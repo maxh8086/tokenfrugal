@@ -1,0 +1,32 @@
+# Every user-visible string of the dashboard (ui/index.html). The page hardcodes no text; edit here.
+title: tokenfrugal
+title_parts: [token, frugal]
+bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP}
+state: {idle: idle, running: running, disconnected: disconnected, unavailable: unavailable}
+bar_none: "-"
+bar_names: {claude: Claude, codex: Codex}
+idle: Idle. Nothing is running right now.
+conn: {connecting: connecting, live: live, reconnecting: reconnecting}
+summary_running: "{n} running"
+thinking_label: thinking
+thinking_placeholder: "…"
+sleeping_think: "zzz…"
+sleeping_log: "zzz… waiting for the next task"
+awake_log: "thinking…"
+badge_running: running
+badge_failed: failed
+progress_idle: Idle, waiting for a task
+progress_run: Running
+progress_fix: Fix needed, retrying
+progress_failed: Failed
+attempt: "attempt {n}"
+step_line: "step {step}/{max} · {calls} tool calls"
+calling: " · calling "
+tools_label: "tools: "
+model_label: "model: "
+mcp_label: "mcp: "
+services:
+  ollama: Ollama
+  docker: Docker
+status: {up: up, down: down, idle: idle, native: native, missing: not pulled, ready: ready, unknown: unknown}
+kinds: {profile: docker profile, backend: compose backend, native: native server}
