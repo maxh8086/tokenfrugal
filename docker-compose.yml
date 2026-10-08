@@ -1,0 +1,119 @@
+# All MCP backing services for the TokenFrugal gateway, in one project (ts-mcp).
+# Nothing runs by default: the gateway (or scripts/mcp_up.*) starts only what a role needs and stops it afterwards.
+#   backends  : long-running services (crawl4ai, sonarqube, penpot-mcp)
+#   neo4j     : plan/task graph; started with the gateway, kept up until the gateway exits (which stops every ts-mcp container)
+#   mcp-*     : stdio MCP wrappers, started per task with `docker compose run --rm -T` (gateway native servers)
+# Secrets live outside the repo in ${MCP_ENV_FILE} (default ~/.docker/mcp/mcp.env); see scripts/mcp_up.*.
+name: ts-mcp
+
+services:
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    profiles: [research]
+    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
+    ports: ["127.0.0.1:11235:11235"]
+    shm_size: 1g
+    mem_limit: 2g
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:11235/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+
+  mcp-crawl4ai:
+    image: tokenfrugal/crawl4ai-mcp:1
+    build: ./docker/crawl4ai-mcp   # built on first use, then reused
+    profiles: [research]
+    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
+    environment:
+      CRAWL4AI_URL: http://crawl4ai:11235
+      SEARXNG_URL: http://searxng:8080
+    stdin_open: true
+
+  searxng:
+    image: searxng/searxng:latest
+    profiles: [research]
+    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
+    volumes:
+      - ./docker/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    ports: ["127.0.0.1:8088:8080"]
+    mem_limit: 512m
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  sonarqube:
+    image: sonarqube:community
+    profiles: [security]
+    ports: ["127.0.0.1:9100:9000"]
+    mem_limit: 3g
+    restart: "no"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_ext:/opt/sonarqube/extensions
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  mcp-sonarqube:
+    image: mcp/sonarqube@sha256:925c88bc7cab2a1e1025b0bd43f0af504cd8ce1b99e9663ececaca914fb632e7
+    profiles: [security]
+    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
+    environment:
+      SONARQUBE_URL: http://sonarqube:9000
+      STORAGE_PATH: /tmp
+    stdin_open: true
+
+  neo4j:
+    image: neo4j:5-community
+    profiles: [plan]
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/unset-run-scripts-mcp_up}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 128m
+      NEO4J_PLUGINS: "[]"
+    ports: ["127.0.0.1:7697:7687"]
+    mem_limit: 1g
+    restart: "no"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/7687'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  penpot-mcp:
+    image: tokenfrugal/penpot-mcp:1
+    build: ./docker/penpot-mcp   # built on first use, then reused
+    profiles: [design]
+    environment:
+      MODE: service
+    ports: ["127.0.0.1:4400-4402:4400-4402"]
+    mem_limit: 1g
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(4401,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+volumes:
+  neo4j_data:
+  # existing volumes from the former `docker run` sonarqube-ce container (keeps its data)
+  sonarqube_data: {external: true}
+  sonarqube_logs: {external: true}
+  sonarqube_ext: {external: true}
