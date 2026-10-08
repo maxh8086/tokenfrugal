@@ -1,0 +1,25 @@
+version: 1
+id: browser
+name: browser
+servers:
+- type: image
+  secrets: default
+  tools:
+  - navigate_page
+  - take_snapshot
+  - take_screenshot
+  - list_console_messages
+  - list_network_requests
+  - lighthouse_audit
+  image: tokenfrugal/chrome-devtools-mcp:1
+  snapshot:
+    server:
+      name: tokenfrugal-chrome-devtools
+      type: server
+      image: tokenfrugal/chrome-devtools-mcp:1
+      description: Chrome DevTools MCP (headless Chromium in container)
+      title: tokenfrugal-chrome-devtools
+      remote: {}
+secrets:
+  default:
+    provider: docker-desktop-store

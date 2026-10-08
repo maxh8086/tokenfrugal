@@ -22,7 +22,7 @@ TASKS = {
 }
 
 
-EXPECT = {'tracker': 'task', 'security': '.env.example', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'Login', 'builder': 'cc_token_saver_mcp', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'README', 'data': 'README', 'designer': 'penpot'}
+EXPECT = {'tracker': 'task', 'security': '.env.example', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'Login', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'README', 'data': 'README', 'designer': 'penpot'}
 
 
 async def one(role_name):

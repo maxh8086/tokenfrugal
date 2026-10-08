@@ -41,7 +41,16 @@ cp .env.example .env          # set TOKENFRUGAL_LLM_URL (host:port) for your LLM
 python scripts/doctor.py
 ```
 
-Start backends once (creates secrets in `~/.docker/mcp/mcp.env`, outside the repo): `scripts/mcp_up.sh` (macOS/Linux) or `scripts/mcp_up.ps1` (Windows). Helper images that wrap upstream tools are built from the Dockerfiles in `docker/` on first use and reused afterwards.
+Then, once:
+
+1. **Start backends** (creates secrets in `~/.docker/mcp/mcp.env`, outside the repo): `scripts/mcp_up.sh` (macOS/Linux) or `scripts/mcp_up.ps1` (Windows). Helper images that wrap upstream tools are built from the Dockerfiles in `docker/` on first use and reused afterwards.
+2. **Install the tool profiles** (build, build-data, analyze, security, debug, docs, design, browser) into Docker's MCP Toolkit:
+   ```bash
+   python scripts/install_profiles.py          # mounts CC_WORKSPACE from .env, else this repo; --workspace PATH to override
+   ```
+   Set `CC_WORKSPACE` in `.env` to the same absolute path. Re-run it any time to refresh the profiles.
+3. **Security role only (SonarQube):** open http://localhost:9100, log in as `admin` / `admin` and set a new password, then *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...` (`SONARQUBE_ORG` is only needed for SonarCloud; leave it empty for the local server), then check it with `python scripts/smoke.py security`.
+4. **Smoke tests:** `python scripts/smoke.py` runs one tiny task per role (needs Ollama and the steps above); `python -m scripts.smoke_plan` exercises the Neo4j plan store (prune, checkpoint, dependency guard) with throwaway data.
 
 Register with your agent (stdio):
 

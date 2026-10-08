@@ -1,0 +1,116 @@
+version: 1
+id: analyze
+name: analyze
+servers:
+- type: image
+  config:
+    path: __WORKSPACE__
+  secrets: default
+  tools:
+  - ast-grep
+  image: mcp/ast-grep@sha256:5fc3f2e9dcf2c019e92662f608b8d89e12134ed6d91e6f5461de6efd506a1e72
+  catalog_ref: mcp/docker-mcp-catalog:latest
+  snapshot:
+    server:
+      name: ast-grep
+      type: server
+      image: mcp/ast-grep@sha256:5fc3f2e9dcf2c019e92662f608b8d89e12134ed6d91e6f5461de6efd506a1e72
+      description: ast-grep is a fast and polyglot tool for code structural search,
+        lint, rewriting at large scale.
+      title: ast-grep
+      icon: https://avatars.githubusercontent.com/u/114017360?s=200&v=4
+      readme: https://desktop.docker.com/mcp/catalog/v3/readme/ast-grep.md
+      remote: {}
+      volumes:
+      - '{{ast-grep.path|volume-target}}:/src'
+      disableNetwork: true
+      tools:
+      - name: ast-grep
+        description: Search codebases using ast-grep patterns for straightforward
+          structural matches. (returns json)
+        arguments:
+        - name: pattern
+          type: string
+          desc: The ast-grep pattern to search for. Note, the pattern must have valid
+            AST structure.
+        - name: dir
+          type: string
+          desc: The directory to search in. If not specified, will use the current
+            working directory.
+          optional: true
+        - name: lang
+          type: string
+          desc: The language of the code. If not specified, will be auto-detected
+            based on file extensions.
+          optional: true
+        annotations:
+          title: Search codebases using ast-grep patterns
+          readOnlyHint: true
+          destructiveHint: true
+          idempotentHint: false
+          openWorldHint: true
+      config:
+      - description: The MCP server is allowed to access this directory
+        name: ast-grep
+        properties:
+          path:
+            type: string
+        required:
+        - path
+        type: object
+      metadata:
+        pulls: 100799
+        stars: 2
+        githubStars: 5
+        category: code
+        tags:
+        - code
+        - refactoring
+        - grep
+        license: Apache License 2.0
+        owner: dgageot
+- type: image
+  secrets: default
+  tools:
+  - read_file
+  - read_multiple_files
+  - list_directory
+  - search_files
+  image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  snapshot:
+    server:
+      name: ts-fs-ro
+      type: server
+      image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+      description: Project filesystem ro
+      title: ts-fs-ro
+      remote: {}
+      command:
+      - /workspace
+      volumes:
+      - __WORKSPACE__:/workspace:ro
+      disableNetwork: true
+- type: image
+  secrets: default
+  tools:
+  - git_status
+  - git_diff
+  - git_diff_unstaged
+  - git_diff_staged
+  - git_log
+  - git_show
+  image: mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+  snapshot:
+    server:
+      name: ts-git
+      type: server
+      image: mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+      description: Project git read-only
+      title: ts-git
+      remote: {}
+      volumes:
+      - __WORKSPACE__:/workspace:ro
+      disableNetwork: true
+secrets:
+  default:
+    provider: docker-desktop-store
