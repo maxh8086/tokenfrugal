@@ -83,6 +83,17 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 **When you need a new MCP server,** ask Claude Code or Codex to add it. Point it at this README and `CLAUDE.md`: it should check the Docker MCP catalogue first, fall back to a helper image or native server only if the catalogue has nothing, update the profile and `personas.yaml`, and re-run `scripts/install_profiles.py`. The dashboard then shows the new server on the agent card and logs each call as it happens.
 
+### Building helper images from a pinned upstream commit
+
+If you prefer to build from source at an exact commit instead of the npm package, `docker/pins.yaml` lists each upstream (`repo`, full 40-char `sha`, `image` tag, `dockerfile`). The helper fetches only that commit, checks that `HEAD` equals the pin, builds the image, and deletes the clone:
+
+```bash
+python scripts/pinned_build.py                      # all pins
+python scripts/pinned_build.py chrome-devtools-mcp  # one pin; --keep leaves the clone for inspection
+```
+
+To bump a pin, change `sha` (resolve it with `git ls-remote --tags <repo>`), rebuild, and re-run the smoke tests.
+
 ## Architecture
 
 ![High-level design](docs/hld.svg)
