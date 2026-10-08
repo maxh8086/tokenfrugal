@@ -33,7 +33,7 @@ def main() -> int:
         print(f"[{'ok' if ok else 'MISSING'}] {name}" + ("" if ok else f"  ->  {fix}"))
         bad += not ok
 
-    report("python >= 3.10", sys.version_info >= (3, 10), "install Python 3.10+")
+    report("python >= 3.11", sys.version_info >= (3, 11), "install Python 3.11+ (3.10.0 breaks pydantic)")
     report("git", bool(shutil.which("git")), HINTS["git"].get(osn, ""))
     dk = bool(shutil.which("docker"))
     report("docker CLI", dk, HINTS["docker"].get(osn, ""))
