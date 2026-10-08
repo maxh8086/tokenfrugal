@@ -1,0 +1,30 @@
+name: bump-pins
+on:
+  schedule: [{cron: "0 6 * * 1"}]   # Mondays 06:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install pyyaml
+      - name: Check upstream tags
+        run: python scripts/check_pins.py --write | tee bump.txt
+      - name: Open PR if anything moved
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git diff --quiet docker/pins.yaml && exit 0
+          br=bump-pins-$(date +%Y%m%d)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$br"
+          git commit -am "Bump pinned upstream commits"
+          git push origin "$br"
+          gh pr create --title "Bump pinned upstream commits" --base "${{ github.event.repository.default_branch }}" \
+            --body "$(printf 'Newer upstream release tags found:\n\n%s\n\nBefore merging run `python scripts/pinned_build.py` to confirm the images still build.' "$(cat bump.txt)")"
