@@ -1,0 +1,13 @@
+# Upstream sources built locally at an exact commit. Used by scripts/pinned_build.py.
+# sha must be the full 40-char commit; dockerfile is the TokenFrugal Dockerfile used with the clone as build context.
+pins:
+  chrome-devtools-mcp:
+    repo: https://github.com/ChromeDevTools/chrome-devtools-mcp.git
+    sha: e52c6b59b476c5e04d8dd9fd4bd017ba3b3d65df   # tag chrome-devtools-mcp-v1.10.1
+    image: tokenfrugal/chrome-devtools-mcp:1
+    dockerfile: docker/chrome-devtools-mcp/Dockerfile
+  penpot-mcp:
+    repo: https://github.com/penpot/penpot.git
+    sha: d49fa51fefc2faaafa69bd46ec273ba48d682731   # tag 2.15.4
+    image: tokenfrugal/penpot-mcp:1
+    dockerfile: docker/penpot-mcp/Dockerfile
