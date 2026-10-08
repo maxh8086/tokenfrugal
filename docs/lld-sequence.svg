@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<style>text{font-family:Segoe UI,Arial,sans-serif;font-size:13px;fill:#1f2937}.t{font-size:15px;font-weight:600}.s{font-size:11px;fill:#4b5563}.l{stroke:#6b7280;stroke-width:1.5;fill:none;marker-end:url(#a)}.d{stroke-dasharray:5 4}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7280"/></marker></defs>
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="28" class="t">TokenFrugal - Low-Level Design: dispatch_task sequence</text>
+<g class="s"><text x="70" y="62" text-anchor="middle">Cloud agent</text><text x="210" y="62" text-anchor="middle">server.py</text><text x="350" y="62" text-anchor="middle">store / plan</text><text x="490" y="62" text-anchor="middle">loop.py</text><text x="630" y="62" text-anchor="middle">Local LLM</text><text x="770" y="62" text-anchor="middle">Docker MCP tools</text><text x="860" y="62" text-anchor="middle">events</text></g>
+<g stroke="#9ca3af" stroke-dasharray="4 4"><path d="M70 70V570"/><path d="M210 70V570"/><path d="M350 70V570"/><path d="M490 70V570"/><path d="M630 70V570"/><path d="M770 70V570"/><path d="M860 70V570"/></g>
+<path class="l" d="M70 95H205"/><text x="75" y="90" class="s">dispatch_task(agent, task, plan_id)</text>
+<path class="l" d="M210 125H345"/><text x="215" y="120" class="s">resolve_role; plan.claim; store.create</text>
+<path class="l" d="M210 155H485"/><text x="215" y="150" class="s">_execute -> run(); emit task_start</text>
+<path class="l" d="M490 185H765"/><text x="495" y="180" class="s">compose.backends up; open_role; list_tools (allowlist)</text>
+<path class="l" d="M490 215H625"/><text x="495" y="210" class="s">chat.completions(tools)</text>
+<path class="l" d="M630 245H495"/><text x="500" y="240" class="s">tool_calls (max 2/step)</text>
+<path class="l" d="M490 275H765"/><text x="495" y="270" class="s">call_tool (paths under /workspace)</text>
+<path class="l" d="M770 305H495"/><text x="560" y="300" class="s">result (capped 8000 chars)</text>
+<path class="l" d="M490 335H855"/><text x="600" y="330" class="s">emit step / tool / say</text>
+<path class="l d" d="M490 365H625"/><text x="495" y="360" class="s">repeat until final answer; slop_check, max 2 retries</text>
+<path class="l" d="M490 395H215"/><text x="260" y="390" class="s">detail, messages</text>
+<path class="l" d="M210 425H345"/><text x="215" y="420" class="s">summarize (150-300 tok); store.update done; plan.done</text>
+<path class="l" d="M210 455H855"/><text x="500" y="450" class="s">emit task_done</text>
+<path class="l" d="M205 485H70"/><text x="75" y="480" class="s">[task_id] summary</text>
+<path class="l d" d="M205 530H70"/><text x="75" y="525" class="s">on error: [task_id] FAILED + error; plan task blocked</text>
+<path class="l d" d="M70 560H205"/><text x="75" y="555" class="s">resume_task(task_id) replays saved messages</text>
+</svg>
