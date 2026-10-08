@@ -247,8 +247,13 @@ function renderChrome() {
   const sc = el('div', 'chips'); sc.append(chip(word('state', st), st, who.join(' + ')));
   const oc = el('div', 'chips'); oc.append(o ? chip(sn.ollama, o.ok ? 'up' : 'down', word('status', o.ok ? 'up' : 'down') + (o.ok ? ' · ' + o.models.length : ''), o.url) : none);
   const dc = el('div', 'chips'); dc.append(d ? chip(sn.docker, d.ok ? 'up' : 'down', word('status', d.ok ? 'up' : 'down') + (d.version ? ' · ' + d.version : '')) : none);
-  $('bar').replaceChildren(
-    cell('status', 'third', sc), cell('ollama', 'third', oc), cell('docker', 'third', dc));
+  const g = sv.graph, gc = el('div', 'chips');
+  if (g) {
+    const gchip = chip(u.bar && u.bar.graph || '', g.ok ? 'up' : 'down', g.ok ? word('state', 'running') : word('state', 'unavailable'), g.ok ? (u.repo_graph_open || '') + ' ' + g.url : '');
+    if (g.ok) { const a = el('a', null); a.href = g.url; a.target = '_blank'; a.rel = 'noopener'; a.style.textDecoration = 'none'; a.style.color = 'inherit'; a.append(gchip); gc.append(a); }
+    else gc.append(gchip);
+  }
+  $('bar').replaceChildren(cell('status', '', sc), cell('ollama', '', oc), cell('docker', '', dc), cell('graph', '', gc));
 }
 
 function render() { renderChrome(); renderTasks(); }

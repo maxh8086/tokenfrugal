@@ -1,12 +1,18 @@
 // Live dashboard for the tokenfrugal gateway: which role/model is running which task.
 // Zero dependencies. Tails gateway/events.jsonl (written by gateway/events.py) and streams it over SSE.
-//   node ui/server.js        ->  http://127.0.0.1:7777   (UI_PORT / GATEWAY_EVENTS override)
+//   node ui/server.js        ->  http://127.0.0.1:7777   (`port:` in gateway/ui.yaml; UI_PORT / GATEWAY_EVENTS override)
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
 
-const PORT = Number(process.env.UI_PORT || 7777);
+function configPort() { // `port: N` from gateway/ui.yaml, the same file the launcher reads
+  try {
+    const m = /^port:\s*(\d+)/m.exec(fs.readFileSync(path.join(__dirname, '..', 'gateway', 'ui.yaml'), 'utf8'));
+    return m ? Number(m[1]) : 7777;
+  } catch { return 7777; }
+}
+const PORT = Number(process.env.UI_PORT || configPort());
 const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
 const ROLES = path.join(path.dirname(EVENTS), 'roles.json');
 const MAX_TASKS = 200;
@@ -101,13 +107,17 @@ async function services(cfg) {
     const r = await fetch(String(llm.url).replace(/\/$/, '') + '/models', { signal: AbortSignal.timeout(2000) });
     if (r.ok) { llm.ok = true; llm.models = ((await r.json()).data || []).map((m) => m.id); }
   } catch { /* down */ }
+  const graph = { ok: false, url: '' };
+  for (const p of (cfg.ui && cfg.ui.repo_graph_ports) || []) { // repo-graph UI: any HTTP answer on a configured local port
+    try { await fetch(`http://127.0.0.1:${p}/`, { signal: AbortSignal.timeout(600) }); graph.ok = true; graph.url = `http://127.0.0.1:${p}/`; break; } catch { /* not listening */ }
+  }
   const ver = await run('docker', ['info', '--format', '{{.ServerVersion}}']);
   const docker = { ok: !!ver && ver.trim() !== '', version: (ver || '').trim() };
   const ps = docker.ok ? await run('docker', ['ps', '-a', '--filter', 'label=com.docker.compose.project=' + (cfg.compose_project || 'ts-mcp'),
     '--format', '{{.Label "com.docker.compose.service"}}|{{.State}}']) : null;
   const containers = {};
   for (const l of (ps || '').split('\n')) { const [n, st] = l.trim().split('|'); if (n) containers[n] = st; }
-  svc = { at: Date.now(), data: { ollama: llm, docker, containers } };
+  svc = { at: Date.now(), data: { ollama: llm, docker, graph, containers } };
   return svc.data;
 }
 

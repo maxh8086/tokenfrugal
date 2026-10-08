@@ -1,7 +1,7 @@
 """Starts the Node dashboard (ui/server.js) with the gateway and opens it in the browser.
 
 Optional and best-effort: no node, a busy port or a headless box never breaks the gateway.
-TOKENFRUGAL_UI=0 disables it, UI_PORT sets the port, TOKENFRUGAL_UI_OPEN=0 skips the browser pop-up.
+TOKENFRUGAL_UI=0 disables it, `port` in gateway/ui.yaml (or UI_PORT) sets the port, TOKENFRUGAL_UI_OPEN=0 skips the browser pop-up.
 """
 import os
 import shutil
@@ -11,13 +11,22 @@ import sys
 import time
 import webbrowser
 
+import yaml
+
 from .config import ROOT
+from .events import UI_TEXT
 
 _proc: subprocess.Popen | None = None
 
 
 def port() -> int:
-    return int(os.getenv("UI_PORT", "7777"))
+    """UI_PORT env wins over `port:` in gateway/ui.yaml; default 7777."""
+    if os.getenv("UI_PORT"):
+        return int(os.environ["UI_PORT"])
+    try:
+        return int(yaml.safe_load(UI_TEXT.read_text(encoding="utf-8")).get("port", 7777))
+    except (OSError, ValueError, AttributeError, yaml.YAMLError):
+        return 7777
 
 
 def enabled() -> bool:
