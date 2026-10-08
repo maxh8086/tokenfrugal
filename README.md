@@ -21,7 +21,7 @@ Good fit: side projects, college projects, corporate seats with tight quotas, la
 
 | Need | Notes |
 | --- | --- |
-| Python 3.10+ and git | |
+| Python 3.11+ and git | |
 | Docker (Desktop, Engine, Colima, Rancher Desktop or Podman with a `docker` shim) | Runs the tool backends. Docker Desktop is free only for personal/education/small-business use; check its licence for your company. |
 | Ollama **or any OpenAI-compatible LLM API** | Host and port set in `.env` (`TOKENFRUGAL_LLM_URL`). Default `http://localhost:11434/v1`. |
 | Two local models | `ollama pull qwen2.5-coder:3b` and `ollama pull llama3.2:3b` (tags are set in `gateway/personas.yaml`). |
