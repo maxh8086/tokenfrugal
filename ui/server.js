@@ -108,7 +108,7 @@ async function services(cfg) {
     if (r.ok) { llm.ok = true; llm.models = ((await r.json()).data || []).map((m) => m.id); }
   } catch { /* down */ }
   const graph = { ok: false, url: '' };
-  for (const p of (cfg.ui && cfg.ui.codegraph_ports) || []) { // codegraph-mcp UI: any HTTP answer on a configured local port
+  for (const p of (cfg.ui && cfg.ui.codelense_ports) || []) { // codelense-mcp UI: any HTTP answer on a configured local port
     try { await fetch(`http://127.0.0.1:${p}/`, { signal: AbortSignal.timeout(600) }); graph.ok = true; graph.url = `http://127.0.0.1:${p}/`; break; } catch { /* not listening */ }
   }
   const ver = await run('docker', ['info', '--format', '{{.ServerVersion}}']);
