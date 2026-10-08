@@ -1,0 +1,265 @@
+version: 1
+id: debug
+name: debug
+servers:
+- type: image
+  secrets: default
+  tools:
+  - execute_code
+  image: mcp/mcp-code-interpreter@sha256:d6ce03d191c78b8e1b76eb861759c005469fc05606c7d8cc4fe64355a24550a9
+  catalog_ref: mcp/docker-mcp-catalog:latest
+  snapshot:
+    server:
+      name: mcp-code-interpreter
+      type: server
+      image: mcp/mcp-code-interpreter@sha256:d6ce03d191c78b8e1b76eb861759c005469fc05606c7d8cc4fe64355a24550a9
+      description: A Python-based execution tool that mimics a Jupyter notebook environment.
+        It accepts code snippets, executes them, and maintains state across sessions
+        — preserving variables, imports, and past results. Ideal for iterative development,
+        debugging, or code execution.
+      title: Python Interpreter
+      icon: https://raw.githubusercontent.com/akuadane/mcp-code-interpreter/refs/heads/main/asset/logo.png
+      readme: https://desktop.docker.com/mcp/catalog/v3/readme/mcp-code-interpreter.md
+      remote: {}
+      volumes:
+      - notebooks:/app/notebooks
+      tools:
+      - name: execute_code
+        description: Executes Python code within a persistent session, retaining past
+          results (e.g., variables, imports). Similar to a Jupyter notebook. A session_id
+          is returned on first use and must be included in subsequent requests to
+          maintain context.
+        arguments:
+        - name: code
+          type: string
+          desc: ''
+        - name: session_id
+          type: integer
+          desc: ''
+          optional: true
+      metadata:
+        pulls: 56936
+        stars: 2
+        githubStars: 16
+        category: productivity
+        tags:
+        - productivity
+        license: MIT License
+        owner: akuadane
+- type: image
+  secrets: default
+  tools:
+  - sequentialthinking
+  image: mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f
+  catalog_ref: mcp/docker-mcp-catalog:latest
+  snapshot:
+    server:
+      name: sequentialthinking
+      type: server
+      image: mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f
+      description: Dynamic and reflective problem-solving through thought sequences.
+      title: Sequential Thinking (Reference)
+      icon: https://avatars.githubusercontent.com/u/182288589?s=200&v=4
+      readme: https://desktop.docker.com/mcp/catalog/v3/readme/sequentialthinking.md
+      remote: {}
+      tools:
+      - name: sequentialthinking
+        description: 'A detailed tool for dynamic and reflective problem-solving through
+          thoughts.
+
+          This tool helps analyze problems through a flexible thinking process that
+          can adapt and evolve.
+
+          Each thought can build on, question, or revise previous insights as understanding
+          deepens.
+
+
+          When to use this tool:
+
+          - Breaking down complex problems into steps
+
+          - Planning and design with room for revision
+
+          - Analysis that might need course correction
+
+          - Problems where the full scope might not be clear initially
+
+          - Problems that require a multi-step solution
+
+          - Tasks that need to maintain context over multiple steps
+
+          - Situations where irrelevant information needs to be filtered out
+
+
+          Key features:
+
+          - You can adjust total_thoughts up or down as you progress
+
+          - You can question or revise previous thoughts
+
+          - You can add more thoughts even after reaching what seemed like the end
+
+          - You can express uncertainty and explore alternative approaches
+
+          - Not every thought needs to build linearly - you can branch or backtrack
+
+          - Generates a solution hypothesis
+
+          - Verifies the hypothesis based on the Chain of Thought steps
+
+          - Repeats the process until satisfied
+
+          - Provides a correct answer
+
+
+          Parameters explained:
+
+          - thought: Your current thinking step, which can include:
+
+          * Regular analytical steps
+
+          * Revisions of previous thoughts
+
+          * Questions about previous decisions
+
+          * Realizations about needing more analysis
+
+          * Changes in approach
+
+          * Hypothesis generation
+
+          * Hypothesis verification
+
+          - next_thought_needed: True if you need more thinking, even if at what seemed
+          like the end
+
+          - thought_number: Current number in sequence (can go beyond initial total
+          if needed)
+
+          - total_thoughts: Current estimate of thoughts needed (can be adjusted up/down)
+
+          - is_revision: A boolean indicating if this thought revises previous thinking
+
+          - revises_thought: If is_revision is true, which thought number is being
+          reconsidered
+
+          - branch_from_thought: If branching, which thought number is the branching
+          point
+
+          - branch_id: Identifier for the current branch (if any)
+
+          - needs_more_thoughts: If reaching end but realizing more thoughts needed
+
+
+          You should:
+
+          1. Start with an initial estimate of needed thoughts, but be ready to adjust
+
+          2. Feel free to question or revise previous thoughts
+
+          3. Don''t hesitate to add more thoughts if needed, even at the "end"
+
+          4. Express uncertainty when present
+
+          5. Mark thoughts that revise previous thinking or branch into new paths
+
+          6. Ignore information that is irrelevant to the current step
+
+          7. Generate a solution hypothesis when appropriate
+
+          8. Verify the hypothesis based on the Chain of Thought steps
+
+          9. Repeat the process until satisfied with the solution
+
+          10. Provide a single, ideally correct answer as the final output
+
+          11. Only set next_thought_needed to false when truly done and a satisfactory
+          answer is reached'
+        arguments:
+        - name: nextThoughtNeeded
+          type: boolean
+          desc: Whether another thought step is needed
+        - name: thought
+          type: string
+          desc: Your current thinking step
+        - name: thoughtNumber
+          type: integer
+          desc: Current thought number
+        - name: totalThoughts
+          type: integer
+          desc: Estimated total thoughts needed
+        - name: branchFromThought
+          type: integer
+          desc: Branching point thought number
+          optional: true
+        - name: branchId
+          type: string
+          desc: Branch identifier
+          optional: true
+        - name: isRevision
+          type: boolean
+          desc: Whether this revises previous thinking
+          optional: true
+        - name: needsMoreThoughts
+          type: boolean
+          desc: If more thoughts are needed
+          optional: true
+        - name: revisesThought
+          type: integer
+          desc: Which thought is being reconsidered
+          optional: true
+      metadata:
+        pulls: 416212
+        stars: 30
+        githubStars: 91033
+        category: ai
+        tags:
+        - mcp
+        - ai
+        license: Other
+        owner: modelcontextprotocol
+- type: image
+  secrets: default
+  tools:
+  - read_file
+  - read_multiple_files
+  - list_directory
+  - search_files
+  image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  snapshot:
+    server:
+      name: ts-fs-ro
+      type: server
+      image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+      description: Project filesystem ro
+      title: ts-fs-ro
+      remote: {}
+      command:
+      - /workspace
+      volumes:
+      - __WORKSPACE__:/workspace:ro
+      disableNetwork: true
+- type: image
+  secrets: default
+  tools:
+  - git_status
+  - git_diff
+  - git_diff_unstaged
+  - git_diff_staged
+  - git_log
+  - git_show
+  image: mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+  snapshot:
+    server:
+      name: ts-git
+      type: server
+      image: mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+      description: Project git read-only
+      title: ts-git
+      remote: {}
+      volumes:
+      - __WORKSPACE__:/workspace:ro
+      disableNetwork: true
+secrets:
+  default:
+    provider: docker-desktop-store

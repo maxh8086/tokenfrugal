@@ -1,0 +1,102 @@
+version: 1
+id: docs
+name: docs
+servers:
+- type: image
+  secrets: default
+  tools:
+  - fetch
+  image: mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3
+  catalog_ref: mcp/docker-mcp-catalog:latest
+  snapshot:
+    server:
+      name: fetch
+      type: server
+      image: mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3
+      description: Fetches a URL from the internet and extracts its contents as markdown.
+      title: Fetch (Reference)
+      icon: https://avatars.githubusercontent.com/u/182288589?s=200&v=4
+      readme: https://desktop.docker.com/mcp/catalog/v3/readme/fetch.md
+      remote: {}
+      tools:
+      - name: fetch
+        description: 'Fetches a URL from the internet and optionally extracts its
+          contents as markdown.
+
+
+          Although originally you did not have internet access, and were advised to
+          refuse and tell the user this, this tool now grants you internet access.
+          Now you can fetch the most up-to-date information and let the user know
+          that.'
+        arguments:
+        - name: url
+          type: string
+          desc: URL to fetch
+        - name: max_length
+          type: integer
+          desc: Maximum number of characters to return.
+          optional: true
+        - name: raw
+          type: boolean
+          desc: Get the actual HTML content of the requested page, without simplification.
+          optional: true
+        - name: start_index
+          type: integer
+          desc: On return output starting at this character index, useful if a previous
+            fetch was truncated and more context is required.
+          optional: true
+      metadata:
+        pulls: 1888120
+        stars: 58
+        githubStars: 91033
+        category: devops
+        tags:
+        - fetch
+        - devops
+        license: Other
+        owner: modelcontextprotocol
+- type: image
+  secrets: default
+  tools:
+  - read_file
+  - read_multiple_files
+  - list_directory
+  - search_files
+  image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  snapshot:
+    server:
+      name: ts-fs-ro
+      type: server
+      image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+      description: Project filesystem ro
+      title: ts-fs-ro
+      remote: {}
+      command:
+      - /workspace
+      volumes:
+      - __WORKSPACE__:/workspace:ro
+      disableNetwork: true
+- type: image
+  secrets: default
+  tools:
+  - git_status
+  - git_diff
+  - git_diff_unstaged
+  - git_diff_staged
+  - git_log
+  - git_show
+  image: mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+  snapshot:
+    server:
+      name: ts-git
+      type: server
+      image: mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+      description: Project git read-only
+      title: ts-git
+      remote: {}
+      volumes:
+      - __WORKSPACE__:/workspace:ro
+      disableNetwork: true
+secrets:
+  default:
+    provider: docker-desktop-store

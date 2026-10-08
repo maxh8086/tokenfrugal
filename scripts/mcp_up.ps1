@@ -13,7 +13,7 @@ if ($Rotate -or -not (Test-Path $envFile)) {
     $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
     New-Item -ItemType Directory -Force (Split-Path $envFile) | Out-Null
     (@("CRAWL4AI_API_TOKEN=" + ([BitConverter]::ToString($b) -replace '-', '').ToLower()) + $old) | Set-Content $envFile -Encoding ascii
-    Write-Host "Wrote $envFile (set SONARQUBE_TOKEN there yourself)"
+    Write-Host "Wrote $envFile (see README step 3 for SONARQUBE_TOKEN)"
 }
 if (-not (Select-String -Path $envFile -Pattern '^SEARXNG_SECRET=' -Quiet)) {
     $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
