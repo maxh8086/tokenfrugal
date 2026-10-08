@@ -17,6 +17,8 @@ TokenFrugal does the wiring:
 - 282 [agency-agents](https://github.com/msitarzewski/agency-agents) personas are mapped to 11 roles (builder, analyzer, reviewer, security, docs, designer, browser, research, data, debugger, tracker).
 - Failures return a short error and a `task_id` (`resume_task`). No silent cloud fallback, so no surprise spend.
 
+For companies this means a cheaper setup: standard-tier cloud subscriptions are enough because the cloud model only plans and reviews, while the bulk of the work runs on a local LLM hosted on a modest, inexpensive GPU (a 3B-class model fits in a few GB of VRAM) that is sized to deliver exactly what routine tasks need and no more.
+
 Good fit: side projects, college projects, corporate seats with tight quotas, laptops with a GPU or Apple Silicon.
 
 ## Requirements
@@ -65,6 +67,21 @@ For Codex use the equivalent `[mcp_servers.tokenfrugal]` table in `~/.codex/conf
 ## Use
 
 Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `dispatch_task`, `ask_followup`, `get_detail`, `resume_task`, `list_roles`, plus plan tools (`plan_add`, `plan_overview`, ...) backed by Neo4j with automatic retention (`PLAN_RETENTION_DAYS`). `server.py` is a simpler two-tool server if you only want `query_local_llm`.
+
+## Adding MCP servers
+
+**Recommended: the Docker MCP gateway with servers from the Docker MCP Toolkit catalogue.** Most MCP servers you will want (filesystem, git, fetch, browser, search, databases, ...) already exist in the catalogue as maintained, sandboxed containers. TokenFrugal runs each role through `docker mcp gateway run --profile <name>`, so adding one is a profile edit, not new code:
+
+1. Add the catalogue server to a profile in `profiles/*.yaml` (or pick it with `docker mcp` / Docker Desktop's MCP Toolkit).
+2. Allowlist 4-6 of its tools for the role in `gateway/personas.yaml`; small local models do better with few tools.
+3. Run `python scripts/install_profiles.py` to import the profiles, then restart the gateway.
+
+**Servers that are not in the catalogue** are shipped with TokenFrugal rather than left to you. Two routes, both already used in this repo:
+
+- **Containerised helper:** a Dockerfile in `docker/` wraps the upstream tool (for example `tokenfrugal/chrome-devtools-mcp:1`, `tokenfrugal/penpot-mcp:1`), and `docker-compose.yml` (project `ts-mcp`) starts it on demand for the roles that list it under `compose:`.
+- **Native stdio server:** a role can list a local stdio MCP server under `native:` in `gateway/personas.yaml` when it cannot run in Docker.
+
+**When you need a new MCP server,** ask Claude Code or Codex to add it. Point it at this README and `CLAUDE.md`: it should check the Docker MCP catalogue first, fall back to a helper image or native server only if the catalogue has nothing, update the profile and `personas.yaml`, and re-run `scripts/install_profiles.py`. The dashboard then shows the new server on the agent card and logs each call as it happens.
 
 ## FAQ
 
