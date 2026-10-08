@@ -1,12 +1,12 @@
 # Every user-visible string of the dashboard (ui/index.html). The page hardcodes no text; edit here.
 # Dashboard port. The UI_PORT environment variable overrides it.
 port: 7777
-# Local ports where the codegraph-mcp UI (codebase-memory-mcp --ui) may listen; the first one answering is linked.
-codegraph_ports: [9749, 9750, 9751]
-codegraph_open: Open UI
+# Local ports where the codelense-mcp UI (codebase-memory-mcp --ui) may listen; the first one answering is linked.
+codelense_ports: [9749, 9750, 9751]
+codelense_open: Open UI
 title: tokenfrugal
 title_parts: [token, frugal]
-bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP, graph: codegraph-mcp}
+bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP, graph: codelense-mcp}
 state: {idle: idle, running: running, disconnected: disconnected, unavailable: unavailable}
 bar_none: "-"
 bar_names: {claude: Claude, codex: Codex}
