@@ -1,0 +1,7 @@
+FROM llama3.2:3b
+PARAMETER num_ctx 16384
+PARAMETER repeat_penalty 1.1
+PARAMETER temperature 0.1
+PARAMETER stop <|start_header_id|>
+PARAMETER stop <|end_header_id|>
+PARAMETER stop <|eot_id|>

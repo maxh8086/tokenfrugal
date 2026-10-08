@@ -28,7 +28,7 @@ Good fit: side projects, college projects, corporate seats with tight quotas, la
 | Python 3.11+ and git | |
 | Docker (Desktop, Engine, Colima, Rancher Desktop or Podman with a `docker` shim) | Runs the tool backends. Docker Desktop is free only for personal/education/small-business use; check its licence for your company. |
 | Ollama **or any OpenAI-compatible LLM API** | Host and port set in `.env` (`TOKENFRUGAL_LLM_URL`). Default `http://localhost:11434/v1`. |
-| Two local models | `ollama pull qwen2.5-coder:3b` and `ollama pull llama3.2:3b` (tags are set in `gateway/personas.yaml`). |
+| Two local models | Pull the bases, then create the tuned tags the gateway expects (`qwen2.5-coder-yarn:3b`, `llama3.2:3b-16k`; see `gateway/personas.yaml`):<br>`ollama pull qwen2.5-coder:3b` / `ollama pull llama3.2:3b`<br>`ollama create qwen2.5-coder-yarn:3b -f models/builder.Modelfile`<br>`ollama create llama3.2:3b-16k -f models/thinker.Modelfile` |
 | An MCP-capable agent | Claude Code, Codex, Cursor or any MCP client. |
 
 Check everything at once: `python scripts/doctor.py` (installs nothing; prints exact fix commands).

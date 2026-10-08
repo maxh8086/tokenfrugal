@@ -1,4 +1,5 @@
 """Check TokenFrugal prerequisites on any OS. Installs nothing; prints what is missing and how to fix it."""
+import json
 import os
 import platform
 import shutil
@@ -25,6 +26,13 @@ def llm_url() -> str:
     return os.getenv("TOKENFRUGAL_LLM_URL", "http://localhost:11434/v1")
 
 
+def required_models() -> list[tuple[str, str]]:
+    """(tag, Modelfile name) for the builder and thinker models named in gateway/personas.yaml."""
+    import yaml
+    models = yaml.safe_load((ROOT / "gateway" / "personas.yaml").read_text(encoding="utf-8"))["models"]
+    return [(models["builder"], "builder.Modelfile"), (models["thinker"], "thinker.Modelfile")]
+
+
 def main() -> int:
     osn, bad = platform.system(), 0
 
@@ -44,6 +52,9 @@ def main() -> int:
     try:
         urllib.request.urlopen(url.rstrip("/") + "/models", timeout=3)
         report(f"LLM endpoint {url}", True)
+        have = {m.get("id") for m in json.load(urllib.request.urlopen(url.rstrip("/") + "/models", timeout=3)).get("data", [])}
+        for tag, modelfile in required_models():
+            report(f"model {tag}", tag in have, f"ollama pull <base> && ollama create {tag} -f models/{modelfile}")
     except Exception:
         report(f"LLM endpoint {url}", False, "start Ollama (" + HINTS["ollama"].get(osn, "") + ") or set TOKENFRUGAL_LLM_URL in .env")
     if bad:
