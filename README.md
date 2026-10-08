@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.svg" alt="tokenfrugal" width="420"></p>
+
 # TokenFrugal
 
 **Stop burning your Claude Code / Codex token quota on boilerplate. TokenFrugal hands routine coding, tests, docs, reviews and research to a free local LLM (Ollama or any OpenAI-compatible API) through one small MCP server, and keeps your paid cloud model for architecture and hard decisions.**
@@ -75,3 +77,12 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 Apache-2.0 (see [LICENSE](LICENSE), [NOTICE](NOTICE)). Inspired by and built on the work of many authors; see [CREDITS.md](CREDITS.md). Third-party backends run as their own unmodified containers under their own licences.
 
 Developed by Vaibhav Pavtekar with AI assistance (Claude Code).
+
+## Live dashboard
+
+The dashboard starts with the gateway and opens in your browser at http://127.0.0.1:7777. At the top is a two-row status table: Status (idle, running, disconnected or unavailable, plus which client is connected: Claude, Codex or both), Ollama, Model and Agent on the first row; Docker (one third) and the MCP servers of the selected role (two thirds) on the second. Below it are the running tasks, a thinking box and a log, with a character that works while a task runs and sleeps when idle. If another gateway already serves the port, it is reused.
+
+- `TOKENFRUGAL_UI=0` disables it, `TOKENFRUGAL_UI_OPEN=0` skips the browser pop-up, `UI_PORT` changes the port.
+- All dashboard text comes from `gateway/ui.yaml`; roles, models and tools come from `gateway/roles.json`.
+- Needs Node 18+ (no npm packages); without Node the gateway runs as before. `node ui/server.js` starts it by hand.
+- The gateway writes `gateway/events.jsonl` and `gateway/roles.json`; override with `GATEWAY_EVENTS`. Restart the gateway after updating so it emits events.
