@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 from openai import OpenAI
 
+from . import events
 from .config import LLM_API_KEY, OLLAMA_URL, TOOLS_PER_STEP
 from .compose import backends
 from .mcp_client import open_role, result_text, to_openai_tools
@@ -58,7 +59,8 @@ def parse_text_calls(text: str, names: set) -> list:
     return calls
 
 
-async def run(agent: str, role: dict, prompt: str, messages: list | None = None) -> tuple[str, list]:
+async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
+              tid: str = "") -> tuple[str, list]:
     msgs = messages or [{"role": "system", "content": SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)},
                         {"role": "user", "content": prompt}]
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
@@ -67,11 +69,15 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None)
         names = {t["function"]["name"] for t in tools}
         slop_retries = 0
         used_tools = any(m.get("role") == "tool" for m in msgs)
-        for _ in range(role["max_steps"]):
+        for step in range(1, role["max_steps"] + 1):
+            events.emit("step", id=tid, n=step)
             r = _client.chat.completions.create(model=role["model"], messages=msgs, temperature=0.1,
                                                 max_tokens=2048, tools=tools or None,
                                                 **({} if used_tools or not tools else {"tool_choice": "required"}))
             m = r.choices[0].message
+            thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()
+            if thought:
+                events.emit("say", id=tid, text=thought[:1000])
             calls = (m.tool_calls or parse_text_calls(m.content, names))[:TOOLS_PER_STEP]
             if not calls:
                 bad = slop_check(m.content or "")
@@ -79,6 +85,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None)
                     bad = "you answered without calling any tool; call a tool to read real data first"
                 if bad and slop_retries < 2:
                     slop_retries += 1
+                    events.emit("retry", id=tid, n=slop_retries, reason=bad[:200])
                     msgs += [{"role": "assistant", "content": m.content or ""}, {"role": "user", "content": bad}]
                     continue
                 if bad:
@@ -90,6 +97,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None)
                 for c in calls]})
             used_tools = True
             for c in calls:
+                events.emit("tool", id=tid, name=c.function.name, args=(c.function.arguments or "")[:160])
                 try:
                     res = await sess.call_tool(c.function.name, json.loads(c.function.arguments or "{}"))
                     out = result_text(res)
