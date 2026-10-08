@@ -53,7 +53,7 @@ Then, once:
    python scripts/install_profiles.py          # mounts CC_WORKSPACE from .env, else this repo; --workspace PATH to override
    ```
    Set `CC_WORKSPACE` in `.env` to the same absolute path. Re-run it any time to refresh the profiles.
-3. **Security role only (SonarQube):** open http://localhost:9100, log in as `admin` / `admin` and set a new password, then *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...` (`SONARQUBE_ORG` is only needed for SonarCloud; leave it empty for the local server), then check it with `python scripts/smoke.py security`.
+3. **Security role only (SonarQube):** open http://localhost:9100, log in as `admin` / `admin` and set a new password, then *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...` (`SONARQUBE_ORG` is only needed for SonarCloud; leave it empty for the local server). If your secrets file lives elsewhere, set `MCP_ENV_FILE=<path>` in `.env` (or the environment); the gateway and `docker-compose.yml` both read that path instead. Then check it with `python scripts/smoke.py security`.
 4. **Smoke tests:** `python scripts/smoke.py` runs one tiny task per role (needs Ollama and the steps above); `python -m scripts.smoke_plan` exercises the Neo4j plan store (prune, checkpoint, dependency guard) with throwaway data.
 
 Register with your agent (stdio):
@@ -93,6 +93,8 @@ python scripts/pinned_build.py chrome-devtools-mcp  # one pin; --keep leaves the
 ```
 
 To bump a pin, change `sha` (resolve it with `git ls-remote --tags <repo>`), rebuild, and re-run the smoke tests.
+
+A weekly GitHub Actions job (`.github/workflows/bump-pins.yml`, also runnable by hand) runs `scripts/check_pins.py`, which looks for newer release tags and opens a pull request that moves the pin. Nothing changes until you merge it; run `python scripts/pinned_build.py` first to confirm the image still builds.
 
 ## Architecture
 
