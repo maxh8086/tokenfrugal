@@ -83,6 +83,15 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 **When you need a new MCP server,** ask Claude Code or Codex to add it. Point it at this README and `CLAUDE.md`: it should check the Docker MCP catalogue first, fall back to a helper image or native server only if the catalogue has nothing, update the profile and `personas.yaml`, and re-run `scripts/install_profiles.py`. The dashboard then shows the new server on the agent card and logs each call as it happens.
 
+## Architecture
+
+![High-level design](docs/hld.svg)
+
+- [High-level design](docs/hld.svg): cloud agent, gateway, local LLMs, Docker MCP profiles, Neo4j, dashboard
+- [Low-level design: modules](docs/lld-modules.svg)
+- [Low-level design: dispatch_task sequence](docs/lld-sequence.svg)
+- [Full write-up](docs/architecture.md)
+
 ## FAQ
 
 **Does it send my code to the cloud?** Local models run on your machine; only the short summaries return to your cloud agent.
