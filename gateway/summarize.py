@@ -10,6 +10,12 @@ def tokens(text: str) -> int:
     return max(1, len(text) // 4)  # cheap estimate, avoids a tokenizer dependency
 
 
+def saved_tokens(msgs, summary: str) -> int:
+    """Tokens the local model handled (everything in its conversation) that the cloud agent did not have to read."""
+    work = sum(tokens(str(m.get("content") or "")) for m in msgs or [] if isinstance(m, dict))
+    return max(0, work - tokens(summary))
+
+
 def hard_trim(text: str, limit: int = SUMMARY_MAX_TOKENS) -> str:
     if tokens(text) <= limit:
         return text

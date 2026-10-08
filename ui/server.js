@@ -60,10 +60,10 @@ function apply(ev) {
     note(t, ev.ts, ev.text); t.think = ev.text; t.updatedAt = ev.ts;
   } else if (ev.kind === 'task_done') {
     note(t, ev.ts, 'done: ' + ev.summary);
-    Object.assign(t, { status: 'done', summary: ev.summary, endedAt: ev.ts, updatedAt: ev.ts, tool: '' });
+    Object.assign(t, { status: 'done', summary: ev.summary, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0 });
   } else if (ev.kind === 'task_failed') {
     note(t, ev.ts, 'failed: ' + ev.error);
-    Object.assign(t, { status: 'failed', error: ev.error, endedAt: ev.ts, updatedAt: ev.ts, tool: '' });
+    Object.assign(t, { status: 'failed', error: ev.error, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0 });
   } else {
     return null;
   }
@@ -153,6 +153,7 @@ const server = http.createServer(async (req, res) => {
     const connected = [...new Set([...gateways].filter(([pid]) => alive(pid)).map(([, n]) => n).filter(Boolean))];
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     return res.end(JSON.stringify({ now: Date.now() / 1000, tasks: list, ...cfg, services: sv, connected, selected,
+      saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
   }
   if (url.pathname === '/events') {

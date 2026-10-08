@@ -133,3 +133,12 @@ class TextCalls(unittest.TestCase):
         c = parse_text_calls('<tool_call>{"name": "read_file", "arguments": {"path": "a"}}</tool_call>', {"read_file"})
         self.assertEqual(c[0].function.name, "read_file")
         self.assertEqual(parse_text_calls('{"name": "nope", "arguments": {}}', {"read_file"}), [])
+
+
+class SavedTokensTest(unittest.TestCase):
+    def test_saved_is_work_minus_summary_and_never_negative(self):
+        from gateway.summarize import saved_tokens
+        msgs = [{"role": "user", "content": "x" * 400}, {"role": "tool", "content": "y" * 4000}]
+        self.assertEqual(saved_tokens(msgs, "z" * 40), 1100 - 10)
+        self.assertEqual(saved_tokens([], "z" * 40), 0)
+        self.assertEqual(saved_tokens([{"content": None}], "z" * 400), 0)

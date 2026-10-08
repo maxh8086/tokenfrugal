@@ -106,6 +106,7 @@
   .chip.up::before, .chip.ready::before { background: var(--done); } .chip.down::before, .chip.missing::before { background: var(--fail); }
   .chip.idle::before { background: var(--stale); } .chip.native::before { background: var(--blue); }
   .chip.active { border-color: var(--run); background: var(--accent-bg); } .chip small { color: var(--muted); }
+  .saved { text-align: center; margin: 8px 0 24px; color: var(--muted); } .saved b { display: block; font-size: 32px; color: var(--blue); }
   .empty { color: var(--muted); padding: 24px 0; text-align: center; }
 </style>
 </head>
@@ -120,6 +121,7 @@
   </header>
   <div class="grid" id="bar"></div>
   <div id="tasks"></div>
+  <div id="saved" class="saved"></div>
 </main>
 <script>
 const BOT = `<svg class="bot" viewBox="0 0 72 84" aria-hidden="true">
@@ -256,7 +258,11 @@ function renderChrome() {
   $('bar').replaceChildren(cell('status', '', sc), cell('ollama', '', oc), cell('docker', '', dc), cell('graph', '', gc));
 }
 
-function render() { renderChrome(); renderTasks(); }
+function renderSaved() {
+  const n = [...tasks.values()].reduce((a, t) => a + (t.saved || 0), 0);
+  const b = $('saved'); b.replaceChildren(el('b', '', n.toLocaleString()), el('span', '', T('tokens_saved')));
+}
+function render() { renderChrome(); renderTasks(); renderSaved(); }
 
 async function load() {
   const s = await (await fetch('/api/state')).json();
@@ -275,7 +281,7 @@ function connect() {
 load().catch(() => {});
 connect();
 setInterval(() => load().catch(() => {}), 5000); // services / MCP status
-setInterval(renderTasks, 1000); // keeps elapsed timers ticking
+setInterval(() => { renderTasks(); renderSaved(); }, 1000); // keeps elapsed timers ticking
 
 </script>
 </body>
