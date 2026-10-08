@@ -63,6 +63,14 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
               tid: str = "") -> tuple[str, list]:
     msgs = messages or [{"role": "system", "content": SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)},
                         {"role": "user", "content": prompt}]
+    try:
+        return await _run(agent, role, msgs, tid)
+    except BaseException as e:
+        leaf(e).msgs = msgs  # failed runs still did local work; the gateway counts it as saved
+        raise
+
+
+async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]:
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
             open_role(role.get("profile"), role.get("native")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
