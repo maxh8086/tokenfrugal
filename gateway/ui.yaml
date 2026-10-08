@@ -1,7 +1,12 @@
 # Every user-visible string of the dashboard (ui/index.html). The page hardcodes no text; edit here.
+# Dashboard port. The UI_PORT environment variable overrides it.
+port: 7777
+# Local ports where the repo-graph UI (codebase-memory-mcp --ui) may listen; the first one answering is linked.
+repo_graph_ports: [9749, 9750, 9751]
+repo_graph_open: Open UI
 title: tokenfrugal
 title_parts: [token, frugal]
-bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP}
+bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP, graph: Repo graph}
 state: {idle: idle, running: running, disconnected: disconnected, unavailable: unavailable}
 bar_none: "-"
 bar_names: {claude: Claude, codex: Codex}
