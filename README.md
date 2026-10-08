@@ -103,7 +103,7 @@ The dashboard starts with the gateway and opens in your browser at http://127.0.
 
 - `TOKENFRUGAL_UI=0` disables it, `TOKENFRUGAL_UI_OPEN=0` skips the browser pop-up, the port is `port:` in `gateway/ui.yaml` (default 7777); the `UI_PORT` environment variable overrides it.
 - The dashboard is the gateway's built-in MCP channel: every MCP call a local agent makes (tool name, arguments, step) is recorded as an event the moment it happens, and each agent card shows the MCP servers of its role with live status, the current tool, and a log of every call.
-- The fourth top box shows codegraph-mcp (the codebase-memory graph UI): `running` becomes a link that opens its UI in a new tab, otherwise `unavailable`. The ports probed are `repo_graph_ports` in `gateway/ui.yaml` (default 9749-9751).
+- The fourth top box shows codegraph-mcp (the codebase-memory graph UI): `running` becomes a link that opens its UI in a new tab, otherwise `unavailable`. The ports probed are `codegraph_ports` in `gateway/ui.yaml` (default 9749-9751).
 - All dashboard text comes from `gateway/ui.yaml`; roles, models and tools come from `gateway/roles.json`.
 - Needs Node 18+ (no npm packages); without Node the gateway runs as before. `node ui/server.js` starts it by hand.
 - The gateway writes `gateway/events.jsonl` and `gateway/roles.json`; override with `GATEWAY_EVENTS`. Restart the gateway after updating so it emits events.
