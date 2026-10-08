@@ -10,8 +10,9 @@ import signal
 import sys
 
 from fastmcp import FastMCP
+from fastmcp.server.middleware import Middleware
 
-from . import compose, plan, store
+from . import compose, events, plan, store, ui_launcher
 from .config import load_personas, resolve_role
 from .loop import leaf, run
 from .summarize import hard_trim, summarize
@@ -33,6 +34,9 @@ async def _warm_up():
 @contextlib.asynccontextmanager
 async def _lifespan(_server):
     """The last gateway to exit stops every ts-mcp container (also on SIGTERM and interpreter exit)."""
+    events.write_roles(CFG)
+    await asyncio.to_thread(ui_launcher.start)
+    atexit.register(ui_launcher.stop)
     compose.register()
     atexit.register(compose.release)
     for name in ("SIGTERM", "SIGBREAK"):
@@ -44,10 +48,20 @@ async def _lifespan(_server):
         yield
     finally:
         warm.cancel()
+        ui_launcher.stop()
         compose.release()
 
 
-mcp = FastMCP("tokenfrugal", lifespan=_lifespan)
+class _ClientSeen(Middleware):
+    """Reports which MCP client (Claude, Codex, ...) opened this gateway process, for the dashboard."""
+
+    async def on_initialize(self, context, call_next):
+        with contextlib.suppress(AttributeError):
+            events.emit("client", name=context.message.params.clientInfo.name)
+        return await call_next(context)
+
+
+mcp = FastMCP("tokenfrugal", lifespan=_lifespan, middleware=[_ClientSeen()])
 
 
 async def _plan(fn, *a, **kw):
@@ -62,9 +76,12 @@ async def _plan(fn, *a, **kw):
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0) -> str:
     row = store.get(tid)
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
+    events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
+                max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300])
     try:
-        detail, msgs = await run(agent, role, prompt, messages)
+        detail, msgs = await run(agent, role, prompt, messages, tid)
         summary = summarize(role["model"], detail, prompt)
+        events.emit("task_done", id=tid, summary=summary[:400])
         store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "done", summary)
@@ -77,6 +94,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         e = leaf(e)
         err = hard_trim(f"{type(e).__name__}: {e}", 120)
         store.update(tid, status="failed", error=err)
+        events.emit("task_failed", id=tid, error=err)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "gateway", err)
@@ -155,10 +173,10 @@ async def resume_task(task_id: str) -> str:
 
 @mcp.tool()
 def list_roles() -> str:
-    """List roles with model, profile and tool allowlist."""
-    return "\n".join(f"{k}: {CFG['models'][v['model']]} | {v.get('profile') or '-'} | "
-                     f"{','.join(v.get('compose', [])) or '-'} | {','.join(v['tools']) or 'all'}"
-                     for k, v in CFG["roles"].items())
+    """List roles with model, docker profile, compose backends and tool allowlist."""
+    rows = [f"{r['role']}: {r['model']} | {r['profile'] or '-'} | {','.join(r['backends']) or '-'} | "
+            f"{','.join(r['tools']) or 'all'}" for r in events.roles_rows(CFG)]
+    return "\n".join(["role: model | docker profile | compose backends | tools", *rows])
 
 
 if __name__ == "__main__":
