@@ -17,6 +17,8 @@ TokenFrugal does the wiring:
 - 282 [agency-agents](https://github.com/msitarzewski/agency-agents) personas are mapped to 11 roles (builder, analyzer, reviewer, security, docs, designer, browser, research, data, debugger, tracker).
 - Failures return a short error and a `task_id` (`resume_task`). No silent cloud fallback, so no surprise spend.
 
+For companies this means a cheaper setup: standard-tier cloud subscriptions are enough because the cloud model only plans and reviews, while the bulk of the work runs on a local LLM hosted on a modest, inexpensive GPU (a 3B-class model fits in a few GB of VRAM) that is sized to deliver exactly what routine tasks need and no more.
+
 Good fit: side projects, college projects, corporate seats with tight quotas, laptops with a GPU or Apple Silicon.
 
 ## Requirements
