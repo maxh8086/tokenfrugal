@@ -38,7 +38,11 @@ async def one(role_name):
 
 
 async def main():
+    bad = 0
     for r in (sys.argv[1:] or TASKS):
-        print(await one(r), flush=True)
+        line = await one(r)
+        bad += not line.startswith("PASS")
+        print(line, flush=True)
+    return bad
 
-asyncio.run(main())
+sys.exit(1 if asyncio.run(main()) else 0)
