@@ -1,0 +1,108 @@
+# compose: backends started (and stopped afterwards) around the task; keep_alive: true leaves them up.
+# Role -> local model, Docker MCP profile, tool allowlist (names as exposed by the gateway).
+# Local-only: no cloud fallback. Failures return a capped error summary to Haiku.
+models:
+  builder: qwen2.5-coder-yarn:3b
+  thinker: llama3.2:3b-16k
+roles:
+  builder:  {model: builder, profile: build,      max_steps: 12, native: [codebase], tools: [read_file, write_file, edit_file, search_files, search_graph, get_code_snippet]}
+  data:     {model: builder, profile: build-data, max_steps: 12, tools: [read_file, write_file, list_directory, read_query, write_query, list_tables]}
+  analyzer: {model: thinker, profile: analyze,    max_steps: 10, native: [codebase], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep]}
+  security: {model: thinker, profile: security,   max_steps: 10, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule]}
+  reviewer: {model: thinker, profile: analyze,    max_steps: 8,  native: [codebase], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep]}
+  debugger: {model: thinker, profile: debug,      max_steps: 12, native: [codebase], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code]}
+  docs:     {model: thinker, profile: docs,       max_steps: 8,  tools: [read_file, list_directory, git_log, fetch]}
+  designer: {model: thinker, profile: design,     max_steps: 10, compose: [penpot-mcp], tools: [high_level_overview, get_design_context, get_screenshot, component_map, token_map, design_diff]}
+  browser:  {model: thinker, profile: browser,    max_steps: 8,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
+  tracker:  {model: thinker, max_steps: 6,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note]}
+  research: {model: thinker,                       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links]}
+# Division (agency-agents folder) -> default role. Overrides by agent slug below.
+divisions:
+  engineering: builder
+  design: designer
+  game-development: builder
+  gis: data
+  finance: analyzer
+  academic: research
+  healthcare: research
+  marketing: research
+  integrations: builder
+  paid-media: research
+  product: research
+  project-management: research
+  research: research
+  sales: research
+  security: security
+  spatial-computing: builder
+  specialized: research
+  support: research
+  testing: reviewer
+overrides:
+  engineering-code-reviewer: reviewer
+  engineering-minimal-change-engineer: builder
+  engineering-sre: debugger
+  engineering-incident-response-commander: debugger
+  engineering-privacy-engineer: security
+  engineering-identity-access-engineer: security
+  engineering-section-508-specialist: reviewer
+  engineering-technical-writer: docs
+  engineering-codebase-onboarding-engineer: analyzer
+  engineering-software-architect: analyzer
+  engineering-database-optimizer: data
+  engineering-data-engineer: data
+  engineering-database-reliability-engineer: data
+  design-ui-finish-gate-reviewer: browser
+  design-ux-researcher: research
+  design-persona-walkthrough: browser
+  accounts-payable-agent: analyzer
+  agentic-identity-trust: security
+  automation-governance-architect: analyzer
+  chief-financial-officer: analyzer
+  data-consolidation-agent: data
+  data-privacy-officer: security
+  game-audio-engineer: builder
+  identity-graph-operator: data
+  lsp-index-engineer: builder
+  ma-integration-manager: analyzer
+  product-dx-engineer: builder
+  project-management-jira-workflow-steward: builder
+  project-management-project-shepherd: tracker
+  project-management-meeting-notes-specialist: docs
+  report-distribution-agent: docs
+  sales-data-extraction-agent: data
+  security-ai-generated-code-auditor: reviewer
+  security-blockchain-security-auditor: reviewer
+  security-incident-responder: debugger
+  security-threat-detection-engineer: debugger
+  specialized-codebase-archaeologist: analyzer
+  specialized-developer-advocate: docs
+  specialized-document-generator: docs
+  specialized-fedramp-rmf-compliance: security
+  specialized-mcp-builder: builder
+  specialized-model-qa: reviewer
+  specialized-pricing-analyst: analyzer
+  specialized-workflow-architect: analyzer
+  support-analytics-reporter: analyzer
+  support-executive-summary-generator: docs
+  support-finance-tracker: analyzer
+  support-infrastructure-maintainer: debugger
+  testing-accessibility-auditor: reviewer
+  testing-api-tester: debugger
+  testing-evidence-collector: browser
+  testing-performance-benchmarker: browser
+  testing-reality-checker: reviewer
+  testing-test-automation-engineer: builder
+  testing-test-results-analyzer: analyzer
+  testing-tool-evaluator: research
+  testing-workflow-optimizer: analyzer
+  zk-steward: docs
+# Agents whose slug lacks the folder prefix: folder -> slugs (resolve via that folder's division role).
+members:
+  game-development:
+    [blender-addon-engineer, economy-designer, game-audio-engineer, game-designer, godot-gameplay-scripter, godot-multiplayer-engineer, godot-shader-developer, level-designer, narrative-designer, roblox-avatar-creator, roblox-experience-designer, roblox-systems-scripter, technical-artist, unity-architect, unity-editor-tool-developer, unity-multiplayer-engineer, unity-shader-graph-artist, unreal-multiplayer-architect, unreal-systems-engineer, unreal-technical-artist, unreal-world-builder]
+  project-management:
+    [project-manager-senior]
+  spatial-computing:
+    [macos-spatial-metal-engineer, terminal-integration-specialist, visionos-spatial-engineer, xr-cockpit-interaction-specialist, xr-immersive-developer, xr-interface-architect]
+  specialized:
+    [accounts-payable-agent, agentic-identity-trust, agents-orchestrator, automation-governance-architect, business-strategist, change-management-consultant, chief-financial-officer, corporate-training-designer, customer-service, customer-success-manager, data-consolidation-agent, data-privacy-officer, esg-sustainability-officer, government-digital-presales-consultant, grant-writer, healthcare-aging-parent-care-companion, healthcare-customer-service, healthcare-marketing-compliance, hospitality-guest-services, hr-onboarding, identity-graph-operator, language-translator, legal-billing-time-tracking, legal-client-intake, legal-document-review, loan-officer-assistant, lsp-index-engineer, ma-integration-manager, medical-billing-coding-specialist, operations-manager, organizational-psychologist, personal-growth-mentor, real-estate-buyer-seller, recruitment-specialist, report-distribution-agent, resume-tailor, retail-customer-returns, sales-data-extraction-agent, sales-outreach, study-abroad-advisor, supply-chain-strategist, zk-steward]

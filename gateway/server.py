@@ -1,0 +1,165 @@
+"""Claude-facing MCP gateway. Claude plans and dispatches; local models do the work.
+
+Tools return only capped summaries. Full output stays in the task store (get_detail).
+Failure never falls back to cloud: a short capped error summary + task_id goes back for retry/resume.
+"""
+import asyncio
+import atexit
+import contextlib
+import signal
+import sys
+
+from fastmcp import FastMCP
+
+from . import compose, plan, store
+from .config import load_personas, resolve_role
+from .loop import leaf, run
+from .summarize import hard_trim, summarize
+
+CFG = load_personas()
+
+
+async def _warm_up():
+    """Start neo4j and create its schema in the background; failures only disable plan features."""
+    try:
+        await compose.ensure(["neo4j"])
+        await asyncio.to_thread(plan.wait_ready)
+        await asyncio.to_thread(plan.init)
+        await asyncio.to_thread(plan.prune)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@contextlib.asynccontextmanager
+async def _lifespan(_server):
+    """The last gateway to exit stops every ts-mcp container (also on SIGTERM and interpreter exit)."""
+    compose.register()
+    atexit.register(compose.release)
+    for name in ("SIGTERM", "SIGBREAK"):
+        if hasattr(signal, name):
+            with contextlib.suppress(ValueError, OSError):
+                signal.signal(getattr(signal, name), lambda *_: sys.exit(0))
+    warm = asyncio.create_task(_warm_up())
+    try:
+        yield
+    finally:
+        warm.cancel()
+        compose.release()
+
+
+mcp = FastMCP("tokenfrugal", lifespan=_lifespan)
+
+
+async def _plan(fn, *a, **kw):
+    """Plan store call that never breaks a dispatch: returns (ok, text)."""
+    try:
+        await compose.ensure(["neo4j"])
+        return True, await asyncio.to_thread(fn, *a, **kw)
+    except Exception as e:  # noqa: BLE001
+        return False, f"{type(e).__name__}: {str(e)[:150]}"
+
+
+async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0) -> str:
+    row = store.get(tid)
+    store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
+    try:
+        detail, msgs = await run(agent, role, prompt, messages)
+        summary = summarize(role["model"], detail, prompt)
+        store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None)
+        if plan_id:
+            await _plan(plan.record_run, plan_id, tid, agent, role["role"], "done", summary)
+            ok, msg = await _plan(plan.done, plan_id, tid, "gateway run", "gateway")
+            if ok:
+                await _plan(plan.checkpoint)
+            summary += "" if ok else f" (plan: {msg})"
+        return f"[{tid}] {summary}"
+    except Exception as e:  # noqa: BLE001
+        e = leaf(e)
+        err = hard_trim(f"{type(e).__name__}: {e}", 120)
+        store.update(tid, status="failed", error=err)
+        if plan_id:
+            await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
+            await _plan(plan.set_status, plan_id, "blocked", "gateway", err)
+        return f"[{tid}] FAILED ({role['role']}/{role['model']}): {err}. Call resume_task('{tid}') to retry."
+
+
+@mcp.tool()
+async def dispatch_task(agent: str, task: str, plan_id: int = 0) -> str:
+    """Run a task on a local agent (agency-agents slug, e.g. 'engineering-code-reviewer').
+    Optional plan_id links it to a plan task (claimed first, marked done/blocked after).
+    Returns a 150-300 token summary and a task_id."""
+    role = resolve_role(agent, CFG)
+    if plan_id:
+        ok, msg = await _plan(plan.claim, plan_id, "gateway")
+        if not ok:
+            return f"plan task {plan_id} not started: {msg}"
+    return await _execute(store.create(agent, role["role"], task), agent, role, task, plan_id=plan_id)
+
+
+@mcp.tool()
+async def plan_add(title: str, depends: list[int] | None = None, priority: int = 0, detail: str = "",
+                   tag: str = "") -> str:
+    """Add a task to the plan graph. depends = ids of existing tasks it needs first."""
+    return (await _plan(plan.add, title, depends, priority, detail, tag))[1]
+
+
+@mcp.tool()
+async def plan_overview(tag: str = "") -> str:
+    """Compact plan state: counts per status and every unfinished task."""
+    return (await _plan(plan.overview, tag))[1]
+
+
+@mcp.tool()
+async def plan_revert(task_id: int = 0, since: str = "") -> str:
+    """Undo status changes: one task's latest change (task_id), or all changes after an ISO time (since)."""
+    if task_id:
+        return (await _plan(plan.revert, task_id))[1]
+    if since:
+        return (await _plan(plan.rollback, since))[1]
+    return "give task_id or since"
+
+
+@mcp.tool()
+async def plan_update_from(task_id: int) -> str:
+    """Re-open a task and everything depending on it (use after changing its approach)."""
+    return (await _plan(plan.update_from, task_id))[1]
+
+
+@mcp.tool()
+async def ask_followup(task_id: str, question: str) -> str:
+    """Ask the same agent a follow-up about a finished task; context is preserved."""
+    t = store.get(task_id)
+    if not t or not t["messages"]:
+        return f"unknown or empty task {task_id}"
+    role = resolve_role(t["agent"], CFG)
+    msgs = t["messages"] + [{"role": "user", "content": question}]
+    return await _execute(task_id, t["agent"], role, question, msgs)
+
+
+@mcp.tool()
+def get_detail(task_id: str, max_chars: int = 4000) -> str:
+    """Fetch the full stored output of a task (use sparingly; costs Claude tokens)."""
+    t = store.get(task_id)
+    return (t["detail"] or t["error"] or "no output")[:max_chars] if t else f"unknown task {task_id}"
+
+
+@mcp.tool()
+async def resume_task(task_id: str) -> str:
+    """Retry a failed task from its saved conversation."""
+    t = store.get(task_id)
+    if not t:
+        return f"unknown task {task_id}"
+    role = resolve_role(t["agent"], CFG)
+    return await _execute(task_id, t["agent"], role, t["prompt"], t["messages"] or None)
+
+
+@mcp.tool()
+def list_roles() -> str:
+    """List roles with model, profile and tool allowlist."""
+    return "\n".join(f"{k}: {CFG['models'][v['model']]} | {v.get('profile') or '-'} | "
+                     f"{','.join(v.get('compose', [])) or '-'} | {','.join(v['tools']) or 'all'}"
+                     for k, v in CFG["roles"].items())
+
+
+if __name__ == "__main__":
+    mcp.run()
