@@ -18,7 +18,7 @@ LLM_API_KEY = os.getenv("TOKENFRUGAL_LLM_API_KEY", "ollama")
 # Exact host path the Docker gateway may bind writable (defaults to the checkout; see docker catalogue volume).
 WORKSPACE = os.getenv("CC_WORKSPACE", ROOT.as_posix())
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
-SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "repograph")
+SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "synaptree-mcp")
 NATIVE_SERVERS = {
     # synaptree-mcp (read-only code graph over stdio); replaces the codebase-memory server for roles.
     "synaptree": {"command": "node", "args": [str(Path(SYNAPTREE_DIR) / "src" / "cli.js"), "--stdio"]},
