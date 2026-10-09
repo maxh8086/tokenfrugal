@@ -82,7 +82,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     try:
         detail, msgs = await run(agent, role, prompt, messages, tid)
         summary = summarize(role["model"], detail, prompt)
-        events.emit("task_done", id=tid, summary=summary[:400], saved=saved_tokens(msgs[base:], summary))
+        events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary))
         store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "done", summary)
@@ -95,7 +95,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         e = leaf(e)
         err = hard_trim(f"{type(e).__name__}: {e}", 120)
         store.update(tid, status="failed", error=err)
-        events.emit("task_failed", id=tid, error=err, saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err))
+        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err))
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "gateway", err)

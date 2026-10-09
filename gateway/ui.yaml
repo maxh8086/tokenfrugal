@@ -36,3 +36,8 @@ services:
   docker: Docker
 status: {up: up, down: down, idle: idle, native: native, missing: not pulled, ready: ready, unknown: unknown}
 kinds: {profile: docker profile, backend: compose backend, native: native server}
+# Usage popup (token-saved totals). renewal_day: day of month (1-28) your subscription renews; the "month" scope starts there.
+renewal_day: 1
+# Length in hours of the rolling "current window" (Claude's own usage window is 5 hours).
+window_hours: 5
+usage: {title: Tokens saved, close: Close, details: Show details, window: "Last {h}h", today: Today, week: "Last 7 days", month: "This period", period: "Period {a} to {b}", sessions: "Sessions in the current window", session: Session, days: "Per day this period", day: Day, roles: "By role this period", role: Role, tasks: Tasks, saved: Saved, failed: failed, live: live, ended: ended, none: Nothing yet, started: Started, last: Last task, scope_note: "Estimate: tokens of local work kept out of the cloud context (characters / 4)"}

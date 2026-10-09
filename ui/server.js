@@ -12,6 +12,12 @@ function configPort() { // `port: N` from gateway/ui.yaml, the same file the lau
     return m ? Number(m[1]) : 7777;
   } catch { return 7777; }
 }
+function cfgNum(key, dflt) {
+  try {
+    const m = new RegExp('^' + key + ':\\s*(\\d+)', 'm').exec(fs.readFileSync(path.join(__dirname, '..', 'gateway', 'ui.yaml'), 'utf8'));
+    return m ? Number(m[1]) : dflt;
+  } catch { return dflt; }
+}
 const PORT = Number(process.env.UI_PORT || configPort());
 const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
 const ROLES = path.join(path.dirname(EVENTS), 'roles.json');
@@ -138,6 +144,45 @@ function mcpRows(cfg, sv, list, only) {
   return [...rows.values()];
 }
 
+// Token-saved totals per time scope, from usage.jsonl (never rotated) plus the rotating events logs, deduped by task id.
+function readJsonl(file) {
+  try { return fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }); } catch { return []; }
+}
+function usage(now = Date.now() / 1000) {
+  const rows = new Map();
+  for (const f of [EVENTS + '.1', EVENTS, path.join(path.dirname(EVENTS), 'usage.jsonl')])
+    for (const e of readJsonl(f)) if (e && (e.kind === 'task_done' || e.kind === 'task_failed') && e.id) rows.set(e.id, { ...rows.get(e.id), ...e });
+  const list = [...rows.values()].map((e) => ({ ts: e.ts, pid: e.pid, id: e.id, ok: e.kind === 'task_done', saved: Number(e.saved) || 0,
+    role: e.role || (tasks.get(e.id) || {}).role || '', model: e.model || (tasks.get(e.id) || {}).model || '' }));
+  const d = new Date(now * 1000);
+  const day = Math.min(Math.max(cfgNum('renewal_day', 1), 1), 28);
+  let start = new Date(d.getFullYear(), d.getMonth(), day);
+  if (start > d) start = new Date(d.getFullYear(), d.getMonth() - 1, day);
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, day);
+  const hours = cfgNum('window_hours', 5);
+  const scopes = {
+    window: now - hours * 3600,
+    today: new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 1000,
+    week: now - 7 * 86400,
+    month: start.getTime() / 1000,
+  };
+  const total = (from) => { const r = list.filter((x) => x.ts >= from); return { saved: r.reduce((n, x) => n + x.saved, 0), tasks: r.length, failed: r.filter((x) => !x.ok).length }; };
+  const out = { windowHours: hours, renewalDay: day, periodStart: start.getTime() / 1000, periodEnd: end.getTime() / 1000, totals: {} };
+  for (const [k, from] of Object.entries(scopes)) out.totals[k] = total(from);
+  const group = (from, keyOf) => {
+    const g = new Map();
+    for (const x of list.filter((r) => r.ts >= from)) {
+      const k = keyOf(x); const a = g.get(k) || { key: k, saved: 0, tasks: 0, first: x.ts, last: x.ts };
+      a.saved += x.saved; a.tasks += 1; a.first = Math.min(a.first, x.ts); a.last = Math.max(a.last, x.ts); g.set(k, a);
+    }
+    return [...g.values()].sort((a, b) => b.last - a.last);
+  };
+  out.sessions = group(scopes.window, (x) => x.pid).map((a) => ({ ...a, pid: a.key, live: alive(a.key) }));
+  out.days = group(scopes.month, (x) => new Date(x.ts * 1000).toLocaleDateString('en-CA')).map((a) => ({ ...a, day: a.key })).sort((a, b) => (a.day < b.day ? 1 : -1));
+  out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
+  return out;
+}
+
 function roles() {
   try { return JSON.parse(fs.readFileSync(ROLES, 'utf8')); } catch { return { roles: [], divisions: {} }; }
 }
@@ -155,6 +200,10 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ now: Date.now() / 1000, tasks: list, ...cfg, services: sv, connected, selected,
       saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
+  }
+  if (url.pathname === '/api/usage') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify(usage()));
   }
   if (url.pathname === '/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
