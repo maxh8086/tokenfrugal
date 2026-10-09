@@ -18,7 +18,10 @@ LLM_API_KEY = os.getenv("TOKENFRUGAL_LLM_API_KEY", "ollama")
 # Exact host path the Docker gateway may bind writable (defaults to the checkout; see docker catalogue volume).
 WORKSPACE = os.getenv("CC_WORKSPACE", ROOT.as_posix())
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
+CODELENSE_DIR = os.getenv("CODELENSE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "repograph")
 NATIVE_SERVERS = {
+    # codelense-mcp (read-only code graph over stdio); replaces the codebase-memory server for roles.
+    "codelense": {"command": "node", "args": [str(Path(CODELENSE_DIR) / "src" / "cli.js"), "--stdio"]},
     "codebase": {"command": os.getenv("CODEBASE_MEMORY_EXE") or shutil.which("codebase-memory-mcp") or "codebase-memory-mcp",
                  "args": []},
 }
