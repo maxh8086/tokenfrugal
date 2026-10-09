@@ -1,0 +1,64 @@
+{
+ "tag": "ts-qwen25c-7b-32768",
+ "stamp": "20261009-205535",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_tests": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 23.8,
+     "p50": 23.8,
+     "p95": 67.4,
+     "max": 67.4,
+     "mean": 45.6
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.8,
+     "p50": 7.8,
+     "p95": 8.1,
+     "max": 8.1,
+     "mean": 7.9
+    },
+    "notes": [
+     "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 12.1,
+     "p50": 12.1,
+     "p95": 12.1,
+     "max": 12.1,
+     "mean": 12.1
+    },
+    "notes": [
+     "FAILED (research/ts-qwen25c-7b-32768): LoopError: you answered without calling any tool; call a tool to read r"
+    ]
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.9,
+     "p50": 9.9,
+     "p95": 11.1,
+     "max": 11.1,
+     "mean": 10.5
+    },
+    "notes": [
+     "[541b3970ef] Task: Navigate to https://example.com, take a snapshot and report the page heading.  Re",
+     "[c6ceab52d3] Task: Navigate to https://example.com, take a snapshot and report the page heading.  Re"
+    ]
+   }
+  }
+ }
+}

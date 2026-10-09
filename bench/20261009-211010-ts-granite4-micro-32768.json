@@ -1,0 +1,66 @@
+{
+ "tag": "ts-granite4-micro-32768",
+ "stamp": "20261009-211010",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 13.4,
+     "p50": 13.4,
+     "p95": 15.6,
+     "max": 15.6,
+     "mean": 14.5
+    },
+    "notes": [
+     "FAILED (builder/ts-granite4-micro-32768): LoopError: empty answer. Call resume_task('0e38973164') to retry.",
+     "FAILED (builder/ts-granite4-micro-32768): LoopError: empty answer. Call resume_task('45caa40b30') to retry."
+    ]
+   },
+   "rename_across_files": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.1,
+     "p50": 12.1,
+     "p95": 13.1,
+     "max": 13.1,
+     "mean": 12.6
+    },
+    "notes": [
+     "def new_name(x):\\n    return x + 1\\n\\nfrom a_mod import new_name\\n\\nprint(new_na"
+    ]
+   },
+   "summarize_readme": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.2,
+     "p50": 14.2,
+     "p95": 15.6,
+     "max": 15.6,
+     "mean": 14.9
+    },
+    "notes": [
+     "[873a5b509b] The TokenFrugal project is a suite of tools and services designed to make AI agents mor"
+    ]
+   },
+   "role_browser": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 6.5,
+     "p50": 6.5,
+     "p95": 10.7,
+     "max": 10.7,
+     "mean": 8.6
+    },
+    "notes": [
+     "[07b6e156a6] Navigated to https://example.com, captured a snapshot, and the page heading is **RootWe"
+    ]
+   }
+  }
+ }
+}

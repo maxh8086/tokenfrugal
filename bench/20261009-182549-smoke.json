@@ -1,0 +1,160 @@
+{
+ "tag": "smoke",
+ "stamp": "20261009-182549",
+ "n": 1,
+ "results": {
+  "roles": {
+   "builder": {
+    "cold_s": 7.6,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 7.6,
+      "ok": true,
+      "out": "[5e0871022f] The symbol `summarize` is found in the file `/workspace/tokenfrugal/gateway/summarize.py`."
+     }
+    ]
+   },
+   "analyzer": {
+    "cold_s": 16.9,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 16.9,
+      "ok": true,
+      "out": "[e2867b28ff] Project: tokenfrugal\nSearch Graph:\nSymbol: run\nFiles:\n- Line 9: tests/test_compose.py\n- Line 62: gateway/loop.py\n- Line 99: ui/"
+     }
+    ]
+   },
+   "reviewer": {
+    "cold_s": 9.6,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 9.6,
+      "ok": true,
+      "out": "[0aa126737b] The summarize.py file contains a function `summarize` that takes in a model, text, and task as input and returns a summarized v"
+     }
+    ]
+   },
+   "debugger": {
+    "cold_s": 17.3,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 17.3,
+      "ok": true,
+      "out": "[c1fab0adba] Public Functions:\n\n1. `tokens`\n2. `saved_tokens`\n3. `hard_trim`\n4. `summarize`"
+     }
+    ]
+   },
+   "research": {
+    "cold_s": 25.4,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 25.4,
+      "ok": true,
+      "out": "[920004a37a] File Path: /workspace/tokenfrugal/README.md\nDescription: The project is a token-based economy for frugal living.\nNext Action: R"
+     }
+    ]
+   },
+   "data": {
+    "cold_s": 21.6,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 21.6,
+      "ok": true,
+      "out": "[225e3288dd] The task was to list the files in the directory `/workspace/tokenfrugal/gateway`. The final result was that no files were chang"
+     }
+    ]
+   },
+   "tracker": {
+    "cold_s": 21.0,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 21.0,
+      "ok": true,
+      "out": "[0930b97b67] **Plan Status Report**\n\n* **File Paths:** None\n* **Numbers:** N/A\n* **Verdict:** No tasks found in the plan.\n* **Next Actions:*"
+     }
+    ]
+   },
+   "security": {
+    "cold_s": 44.8,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 44.8,
+      "ok": true,
+      "out": "[f4a1d4577e] **Results**\n\n* File Path: /workspace/tokenfrugal/gateway/config.py\n* Hard-coded secrets found:\n\t+ OLLAMA_URL: http://localhost:"
+     }
+    ]
+   },
+   "designer": {
+    "cold_s": 12.7,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 12.7,
+      "ok": true,
+      "out": "[56aed49344] Design Tools:\n\n1. Penpot\n2. Penpot MCP Plugin (for connecting to MCP server)\n\nNext Actions:\n\n1. Connect Penpot design project t"
+     }
+    ]
+   },
+   "browser": {
+    "cold_s": 7.1,
+    "warm": {},
+    "success": "1/1",
+    "failures": [],
+    "runs": [
+     {
+      "s": 7.1,
+      "ok": true,
+      "out": "[64affa0d8b] Browser Tools:\n\n1. `list_console_messages` - Lists console messages from a given page ID.\n2. `list_network_requests` - Lists ne"
+     }
+    ]
+   }
+  },
+  "plan": {
+   "plan_add": {
+    "s": 3.3,
+    "out": "task 13 added"
+   },
+   "plan_overview": {
+    "s": 1.2,
+    "out": "plan 'bench': pending=1\n13 [pending] bench task"
+   },
+   "smoke_plan": {
+    "rc": 1,
+    "tail": [
+     "  File \"C:\\Users\\vaibh\\Downloads\\Projects\\tokenfrugal\\gateway\\plan.py\", line 137, in done",
+     "    kind = check_evidence(evidence, repo)",
+     "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+     "  File \"C:\\Users\\vaibh\\Downloads\\Projects\\tokenfrugal\\gateway\\plan.py\", line 83, in check_evidence",
+     "    raise PlanError(\"evidence must be an existing git commit sha or a finished gateway task id\")",
+     "gateway.plan.PlanError: evidence must be an existing git commit sha or a finished gateway task id"
+    ]
+   }
+  }
+ }
+}
