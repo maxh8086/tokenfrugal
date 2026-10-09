@@ -6,7 +6,7 @@ import shutil
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from .config import NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
+from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
 # Arguments small models routinely omit; filled in before the call.
@@ -63,7 +63,8 @@ async def open_native(name: str):
 @contextlib.asynccontextmanager
 async def open_profile(profile: str):
     params = StdioServerParameters(command=shutil.which("docker") or "docker",
-                                   args=["mcp", "gateway", "run", "--profile", profile],
+                                   args=["mcp", "gateway", "run", "--profile", profile,
+                                         "--cpus", MCP_CPUS, "--memory", MCP_MEMORY],
                                    env={**os.environ,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS": WORKSPACE,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS": WORKSPACE})
