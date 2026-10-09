@@ -54,9 +54,8 @@ for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
     NATIVE_SERVERS[_n] = {"command": "docker", "args": ["compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE),
                                                          "run", "--rm", "-T", _svc]}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "gateway.plan_mcp"]}
-# codebase-memory project = checkout path with separators turned into '-'
-CODEBASE_PROJECT = os.getenv("CODEBASE_PROJECT") or re.sub(
-    "[:/\\\\]+", "-", str(Path(__file__).resolve().parent.parent))
+# codelense-mcp project = checkout folder name; CODELENSE_PROJECT overrides it
+CODEBASE_PROJECT = os.getenv("CODELENSE_PROJECT") or os.getenv("CODEBASE_PROJECT") or Path(__file__).resolve().parent.parent.name
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
 TOOLS_PER_STEP = 2

@@ -122,6 +122,13 @@ class Tools(unittest.TestCase):
         asyncio.run(go())
         self.assertIn("project", calls[0])
 
+class CodelenseProject(unittest.TestCase):
+    def test_project_defaults_to_checkout_folder_name(self):
+        from gateway import config
+        if not (os.getenv('CODELENSE_PROJECT') or os.getenv('CODEBASE_PROJECT')):
+            self.assertEqual(config.CODEBASE_PROJECT, Path(config.__file__).resolve().parent.parent.name)
+        self.assertIn('codelense', config.NATIVE_SERVERS)
+
 
 if __name__ == "__main__":
     unittest.main()
