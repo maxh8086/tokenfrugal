@@ -1,7 +1,7 @@
 #!/bin/bash
 # waits for the new-model sweep, then runs the full 16-case suite (n=2) on the already-tested models with the current code
 cd /c/Users/vaibh/Downloads/Projects/tokenfrugal
-until grep -q FULLSWEEP-DONE bench/full-sweep.log; do sleep 20; done
+true
 run() { # tag builder thinker
   echo "### $1 FULL"
   TOKENFRUGAL_MODEL_BUILDER=$2 TOKENFRUGAL_MODEL_THINKER=$3 PYTHONPATH=. .venv/Scripts/python.exe -m scripts.bench --only realworld --n 2 --tag "full-$1" 2>&1 | grep -E "realworld/|wrote"
