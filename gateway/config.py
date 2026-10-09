@@ -18,10 +18,10 @@ LLM_API_KEY = os.getenv("TOKENFRUGAL_LLM_API_KEY", "ollama")
 # Exact host path the Docker gateway may bind writable (defaults to the checkout; see docker catalogue volume).
 WORKSPACE = os.getenv("CC_WORKSPACE", ROOT.as_posix())
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
-CODELENSE_DIR = os.getenv("CODELENSE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "repograph")
+SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "repograph")
 NATIVE_SERVERS = {
-    # codelense-mcp (read-only code graph over stdio); replaces the codebase-memory server for roles.
-    "codelense": {"command": "node", "args": [str(Path(CODELENSE_DIR) / "src" / "cli.js"), "--stdio"]},
+    # synaptree-mcp (read-only code graph over stdio); replaces the codebase-memory server for roles.
+    "synaptree": {"command": "node", "args": [str(Path(SYNAPTREE_DIR) / "src" / "cli.js"), "--stdio"]},
     "codebase": {"command": os.getenv("CODEBASE_MEMORY_EXE") or shutil.which("codebase-memory-mcp") or "codebase-memory-mcp",
                  "args": []},
 }
@@ -54,8 +54,8 @@ for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
     NATIVE_SERVERS[_n] = {"command": "docker", "args": ["compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE),
                                                          "run", "--rm", "-T", _svc]}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "gateway.plan_mcp"]}
-# codelense-mcp project = checkout folder name; CODELENSE_PROJECT overrides it
-CODEBASE_PROJECT = os.getenv("CODELENSE_PROJECT") or os.getenv("CODEBASE_PROJECT") or Path(__file__).resolve().parent.parent.name
+# synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
+CODEBASE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or os.getenv("CODEBASE_PROJECT") or Path(__file__).resolve().parent.parent.name
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
 TOOLS_PER_STEP = 2
