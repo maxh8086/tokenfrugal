@@ -19,8 +19,13 @@ WORKSPACE = os.getenv("CC_WORKSPACE", ROOT.as_posix())
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
 SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "synaptree-mcp")
 NATIVE_SERVERS = {
-    # synaptree-mcp: code graph over stdio
-    "synaptree": {"command": "node", "args": [str(Path(SYNAPTREE_DIR) / "src" / "cli.js"), "--stdio"]},
+    # synaptree-mcp: code graph over stdio (default: inside the synaptree Docker container; SYNAPTREE_HOST_NODE=1 for host node)
+    "synaptree": (
+        {"command": "node", "args": [str(Path(SYNAPTREE_DIR) / "src" / "cli.js"), "--stdio"]}
+        if os.getenv("SYNAPTREE_HOST_NODE") == "1"
+        else {"command": "docker", "args": ["exec", "-i", os.getenv("SYNAPTREE_CONTAINER", "synaptree-synaptree-1"),
+                                            "node", "src/cli.js", "--stdio"]}
+    ),
 }
 # Compose-managed backends (docker-compose.yml). Secrets come from an env file outside the repo.
 COMPOSE_FILE = Path(os.getenv("MCP_COMPOSE_FILE", Path(__file__).resolve().parent.parent / "docker-compose.yml"))
