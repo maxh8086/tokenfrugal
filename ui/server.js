@@ -109,7 +109,7 @@ async function services(cfg) {
   } catch { /* down */ }
   const graph = { ok: false, url: '' };
   for (const p of (cfg.ui && cfg.ui.codelense_ports) || []) { // codelense-mcp UI: any HTTP answer on a configured local port
-    try { await fetch(`http://127.0.0.1:${p}/`, { signal: AbortSignal.timeout(600) }); graph.ok = true; graph.url = `http://127.0.0.1:${p}/`; break; } catch { /* not listening */ }
+    try { await fetch(`http://127.0.0.1:${p}/healthz`, { signal: AbortSignal.timeout(600) }); graph.ok = true; graph.url = `http://127.0.0.1:${p}/ui/`; break; } catch { /* not listening */ }
   }
   const ver = await run('docker', ['info', '--format', '{{.ServerVersion}}']);
   const docker = { ok: !!ver && ver.trim() !== '', version: (ver || '').trim() };
