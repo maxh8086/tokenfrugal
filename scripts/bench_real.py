@@ -1,5 +1,6 @@
 """Real-world benchmark cases: each task is verified by running the produced code or inspecting files,
 not by trusting the model's "done" report. Used by scripts/bench.py (section `realworld`)."""
+import os
 import subprocess
 import sys
 
@@ -127,7 +128,10 @@ def cases():
 async def run(n, timed, ok, failure_mode, stats):
     SCRATCH.mkdir(parents=True, exist_ok=True)
     res = {}
+    pick = [c for c in os.getenv("BENCH_CASES", "").split(",") if c]  # e.g. BENCH_CASES=write_tests,role_browser
     for cid, agent, setup, task, check in cases():
+        if pick and cid not in pick:
+            continue
         runs = []
         for i in range(n):
             setup()
