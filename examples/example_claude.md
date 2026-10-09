@@ -18,6 +18,15 @@ Use `list_roles` to see agent slugs. Replies are capped summaries; call `get_det
 
 Local models run 16k-32k context. Point them at file paths in the workspace instead of pasting files. Pass only signatures and the types they need.
 
+## Code intelligence (synaptree-mcp)
+
+Repo: https://github.com/maxh8086/synaptree-mcp (MCP server `synaptree`). Query the code graph before grepping or reading whole files.
+
+- Check `index_status(project)` first; if stale or missing, run `index_repository(project, root_path)` with the main checkout path, not a worktree.
+- Find code: `search_graph` / `search_code`. Callers, callees, references: `trace_path`. Structure: `get_architecture`. Hierarchy: `query_graph` (Cypher over `INHERITS` / `IMPLEMENTS` edges). Read one symbol: `get_code_snippet`.
+- Read files directly only after the symbol is located, or for configs and docs the index excludes.
+- Re-index after merges.
+
 ## Verification
 
 - Run the project's test command after every delegated change; never accept delegated code unrun.
