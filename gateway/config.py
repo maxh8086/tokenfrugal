@@ -61,6 +61,10 @@ SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().p
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
 TOOLS_PER_STEP = 2
+# Timeouts (seconds), all overridable via env. 0 disables the task/tool limit.
+LLM_TIMEOUT = float(os.getenv("TOKENFRUGAL_LLM_TIMEOUT", "180"))    # one chat completion
+TOOL_TIMEOUT = float(os.getenv("TOKENFRUGAL_TOOL_TIMEOUT", "60"))   # one MCP tool call
+TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task; keep below the MCP client's tool timeout
 
 
 def load_personas() -> dict:

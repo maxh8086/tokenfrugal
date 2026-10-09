@@ -1,4 +1,5 @@
 """Tool-calling agent loop: <=2 tool calls per step, anti-slop checks, bounded steps."""
+import asyncio
 import json
 import re
 from types import SimpleNamespace
@@ -6,11 +7,11 @@ from types import SimpleNamespace
 from openai import OpenAI
 
 from . import events
-from .config import LLM_API_KEY, OLLAMA_URL, TOOLS_PER_STEP
+from .config import LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, TASK_TIMEOUT, TOOL_TIMEOUT, TOOLS_PER_STEP
 from .compose import backends
 from .mcp_client import open_role, result_text, to_openai_tools
 
-_client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY)
+_client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0)
 SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls per step. "
           "Work only inside the workspace, which is mounted at /workspace: always use absolute paths like /workspace/README.md. Be terse. When done, reply with the final result "
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
@@ -64,7 +65,11 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
     msgs = messages or [{"role": "system", "content": SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)},
                         {"role": "user", "content": prompt}]
     try:
-        return await _run(agent, role, msgs, tid)
+        return await asyncio.wait_for(_run(agent, role, msgs, tid), TASK_TIMEOUT or None)
+    except asyncio.TimeoutError:
+        e = LoopError(f"task timed out after {TASK_TIMEOUT:g}s")
+        e.msgs = msgs
+        raise e
     except BaseException as e:
         leaf(e).msgs = msgs  # failed runs still did local work; the gateway counts it as saved
         raise
@@ -79,9 +84,10 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
         used_tools = any(m.get("role") == "tool" for m in msgs)
         for step in range(1, role["max_steps"] + 1):
             events.emit("step", id=tid, n=step)
-            r = _client.chat.completions.create(model=role["model"], messages=msgs, temperature=0.1,
-                                                max_tokens=2048, tools=tools or None,
-                                                **({} if used_tools or not tools else {"tool_choice": "required"}))
+            r = await asyncio.to_thread(  # off the event loop so keepalives and other tasks keep running
+                _client.chat.completions.create, model=role["model"], messages=msgs, temperature=0.1,
+                max_tokens=2048, tools=tools or None,
+                **({} if used_tools or not tools else {"tool_choice": "required"}))
             m = r.choices[0].message
             thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()
             if thought:
@@ -107,8 +113,11 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             for c in calls:
                 events.emit("tool", id=tid, name=c.function.name, args=(c.function.arguments or "")[:160])
                 try:
-                    res = await sess.call_tool(c.function.name, json.loads(c.function.arguments or "{}"))
+                    res = await asyncio.wait_for(sess.call_tool(c.function.name, json.loads(c.function.arguments or "{}")),
+                                                 TOOL_TIMEOUT or None)
                     out = result_text(res)
+                except asyncio.TimeoutError:
+                    out = f"tool error: {c.function.name} timed out after {TOOL_TIMEOUT:g}s; try a narrower path or query"
                 except Exception as e:  # tool errors go back to the model, not up
                     out = f"tool error: {e}"
                 msgs.append({"role": "tool", "tool_call_id": c.id, "content": out[:TOOL_CAP]})
