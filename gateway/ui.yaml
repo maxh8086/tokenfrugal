@@ -1,12 +1,12 @@
 # Every user-visible string of the dashboard (ui/index.html). The page hardcodes no text; edit here.
 # Dashboard port. The UI_PORT environment variable overrides it.
 port: 7777
-# Local ports where the codelense-mcp UI (default http://127.0.0.1:8787/ui/) may listen; the first one answering is linked.
-codelense_ports: [8787]
-codelense_open: Open UI
+# Local ports where the synaptree-mcp UI (default http://127.0.0.1:8787/ui/) may listen; the first one answering is linked.
+synaptree_ports: [8787]
+synaptree_open: Open UI
 title: tokenfrugal
 title_parts: [token, frugal]
-bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP, graph: codelense-mcp}
+bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP, graph: synaptree-mcp}
 state: {idle: idle, running: running, disconnected: disconnected, unavailable: unavailable}
 bar_none: "-"
 bar_names: {claude: Claude, codex: Codex}

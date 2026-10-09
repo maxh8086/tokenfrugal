@@ -251,7 +251,7 @@ function renderChrome() {
   const dc = el('div', 'chips'); dc.append(d ? chip(sn.docker, d.ok ? 'up' : 'down', word('status', d.ok ? 'up' : 'down') + (d.version ? ' · ' + d.version : '')) : none);
   const g = sv.graph, gc = el('div', 'chips');
   if (g) {
-    const gchip = chip(u.bar && u.bar.graph || '', g.ok ? 'up' : 'down', g.ok ? word('state', 'running') : word('state', 'unavailable'), g.ok ? (u.codelense_open || '') + ' ' + g.url : '');
+    const gchip = chip(u.bar && u.bar.graph || '', g.ok ? 'up' : 'down', g.ok ? word('state', 'running') : word('state', 'unavailable'), g.ok ? (u.synaptree_open || '') + ' ' + g.url : '');
     if (g.ok) { const a = el('a', null); a.href = g.url; a.target = '_blank'; a.rel = 'noopener'; a.style.textDecoration = 'none'; a.style.color = 'inherit'; a.append(gchip); gc.append(a); }
     else gc.append(gchip);
   }

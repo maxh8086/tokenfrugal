@@ -5,12 +5,12 @@ models:
   builder: qwen2.5-coder-yarn:3b
   thinker: llama3.2:3b-16k
 roles:
-  builder:  {model: builder, profile: build,      max_steps: 12, native: [codelense], tools: [read_file, write_file, edit_file, search_files, search_graph, get_code_snippet]}
+  builder:  {model: builder, profile: build,      max_steps: 12, native: [synaptree], tools: [read_file, write_file, edit_file, search_files, search_graph, get_code_snippet]}
   data:     {model: builder, profile: build-data, max_steps: 12, tools: [read_file, write_file, list_directory, read_query, write_query, list_tables]}
-  analyzer: {model: thinker, profile: analyze,    max_steps: 10, native: [codelense], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep]}
+  analyzer: {model: thinker, profile: analyze,    max_steps: 10, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep]}
   security: {model: thinker, profile: security,   max_steps: 10, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule]}
-  reviewer: {model: thinker, profile: analyze,    max_steps: 8,  native: [codelense], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep]}
-  debugger: {model: thinker, profile: debug,      max_steps: 12, native: [codelense], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code]}
+  reviewer: {model: thinker, profile: analyze,    max_steps: 8,  native: [synaptree], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep]}
+  debugger: {model: thinker, profile: debug,      max_steps: 12, native: [synaptree], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code]}
   docs:     {model: thinker, profile: docs,       max_steps: 8,  tools: [read_file, list_directory, git_log, fetch]}
   designer: {model: thinker, profile: design,     max_steps: 10, compose: [penpot-mcp], tools: [high_level_overview, get_design_context, get_screenshot, component_map, token_map, design_diff]}
   browser:  {model: thinker, profile: browser,    max_steps: 8,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
