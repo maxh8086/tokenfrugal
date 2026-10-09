@@ -71,7 +71,10 @@ TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task
 
 
 def load_personas() -> dict:
-    return yaml.safe_load((Path(__file__).parent / "personas.yaml").read_text(encoding="utf-8"))
+    cfg = yaml.safe_load((Path(__file__).parent / "personas.yaml").read_text(encoding="utf-8"))
+    for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
+        cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
+    return cfg
 
 
 def resolve_role(agent: str, cfg: dict) -> dict:
