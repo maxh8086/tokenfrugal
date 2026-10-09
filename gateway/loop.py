@@ -2,13 +2,16 @@
 import asyncio
 import json
 import re
+from pathlib import Path
 from types import SimpleNamespace
 
 from openai import OpenAI
 
 from . import events
-from .config import LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT, TOOLS_PER_STEP
+from .config import (LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
+                     TOOLS_PER_STEP, WORKSPACE)
 from .compose import backends
+from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
 
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0)
@@ -19,6 +22,8 @@ GRAPH_RULE = (" Code graph: search_graph returns repo-relative file_path values.
               "/workspace/{project}/<file_path>; use that path with read_file, or get_code_snippet for one symbol. "
               "Never run search_files on /workspace itself; it walks every repo and times out. "
               "Call search_graph with only `query` (a symbol name); do not set `label` or other filters unless you know the value.")
+BROWSER_RULE = (" Browser: call navigate_page with `url` first. take_snapshot and take_screenshot return their result inline; "
+                "never pass `filePath` (writes outside the allowed roots are denied). Only call the listed tools.")
 SLOP = re.compile(r"(as an ai|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 TOOL_CAP = 8000  # chars of tool output fed back to the model
 
@@ -64,6 +69,18 @@ def coerce_args(args: dict, schema: dict) -> dict:
     return out
 
 
+def lint_written(path: str) -> str:
+    """Feedback line for a just-written .py file so the model fixes missing imports/syntax itself."""
+    if not path.endswith(".py") or not path.startswith("/workspace/"):
+        return ""
+    try:
+        src = (Path(WORKSPACE) / path[len("/workspace/"):]).read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    problem = check_python(src)
+    return f"\nLINT: {problem}. Fix it with edit_file or write_file." if problem else ""
+
+
 def _repair(t: str, i: int, dec) -> tuple:
     """Small models often drop the last closing brace/bracket of a tool call; try adding up to 3."""
     for tail in ("}", "}}", "]}", "}]}", "}}}"):
@@ -101,6 +118,8 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
     if "synaptree" in (role.get("native") or []):
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
+    if role["role"] == "browser":
+        system += BROWSER_RULE
     msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
     try:
         return await asyncio.wait_for(_run(agent, role, msgs, tid), TASK_TIMEOUT or None)
@@ -165,6 +184,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                         out = f"tool error: {out}"
                     else:
                         ok_calls += 1
+                        if c.function.name in ("write_file", "edit_file"):
+                            out += lint_written(a.get("path", ""))
                 except asyncio.TimeoutError:
                     out = f"tool error: {c.function.name} timed out after {TOOL_TIMEOUT:g}s; try a narrower path or query"
                 except Exception as e:  # tool errors go back to the model, not up
