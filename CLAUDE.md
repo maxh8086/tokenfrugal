@@ -73,6 +73,6 @@ Repo: https://github.com/maxh8086/synaptree-mcp (MCP server `synaptree`, local c
 
 - Commits have the human author only: no Co-Authored-By trailer, no "generated with" footer.
 - Ask before installing Docker or other software; `scripts/doctor.py` only reports.
-- Samples for downstream projects: `examples/CLAUDE.md.sample`, `examples/AGENTS.md.sample`.
+- Samples for downstream projects: `examples/example_claude.md`, `examples/example_agents.md`.
 
 
