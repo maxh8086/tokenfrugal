@@ -6,7 +6,7 @@ import shutil
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from .config import CODEBASE_PROJECT, NATIVE_SERVERS, WORKSPACE
+from .config import NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
 # Arguments small models routinely omit; filled in before the call.
@@ -33,7 +33,7 @@ class Router:
 
     async def call_tool(self, name, args):
         if name in self._needs_project:
-            args = {"project": CODEBASE_PROJECT, **args}
+            args = {"project": SYNAPTREE_PROJECT, **args}
         args = {**ARG_DEFAULTS.get(name, {}), **args}
         return await self._owner[name].call_tool(name, args)
 
