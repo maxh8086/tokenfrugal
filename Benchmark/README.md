@@ -41,4 +41,6 @@ browser `filePath` writes denied, missing-import code (now linted and fed back),
 ## Does it solve the problem?
 Partly, honestly. For routine, well-scoped, single-file work and tool lookups it saves cloud tokens and is mostly correct. For multi-file edits, test authoring,
 summarization and browsing, a 3B model is unreliable: the orchestrator must verify results (run tests, git diff) and fall back to Haiku, as the project rules already require.
-Screenshots: not captured (no plotting library installed and I didn't install one); the tables above come straight from the raw reports.
+Screenshot below is rendered from the raw JSON by `make_report.py` (HTML captured with headless Edge; no extra software installed).
+
+![iter4 results](iter4-results.png)
