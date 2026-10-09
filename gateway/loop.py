@@ -9,7 +9,7 @@ from openai import OpenAI
 
 from . import events
 from .config import (LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
-                     TOOLS_PER_STEP, WORKSPACE)
+                     TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
 from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
@@ -25,6 +25,9 @@ GRAPH_RULE = (" Code graph: search_graph returns repo-relative file_path values.
 BROWSER_RULE = (" Browser: call navigate_page with `url` first. take_snapshot and take_screenshot return their result inline; "
                 "never pass `filePath` (writes outside the allowed roots are denied). The first page has pageId 1 (a number). "
                 "Only call the listed tools.")
+TEXT_TOOLS = (chr(10) * 2 + "Tools are NOT available through an API. To use one, reply with ONLY one JSON object per call, "
+              'for example {{"name": "read_file", "arguments": {{"path": "/workspace/README.md"}}}}, and nothing else. '
+              "Results come back in the next message. Available tools:" + chr(10) + "{tools}")
 SLOP = re.compile(r"(as an ai|i.m sorry, but i.m not able|i can.t assist|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 TOOL_CAP = 8000  # chars of tool output fed back to the model
 
@@ -114,6 +117,32 @@ def parse_text_calls(text: str, names: set) -> list:
     return calls
 
 
+NL = chr(10)
+
+
+def text_tool_prompt(tools: list) -> str:
+    lines = []
+    for t in tools:
+        f = t["function"]
+        props = ", ".join(f"{k}: {(v or {}).get('type', 'any')}" for k, v in (f["parameters"].get("properties") or {}).items())
+        lines.append(f"- {f['name']}({props}): {(f.get('description') or '')[:160]}")
+    return TEXT_TOOLS.format(tools=NL.join(lines))
+
+
+def text_view(msgs: list) -> list:
+    """Messages for a model without native tool calling: tool calls become JSON text, tool results become user turns."""
+    out = []
+    for x in msgs:
+        if x.get("role") == "tool":
+            out.append({"role": "user", "content": f"TOOL RESULT:{NL}{x['content']}"})
+        elif x.get("tool_calls"):
+            out.append({"role": "assistant", "content": NL.join(json.dumps(
+                {"name": c["function"]["name"], "arguments": json.loads(c["function"]["arguments"] or "{}")}) for c in x["tool_calls"])})
+        else:
+            out.append(x)
+    return out
+
+
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
               tid: str = "") -> tuple[str, list]:
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
@@ -138,6 +167,9 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             open_role(role.get("profile"), role.get("native")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
         names = {t["function"]["name"] for t in tools}
+        text_mode = bool(tools) and (role.get("tool_mode") or TOOL_MODE) == "text"
+        if text_mode and msgs and msgs[0].get("role") == "system" and "Tools are NOT available" not in msgs[0]["content"]:
+            msgs[0]["content"] += text_tool_prompt(tools)
         schemas = {t["function"]["name"]: t["function"]["parameters"] for t in tools}
         ok_calls = sum(1 for x in msgs if x.get("role") == "tool" and not str(x.get("content", "")).startswith("tool error"))
         fail_retries = 0
@@ -146,9 +178,9 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
         for step in range(1, role["max_steps"] + 1):
             events.emit("step", id=tid, n=step)
             r = await asyncio.to_thread(  # off the event loop so keepalives and other tasks keep running
-                _client.chat.completions.create, model=role["model"], messages=msgs, temperature=0.1,
-                max_tokens=2048, tools=tools or None,
-                **({} if used_tools or not tools else {"tool_choice": "required"}))
+                _client.chat.completions.create, model=role["model"], messages=text_view(msgs) if text_mode else msgs,
+                temperature=0.1, max_tokens=2048, tools=None if text_mode else (tools or None),
+                **({} if used_tools or not tools or text_mode else {"tool_choice": "required"}))
             m = r.choices[0].message
             thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()
             if thought:
