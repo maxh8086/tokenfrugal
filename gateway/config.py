@@ -61,6 +61,7 @@ SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().p
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
 TOOLS_PER_STEP = 2
+TOOL_MODE = os.getenv("TOKENFRUGAL_TOOL_MODE", "native")  # "text": tools described in the prompt, calls parsed from JSON text (models without a tool template)
 # CPUs / memory per Docker MCP tool container (docker mcp gateway defaults: 1 CPU, 2Gb).
 MCP_CPUS = os.getenv("TOKENFRUGAL_MCP_CPUS", "4")
 MCP_MEMORY = os.getenv("TOKENFRUGAL_MCP_MEMORY", "2Gb")
