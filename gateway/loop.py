@@ -188,6 +188,10 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             calls = (m.tool_calls or parse_text_calls(m.content, names))[:TOOLS_PER_STEP]
             if not calls:
                 bad = slop_check(m.content or "")
+                if bad and bad.startswith("you wrote a tool call") and text_mode:
+                    bad = ("that tool call could not be run: it is malformed JSON or names an unknown tool. Reply with ONLY "
+                           'one valid JSON object like {"name": "<tool>", "arguments": {...}}. Valid tool names: '
+                           + ", ".join(sorted(names)))
                 if not bad and tools and not used_tools:
                     bad = "you answered without calling any tool; call a tool to read real data first"
                 failed = not bad and used_tools and not ok_calls and fail_retries < 2
