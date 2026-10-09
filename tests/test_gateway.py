@@ -179,3 +179,21 @@ class Coerce(unittest.TestCase):
 
     def test_bad_values_left_alone(self):
         self.assertEqual(coerce_args({"pageId": "abc", "other": "1"}, self.SCHEMA), {"pageId": "abc", "other": "1"})
+
+
+class Lint(unittest.TestCase):
+    def test_missing_import_flagged(self):
+        from gateway.lint import check_python
+        self.assertIn("re", check_python("def f(s):\n    return re.sub('a', 'b', s)\n"))
+
+    def test_valid_code_clean(self):
+        from gateway.lint import check_python
+        self.assertIsNone(check_python("import re\n\n\ndef f(s, *a):\n    try:\n        return [x for x in re.findall('a', s)]\n    except ValueError as e:\n        return e\n"))
+
+    def test_syntax_error(self):
+        from gateway.lint import check_python
+        self.assertIn("syntax error", check_python("def f(:\n"))
+
+    def test_star_import_skipped(self):
+        from gateway.lint import check_python
+        self.assertIsNone(check_python("from os.path import *\njoin('a')\n"))
