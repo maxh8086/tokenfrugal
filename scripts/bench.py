@@ -21,10 +21,11 @@ from pathlib import Path
 os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", "150")  # keep one bad run from stalling the matrix
 
 from gateway import loop, server  # noqa: E402
+from scripts import bench_real  # noqa: E402
 from gateway.config import OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
 OUT = ROOT / "bench"
-SECTIONS = ["roles", "context", "output", "concurrency", "resume", "plan", "resources"]
+SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
 
 # One short, checkable task per role: (agent slug, task).
 ROLE_TASKS = {
@@ -227,6 +228,12 @@ def markdown(data):
             w = v["warm"]
             L.append(f"| {k} | {v['cold_s']} | {w.get('p50', '-')} | {w.get('p95', '-')} | {v['success']} | {'; '.join(v['failures']) or '-'} |")
         L.append("")
+    if "realworld" in data["results"]:
+        L += ["## Real-world tasks (verified by running code or checking files)", "",
+              "| task | verified | ran | p50 s | max s | failure notes |", "|---|---|---|---|---|---|"]
+        for k, v in data["results"]["realworld"].items():
+            L.append(f"| {k} | {v['verified']} | {v['ran']} | {v['s'].get('p50', '-')} | {v['s'].get('max', '-')} | {' / '.join(v['notes']) or '-'} |")
+        L.append("")
     if "context" in data["results"]:
         L += ["## Context ramp (docs role, prompt tokens)", "", "| tokens | success | recall | p50 s | failures |", "|---|---|---|---|---|"]
         for k, v in data["results"]["context"].items():
@@ -259,7 +266,10 @@ async def main():
     want = a.only.split(",")
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     data = {"tag": a.tag, "stamp": stamp, "n": a.n, "results": {}}
-    fns = {"roles": bench_roles, "context": bench_context, "concurrency": bench_concurrency, "resume": bench_resume,
+    async def _real(n):
+        return await bench_real.run(n, timed, ok, failure_mode, stats)
+
+    fns = {"roles": bench_roles, "realworld": _real, "context": bench_context, "concurrency": bench_concurrency, "resume": bench_resume,
            "plan": bench_plan, "resources": bench_resources}
     OUT.mkdir(exist_ok=True)
     for s in SECTIONS:
