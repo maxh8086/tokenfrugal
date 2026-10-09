@@ -23,8 +23,9 @@ GRAPH_RULE = (" Code graph: search_graph returns repo-relative file_path values.
               "Never run search_files on /workspace itself; it walks every repo and times out. "
               "Call search_graph with only `query` (a symbol name); do not set `label` or other filters unless you know the value.")
 BROWSER_RULE = (" Browser: call navigate_page with `url` first. take_snapshot and take_screenshot return their result inline; "
-                "never pass `filePath` (writes outside the allowed roots are denied). Only call the listed tools.")
-SLOP = re.compile(r"(as an ai|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
+                "never pass `filePath` (writes outside the allowed roots are denied). The first page has pageId 1 (a number). "
+                "Only call the listed tools.")
+SLOP = re.compile(r"(as an ai|i.m sorry, but i.m not able|i can.t assist|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 TOOL_CAP = 8000  # chars of tool output fed back to the model
 
 
@@ -178,9 +179,11 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 events.emit("tool", id=tid, name=c.function.name, args=(c.function.arguments or "")[:160])
                 try:
                     a = coerce_args(json.loads(c.function.arguments or "{}"), schemas.get(c.function.name, {}))
+                    if role["role"] == "browser":
+                        a.pop("filePath", None)  # snapshots return inline; file output is outside the sandbox roots
                     res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
                     out = result_text(res)
-                    if getattr(res, "isError", False) or out.startswith("Input validation error"):
+                    if getattr(res, "isError", False) or out.startswith(("Input validation error", "Error:")):
                         out = f"tool error: {out}"
                     else:
                         ok_calls += 1
