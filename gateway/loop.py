@@ -17,7 +17,8 @@ SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls 
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
 GRAPH_RULE = (" Code graph: search_graph returns repo-relative file_path values. The file on disk is "
               "/workspace/{project}/<file_path>; use that path with read_file, or get_code_snippet for one symbol. "
-              "Never run search_files on /workspace itself; it walks every repo and times out.")
+              "Never run search_files on /workspace itself; it walks every repo and times out. "
+              "Call search_graph with only `query` (a symbol name); do not set `label` or other filters unless you know the value.")
 SLOP = re.compile(r"(as an ai|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 TOOL_CAP = 8000  # chars of tool output fed back to the model
 
@@ -41,6 +42,26 @@ def slop_check(text: str) -> str | None:
     if SLOP.search(text):
         return "answer contains filler/placeholder text; redo with concrete content"
     return None
+
+
+def coerce_args(args: dict, schema: dict) -> dict:
+    """Small models send numbers/booleans as strings; convert to the types the tool schema declares."""
+    props = (schema or {}).get("properties", {})
+    out = dict(args)
+    for k, v in args.items():
+        t = (props.get(k) or {}).get("type")
+        if not isinstance(v, str):
+            continue
+        try:
+            if t == "integer":
+                out[k] = int(v)
+            elif t == "number":
+                out[k] = float(v)
+            elif t == "boolean" and v.lower() in ("true", "false"):
+                out[k] = v.lower() == "true"
+        except ValueError:
+            pass
+    return out
 
 
 def _repair(t: str, i: int, dec) -> tuple:
@@ -97,6 +118,9 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             open_role(role.get("profile"), role.get("native")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
         names = {t["function"]["name"] for t in tools}
+        schemas = {t["function"]["name"]: t["function"]["parameters"] for t in tools}
+        ok_calls = sum(1 for x in msgs if x.get("role") == "tool" and not str(x.get("content", "")).startswith("tool error"))
+        fail_retries = 0
         slop_retries = 0
         used_tools = any(m.get("role") == "tool" for m in msgs)
         for step in range(1, role["max_steps"] + 1):
@@ -114,8 +138,12 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 bad = slop_check(m.content or "")
                 if not bad and tools and not used_tools:
                     bad = "you answered without calling any tool; call a tool to read real data first"
-                if bad and slop_retries < 2:
-                    slop_retries += 1
+                failed = not bad and used_tools and not ok_calls and fail_retries < 2
+                if failed:
+                    fail_retries += 1
+                    bad = "every tool call failed; fix the arguments and call the tool again before answering"
+                if bad and (failed or slop_retries < 2):
+                    slop_retries += 0 if failed else 1
                     events.emit("retry", id=tid, n=slop_retries, reason=bad[:200])
                     msgs += [{"role": "assistant", "content": m.content or ""}, {"role": "user", "content": bad}]
                     continue
@@ -130,9 +158,13 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             for c in calls:
                 events.emit("tool", id=tid, name=c.function.name, args=(c.function.arguments or "")[:160])
                 try:
-                    res = await asyncio.wait_for(sess.call_tool(c.function.name, json.loads(c.function.arguments or "{}")),
-                                                 TOOL_TIMEOUT or None)
+                    a = coerce_args(json.loads(c.function.arguments or "{}"), schemas.get(c.function.name, {}))
+                    res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
                     out = result_text(res)
+                    if getattr(res, "isError", False) or out.startswith("Input validation error"):
+                        out = f"tool error: {out}"
+                    else:
+                        ok_calls += 1
                 except asyncio.TimeoutError:
                     out = f"tool error: {c.function.name} timed out after {TOOL_TIMEOUT:g}s; try a narrower path or query"
                 except Exception as e:  # tool errors go back to the model, not up

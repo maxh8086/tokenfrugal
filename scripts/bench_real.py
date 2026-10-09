@@ -73,6 +73,14 @@ def cases():
     def s_debug():
         _seed("bug.py", "def avg(xs):\n    return sum(xs) / len(xs)\n\nprint(avg([]))\n")
 
+    def s_secret():
+        _seed("secret.py", "API_KEY = 'AKIAFAKEFAKEFAKE1234'" + chr(10) + "PASSWORD = 'hunter2'" + chr(10))
+
+    def s_files():
+        for n in ("calc.py", "stack.py"):
+            if not (SCRATCH / n).exists():
+                _seed(n, "x = 1" + chr(10))
+
     return [
         ("write_function", "engineering-backend-architect", s_write,
          f"Create {WS}/slug.py with slugify(s): lowercase, strip, collapse runs of non-alphanumerics into a single '-', "
@@ -95,6 +103,24 @@ def cases():
         ("summarize_readme", "support-docs-writer", _none,
          f"Read /workspace/{SYNAPTREE_PROJECT}/README.md and summarize what the project does in 3 sentences.",
          _has("mcp", "local")),
+        # one verified case per remaining role: analyzer, data, docs, security, designer, browser, tracker, research
+        ("role_analyzer", "finance-analyst", _none,
+         "Use search_graph to find where resolve_role is defined and give its file path.",
+         _has("gateway/config.py", "gateway\\config.py")),
+        ("role_data", "gis-analyst", s_files,
+         f"List the files in {WS} with list_directory and name them.", _has("calc.py", "stack.py")),
+        ("role_docs", "engineering-technical-writer", s_tests,
+         f"Read {WS}/stack.py and describe its public methods in two sentences.", _has("push")),
+        ("role_security", "security-auditor", s_secret,
+         f"Read {WS}/secret.py and list any hard-coded secrets.", _has("api_key", "password", "hard-coded", "hardcoded")),
+        ("role_designer", "design-ui-designer", _none,
+         "Call high_level_overview and report what it returns, or the exact error.", _has("penpot", "design", "file", "error")),
+        ("role_browser", "testing-evidence-collector", _none,
+         "Navigate to https://example.com, take a snapshot and report the page heading.", _has("example domain", "documentation examples")),
+        ("role_tracker", "project-management-project-shepherd", _none,
+         "Call plan_status and report the numbers.", _has("task", "plan", "done", "open", "0")),
+        ("role_research", "support-docs-writer", _none,
+         "Use crawl_markdown on https://example.com and report the page heading.", _has("example domain", "documentation examples")),
     ]
 
 
