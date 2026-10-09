@@ -25,6 +25,11 @@ class TextToolTests(unittest.TestCase):
         calls = parse_text_calls(v[1]["content"], {"read_file"})
         self.assertEqual(calls[0].function.name, "read_file")
 
+    def test_repairs_missing_closers_and_ignores_unknown_tools(self):
+        c = parse_text_calls('{"name": "read_file", "arguments": {"path": "/workspace/a"}', {"read_file"})
+        self.assertEqual(json.loads(c[0].function.arguments), {"path": "/workspace/a"})
+        self.assertEqual(parse_text_calls('{"name": "nope", "arguments": {}}', {"read_file"}), [])
+
 
 if __name__ == "__main__":
     unittest.main()
