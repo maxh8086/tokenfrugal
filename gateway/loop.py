@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from openai import OpenAI
 
 from . import events
-from .config import LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, TASK_TIMEOUT, TOOL_TIMEOUT, TOOLS_PER_STEP
+from .config import LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT, TOOLS_PER_STEP
 from .compose import backends
 from .mcp_client import open_role, result_text, to_openai_tools
 
@@ -15,6 +15,9 @@ _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, 
 SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls per step. "
           "Work only inside the workspace, which is mounted at /workspace: always use absolute paths like /workspace/README.md. Be terse. When done, reply with the final result "
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
+GRAPH_RULE = (" Code graph: search_graph returns repo-relative file_path values. The file on disk is "
+              "/workspace/{project}/<file_path>; use that path with read_file, or get_code_snippet for one symbol. "
+              "Never run search_files on /workspace itself; it walks every repo and times out.")
 SLOP = re.compile(r"(as an ai|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 TOOL_CAP = 8000  # chars of tool output fed back to the model
 
@@ -62,8 +65,10 @@ def parse_text_calls(text: str, names: set) -> list:
 
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
               tid: str = "") -> tuple[str, list]:
-    msgs = messages or [{"role": "system", "content": SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)},
-                        {"role": "user", "content": prompt}]
+    system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
+    if "synaptree" in (role.get("native") or []):
+        system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
+    msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
     try:
         return await asyncio.wait_for(_run(agent, role, msgs, tid), TASK_TIMEOUT or None)
     except asyncio.TimeoutError:
