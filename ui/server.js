@@ -5,6 +5,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
+const os = require('node:os');
 
 function configPort() { // `port: N` from gateway/ui.yaml, the same file the launcher reads
   try {
@@ -180,7 +181,64 @@ function usage(now = Date.now() / 1000) {
   out.sessions = group(scopes.window, (x) => x.pid).map((a) => ({ ...a, pid: a.key, live: alive(a.key) }));
   out.days = group(scopes.month, (x) => new Date(x.ts * 1000).toLocaleDateString('en-CA')).map((a) => ({ ...a, day: a.key })).sort((a, b) => (a.day < b.day ? 1 : -1));
   out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
+  out.claude = claudeUsage(scopes);
   return out;
+}
+
+// Claude token usage from Claude Code transcripts (~/.claude/projects/**), deduped by message id; subagent files carry the task description.
+const PROJECTS = process.env.CLAUDE_PROJECTS || path.join(os.homedir(), '.claude', 'projects');
+const fileCache = new Map();
+function transcriptFiles() {
+  const out = [];
+  const walk = (dir, depth) => {
+    let ents = []; try { ents = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      const f = path.join(dir, e.name);
+      if (e.isDirectory() && depth < 3 && e.name !== 'tool-results' && e.name !== 'memory') walk(f, depth + 1);
+      else if (e.isFile() && e.name.endsWith('.jsonl')) out.push(f);
+    }
+  };
+  walk(PROJECTS, 0);
+  return out;
+}
+function parseTranscript(f) {
+  let st; try { st = fs.statSync(f); } catch { return []; }
+  const hit = fileCache.get(f);
+  if (hit && hit.key === st.mtimeMs + ':' + st.size) return hit.rows;
+  const isSub = path.basename(path.dirname(f)) === 'subagents';
+  let meta = {}; if (isSub) { try { meta = JSON.parse(fs.readFileSync(f.replace(/\.jsonl$/, '.meta.json'), 'utf8')); } catch { /* no meta */ } }
+  const byId = new Map();
+  for (const e of readJsonl(f)) {
+    const m = e && e.type === 'assistant' && e.message;
+    if (!m || !m.usage || !m.model || m.model === '<synthetic>') continue;
+    const u = m.usage, t = Date.parse(e.timestamp) / 1000;
+    byId.set(m.id || e.uuid, { ts: t, model: m.model, input: u.input_tokens || 0, cacheRead: u.cache_read_input_tokens || 0,
+      cacheWrite: u.cache_creation_input_tokens || 0, output: u.output_tokens || 0,
+      agent: isSub ? (e.agentId || path.basename(f, '.jsonl')) : '', task: meta.description || '' });
+  }
+  const rows = [...byId.values()];
+  fileCache.set(f, { key: st.mtimeMs + ':' + st.size, rows });
+  return rows;
+}
+function claudeUsage(scopes) {
+  const rows = transcriptFiles().flatMap(parseTranscript);
+  const sum = (a) => a.reduce((n, x) => n + x.input + x.cacheRead + x.cacheWrite + x.output, 0);
+  const byModel = (from) => {
+    const g = new Map();
+    for (const x of rows.filter((r) => r.ts >= from)) {
+      const a = g.get(x.model) || { model: x.model, calls: 0, input: 0, cacheRead: 0, cacheWrite: 0, output: 0 };
+      a.calls++; a.input += x.input; a.cacheRead += x.cacheRead; a.cacheWrite += x.cacheWrite; a.output += x.output; g.set(x.model, a);
+    }
+    return [...g.values()].map((a) => ({ ...a, total: a.input + a.cacheRead + a.cacheWrite + a.output })).sort((a, b) => b.total - a.total);
+  };
+  const totals = {}; for (const [k, from] of Object.entries(scopes)) totals[k] = sum(rows.filter((r) => r.ts >= from));
+  const g = new Map();
+  for (const x of rows.filter((r) => r.agent && r.ts >= scopes.month)) {
+    const a = g.get(x.agent) || { agent: x.agent, task: x.task, model: x.model, calls: 0, input: 0, output: 0, cached: 0, first: x.ts };
+    a.calls++; a.input += x.input; a.output += x.output; a.cached += x.cacheRead + x.cacheWrite; a.first = Math.min(a.first, x.ts); g.set(x.agent, a);
+  }
+  const subagents = [...g.values()].map((a) => ({ ...a, total: a.input + a.output + a.cached })).sort((a, b) => b.first - a.first).slice(0, 200);
+  return { totals, models: byModel(scopes.month).slice(0, 12), modelsWindow: byModel(scopes.window).slice(0, 12), subagents };
 }
 
 function roles() {

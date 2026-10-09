@@ -301,7 +301,16 @@ function renderUsage() {
     el('h3', '', X.days),
     table([[X.day], [X.tasks, 1], [X.saved, 1]], u.days.map((r) => [r.day, r.tasks, num(r.saved)])),
     el('h3', '', X.roles),
-    table([[X.role], [X.tasks, 1], [X.saved, 1]], u.roles.map((r) => [r.role, r.tasks, num(r.saved)])));
+    table([[X.role], [X.tasks, 1], [X.saved, 1]], u.roles.map((r) => [r.role, r.tasks, num(r.saved)])),
+    ...(X.claude_models && u.claude ? [
+      el('h3', '', X.claude_models),
+      table([[X.model], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+        u.claude.models.map((r) => [r.model, r.calls, num(r.input), num(r.cacheRead + r.cacheWrite), num(r.output), num(r.total)])),
+      el('h3', '', fill(X.claude_window, { h: u.windowHours })),
+      table([[X.model], [X.calls, 1], [X.total, 1]], u.claude.modelsWindow.map((r) => [r.model, r.calls, num(r.total)])),
+      el('h3', '', X.claude_tasks),
+      table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
 }
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
