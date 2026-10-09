@@ -8,7 +8,7 @@ upstreams are pulled or built at install time under their own licences.
 | --- | --- | --- | --- |
 | [cc_token_saver_mcp](https://github.com/csabakecskemeti/cc_token_saver_mcp) | Csaba Kecskemeti | none stated | Original idea: Claude Code offloading small tasks to a local LLM via MCP. TokenFrugal's `server.py` is a clean-room rewrite; no code copied. |
 | [agency-agents](https://github.com/msitarzewski/agency-agents) | msitarzewski | MIT | The 282 persona slugs mapped to roles in `gateway/personas.yaml`. |
-| [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | DeusData | MIT | Code-graph MCP server used by builder/analyzer/debugger roles (installed separately). |
+| [synaptree-mcp](https://github.com/maxh8086/synaptree-mcp) | maxh8086 | see repo | Code-graph MCP server used by builder/analyzer/reviewer/debugger roles (installed separately). |
 | [mcp-gateway](https://github.com/docker/mcp-gateway) | Docker | MIT | `docker mcp gateway` hosts the allowlisted tool profiles. |
 | [crawl4ai](https://github.com/unclecode/crawl4ai) | unclecode | Apache-2.0 | Web crawling backend (pulled image, unchanged). |
 | [SearXNG](https://github.com/searxng/searxng) | SearXNG contributors | AGPL-3.0 | Search backend (pulled image, unchanged; only a `settings.yml` is shipped). |

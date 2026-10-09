@@ -125,8 +125,8 @@ class Tools(unittest.TestCase):
 class SynaptreeProject(unittest.TestCase):
     def test_project_defaults_to_checkout_folder_name(self):
         from gateway import config
-        if not (os.getenv('SYNAPTREE_PROJECT') or os.getenv('CODEBASE_PROJECT')):
-            self.assertEqual(config.CODEBASE_PROJECT, Path(config.__file__).resolve().parent.parent.name)
+        if not os.getenv('SYNAPTREE_PROJECT'):
+            self.assertEqual(config.SYNAPTREE_PROJECT, Path(config.__file__).resolve().parent.parent.name)
         self.assertIn('synaptree', config.NATIVE_SERVERS)
 
 
