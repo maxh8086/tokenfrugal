@@ -40,6 +40,7 @@ ROLE_TASKS = {
     "security": ("security-auditor", "Read /workspace/%s/gateway/config.py and list any hard-coded secrets (say none if none)." % SYNAPTREE_PROJECT),
     "designer": ("design-ui-designer", "Say what design tools you have."),
     "browser": ("testing-evidence-collector", "Say what browser tools you have."),
+    "docs": ("engineering-technical-writer", "Read /workspace/%s/gateway/summarize.py and say in one sentence what it does." % SYNAPTREE_PROJECT),
 }
 
 
@@ -76,6 +77,8 @@ def failure_mode(r):
 async def bench_roles(n):
     res = {}
     cfg = load_personas()
+    missing = set(cfg["roles"]) - set(ROLE_TASKS)
+    assert not missing, f"bench does not cover roles: {sorted(missing)}"
     for role, (agent, task) in ROLE_TASKS.items():
         assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
         runs = []

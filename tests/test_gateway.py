@@ -8,7 +8,7 @@ os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from gateway import store  # noqa: E402
 from gateway.config import load_personas, resolve_role  # noqa: E402
-from gateway.loop import parse_text_calls, slop_check  # noqa: E402
+from gateway.loop import coerce_args, parse_text_calls, slop_check  # noqa: E402
 from gateway.mcp_client import Router, to_openai_tools  # noqa: E402
 from gateway.summarize import hard_trim, tokens  # noqa: E402
 
@@ -167,3 +167,15 @@ class SavedTokensTest(unittest.TestCase):
         self.assertEqual(saved_tokens(msgs, "z" * 40), 1100 - 10)
         self.assertEqual(saved_tokens([], "z" * 40), 0)
         self.assertEqual(saved_tokens([{"content": None}], "z" * 400), 0)
+
+
+class Coerce(unittest.TestCase):
+    SCHEMA = {"properties": {"pageId": {"type": "integer"}, "verbose": {"type": "boolean"},
+                             "ratio": {"type": "number"}, "url": {"type": "string"}}}
+
+    def test_strings_become_typed(self):
+        out = coerce_args({"pageId": "1", "verbose": "false", "ratio": "0.5", "url": "x"}, self.SCHEMA)
+        self.assertEqual(out, {"pageId": 1, "verbose": False, "ratio": 0.5, "url": "x"})
+
+    def test_bad_values_left_alone(self):
+        self.assertEqual(coerce_args({"pageId": "abc", "other": "1"}, self.SCHEMA), {"pageId": "abc", "other": "1"})
