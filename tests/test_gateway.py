@@ -197,3 +197,8 @@ class Lint(unittest.TestCase):
     def test_star_import_skipped(self):
         from gateway.lint import check_python
         self.assertIsNone(check_python("from os.path import *\njoin('a')\n"))
+
+
+class Refusal(unittest.TestCase):
+    def test_refusal_is_slop(self):
+        self.assertIsNotNone(slop_check("I'm sorry, but I'm not able to assist with that request."))
