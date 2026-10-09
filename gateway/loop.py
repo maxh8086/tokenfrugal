@@ -36,11 +36,21 @@ def leaf(e: BaseException) -> BaseException:
 def slop_check(text: str) -> str | None:
     if not text.strip():
         return "empty answer"
-    if re.match(r'''\s*\{\s*["']name["']\s*:''', text):
+    if re.match(r'''\s*\{\s*["']name["']\s*:''', re.sub(r"</?tool_call>|```(?:json)?", "", text).lstrip()):
         return "you wrote a tool call as text; use the tool-calling interface or give the final answer"
     if SLOP.search(text):
         return "answer contains filler/placeholder text; redo with concrete content"
     return None
+
+
+def _repair(t: str, i: int, dec) -> tuple:
+    """Small models often drop the last closing brace/bracket of a tool call; try adding up to 3."""
+    for tail in ("}", "}}", "]}", "}]}", "}}}"):
+        try:
+            return dec.raw_decode(t[i:] + tail)[0], len(t)
+        except ValueError:
+            continue
+    return None, i
 
 
 def parse_text_calls(text: str, names: set) -> list:
@@ -53,8 +63,10 @@ def parse_text_calls(text: str, names: set) -> list:
         try:
             o, j = dec.raw_decode(t, i)
         except ValueError:
-            i += 1
-            continue
+            o, j = _repair(t, i, dec)
+            if o is None:
+                i += 1
+                continue
         i = j
         if isinstance(o, dict) and o.get("name") in names:
             a = o.get("arguments", o.get("parameters", {}))

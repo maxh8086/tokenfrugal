@@ -8,7 +8,7 @@ os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from gateway import store  # noqa: E402
 from gateway.config import load_personas, resolve_role  # noqa: E402
-from gateway.loop import slop_check  # noqa: E402
+from gateway.loop import parse_text_calls, slop_check  # noqa: E402
 from gateway.mcp_client import Router, to_openai_tools  # noqa: E402
 from gateway.summarize import hard_trim, tokens  # noqa: E402
 
@@ -78,6 +78,24 @@ class Slop(unittest.TestCase):
 
     def test_ok(self):
         self.assertIsNone(slop_check("Found 3 issues in a.py"))
+
+
+class TextCalls(unittest.TestCase):
+    N = {"edit_file", "read_file"}
+    FENCE = "`" * 3 + "json" + chr(10) + '{"name": "edit_file", "arguments": {"path": "/a"}}' + chr(10) + "`" * 3
+
+    def test_fenced_call_is_slop(self):
+        self.assertIn("tool call", slop_check(self.FENCE))
+
+    def test_fenced_call_parsed(self):
+        self.assertEqual([x.function.name for x in parse_text_calls(self.FENCE, self.N)], ["edit_file"])
+
+    def test_missing_closing_brace_repaired(self):
+        c = parse_text_calls('{"name": "edit_file", "arguments": {"path": "/a", "edits": [{"oldText": "x"}]}', self.N)
+        self.assertEqual(len(c), 1)
+
+    def test_unknown_tool_ignored(self):
+        self.assertEqual(parse_text_calls('{"name": "rm", "arguments": {}}', self.N), [])
 
 
 class Store(unittest.TestCase):
