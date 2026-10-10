@@ -13,6 +13,18 @@ class TextToolTests(unittest.TestCase):
         self.assertIn("read_file(path: string)", p)
         self.assertIn('"name": "read_file"', p)
 
+    def test_prompt_has_one_shot_write_example(self):
+        p = text_tool_prompt(TOOLS)
+        self.assertIn("One-shot example", p)
+        self.assertIn('"name": "write_file"', p)
+        self.assertIn("edit_file", p)
+
+    def test_write_file_with_raw_newline_in_content_parses(self):
+        raw = '{"name": "write_file", "arguments": {"path": "/workspace/a.py", "content": "x = 1\n\ny = 2\n"}}'
+        calls = parse_text_calls(raw, {"write_file"})
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(json.loads(calls[0].function.arguments)["content"], "x = 1\n\ny = 2\n")
+
     def test_view_converts_calls_and_results(self):
         msgs = [{"role": "user", "content": "go"},
                 {"role": "assistant", "content": "", "tool_calls": [

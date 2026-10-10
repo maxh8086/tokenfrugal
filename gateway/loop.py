@@ -48,6 +48,10 @@ BROWSER_RULE = (" Browser: call navigate_page with `url` first. take_snapshot an
                 "Only call the listed tools.")
 TEXT_TOOLS = (chr(10) * 2 + "Tools are NOT available through an API. To use one, reply with ONLY one JSON object per call, "
               'for example {{"name": "read_file", "arguments": {{"path": "/workspace/README.md"}}}}, and nothing else. '
+              'One-shot example of write_file (escape newlines in content as \\n, never put a raw line break inside the JSON string): '
+              '{{"name": "write_file", "arguments": {{"path": "/workspace/app/util.py", "content": "def add(a, b):\\n    return a + b\\n"}}}}. '
+              "Write the real code in content, never a placeholder such as '...' or 'rest of file'. "
+              "To change an existing file, prefer edit_file over rewriting it with write_file. "
               "Results come back in the next message. Available tools:" + chr(10) + "{tools}")
 SLOP = re.compile(r"(as an ai|i.m sorry, but i.m not able|i can.t assist|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 TOOL_CAP = 8000  # chars of tool output fed back to the model
@@ -160,7 +164,7 @@ def parse_text_calls(text: str, names: set) -> list:
     """Recover tool calls a small model wrote as JSON text (optionally in <tool_call>/code fences)."""
     t = re.sub(r"</?tool_call>|```(?:json)?", "", text or "").strip()
     calls = []
-    dec = json.JSONDecoder()
+    dec = json.JSONDecoder(strict=False)  # small models emit raw newlines inside "content" strings
     i = 0
     while (i := t.find("{", i)) != -1:
         try:
@@ -211,6 +215,12 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
     if role["role"] == "browser":
         system += BROWSER_RULE
+    for name in role.get("skills") or []:
+        path = Path(__file__).parent / "skills" / name / "SKILL.md"
+        if not path.exists():
+            continue
+        body = path.read_text(encoding="utf-8").split("---", 2)[-1].strip()
+        system += f"\n\nSkill {name}:\n{body}"
     msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
     try:
         return await asyncio.wait_for(_run(agent, role, msgs, tid), TASK_TIMEOUT or None)
