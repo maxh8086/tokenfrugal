@@ -60,8 +60,10 @@ class _ClientSeen(Middleware):
     """Reports which MCP client (Claude, Codex, ...) opened this gateway process, for the dashboard."""
 
     async def on_initialize(self, context, call_next):
-        with contextlib.suppress(AttributeError):
-            events.emit("client", name=context.message.params.clientInfo.name)
+        # pydantic exposes the MCP field as snake_case `client_info`, not `clientInfo`
+        info = getattr(getattr(context.message, "params", None), "client_info", None)
+        if info is not None:
+            events.emit("client", name=info.name)
         return await call_next(context)
 
 
