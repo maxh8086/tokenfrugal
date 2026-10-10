@@ -1,0 +1,213 @@
+{
+ "tag": "confirmA",
+ "stamp": "20261009-211210",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.3,
+     "p50": 10.3,
+     "p95": 13.5,
+     "max": 13.5,
+     "mean": 11.9
+    },
+    "notes": []
+   },
+   "fix_bug": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.0,
+     "p50": 10.0,
+     "p95": 11.0,
+     "max": 11.0,
+     "mean": 10.5
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.4,
+     "p50": 9.4,
+     "p95": 9.9,
+     "max": 9.9,
+     "mean": 9.7
+    },
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=3)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.6,
+     "p50": 12.6,
+     "p95": 37.4,
+     "max": 37.4,
+     "mean": 25.0
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 from a_mod import new_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.0,
+     "p50": 14.0,
+     "p95": 15.2,
+     "max": 15.2,
+     "mean": 14.6
+    },
+    "notes": [
+     "[a5ce39c00a] To find where `resolve_role` is defined, you can use the `search_graph` function. The f"
+    ]
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.2,
+     "p50": 9.2,
+     "p95": 15.2,
+     "max": 15.2,
+     "mean": 12.2
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 11.7,
+     "p50": 11.7,
+     "p95": 13.0,
+     "max": 13.0,
+     "mean": 12.3
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.1,
+     "p50": 14.1,
+     "p95": 15.5,
+     "max": 15.5,
+     "mean": 14.8
+    },
+    "notes": [
+     "[eded3ed65c] The TokenFrugal project is a suite of tools and services designed to make AI agents mor"
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.2,
+     "p50": 8.2,
+     "p95": 8.3,
+     "max": 8.3,
+     "mean": 8.2
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 4.5,
+     "p50": 4.5,
+     "p95": 10.9,
+     "max": 10.9,
+     "mean": 7.7
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 6.7,
+     "p50": 6.7,
+     "p95": 13.4,
+     "max": 13.4,
+     "mean": 10.1
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 41.8,
+     "p50": 41.8,
+     "p95": 49.9,
+     "max": 49.9,
+     "mean": 45.8
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.1,
+     "p50": 12.1,
+     "p95": 12.5,
+     "max": 12.5,
+     "mean": 12.3
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 6.1,
+     "p50": 6.1,
+     "p95": 10.5,
+     "max": 10.5,
+     "mean": 8.3
+    },
+    "notes": [
+     "[7daeed8e0b] Navigated to https://example.com, captured a snapshot, and the page heading is **RootWe"
+    ]
+   },
+   "role_tracker": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 5.4,
+     "p50": 5.4,
+     "p95": 6.5,
+     "max": 6.5,
+     "mean": 6.0
+    },
+    "notes": []
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 21.6,
+     "p50": 21.6,
+     "p95": 22.6,
+     "max": 22.6,
+     "mean": 22.1
+    },
+    "notes": []
+   }
+  }
+ }
+}

@@ -1,0 +1,213 @@
+{
+ "tag": "full-ts-qwen25c-7b-builder-granite-thinker",
+ "stamp": "20261010-011337",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.6,
+     "p50": 9.6,
+     "p95": 12.6,
+     "max": 12.6,
+     "mean": 11.1
+    },
+    "notes": []
+   },
+   "fix_bug": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.4,
+     "p50": 9.4,
+     "p95": 22.7,
+     "max": 22.7,
+     "mean": 16.1
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 50.4,
+     "p50": 50.4,
+     "p95": 50.5,
+     "max": 50.5,
+     "mean": 50.5
+    },
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.000s\n\nFAILED (errors=2)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.9,
+     "p50": 9.9,
+     "p95": 10.2,
+     "max": 10.2,
+     "mean": 10.1
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.8,
+     "p50": 7.8,
+     "p95": 8.8,
+     "max": 8.8,
+     "mean": 8.3
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.8,
+     "p50": 9.8,
+     "p95": 16.4,
+     "max": 16.4,
+     "mean": 13.1
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 11.5,
+     "p50": 11.5,
+     "p95": 12.2,
+     "max": 12.2,
+     "mean": 11.8
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 15.0,
+     "p50": 15.0,
+     "p95": 17.6,
+     "max": 17.6,
+     "mean": 16.3
+    },
+    "notes": []
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.5,
+     "p50": 8.5,
+     "p95": 8.5,
+     "max": 8.5,
+     "mean": 8.5
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 5.9,
+     "p50": 5.9,
+     "p95": 14.4,
+     "max": 14.4,
+     "mean": 10.2
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.1,
+     "p50": 7.1,
+     "p95": 14.1,
+     "max": 14.1,
+     "mean": 10.6
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 42.4,
+     "p50": 42.4,
+     "p95": 43.4,
+     "max": 43.4,
+     "mean": 42.9
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.0,
+     "p50": 12.0,
+     "p95": 12.4,
+     "max": 12.4,
+     "mean": 12.2
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.4,
+     "p50": 7.4,
+     "p95": 8.0,
+     "max": 8.0,
+     "mean": 7.7
+    },
+    "notes": [
+     "[a54d004c2f] Navigated to https://example.com, captured a snapshot, and the page heading is **RootWe",
+     "[e09ec547b7] Navigated to https://example.com, captured a snapshot, and the page heading is **RootWe"
+    ]
+   },
+   "role_tracker": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 4.9,
+     "p50": 4.9,
+     "p95": 5.6,
+     "max": 5.6,
+     "mean": 5.2
+    },
+    "notes": [
+     "FAILED (tracker/ts-granite4-micro-16384): LoopError: no final answer in 6 steps. Call resume_task('1ace950cb3'",
+     "FAILED (tracker/ts-granite4-micro-16384): LoopError: no final answer in 6 steps. Call resume_task('dfc89aa77f'"
+    ]
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 21.5,
+     "p50": 21.5,
+     "p95": 21.6,
+     "max": 21.6,
+     "mean": 21.6
+    },
+    "notes": []
+   }
+  }
+ }
+}

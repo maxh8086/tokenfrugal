@@ -1,0 +1,750 @@
+{
+ "tag": "before",
+ "stamp": "20261009-182943",
+ "n": 5,
+ "results": {
+  "roles": {
+   "builder": {
+    "cold_s": 14.8,
+    "warm": {
+     "min": 7.4,
+     "p50": 7.7,
+     "p95": 8.0,
+     "max": 8.0,
+     "mean": 7.7
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 14.8,
+      "ok": true,
+      "out": "[8e62ea3921] The symbol `summarize` is found in the file `/workspace/tokenfrugal/gateway/summarize.py`."
+     },
+     {
+      "s": 7.4,
+      "ok": true,
+      "out": "[3ba0fe9e6a] The symbol `summarize` is found in the file `/workspace/tokenfrugal/gateway/summarize.py`."
+     },
+     {
+      "s": 8.0,
+      "ok": true,
+      "out": "[78bf9c024a] The symbol `summarize` is found in the file `/workspace/tokenfrugal/gateway/summarize.py`."
+     },
+     {
+      "s": 7.7,
+      "ok": true,
+      "out": "[06e483a81b] The symbol `summarize` is found in the file `/workspace/tokenfrugal/gateway/summarize.py`."
+     },
+     {
+      "s": 7.5,
+      "ok": true,
+      "out": "[4b7bc00763] The symbol `summarize` is found in the file `/workspace/tokenfrugal/gateway/summarize.py`."
+     }
+    ]
+   },
+   "analyzer": {
+    "cold_s": 17.3,
+    "warm": {
+     "min": 9.8,
+     "p50": 10.3,
+     "p95": 11.4,
+     "max": 11.4,
+     "mean": 10.4
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 17.3,
+      "ok": true,
+      "out": "[10dfc67c14] Project: tokenfrugal\nSearch Graph:\n- tests/test_compose.py (line 9): run\n- gateway/loop.py (line 62): run\n- ui/server.js (line "
+     },
+     {
+      "s": 11.4,
+      "ok": true,
+      "out": "[73fdc6ab6c] * Search Graph: \n  - Project: tokenfrugal\n  - Symbol: run\n\n* File Definitions:\n  - No files defined\n\n* Next Action:\n  - Review "
+     },
+     {
+      "s": 9.9,
+      "ok": true,
+      "out": "[71e07e2b60] Search_graph result:\n\nSymbol: run\nFiles:\n1. tests/test_compose.py (line 9)\n2. gateway/loop.py (line 62)\n3. ui/server.js (line 9"
+     },
+     {
+      "s": 9.8,
+      "ok": true,
+      "out": "[16a15dd4cb] Search_graph result:\n\nSymbol: run\nFiles:\n1. tests/test_compose.py (line 9)\n2. gateway/loop.py (line 62)\n3. ui/server.js (line 9"
+     },
+     {
+      "s": 10.3,
+      "ok": true,
+      "out": "[e0985d8395] Search_graph result:\n\nSymbol: run\nFiles:\n1. tests/test_compose.py (line 9)\n2. gateway/loop.py (line 62)\n3. ui/server.js (line 9"
+     }
+    ]
+   },
+   "reviewer": {
+    "cold_s": 9.6,
+    "warm": {
+     "min": 9.4,
+     "p50": 9.6,
+     "p95": 10.3,
+     "max": 10.3,
+     "mean": 9.7
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 9.6,
+      "ok": true,
+      "out": "[108858e414] The summarize.py file contains a function `summarize` that takes in a model, text, and task as input and returns a summarized v"
+     },
+     {
+      "s": 9.6,
+      "ok": true,
+      "out": "[ce70d2a660] The summarize.py file contains a function `summarize` that takes in a model, text, and task as input and returns a summarized v"
+     },
+     {
+      "s": 9.4,
+      "ok": true,
+      "out": "[be8a2192e4] The summarize.py file contains a function `summarize` that takes in a model, text, and task as input and returns a summarized v"
+     },
+     {
+      "s": 9.5,
+      "ok": true,
+      "out": "[5b174c5f24] The summarize.py file contains a function `summarize` that takes in a model, text, and task as input and returns a summarized v"
+     },
+     {
+      "s": 10.3,
+      "ok": true,
+      "out": "[a9c3eedec8] The summarize.py file contains a function `summarize` that takes in a model, text, and task as input and returns a summarized v"
+     }
+    ]
+   },
+   "debugger": {
+    "cold_s": 10.9,
+    "warm": {
+     "min": 10.2,
+     "p50": 10.5,
+     "p95": 10.8,
+     "max": 10.8,
+     "mean": 10.5
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 10.9,
+      "ok": true,
+      "out": "[5bc684d43b] Public Functions:\n\n1. `tokens`\n2. `saved_tokens`\n3. `hard_trim`\n4. `summarize`"
+     },
+     {
+      "s": 10.8,
+      "ok": true,
+      "out": "[2cbfacfdc2] 1. `tokens`\n2. `saved_tokens`\n3. `hard_trim`\n4. `summarize`"
+     },
+     {
+      "s": 10.5,
+      "ok": true,
+      "out": "[6091b116b1] 1. `tokens`\n2. `saved_tokens`\n3. `hard_trim`\n4. `summarize`"
+     },
+     {
+      "s": 10.4,
+      "ok": true,
+      "out": "[a15fe6ff13] 1. `tokens`\n2. `saved_tokens`\n3. `hard_trim`\n4. `summarize`"
+     },
+     {
+      "s": 10.2,
+      "ok": true,
+      "out": "[435d8df132] 1. `tokens`\n2. `saved_tokens`\n3. `hard_trim`\n4. `summarize`"
+     }
+    ]
+   },
+   "research": {
+    "cold_s": 22.7,
+    "warm": {
+     "min": 21.8,
+     "p50": 21.9,
+     "p95": 22.2,
+     "max": 22.2,
+     "mean": 21.9
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 22.7,
+      "ok": true,
+      "out": "[3b46624589] File Path: /workspace/tokenfrugal/README.md\nDescription: The project is a collection of tips and strategies for living frugally"
+     },
+     {
+      "s": 21.9,
+      "ok": true,
+      "out": "[01ec5e30d1] File Path: /workspace/tokenfrugal/README.md\nDescription: The project is a token-based economy for frugal living.\nNext Action: R"
+     },
+     {
+      "s": 21.8,
+      "ok": true,
+      "out": "[2fb9011cb8] File Path: /workspace/tokenfrugal/README.md\nDescription: The project is a token-based economy for frugal living.\nNext Action: R"
+     },
+     {
+      "s": 22.2,
+      "ok": true,
+      "out": "[80f6be43c8] File Path: /workspace/tokenfrugal/README.md\nDescription: The project is a token-based economy for frugal living.\nNext Action: R"
+     },
+     {
+      "s": 21.8,
+      "ok": true,
+      "out": "[1ffbb2f954] File Path: /workspace/tokenfrugal/README.md\nDescription: The project is a token-based economy for frugal living.\nNext Action: R"
+     }
+    ]
+   },
+   "data": {
+    "cold_s": 23.0,
+    "warm": {
+     "min": 11.3,
+     "p50": 16.4,
+     "p95": 16.6,
+     "max": 16.6,
+     "mean": 14.8
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 23.0,
+      "ok": true,
+      "out": "[1413515cc9] The files in `/workspace/tokenfrugal/gateway` are:\n\n- `__init__.py`\n- `__pycache__`\n- `compose.py`\n- `config.py`\n- `events.json"
+     },
+     {
+      "s": 16.6,
+      "ok": true,
+      "out": "[bc928c8edd] The files in `/workspace/tokenfrugal/gateway` are:\n\n- `__init__.py`\n- `__pycache__`\n- `compose.py`\n- `config.py`\n- `events.json"
+     },
+     {
+      "s": 15.1,
+      "ok": true,
+      "out": "[e39a55da0b] The files in `/workspace/tokenfrugal/gateway` are listed above. Three files are: `config.py`, `plan.py`, and `plan_mcp.py`."
+     },
+     {
+      "s": 16.4,
+      "ok": true,
+      "out": "[41ed223fbc] The files in `/workspace/tokenfrugal/gateway` are:\n\n- `__init__.py`\n- `__pycache__`\n- `compose.py`\n- `config.py`\n- `events.json"
+     },
+     {
+      "s": 11.3,
+      "ok": true,
+      "out": "[f015aeff38] The files in /workspace/tokenfrugal/gateway are listed below. Three of them are:\n\n1. gateway.py\n2. config.py\n3. models.py"
+     }
+    ]
+   },
+   "tracker": {
+    "cold_s": 10.4,
+    "warm": {
+     "min": 3.5,
+     "p50": 3.6,
+     "p95": 3.7,
+     "max": 3.7,
+     "mean": 3.6
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 10.4,
+      "ok": true,
+      "out": "[6dfa92bca3] **Plan Status Report**\n\n* **File Path:** N/A\n* **Number of Tasks:** 0\n* **Verdict:** No tasks found in the plan.\n* **Next Actio"
+     },
+     {
+      "s": 3.5,
+      "ok": true,
+      "out": "[51c5108112] **Plan Status Report**\n\n* **File Path:** N/A\n* **Task ID:** N/A\n* **Verdict:** None\n* **Next Action:** Provide a valid Task ID "
+     },
+     {
+      "s": 3.7,
+      "ok": true,
+      "out": "[7f1dfc6711] **Plan Status Report**\n\n* **Task ID:** Not provided\n* **File Paths:** None\n* **Numbers:** None\n* **Verdict:** No plan status av"
+     },
+     {
+      "s": 3.6,
+      "ok": true,
+      "out": "[a2d32db878] **Plan Status Report**\n\n* **Task ID:** None\n* **File Paths:** N/A\n* **Numbers:** N/A\n* **Verdicts:** N/A\n* **Next Actions:** Pr"
+     },
+     {
+      "s": 3.6,
+      "ok": true,
+      "out": "[68e0cb6548] **Plan Status Report**\n\n* **Task ID:** None\n* **File Paths:** N/A\n* **Numbers:** N/A\n* **Verdicts:** N/A\n* **Next Actions:** Pr"
+     }
+    ]
+   },
+   "security": {
+    "cold_s": 37.4,
+    "warm": {
+     "min": 37.1,
+     "p50": 37.8,
+     "p95": 38.7,
+     "max": 38.7,
+     "mean": 37.8
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 37.4,
+      "ok": true,
+      "out": "[ad9d562215] **Task Summary**\n\n* File: /workspace/tokenfrugal/gateway/config.py\n* Hard-coded secrets found:\n\t+ OLLAMA_URL: http://localhost:"
+     },
+     {
+      "s": 37.8,
+      "ok": true,
+      "out": "[bc2f568441] **Results**\n\n* File: /workspace/tokenfrugal/gateway/config.py\n* Hard-coded secrets:\n\t+ OLLAMA_URL: http://localhost:11434/v1\n\t+"
+     },
+     {
+      "s": 37.6,
+      "ok": true,
+      "out": "[ac67ab41a1] **Results Summary**\n\n* File: /workspace/tokenfrugal/gateway/config.py\n* Hard-coded secrets found:\n\t+ OLLAMA_URL: http://localho"
+     },
+     {
+      "s": 37.1,
+      "ok": true,
+      "out": "[6e01653285] **Results**\n\n* File: /workspace/tokenfrugal/gateway/config.py\n* Hard-coded secrets:\n\t+ OLLAMA_URL: http://localhost:11434/v1\n\t+"
+     },
+     {
+      "s": 38.7,
+      "ok": true,
+      "out": "[b3df79a30c] **Results**\n\n* File: /workspace/tokenfrugal/gateway/config.py\n* Hard-coded secrets:\n\t+ OLLAMA_URL: http://localhost:11434/v1\n\t+"
+     }
+    ]
+   },
+   "designer": {
+    "cold_s": 11.4,
+    "warm": {
+     "min": 10.8,
+     "p50": 11.1,
+     "p95": 11.6,
+     "max": 11.6,
+     "mean": 11.1
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 11.4,
+      "ok": true,
+      "out": "[d9fe74a70f] Design Tools:\n\n1. Penpot\n2. Penpot MCP Plugin (for connecting to MCP server)\n3. Penpot tools for interacting with design projec"
+     },
+     {
+      "s": 10.8,
+      "ok": true,
+      "out": "[5961c869ad] Design Tools:\n\n* Penpot\n\t+ Penpot MCP Plugin (for connecting to MCP server)\n\t+ Penpot tools for interacting with design project"
+     },
+     {
+      "s": 11.6,
+      "ok": true,
+      "out": "[11a1851ba8] Design Tools:\n\n1. Penpot\n2. Penpot MCP Plugin (for connecting to MCP server)\n\nNext Actions:\n\n- Connect Penpot design project to"
+     },
+     {
+      "s": 10.9,
+      "ok": true,
+      "out": "[27b9f5c32c] Design Tools:\n\n* Penpot\n\t+ Penpot MCP Plugin (for connecting to MCP server)\n\t+ Penpot tools for interacting with design project"
+     },
+     {
+      "s": 11.1,
+      "ok": true,
+      "out": "[d3e88bd601] Design Tools:\n\n* Penpot\n\t+ Penpot MCP Plugin (for connecting to MCP server)\n\t+ Penpot tools for interacting with design project"
+     }
+    ]
+   },
+   "browser": {
+    "cold_s": 6.6,
+    "warm": {
+     "min": 6.6,
+     "p50": 15.9,
+     "p95": 20.5,
+     "max": 20.5,
+     "mean": 12.4
+    },
+    "success": "5/5",
+    "failures": [],
+    "runs": [
+     {
+      "s": 6.6,
+      "ok": true,
+      "out": "[a6004e10e0] Browser Tools:\n\n1. `list_console_messages`: lists console messages from a given page.\n2. `list_network_requests`: lists network"
+     },
+     {
+      "s": 6.6,
+      "ok": true,
+      "out": "[248152e4f8] Browser Tools:\n\n1. `list_console_messages`: lists all console messages from a given page.\n2. `list_network_requests`: lists all"
+     },
+     {
+      "s": 20.5,
+      "ok": true,
+      "out": "[030620917c] Browser Tools:\n\n* Developer Tools: Not available\n* Console: Not available\n* Network: Not available\n* Performance: Not available"
+     },
+     {
+      "s": 15.9,
+      "ok": true,
+      "out": "[6c3309fa8f] Browser Tools:\n\n1. Console\n2. Network\n3. Sources (Code Inspector)\n4. Performance\n5. Application\n6. Security\n7. Lighthouse\n8. Au"
+     },
+     {
+      "s": 6.6,
+      "ok": true,
+      "out": "[abd2fa192d] Browser Tools:\n\n1. `list_console_messages`: lists console messages from a given page.\n2. `list_network_requests`: lists network"
+     }
+    ]
+   }
+  },
+  "context": {
+   "2000": {
+    "success": "2/2",
+    "recall": "2/2",
+    "s": {
+     "min": 21.7,
+     "p50": 21.7,
+     "p95": 25.1,
+     "max": 25.1,
+     "mean": 23.4
+    },
+    "failures": []
+   },
+   "4000": {
+    "success": "2/2",
+    "recall": "2/2",
+    "s": {
+     "min": 22.6,
+     "p50": 22.6,
+     "p95": 24.6,
+     "max": 24.6,
+     "mean": 23.6
+    },
+    "failures": []
+   },
+   "8000": {
+    "success": "2/2",
+    "recall": "2/2",
+    "s": {
+     "min": 12.0,
+     "p50": 12.0,
+     "p95": 15.5,
+     "max": 15.5,
+     "mean": 13.8
+    },
+    "failures": []
+   },
+   "12000": {
+    "success": "2/2",
+    "recall": "2/2",
+    "s": {
+     "min": 16.1,
+     "p50": 16.1,
+     "p95": 21.3,
+     "max": 21.3,
+     "mean": 18.7
+    },
+    "failures": []
+   },
+   "16000": {
+    "success": "2/2",
+    "recall": "2/2",
+    "s": {
+     "min": 15.6,
+     "p50": 15.6,
+     "p95": 25.4,
+     "max": 25.4,
+     "mean": 20.5
+    },
+    "failures": []
+   },
+   "24000": {
+    "success": "2/2",
+    "recall": "0/2",
+    "s": {
+     "min": 16.8,
+     "p50": 16.8,
+     "p95": 20.2,
+     "max": 20.2,
+     "mean": 18.5
+    },
+    "failures": []
+   },
+   "32000": {
+    "success": "2/2",
+    "recall": "0/2",
+    "s": {
+     "min": 15.7,
+     "p50": 15.7,
+     "p95": 15.7,
+     "max": 15.7,
+     "mean": 15.7
+    },
+    "failures": []
+   }
+  },
+  "output": {
+   "builder": {
+    "128": {
+     "tok_per_s": 58.8,
+     "s": {
+      "min": 1.2,
+      "p50": 1.2,
+      "p95": 8.5,
+      "max": 8.5,
+      "mean": 4.9
+     },
+     "fails": 0
+    },
+    "512": {
+     "tok_per_s": 100.7,
+     "s": {
+      "min": 2.7,
+      "p50": 2.7,
+      "p95": 3.0,
+      "max": 3.0,
+      "mean": 2.9
+     },
+     "fails": 0
+    },
+    "1024": {
+     "tok_per_s": 100.9,
+     "s": {
+      "min": 2.8,
+      "p50": 2.8,
+      "p95": 2.9,
+      "max": 2.9,
+      "mean": 2.9
+     },
+     "fails": 0
+    },
+    "2048": {
+     "tok_per_s": 99.5,
+     "s": {
+      "min": 2.7,
+      "p50": 2.7,
+      "p95": 2.8,
+      "max": 2.8,
+      "mean": 2.7
+     },
+     "fails": 0
+    },
+    "4096": {
+     "tok_per_s": 99.8,
+     "s": {
+      "min": 2.2,
+      "p50": 2.2,
+      "p95": 2.7,
+      "max": 2.7,
+      "mean": 2.5
+     },
+     "fails": 0
+    }
+   },
+   "thinker": {
+    "128": {
+     "tok_per_s": 56.8,
+     "s": {
+      "min": 1.3,
+      "p50": 1.3,
+      "p95": 8.3,
+      "max": 8.3,
+      "mean": 4.8
+     },
+     "fails": 0
+    },
+    "512": {
+     "tok_per_s": 97.1,
+     "s": {
+      "min": 2.8,
+      "p50": 2.8,
+      "p95": 3.8,
+      "max": 3.8,
+      "mean": 3.3
+     },
+     "fails": 0
+    },
+    "1024": {
+     "tok_per_s": 96.4,
+     "s": {
+      "min": 2.4,
+      "p50": 2.4,
+      "p95": 10.5,
+      "max": 10.5,
+      "mean": 6.5
+     },
+     "fails": 0
+    },
+    "2048": {
+     "tok_per_s": 98.3,
+     "s": {
+      "min": 2.3,
+      "p50": 2.3,
+      "p95": 3.5,
+      "max": 3.5,
+      "mean": 2.9
+     },
+     "fails": 0
+    },
+    "4096": {
+     "tok_per_s": 95.7,
+     "s": {
+      "min": 2.5,
+      "p50": 2.5,
+      "p95": 27.1,
+      "max": 27.1,
+      "mean": 14.8
+     },
+     "fails": 0
+    }
+   }
+  },
+  "concurrency": {
+   "1": {
+    "wall_s": 11.2,
+    "per_task": {
+     "min": 11.2,
+     "p50": 11.2,
+     "p95": 11.2,
+     "max": 11.2,
+     "mean": 11.2
+    },
+    "success": "1/1",
+    "throughput_per_min": 5.4,
+    "failures": []
+   },
+   "2": {
+    "wall_s": 13.5,
+    "per_task": {
+     "min": 10.1,
+     "p50": 10.1,
+     "p95": 13.5,
+     "max": 13.5,
+     "mean": 11.8
+    },
+    "success": "2/2",
+    "throughput_per_min": 8.9,
+    "failures": []
+   },
+   "4": {
+    "wall_s": 15.3,
+    "per_task": {
+     "min": 10.4,
+     "p50": 12.7,
+     "p95": 15.3,
+     "max": 15.3,
+     "mean": 12.5
+    },
+    "success": "4/4",
+    "throughput_per_min": 15.7,
+    "failures": []
+   },
+   "8": {
+    "wall_s": 20.5,
+    "per_task": {
+     "min": 13.7,
+     "p50": 15.9,
+     "p95": 20.4,
+     "max": 20.4,
+     "mean": 15.8
+    },
+    "success": "8/8",
+    "throughput_per_min": 23.4,
+    "failures": []
+   },
+   "mixed_models_4": {
+    "s": [
+     55.4,
+     46.5,
+     55.7,
+     48.5
+    ],
+    "success": "4/4"
+   }
+  },
+  "resume": [
+   {
+    "round": 0,
+    "s": 2.5,
+    "ok": false,
+    "msgs": 0
+   },
+   {
+    "round": 1,
+    "s": 2.7,
+    "ok": false,
+    "msgs": 0,
+    "attempts": 2
+   },
+   {
+    "round": 2,
+    "s": 2.7,
+    "ok": false,
+    "msgs": 0,
+    "attempts": 3
+   },
+   {
+    "round": 3,
+    "s": 2.4,
+    "ok": false,
+    "msgs": 0,
+    "attempts": 4
+   },
+   {
+    "round": 4,
+    "s": 2.5,
+    "ok": false,
+    "msgs": 0,
+    "attempts": 5
+   },
+   {
+    "round": 5,
+    "s": 2.4,
+    "ok": false,
+    "msgs": 0,
+    "attempts": 6
+   },
+   {
+    "round": "final",
+    "s": 7.5,
+    "ok": true,
+    "msgs": 7
+   }
+  ],
+  "plan": {
+   "plan_add": {
+    "s": 1.1,
+    "out": "task 18 added"
+   },
+   "plan_overview": {
+    "s": 0.9,
+    "out": "plan 'bench': pending=2\n13 [pending] bench task\n18 [pending] bench task"
+   },
+   "smoke_plan": {
+    "rc": 0,
+    "tail": [
+     "PASS A done with real commit ",
+     "PASS checkpoint keeps open tasks ",
+     "PASS prune spares done task that an open task depends on ",
+     "PASS checkpoint prunes finished tag ",
+     "PASS prune leaves no new orphaned events ",
+     "smoke_plan: OK"
+    ]
+   }
+  },
+  "resources": {
+   "gpu_before": "3293 MiB, 8188 MiB, 0 %",
+   "docker_before": "synaptree-synaptree-1 4.33% 1.282GiB / 15.26GiB\nsynaptree-neo4j-1 0.65% 1.003GiB / 15.26GiB\nts-mcp-neo4j-1 0.67% 656.8MiB / 1GiB\nglossary-workbook-changes-78e56f-ui-1 0.15% 59.37MiB / 15.26GiB\nmarket-scanner-collector-1 0.00% 37.68MiB / 15.26GiB",
+   "gpu_after": "3293 MiB, 8188 MiB, 95 %",
+   "run_s": 15.3,
+   "ok": true,
+   "docker_samples": [
+    "synaptree-synaptree-1 0.00% 1.281GiB / 15.26GiB\nsynaptree-neo4j-1 0.67% 1.003GiB / 15.26GiB\nts-mcp-neo4j-1 2.92% 657.8MiB / 1GiB\nglossary-workbook-changes-78e56f-ui-1 0.17% 59.37MiB / 15.26GiB\nmarket-scanner-collector-1 0.00% 37.68MiB / 15.26GiB",
+    "synaptree-synaptree-1 0.00% 1.281GiB / 15.26GiB\nsynaptree-neo4j-1 185.15% 1.004GiB / 15.26GiB\nts-mcp-neo4j-1 0.54% 657MiB / 1GiB\nglossary-workbook-changes-78e56f-ui-1 0.14% 59.37MiB / 15.26GiB\nmarket-scanner-collector-1 0.00% 37.68MiB / 15.26GiB",
+    "synaptree-synaptree-1 0.00% 1.325GiB / 15.26GiB\nsynaptree-neo4j-1 0.60% 1.003GiB / 15.26GiB\nts-mcp-neo4j-1 0.73% 657.3MiB / 1GiB\nglossary-workbook-changes-78e56f-ui-1 0.14% 59.37MiB / 15.26GiB\nmarket-scanner-collector-1 0.00% 37.68MiB / 15.26GiB",
+    "synaptree-synaptree-1 0.00% 1.325GiB / 15.26GiB\nsynaptree-neo4j-1 0.61% 1.003GiB / 15.26GiB\nts-mcp-neo4j-1 0.68% 656.9MiB / 1GiB\nglossary-workbook-changes-78e56f-ui-1 0.15% 59.37MiB / 15.26GiB\nmarket-scanner-collector-1 0.00% 37.68MiB / 15.26GiB",
+    "synaptree-synaptree-1 7.34% 1.312GiB / 15.26GiB\nsynaptree-neo4j-1 0.64% 1.003GiB / 15.26GiB\nts-mcp-neo4j-1 0.83% 656.9MiB / 1GiB\nglossary-workbook-changes-78e56f-ui-1 3.88% 59.73MiB / 15.26GiB\nmarket-scanner-collector-1 0.00% 37.68MiB / 15.26GiB"
+   ],
+   "ollama_ps": "NAME                     ID              SIZE      PROCESSOR    CONTEXT    UNTIL               \nqwen2.5-coder-yarn:3b    b8078e7ef810    3.3 GB    100% GPU     32768      29 minutes from now",
+   "leftover_containers": "synaptree-synaptree-1\nsynaptree-neo4j-1\nts-mcp-neo4j-1\nglossary-workbook-changes-78e56f-ui-1\nmarket-scanner-collector-1"
+  }
+ }
+}

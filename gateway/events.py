@@ -12,6 +12,7 @@ EVENTS_PATH = Path(os.getenv("GATEWAY_EVENTS", Path(__file__).parent / "events.j
 ROLES_PATH = EVENTS_PATH.with_name("roles.json")
 UI_TEXT = Path(__file__).parent / "ui.yaml"
 MAX_BYTES = 2_000_000
+USAGE_FIELDS = ("ts", "pid", "kind", "id", "role", "model", "saved")  # long-term ledger for the dashboard usage popup
 
 
 def emit(kind: str, **fields) -> None:
@@ -22,6 +23,10 @@ def emit(kind: str, **fields) -> None:
         line = json.dumps({"ts": time.time(), "pid": os.getpid(), "kind": kind, **fields}, ensure_ascii=False)
         with EVENTS_PATH.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
+        if kind in ("task_done", "task_failed"):  # events.jsonl rotates; usage.jsonl keeps month-long totals
+            row = {"ts": time.time(), "pid": os.getpid(), "kind": kind, **fields}
+            with EVENTS_PATH.with_name("usage.jsonl").open("a", encoding="utf-8") as f:
+                f.write(json.dumps({k: row[k] for k in USAGE_FIELDS if k in row}) + "\n")
     except (OSError, yaml.YAMLError):
         pass
 

@@ -1,0 +1,213 @@
+{
+ "tag": "full-ts-qwen25c-7b-16384",
+ "stamp": "20261010-010608",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.7,
+     "p50": 9.7,
+     "p95": 13.7,
+     "max": 13.7,
+     "mean": 11.7
+    },
+    "notes": []
+   },
+   "fix_bug": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.4,
+     "p50": 9.4,
+     "p95": 18.2,
+     "max": 18.2,
+     "mean": 13.8
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.4,
+     "p50": 12.4,
+     "p95": 50.4,
+     "max": 50.4,
+     "mean": 31.4
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.1,
+     "p50": 10.1,
+     "p95": 11.5,
+     "max": 11.5,
+     "mean": 10.8
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.1,
+     "p50": 7.1,
+     "p95": 7.4,
+     "max": 7.4,
+     "mean": 7.2
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.9,
+     "p50": 9.9,
+     "p95": 12.7,
+     "max": 12.7,
+     "mean": 11.3
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 11.1,
+     "p50": 11.1,
+     "p95": 12.0,
+     "max": 12.0,
+     "mean": 11.6
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 11.7,
+     "p50": 11.7,
+     "p95": 11.9,
+     "max": 11.9,
+     "mean": 11.8
+    },
+    "notes": [
+     "FAILED (research/ts-qwen25c-7b-16384): LoopError: you answered without calling any tool; call a tool to read r"
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.8,
+     "p50": 8.8,
+     "p95": 9.2,
+     "max": 9.2,
+     "mean": 9.0
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 5.7,
+     "p50": 5.7,
+     "p95": 6.2,
+     "max": 6.2,
+     "mean": 6.0
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.2,
+     "p50": 8.2,
+     "p95": 8.4,
+     "max": 8.4,
+     "mean": 8.3
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 39.9,
+     "p50": 39.9,
+     "p95": 40.6,
+     "max": 40.6,
+     "mean": 40.2
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.5,
+     "p50": 12.5,
+     "p95": 15.0,
+     "max": 15.0,
+     "mean": 13.8
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.4,
+     "p50": 8.4,
+     "p95": 9.7,
+     "max": 9.7,
+     "mean": 9.1
+    },
+    "notes": [
+     "[04a0529a02] Task: Navigate to https://example.com, take a snapshot and report the page heading.  Re",
+     "[1134f6b7aa] Task: Navigate to https://example.com, take a snapshot and report the page heading.  Re"
+    ]
+   },
+   "role_tracker": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 4.2,
+     "p50": 4.2,
+     "p95": 5.4,
+     "max": 5.4,
+     "mean": 4.8
+    },
+    "notes": []
+   },
+   "role_research": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 21.8,
+     "p50": 21.8,
+     "p95": 22.1,
+     "max": 22.1,
+     "mean": 22.0
+    },
+    "notes": [
+     "[a63e5d24ce] Task: Use crawl_markdown on https://example.com and report the page heading.  Result: n",
+     "[efc6b2f385] Task: Use crawl_markdown on https://example.com and report the page heading.  Result: n"
+    ]
+   }
+  }
+ }
+}

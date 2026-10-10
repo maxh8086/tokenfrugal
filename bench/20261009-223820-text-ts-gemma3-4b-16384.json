@@ -1,0 +1,66 @@
+{
+ "tag": "text-ts-gemma3-4b-16384",
+ "stamp": "20261009-223820",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 24.3,
+     "p50": 24.3,
+     "p95": 42.8,
+     "max": 42.8,
+     "mean": 33.5
+    },
+    "notes": [
+     "rc=1 tests=3 -----------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 23.7,
+     "p50": 23.7,
+     "p95": 25.5,
+     "max": 25.5,
+     "mean": 24.6
+    },
+    "notes": [
+     "FAILED (builder/ts-gemma3-4b-16384): LoopError: no final answer in 12 steps. Call resume_task('5b88265d0a') to",
+     "FAILED (builder/ts-gemma3-4b-16384): LoopError: no final answer in 12 steps. Call resume_task('7d6e20f1f6') to"
+    ]
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 13.0,
+     "p50": 13.0,
+     "p95": 13.2,
+     "max": 13.2,
+     "mean": 13.1
+    },
+    "notes": [
+     "FAILED (research/ts-gemma3-4b-16384): LoopError: you answered without calling any tool; call a tool to read re"
+    ]
+   },
+   "role_browser": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.2,
+     "p50": 8.2,
+     "p95": 8.6,
+     "max": 8.6,
+     "mean": 8.4
+    },
+    "notes": [
+     "[36341fcb02] **Task:** Navigate to https://example.com, take a snapshot and report the page heading."
+    ]
+   }
+  }
+ }
+}
