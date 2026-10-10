@@ -16,6 +16,8 @@ mcps:
   penpot:             {label: "Penpot",                                    profile: design,   compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape]}
   chrome-devtools:    {label: "Chrome DevTools",                           profile: browser,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
   plan:               {label: "Task plan store (Neo4j)",                   native: plan,      compose: [neo4j], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note]}
+  github:             {label: "GitHub (official MCP)",                     profile: github,   tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents, create_pull_request]}
+  github-actions:     {label: "GitHub Actions (read-only, official MCP)", profile: github, tools: [actions_list, actions_get, get_job_logs]}
 # Profile type -> personas that suit it; `default` is pre-selected.
 profile_types:
   financial-analyst:  {label: "Financial analyst",  default: finance-analyst,                personas: [finance-analyst, support-finance-tracker, chief-financial-officer, accounts-payable-agent]}
