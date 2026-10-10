@@ -5,32 +5,34 @@ models:
   builder: qwen2.5-coder-yarn:3b
   thinker: llama3.2:3b-16k
 # Per-persona model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
-# Defaults = best measured solo model per persona (Benchmark/persona-defaults.md). Edit here, or override
+# Defaults = smallest adequate, then fastest measured solo model per persona (Benchmark/persona-model-selection.md). Edit here, or override
 # without touching this file via `python -m scripts.persona_ui` (writes gateway/persona_models.json).
 # Personas not listed use their role's model. Tags come from models/trial/*.Modelfile.
 persona_models:
   engineering-backend-architect: ts-gemma4-e4b-16384
-  testing-code-reviewer: ts-qwen25c-7b-16384
-  engineering-sre: ts-qwen25c-7b-16384
+  testing-code-reviewer: thinker
+  engineering-sre: builder
   support-docs-writer: ts-qwen3-8b-16384
-  finance-analyst: ts-qwen25c-7b-16384
+  engineering-software-architect: builder
   gis-analyst: builder
-  engineering-technical-writer: thinker
-  security-auditor: ts-qwen25c-7b-16384
+  engineering-technical-writer: builder
+  security-auditor: builder
   design-ui-designer: thinker
   testing-evidence-collector: thinker
   project-management-project-shepherd: thinker
 roles:
   builder:  {model: builder, profile: build,      max_steps: 12, native: [synaptree], tools: [read_file, write_file, edit_file, search_files, search_graph, get_code_snippet]}
-  data:     {model: builder, profile: build-data, max_steps: 12, tools: [read_file, write_file, list_directory, read_query, write_query, list_tables]}
+  data:     {model: builder, profile: build-data, max_steps: 12, tools: [read_file, write_file, list_directory]}  # no SQL MCP wired yet
   analyzer: {model: thinker, profile: analyze,    max_steps: 10, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep]}
   security: {model: thinker, profile: security,   max_steps: 10, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule]}
   reviewer: {model: thinker, profile: analyze,    max_steps: 8,  native: [synaptree], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep]}
   debugger: {model: thinker, profile: debug,      max_steps: 12, native: [synaptree], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code]}
   docs:     {model: thinker, profile: docs,       max_steps: 8,  tools: [read_file, list_directory, git_log, fetch]}
-  designer: {model: thinker, profile: design,     max_steps: 10, compose: [penpot-mcp], tools: [high_level_overview, get_design_context, get_screenshot, component_map, token_map, design_diff]}
+  designer: {model: thinker, profile: design,     max_steps: 10, compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape]}
   browser:  {model: thinker, profile: browser,    max_steps: 8,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
   tracker:  {model: thinker, max_steps: 6,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note]}
+  devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code]}
+  finance:  {model: thinker, profile: docs,       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown]}
   research: {model: thinker,                       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links]}
 # Division (agency-agents folder) -> default role. Overrides by agent slug below.
 divisions:
@@ -38,7 +40,7 @@ divisions:
   design: designer
   game-development: builder
   gis: data
-  finance: analyzer
+  finance: finance
   academic: research
   healthcare: research
   marketing: research
@@ -55,8 +57,34 @@ divisions:
   testing: reviewer
 overrides:
   engineering-code-reviewer: reviewer
+  security-architect: analyzer
+  security-cloud-security-architect: analyzer
+  security-compliance-auditor: reviewer
+  support-legal-compliance-checker: reviewer
+  security-senior-secops: debugger
+  security-threat-intelligence-analyst: research
+  support-support-responder: docs
+  engineering-servicenow-developer-mentor: docs
+  engineering-multi-agent-systems-architect: analyzer
+  specialized-master-plan-architect: analyzer
+  legal-document-review: reviewer
+  customer-service: docs
+  customer-success-manager: docs
+  engineering-i18n-engineer: builder
   engineering-minimal-change-engineer: builder
   engineering-sre: debugger
+  engineering-devops-automator: devops
+  engineering-platform-engineer: devops
+  engineering-git-workflow-master: devops
+  engineering-mobile-release-engineer: devops
+  engineering-developer-tooling-engineer: devops
+  engineering-network-engineer: debugger
+  engineering-it-service-manager: debugger
+  engineering-rust-refactoring-specialist: builder
+  engineering-senior-developer: builder
+  engineering-frontend-developer: builder
+  engineering-rapid-prototyper: builder
+  engineering-api-platform-engineer: builder
   engineering-incident-response-commander: debugger
   engineering-privacy-engineer: security
   engineering-identity-access-engineer: security
@@ -69,17 +97,18 @@ overrides:
   engineering-database-reliability-engineer: data
   design-ui-finish-gate-reviewer: browser
   design-ux-researcher: research
+  design-ux-architect: browser
   design-persona-walkthrough: browser
-  accounts-payable-agent: analyzer
+  accounts-payable-agent: finance
   agentic-identity-trust: security
   automation-governance-architect: analyzer
-  chief-financial-officer: analyzer
+  chief-financial-officer: finance
   data-consolidation-agent: data
   data-privacy-officer: security
   game-audio-engineer: builder
   identity-graph-operator: data
   lsp-index-engineer: builder
-  ma-integration-manager: analyzer
+  ma-integration-manager: finance
   product-dx-engineer: builder
   project-management-jira-workflow-steward: builder
   project-management-project-shepherd: tracker
@@ -96,11 +125,11 @@ overrides:
   specialized-fedramp-rmf-compliance: security
   specialized-mcp-builder: builder
   specialized-model-qa: reviewer
-  specialized-pricing-analyst: analyzer
+  specialized-pricing-analyst: finance
   specialized-workflow-architect: analyzer
   support-analytics-reporter: analyzer
   support-executive-summary-generator: docs
-  support-finance-tracker: analyzer
+  support-finance-tracker: finance
   support-infrastructure-maintainer: debugger
   testing-accessibility-auditor: reviewer
   testing-api-tester: debugger

@@ -80,6 +80,13 @@ python -m scripts.persona_ui          # http://127.0.0.1:7878
 
 Your changes are saved to `gateway/persona_models.json` (git-ignored, or set `TOKENFRUGAL_PERSONA_MODELS_FILE`) and override the yaml defaults. Restart the MCP client to apply. A blank choice means the role's model. `TOKENFRUGAL_PERSONA_MODELS=0` or any `TOKENFRUGAL_MODEL_*` variable turns the mapping off and pins every persona to the role models.
 
+## Model conclusions
+
+Measured on 16 real tool cases, 2 runs each, RTX 4060 8 GB, 16384 context. Full table with the reason per model: [Benchmark/model-conclusions.md](Benchmark/model-conclusions.md).
+
+- Keep: `ts-qwen3-8b-16384` (28/32, slow), `ts-gemma4-e4b-16384` (27/32), `ts-qwen25c-7b-16384` (23/32, fastest of the strong ones), `llama3.2:3b-16k` (thinker, 20/32), `qwen2.5-coder-yarn:3b` (builder).
+- Remove: models that scored 0 to 2 of 32 (gemma3-4b, qwen2.5vl-7b, starcoder2-7b, granite3.3-8b, deepseek-r1-8b, phi4-mini) and those beaten on both score and time (ministral-3-8b, qwen2.5-7b, qwen3-4b, llama3.1-8b).
+
 ## Adding MCP servers
 
 **Recommended: the Docker MCP gateway with servers from the Docker MCP Toolkit catalogue.** Most MCP servers you will want (filesystem, git, fetch, browser, search, databases, ...) already exist in the catalogue as maintained, sandboxed containers. TokenFrugal runs each role through `docker mcp gateway run --profile <name>`, so adding one is a profile edit, not new code:

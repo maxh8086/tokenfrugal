@@ -25,13 +25,14 @@ from scripts import bench_real  # noqa: E402
 from gateway.config import OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
+SECTION_TIMEOUT = float(os.getenv("BENCH_SECTION_TIMEOUT", "3600"))  # seconds; one section with no result for 1 h is skipped
 SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
 
 # One short, checkable task per role: (agent slug, task).
 ROLE_TASKS = {
     "builder": ("engineering-backend-architect",
                 "Use search_graph to find the symbol named summarize and report its file path."),
-    "analyzer": ("finance-analyst", f"Use search_graph to find the symbol named run in project {SYNAPTREE_PROJECT} and say which file defines it."),
+    "analyzer": ("engineering-software-architect", f"Use search_graph to find the symbol named run in project {SYNAPTREE_PROJECT} and say which file defines it."),
     "reviewer": ("testing-code-reviewer", "Read /workspace/%s/gateway/summarize.py and say in two sentences what it does." % SYNAPTREE_PROJECT),
     "debugger": ("engineering-sre", "Read /workspace/%s/gateway/summarize.py and name its public functions." % SYNAPTREE_PROJECT),
     "research": ("support-docs-writer", "Read /workspace/%s/README.md and give a one-sentence description of the project." % SYNAPTREE_PROJECT),
@@ -225,37 +226,41 @@ async def bench_resources(n):
 
 def markdown(data):
     L = [f"# Benchmark {data['tag']} {data['stamp']}", "", f"n={data['n']}, task timeout {os.environ['TOKENFRUGAL_TASK_TIMEOUT']}s", ""]
-    if "roles" in data["results"]:
+    for k, v in data["results"].items():  # errored sections are reported, not rendered as tables
+        if isinstance(v, dict) and "error" in v:
+            L += [f"## {k.title()}", "", f"Section failed: {v['error']}", ""]
+    ok = lambda k: k in data["results"] and "error" not in data["results"][k]  # noqa: E731
+    if ok("roles"):
         L += ["## Roles", "", "| role | cold s | warm p50 | warm p95 | success | failure modes |", "|---|---|---|---|---|---|"]
         for k, v in data["results"]["roles"].items():
             w = v["warm"]
             L.append(f"| {k} | {v['cold_s']} | {w.get('p50', '-')} | {w.get('p95', '-')} | {v['success']} | {'; '.join(v['failures']) or '-'} |")
         L.append("")
-    if "realworld" in data["results"]:
+    if ok("realworld"):
         L += ["## Real-world tasks (verified by running code or checking files)", "",
               "| task | verified | ran | p50 s | max s | failure notes |", "|---|---|---|---|---|---|"]
         for k, v in data["results"]["realworld"].items():
             L.append(f"| {k} | {v['verified']} | {v['ran']} | {v['s'].get('p50', '-')} | {v['s'].get('max', '-')} | {' / '.join(v['notes']) or '-'} |")
         L.append("")
-    if "context" in data["results"]:
+    if ok("context"):
         L += ["## Context ramp (docs role, prompt tokens)", "", "| tokens | success | recall | p50 s | failures |", "|---|---|---|---|---|"]
         for k, v in data["results"]["context"].items():
             L.append(f"| {k} | {v['success']} | {v['recall']} | {v['s'].get('p50', '-')} | {'; '.join(v['failures']) or '-'} |")
         L.append("")
-    if "output" in data["results"]:
+    if ok("output"):
         L += ["## Output length (direct)", "", "| model | max_tokens | tok/s | p50 s | fails |", "|---|---|---|---|---|"]
         for m, d in data["results"]["output"].items():
             for ln, v in d.items():
                 L.append(f"| {m} | {ln} | {v['tok_per_s']} | {v['s'].get('p50', '-')} | {v['fails']} |")
         L.append("")
-    if "concurrency" in data["results"]:
+    if ok("concurrency"):
         L += ["## Concurrency", "", "| parallel | wall s | per-task p50 | success | per min |", "|---|---|---|---|---|"]
         for k, v in data["results"]["concurrency"].items():
             if "wall_s" in v:
                 L.append(f"| {k} | {v['wall_s']} | {v['per_task'].get('p50', '-')} | {v['success']} | {v['throughput_per_min']} |")
         L += ["", f"Mixed builder/thinker x4: {data['results']['concurrency'].get('mixed_models_4')}", ""]
     for key in ("resume", "plan", "resources"):
-        if key in data["results"]:
+        if ok(key):
             L += [f"## {key.title()}", "", "```json", json.dumps(data["results"][key], indent=1)[:4000], "```", ""]
     return "\n".join(L)
 
@@ -281,7 +286,12 @@ async def main():
         print(f"== {s}", flush=True)
         t = time.perf_counter()
         try:
-            data["results"][s] = bench_output(a.n) if s == "output" else await fns[s](a.n)
+            # A section with no result for SECTION_TIMEOUT seconds is recorded as failed and the run moves on.
+            # bench_output is blocking, so it runs in a thread; a timed-out thread is left to finish on its own.
+            run = asyncio.to_thread(bench_output, a.n) if s == "output" else fns[s](a.n)
+            data["results"][s] = await asyncio.wait_for(run, SECTION_TIMEOUT)
+        except asyncio.TimeoutError:
+            data["results"][s] = {"error": f"no result after {SECTION_TIMEOUT}s (section watchdog)"}
         except Exception as e:  # noqa: BLE001
             data["results"][s] = {"error": f"{type(e).__name__}: {e}"}
         print(f"== {s} done in {time.perf_counter() - t:.0f}s", flush=True)

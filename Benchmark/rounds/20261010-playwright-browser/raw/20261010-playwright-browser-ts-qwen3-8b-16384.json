@@ -1,0 +1,236 @@
+{
+ "round": "20261010-playwright-browser",
+ "model": "ts-qwen3-8b-16384",
+ "results": {
+  "A-chrome-devtools": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 81.3,
+    "runs": [
+     {
+      "s": 76.3,
+      "verified": false,
+      "note": "The page snapshot does not include the heading text. The root web area (uid=1_0) is empty or not ful"
+     },
+     {
+      "s": 86.4,
+      "verified": false,
+      "note": "## Final Result Verdict: Failed to navigate to the target URL. The page remains unloaded (url=\"about"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 47.5,
+    "runs": [
+     {
+      "s": 65.9,
+      "verified": false,
+      "note": "## Verdict No console error messages found on the page. The application may be functioning normally,"
+     },
+     {
+      "s": 29.0,
+      "verified": false,
+      "note": "The page was successfully navigated to http://host.docker.internal:9101, but no console error messag"
+     }
+    ]
+   },
+   "pw_network": {
+    "verified": "0/2",
+    "s": 89.9,
+    "runs": [
+     {
+      "s": 66.6,
+      "verified": false,
+      "note": "## Findings No failed requests or console errors detected on the page. The network request list is e"
+     },
+     {
+      "s": 113.2,
+      "verified": false,
+      "note": "## Findings - Navigated to http://host.docker.internal:9101 successfully - No network requests found"
+     }
+    ]
+   },
+   "pw_perf": {
+    "verified": "0/2",
+    "s": 267.1,
+    "runs": [
+     {
+      "s": 300.2,
+      "verified": false,
+      "note": "TimeoutError: "
+     },
+     {
+      "s": 234.0,
+      "verified": false,
+      "note": "LoopError: empty answer"
+     }
+    ]
+   }
+  },
+  "B-playwright": {
+   "pw_heading": {
+    "verified": "2/2",
+    "s": 24.6,
+    "runs": [
+     {
+      "s": 24.5,
+      "verified": true,
+      "note": "The page heading (title) is **Acme Dashboard**. No files changed. Verdict: Page loaded successfully."
+     },
+     {
+      "s": 24.6,
+      "verified": true,
+      "note": "The page heading (title) is **Acme Dashboard**. No files changed. Verdict: Page loaded successfully "
+     }
+    ]
+   },
+   "pw_click": {
+    "verified": "0/2",
+    "s": 201.3,
+    "runs": [
+     {
+      "s": 175.5,
+      "verified": false,
+      "note": "The page was navigated to successfully, but the 'Show details' button could not be located with the "
+     },
+     {
+      "s": 227.1,
+      "verified": false,
+      "note": "### Verdict The target URL `http://host.docker.internal:9101` failed to load properly, resulting in "
+     }
+    ]
+   },
+   "pw_login": {
+    "verified": "0/2",
+    "s": 194.6,
+    "runs": [
+     {
+      "s": 193.7,
+      "verified": false,
+      "note": "### Findings - The form submission resulted in an unexpected redirect to `about:blank`. - The userna"
+     },
+     {
+      "s": 195.6,
+      "verified": false,
+      "note": "### Findings - The CSS selectors used are invalid or mismatched with the actual page structure. - Th"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 35.3,
+    "runs": [
+     {
+      "s": 29.1,
+      "verified": false,
+      "note": "The page failed to load correctly (URL changed to about:blank), and no console errors were found. Ve"
+     },
+     {
+      "s": 41.5,
+      "verified": false,
+      "note": "The page at http://host.docker.internal:9101/ is blank (about:blank), indicating the URL may be inva"
+     }
+    ]
+   },
+   "pw_network": {
+    "verified": "0/2",
+    "s": 104.8,
+    "runs": [
+     {
+      "s": 120.0,
+      "verified": false,
+      "note": "The page navigated to http://host.docker.internal:9101 but failed to load properly. No network reque"
+     },
+     {
+      "s": 89.5,
+      "verified": false,
+      "note": "### Verdict The page navigated to `about:blank`, indicating an unexpected blank page. No network req"
+     }
+    ]
+   }
+  },
+  "C-playwright+lighthouse": {
+   "pw_heading": {
+    "verified": "2/2",
+    "s": 77.7,
+    "runs": [
+     {
+      "s": 102.3,
+      "verified": true,
+      "note": "The page heading (title) is **Acme Dashboard**. The snapshot tool encountered issues targeting eleme"
+     },
+     {
+      "s": 53.0,
+      "verified": true,
+      "note": "The page heading (title) is **Acme Dashboard**. The subsequent `about:blank` result likely indicates"
+     }
+    ]
+   },
+   "pw_click": {
+    "verified": "0/2",
+    "s": 233.5,
+    "runs": [
+     {
+      "s": 300.1,
+      "verified": false,
+      "note": "TimeoutError: "
+     },
+     {
+      "s": 166.8,
+      "verified": false,
+      "note": "The page failed to load correctly, resulting in an empty snapshot and inability to locate the 'Show "
+     }
+    ]
+   },
+   "pw_login": {
+    "verified": "0/2",
+    "s": 234.8,
+    "runs": [
+     {
+      "s": 245.9,
+      "verified": false,
+      "note": "The browser was navigated to http://host.docker.internal:9101, but the page is blank (about:blank), "
+     },
+     {
+      "s": 223.6,
+      "verified": false,
+      "note": "### Findings - The username field and \"Sign in\" button could not be located with the provided select"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 36.0,
+    "runs": [
+     {
+      "s": 37.6,
+      "verified": false,
+      "note": "The console error messages could not be retrieved as the page is now blank (about:blank). The initia"
+     },
+     {
+      "s": 34.5,
+      "verified": false,
+      "note": "The page at http://host.docker.internal:9101 initially showed 3 console errors, but after navigation"
+     }
+    ]
+   },
+   "pw_perf": {
+    "verified": "0/2",
+    "s": 289.2,
+    "runs": [
+     {
+      "s": 278.4,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     },
+     {
+      "s": 300.1,
+      "verified": false,
+      "note": "TimeoutError: "
+     }
+    ]
+   }
+  }
+ }
+}
