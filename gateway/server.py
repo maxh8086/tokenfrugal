@@ -165,11 +165,7 @@ def get_detail(task_id: str, max_chars: int = 4000) -> str:
         return f"unknown task {task_id}"
     head = (t["detail"] or t["error"] or "no output")[:max_chars]
     trail = [_trail_line(e) for e in t["trail"]]
-    return head + ("
-
-event trail:
-" + "
-".join(trail) if trail else "")
+    return head + ("\n\nevent trail:\n" + "\n".join(trail) if trail else "")
 
 
 def _trail_line(e: dict) -> str:
