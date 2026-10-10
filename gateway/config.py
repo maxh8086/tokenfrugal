@@ -1,4 +1,5 @@
 """Gateway configuration (env-overridable)."""
+import json
 import os
 import re
 import secrets
@@ -71,8 +72,20 @@ TOOL_TIMEOUT = float(os.getenv("TOKENFRUGAL_TOOL_TIMEOUT", "60"))   # one MCP to
 TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task; keep below the MCP client's tool timeout
 
 
+PERSONA_MODELS_FILE = Path(os.getenv("TOKENFRUGAL_PERSONA_MODELS_FILE", Path(__file__).parent / "persona_models.json"))
+
+
 def load_personas() -> dict:
     cfg = yaml.safe_load((Path(__file__).parent / "personas.yaml").read_text(encoding="utf-8"))
+    pm = dict(cfg.get("persona_models") or {})
+    try:  # user overrides (written by scripts/persona_ui.py) win over the yaml defaults
+        pm.update(json.loads(PERSONA_MODELS_FILE.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        pass
+    # Benchmarks pin one model for every persona with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_PERSONA_MODELS=0 disables the mapping.
+    if os.getenv("TOKENFRUGAL_PERSONA_MODELS") == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"]):
+        pm = {}
+    cfg["persona_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
     return cfg
@@ -86,4 +99,7 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     r = dict(cfg["roles"][role])
     r["role"] = role
     r["model"] = cfg["models"][r["model"]]
+    pm = cfg.get("persona_models", {}).get(agent)
+    if pm:  # a logical name (builder/thinker) or a concrete model tag
+        r["model"] = cfg["models"].get(pm, pm)
     return r

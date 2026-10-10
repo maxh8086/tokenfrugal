@@ -68,6 +68,18 @@ For Codex use the equivalent `[mcp_servers.tokenfrugal]` table in `~/.codex/conf
 
 Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `dispatch_task`, `ask_followup`, `get_detail`, `resume_task`, `list_roles`, plus plan tools (`plan_add`, `plan_overview`, ...) backed by Neo4j with automatic retention (`PLAN_RETENTION_DAYS`). `server.py` is a simpler two-tool server if you only want `query_local_llm`.
 
+## Choosing a model per persona
+
+`persona_models` in `gateway/personas.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see `Benchmark/persona-defaults.md`). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
+
+Edit the mapping in a browser instead of the yaml:
+
+```bash
+python -m scripts.persona_ui          # http://127.0.0.1:7878
+```
+
+Your changes are saved to `gateway/persona_models.json` (git-ignored, or set `TOKENFRUGAL_PERSONA_MODELS_FILE`) and override the yaml defaults. Restart the MCP client to apply. A blank choice means the role's model. `TOKENFRUGAL_PERSONA_MODELS=0` or any `TOKENFRUGAL_MODEL_*` variable turns the mapping off and pins every persona to the role models.
+
 ## Adding MCP servers
 
 **Recommended: the Docker MCP gateway with servers from the Docker MCP Toolkit catalogue.** Most MCP servers you will want (filesystem, git, fetch, browser, search, databases, ...) already exist in the catalogue as maintained, sandboxed containers. TokenFrugal runs each role through `docker mcp gateway run --profile <name>`, so adding one is a profile edit, not new code:
