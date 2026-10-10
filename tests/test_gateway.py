@@ -8,7 +8,7 @@ os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from gateway import store  # noqa: E402
 from gateway.config import load_personas, resolve_role  # noqa: E402
-from gateway.loop import coerce_args, parse_text_calls, slop_check  # noqa: E402
+from gateway.loop import arg_error, coerce_args, parse_text_calls, slop_check  # noqa: E402
 from gateway.mcp_client import Router, to_openai_tools  # noqa: E402
 from gateway.summarize import hard_trim, tokens  # noqa: E402
 
@@ -107,6 +107,19 @@ class Store(unittest.TestCase):
         self.assertEqual(t["messages"][0]["content"], "x")
         self.assertIsNone(store.get("nope"))
 
+    def test_trail_kept_in_order_and_capped(self):
+        tid = store.create("a", "builder", "p")
+        self.assertEqual(store.get(tid)["trail"], [])
+        store.append_trail(tid, {"kind": "step", "n": 1})
+        store.append_trail(tid, {"kind": "tool", "name": "list_pull_requests"})
+        self.assertEqual([e["kind"] for e in store.get(tid)["trail"]], ["step", "tool"])
+        for i in range(store.TRAIL_MAX + 5):
+            store.append_trail(tid, {"kind": "say", "text": str(i)})
+        trail = store.get(tid)["trail"]
+        self.assertEqual(len(trail), store.TRAIL_MAX)
+        self.assertEqual(trail[-1]["text"], str(store.TRAIL_MAX + 4))
+        store.append_trail("missing", {"kind": "step"})  # unknown task: silently ignored
+
 
 class Tools(unittest.TestCase):
     def test_allowlist_and_project_hidden(self):
@@ -179,6 +192,20 @@ class Coerce(unittest.TestCase):
 
     def test_bad_values_left_alone(self):
         self.assertEqual(coerce_args({"pageId": "abc", "other": "1"}, self.SCHEMA), {"pageId": "abc", "other": "1"})
+
+    def test_unknown_argument_rejected_before_call(self):
+        err = arg_error({"owner": "a", "fields": "x"}, {"properties": {"owner": {"type": "string"}}})
+        self.assertTrue(err.startswith("tool error: unknown argument(s) fields"))
+        self.assertIn("Valid arguments: owner", err)
+
+    def test_missing_required_rejected(self):
+        schema = {"properties": {"owner": {}, "repo": {}}, "required": ["owner", "repo"]}
+        self.assertIn("missing required argument(s) repo", arg_error({"owner": "a"}, schema))
+
+    def test_valid_args_pass(self):
+        schema = {"properties": {"owner": {}, "repo": {}}, "required": ["owner"]}
+        self.assertEqual(arg_error({"owner": "a", "repo": "b"}, schema), "")
+        self.assertEqual(arg_error({"owner": "a"}, {}), "")  # no schema properties: nothing to check
 
 
 class Lint(unittest.TestCase):

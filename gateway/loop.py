@@ -94,6 +94,23 @@ def coerce_args(args: dict, schema: dict) -> dict:
     return out
 
 
+def arg_error(args: dict, schema: dict) -> str:
+    """Reject calls the schema cannot accept before they reach the MCP server: unknown or missing arguments."""
+    props = (schema or {}).get("properties")
+    if props is None:
+        return ""
+    unknown = sorted(k for k in args if k not in props)
+    missing = sorted(k for k in (schema or {}).get("required", []) if k not in args)
+    if not unknown and not missing:
+        return ""
+    parts = []
+    if unknown:
+        parts.append(f"unknown argument(s) {', '.join(unknown)}")
+    if missing:
+        parts.append(f"missing required argument(s) {', '.join(missing)}")
+    return f"tool error: {'; '.join(parts)}. Valid arguments: {', '.join(sorted(props)) or 'none'}. Call again with only those."
+
+
 def lint_written(path: str) -> str:
     """Feedback line for a just-written .py file so the model fixes missing imports/syntax itself."""
     if not path.endswith(".py") or not path.startswith("/workspace/"):
@@ -198,10 +215,16 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
         used_tools = any(m.get("role") == "tool" for m in msgs)
         for step in range(1, role["max_steps"] + 1):
             events.emit("step", id=tid, n=step)
+            # the last step is reserved for the answer once real results exist: no tools, so the model cannot run out of steps
+            force_answer = bool(ok_calls) and step == role["max_steps"]
+            if force_answer:
+                msgs.append({"role": "user", "content": "Step limit reached. Do not call any more tools. "
+                                                        "Answer now using only the tool results above."})
+            use_tools = bool(tools) and not text_mode and not force_answer
             r = await asyncio.to_thread(  # off the event loop so keepalives and other tasks keep running
                 _client.chat.completions.create, model=role["model"], messages=text_view(msgs) if text_mode else msgs,
-                temperature=0.1, max_tokens=2048, tools=None if text_mode else (tools or None),
-                **({} if used_tools or not tools or text_mode else {"tool_choice": "required"}))
+                temperature=0.1, max_tokens=2048, tools=(tools or None) if use_tools else None,
+                **({} if used_tools or not use_tools else {"tool_choice": "required"}))
             m = r.choices[0].message
             _count(tid, r, msgs, m)
             thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()
@@ -239,14 +262,20 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     a = coerce_args(json.loads(c.function.arguments or "{}"), schemas.get(c.function.name, {}))
                     if role["role"] == "browser":
                         a.pop("filePath", None)  # snapshots return inline; file output is outside the sandbox roots
-                    res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
-                    out = result_text(res)
-                    if getattr(res, "isError", False) or out.startswith(("Input validation error", "Error:")):
-                        out = f"tool error: {out}"
+                    bad_args = arg_error(a, schemas.get(c.function.name, {}))
+                    if bad_args:  # never sent to the server; the model must fix the call
+                        out = bad_args
                     else:
-                        ok_calls += 1
-                        if c.function.name in ("write_file", "edit_file"):
-                            out += lint_written(a.get("path", ""))
+                        res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
+                        out = result_text(res)
+                        if getattr(res, "isError", False) or out.startswith(("Input validation error", "Error:")):
+                            out = f"tool error: {out}"
+                        else:
+                            ok_calls += 1
+                            if not out.strip():  # empty result: say so, so the model does not invent data
+                                out = "tool returned no results (empty). Report that no matching data was found; do not invent any."
+                            elif c.function.name in ("write_file", "edit_file"):
+                                out += lint_written(a.get("path", ""))
                 except asyncio.TimeoutError:
                     out = f"tool error: {c.function.name} timed out after {TOOL_TIMEOUT:g}s; try a narrower path or query"
                 except Exception as e:  # tool errors go back to the model, not up

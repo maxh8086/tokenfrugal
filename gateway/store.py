@@ -11,6 +11,10 @@ def _db():
     c.execute("""CREATE TABLE IF NOT EXISTS tasks(
         id TEXT PRIMARY KEY, agent TEXT, role TEXT, prompt TEXT, status TEXT,
         summary TEXT, detail TEXT, messages TEXT, error TEXT, attempts INTEGER DEFAULT 0)""")
+    try:  # databases created before the event trail existed
+        c.execute("ALTER TABLE tasks ADD COLUMN trail TEXT")
+    except sqlite3.OperationalError:
+        pass
     return c
 
 
@@ -30,6 +34,19 @@ def update(tid, **kw):
         c.execute(f"UPDATE tasks SET {sets} WHERE id=?", (*kw.values(), tid))
 
 
+TRAIL_MAX = 200  # newest events kept per task; older ones are dropped
+
+
+def append_trail(tid, event: dict) -> None:
+    """Keep the step-by-step event trail (step, tool, retry, fail) so get_detail can explain a failed run."""
+    with _db() as c:
+        r = c.execute("SELECT trail FROM tasks WHERE id=?", (tid,)).fetchone()
+        if not r:
+            return
+        trail = (json.loads(r[0]) if r[0] else []) + [event]
+        c.execute("UPDATE tasks SET trail=? WHERE id=?", (json.dumps(trail[-TRAIL_MAX:], ensure_ascii=False), tid))
+
+
 def get(tid) -> dict | None:
     with _db() as c:
         c.row_factory = sqlite3.Row
@@ -38,4 +55,5 @@ def get(tid) -> dict | None:
         return None
     d = dict(r)
     d["messages"] = json.loads(d["messages"] or "[]")
+    d["trail"] = json.loads(d.get("trail") or "[]")
     return d
