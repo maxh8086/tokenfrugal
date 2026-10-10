@@ -1,0 +1,24 @@
+# Stored responses per model
+
+- [llama3.2:3b-16k](llama3.2_3b-16k.md) — 160 responses
+- [qwen2.5-coder-yarn:3b](qwen2.5-coder-yarn_3b.md) — 115 responses
+- [ts-deepseek-r1-8b-16384](ts-deepseek-r1-8b-16384.md) — 32 responses
+- [ts-gemma3-4b-16384](ts-gemma3-4b-16384.md) — 72 responses
+- [ts-gemma4-e4b-16384](ts-gemma4-e4b-16384.md) — 40 responses
+- [ts-granite3-3-8b-16384](ts-granite3-3-8b-16384.md) — 32 responses
+- [ts-granite4-micro-16384](ts-granite4-micro-16384.md) — 92 responses
+- [ts-granite4-micro-32768](ts-granite4-micro-32768.md) — 8 responses
+- [ts-llama3-1-8b-16384](ts-llama3-1-8b-16384.md) — 32 responses
+- [ts-michelrosselli-bonsai-27b-16384](ts-michelrosselli-bonsai-27b-16384.md) — 32 responses
+- [ts-ministral-3-8b-16384](ts-ministral-3-8b-16384.md) — 32 responses
+- [ts-phi4-mini-16384](ts-phi4-mini-16384.md) — 48 responses
+- [ts-phi4-mini-32768](ts-phi4-mini-32768.md) — 8 responses
+- [ts-qwen2-5-7b-16384](ts-qwen2-5-7b-16384.md) — 32 responses
+- [ts-qwen2-5vl-7b-16384](ts-qwen2-5vl-7b-16384.md) — 32 responses
+- [ts-qwen25c-7b-16384](ts-qwen25c-7b-16384.md) — 74 responses
+- [ts-qwen25c-7b-32768](ts-qwen25c-7b-32768.md) — 8 responses
+- [ts-qwen3-4b-16384](ts-qwen3-4b-16384.md) — 48 responses
+- [ts-qwen3-4b-32768](ts-qwen3-4b-32768.md) — 5 responses
+- [ts-qwen3-4b-8192](ts-qwen3-4b-8192.md) — 4 responses
+- [ts-qwen3-8b-16384](ts-qwen3-8b-16384.md) — 32 responses
+- [ts-starcoder2-7b-16384](ts-starcoder2-7b-16384.md) — 32 responses
