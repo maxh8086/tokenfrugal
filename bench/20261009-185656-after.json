@@ -1,0 +1,120 @@
+{
+ "tag": "after",
+ "stamp": "20261009-185656",
+ "n": 3,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "s": {
+     "min": 8.6,
+     "p50": 9.9,
+     "p95": 16.0,
+     "max": 16.0,
+     "mean": 11.5
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n",
+     "\\Downloads\\Projects\\tokenfrugal\\bench\\scratch\\slug.py\", line 4, in slugify\n    s = re.sub(r'[^a-z0-9]+', '-', s)\n        ^^\nNameError: name "
+    ]
+   },
+   "fix_bug": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "s": {
+     "min": 10.2,
+     "p50": 10.3,
+     "p95": 10.5,
+     "max": 10.5,
+     "mean": 10.3
+    },
+    "notes": []
+   },
+   "write_tests": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "s": {
+     "min": 9.8,
+     "p50": 10.0,
+     "p95": 10.2,
+     "max": 10.2,
+     "mean": 10.0
+    },
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=3)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "2/3",
+    "ran": "3/3",
+    "s": {
+     "min": 9.6,
+     "p50": 11.0,
+     "p95": 11.7,
+     "max": 11.7,
+     "mean": 10.8
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 from a_mod import new_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "s": {
+     "min": 7.8,
+     "p50": 7.9,
+     "p95": 8.8,
+     "max": 8.8,
+     "mean": 8.2
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "s": {
+     "min": 9.4,
+     "p50": 12.2,
+     "p95": 16.1,
+     "max": 16.1,
+     "mean": 12.6
+    },
+    "notes": [
+     "[14d8824957] **Vulnerability Class:** Information Disclosure  **File Path:** /workspace/tokenfrugal/",
+     "[58a9e178e8] The tool call to 'ast-grep' failed because the specified directory '/workspace/tokenfru",
+     "[9b2311195d] Vulnerability Class: File Not Found Error  Next Action: Confirm Existence of File File "
+    ]
+   },
+   "debug_trace": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "s": {
+     "min": 11.4,
+     "p50": 11.9,
+     "p95": 12.4,
+     "max": 12.4,
+     "mean": 11.9
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "s": {
+     "min": 15.1,
+     "p50": 17.3,
+     "p95": 24.6,
+     "max": 24.6,
+     "mean": 19.0
+    },
+    "notes": [
+     "[2565932500] FrugalGPT is an open-source cost-effective alternative to large language models (LLMs) ",
+     "[76fa03f6a8] * File Path: /workspace/tokenfrugal/README.md * Summary: The \"token frugal\" project aim",
+     "[9d5f26016b] The project \"token frugal\" aims to offer a more efficient and cost-effective approach t"
+    ]
+   }
+  }
+ }
+}

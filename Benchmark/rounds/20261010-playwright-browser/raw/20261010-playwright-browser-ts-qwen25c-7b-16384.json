@@ -1,0 +1,236 @@
+{
+ "round": "20261010-playwright-browser",
+ "model": "ts-qwen25c-7b-16384",
+ "results": {
+  "A-chrome-devtools": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 12.1,
+    "runs": [
+     {
+      "s": 17.0,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 7.1,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 7.5,
+    "runs": [
+     {
+      "s": 7.4,
+      "verified": false,
+      "note": "No console error messages found."
+     },
+     {
+      "s": 7.6,
+      "verified": false,
+      "note": "No console error messages found."
+     }
+    ]
+   },
+   "pw_network": {
+    "verified": "0/2",
+    "s": 7.2,
+    "runs": [
+     {
+      "s": 7.0,
+      "verified": false,
+      "note": "No requests failed. All network requests were successful."
+     },
+     {
+      "s": 7.4,
+      "verified": false,
+      "note": "No requests were found for the page http://host.docker.internal:9101."
+     }
+    ]
+   },
+   "pw_perf": {
+    "verified": "0/2",
+    "s": 8.4,
+    "runs": [
+     {
+      "s": 8.4,
+      "verified": false,
+      "note": "<tool_response> tool error: Error: Access denied: path /workspace/lighthouse-reports (canonical: /wo"
+     },
+     {
+      "s": 8.3,
+      "verified": false,
+      "note": "<tool_response> tool error: Error: Access denied: path /workspace/lighthouse-reports (canonical: /wo"
+     }
+    ]
+   }
+  },
+  "B-playwright": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 8.2,
+    "runs": [
+     {
+      "s": 8.4,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 8.1,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_click": {
+    "verified": "0/2",
+    "s": 7.9,
+    "runs": [
+     {
+      "s": 7.8,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 8.0,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_login": {
+    "verified": "0/2",
+    "s": 10.0,
+    "runs": [
+     {
+      "s": 10.3,
+      "verified": false,
+      "note": "<tool_response> ### Error Invalid arguments for tool \"browser_fill_form\": \u2716 Invalid input: expected "
+     },
+     {
+      "s": 9.7,
+      "verified": false,
+      "note": "<tool_response> ### Error Invalid arguments for tool \"browser_fill_form\": \u2716 Invalid input: expected "
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 7.8,
+    "runs": [
+     {
+      "s": 7.6,
+      "verified": false,
+      "note": "No console error message found."
+     },
+     {
+      "s": 7.9,
+      "verified": false,
+      "note": "No console error message found."
+     }
+    ]
+   },
+   "pw_network": {
+    "verified": "0/2",
+    "s": 7.8,
+    "runs": [
+     {
+      "s": 7.9,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 7.8,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   }
+  },
+  "C-playwright+lighthouse": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 8.7,
+    "runs": [
+     {
+      "s": 8.8,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 8.6,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_click": {
+    "verified": "0/2",
+    "s": 8.8,
+    "runs": [
+     {
+      "s": 9.2,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 8.4,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_login": {
+    "verified": "0/2",
+    "s": 11.1,
+    "runs": [
+     {
+      "s": 11.2,
+      "verified": false,
+      "note": "<tool_response> ### Error Invalid arguments for tool \"browser_fill_form\": \u2716 Invalid input: expected "
+     },
+     {
+      "s": 11.0,
+      "verified": false,
+      "note": "<tool_response> ### Error Invalid arguments for tool \"browser_fill_form\": \u2716 Invalid input: expected "
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 8.1,
+    "runs": [
+     {
+      "s": 8.3,
+      "verified": false,
+      "note": "No console error messages found."
+     },
+     {
+      "s": 7.9,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_perf": {
+    "verified": "0/2",
+    "s": 8.9,
+    "runs": [
+     {
+      "s": 8.9,
+      "verified": false,
+      "note": "Verdict: Lighthouse audit failed due to invalid arguments. Please provide a valid page ID."
+     },
+     {
+      "s": 9.0,
+      "verified": false,
+      "note": "Verdict: Unable to perform Lighthouse audit due to invalid input arguments."
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,4 +1,5 @@
 """Gateway configuration (env-overridable)."""
+import json
 import os
 import re
 import secrets
@@ -61,10 +62,52 @@ SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().p
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
 TOOLS_PER_STEP = 2
+TOOL_MODE = os.getenv("TOKENFRUGAL_TOOL_MODE", "native")  # "text": tools described in the prompt, calls parsed from JSON text (models without a tool template)
+# CPUs / memory per Docker MCP tool container (docker mcp gateway defaults: 1 CPU, 2Gb).
+MCP_CPUS = os.getenv("TOKENFRUGAL_MCP_CPUS", "4")
+MCP_MEMORY = os.getenv("TOKENFRUGAL_MCP_MEMORY", "2Gb")
+# Timeouts (seconds), all overridable via env. 0 disables the task/tool limit.
+LLM_TIMEOUT = float(os.getenv("TOKENFRUGAL_LLM_TIMEOUT", "180"))    # one chat completion
+TOOL_TIMEOUT = float(os.getenv("TOKENFRUGAL_TOOL_TIMEOUT", "60"))   # one MCP tool call
+TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task; keep below the MCP client's tool timeout
+
+
+PERSONA_MODELS_FILE = Path(os.getenv("TOKENFRUGAL_PERSONA_MODELS_FILE", Path(__file__).parent / "persona_models.json"))
+
+
+PERSONA_MCPS_FILE = Path(os.getenv("TOKENFRUGAL_PERSONA_MCPS_FILE", Path(__file__).parent / "persona_mcps.json"))
+
+
+def load_catalog() -> dict:
+    return yaml.safe_load((Path(__file__).parent / "mcp_catalog.yaml").read_text(encoding="utf-8"))
+
+
+def default_mcps(role: dict, catalog: dict) -> list[str]:
+    """MCPs whose tools the role already allows (the benchmarked default toolkit)."""
+    return [n for n, m in catalog["mcps"].items() if set(m["tools"]) & set(role["tools"])]
 
 
 def load_personas() -> dict:
-    return yaml.safe_load((Path(__file__).parent / "personas.yaml").read_text(encoding="utf-8"))
+    cfg = yaml.safe_load((Path(__file__).parent / "personas.yaml").read_text(encoding="utf-8"))
+    pm = dict(cfg.get("persona_models") or {})
+    try:  # user overrides (written by scripts/persona_ui.py) win over the yaml defaults
+        pm.update(json.loads(PERSONA_MODELS_FILE.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        pass
+    # Benchmarks pin one model for every persona with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_PERSONA_MODELS=0 disables the mapping.
+    disabled = os.getenv("TOKENFRUGAL_PERSONA_MODELS") == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
+    if disabled:
+        pm = {}
+    cfg["persona_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
+    cfg["mcp_catalog"] = load_catalog()["mcps"]
+    try:  # user MCP selection per persona (written by scripts/persona_ui.py); off whenever the model mapping is off
+        mc = json.loads(PERSONA_MCPS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        mc = {}
+    cfg["persona_mcps"] = {} if disabled else {k: v for k, v in mc.items() if isinstance(v, list)}
+    for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
+        cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
+    return cfg
 
 
 def resolve_role(agent: str, cfg: dict) -> dict:
@@ -75,4 +118,16 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     r = dict(cfg["roles"][role])
     r["role"] = role
     r["model"] = cfg["models"][r["model"]]
+    sel = [n for n in cfg.get("persona_mcps", {}).get(agent, []) if n in cfg.get("mcp_catalog", {})]
+    if sel:  # user-chosen toolkit: open the distinct profiles/natives/backends and allow the union of tools
+        ms = [cfg["mcp_catalog"][n] for n in sel]
+        uniq = lambda xs: list(dict.fromkeys(x for x in xs if x))
+        r["profile"] = uniq(m.get("profile") for m in ms) or None
+        r["native"] = uniq(m.get("native") for m in ms)
+        r["compose"] = uniq(c for m in ms for c in m.get("compose", []))
+        r["tools"] = uniq(t for m in ms for t in m["tools"])
+        r["mcps"] = sel
+    pm = cfg.get("persona_models", {}).get(agent)
+    if pm:  # a logical name (builder/thinker) or a concrete model tag
+        r["model"] = cfg["models"].get(pm, pm)
     return r

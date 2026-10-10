@@ -1,0 +1,19 @@
+version: 1
+id: browser-pwlh
+name: browser-pwlh
+servers:
+- type: image
+  secrets: default
+  tools: [browser_navigate, browser_snapshot, browser_click, browser_fill_form, browser_console_messages]
+  image: mcp/playwright@sha256:8771dc4666e7c11440bfc6a0c6b00480e9a15b8891b45f29a52d7d995f8d1492
+  snapshot:
+    server: {name: playwright, type: server, image: mcp/playwright@sha256:8771dc4666e7c11440bfc6a0c6b00480e9a15b8891b45f29a52d7d995f8d1492, description: Playwright MCP server., title: Playwright, remote: {}}
+- type: image
+  secrets: default
+  tools: [navigate_page, lighthouse_audit]
+  image: tokenfrugal/chrome-devtools-mcp:1
+  snapshot:
+    server: {name: tokenfrugal-chrome-devtools, type: server, image: tokenfrugal/chrome-devtools-mcp:1, description: Chrome DevTools MCP, title: tokenfrugal-chrome-devtools, remote: {}}
+secrets:
+  default:
+    provider: docker-desktop-store
