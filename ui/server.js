@@ -27,6 +27,8 @@ const MAX_TASKS = 200;
 const tasks = new Map(); // id -> task
 const clients = new Set();
 const gateways = new Map(); // gateway pid -> MCP client name (Claude, Codex, ...)
+const HEALTH_STALE = 30; // seconds without a gateway health event before it counts as down
+const health = new Map(); // gateway pid -> {ts, status} from its latest health event
 let offset = 0;
 let tail = '';
 
@@ -47,6 +49,7 @@ function note(t, ts, text) {
 function apply(ev) {
   if (ev.pid && !gateways.has(ev.pid)) gateways.set(ev.pid, ''); // every event line carries its gateway pid
   if (ev.kind === 'client') { gateways.set(ev.pid, String(ev.name || '')); return null; }
+  if (ev.kind === 'health') { health.set(ev.pid, { ts: ev.ts, status: ev.status }); return null; }
   let t = tasks.get(ev.id);
   if (ev.kind === 'task_start') {
     t = { id: ev.id, pid: ev.pid, agent: ev.agent, role: ev.role, model: ev.model, prompt: ev.prompt,
@@ -273,11 +276,11 @@ const server = http.createServer(async (req, res) => {
       saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
   }
-  if (url.pathname === '/health') { // gateway liveness for the STATUS chip; pids stay server-side
-    const live = [...gateways].filter(([pid]) => alive(pid));
-    const clients = [...new Set(live.map(([, n]) => n).filter(Boolean))];
+  if (url.pathname === '/health') { // gateway health, published by each gateway as health events
+    const now = Date.now() / 1000;
+    const up = [...health.values()].some((h) => h.status === 'up' && now - h.ts < HEALTH_STALE);
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    return res.end(JSON.stringify({ status: live.length ? 'up' : 'down', clients }));
+    return res.end(JSON.stringify({ status: up ? 'up' : 'down', ts: now }));
   }
   if (url.pathname === '/api/usage') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
