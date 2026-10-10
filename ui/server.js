@@ -45,6 +45,7 @@ function note(t, ts, text) {
 }
 
 function apply(ev) {
+  if (ev.pid && !gateways.has(ev.pid)) gateways.set(ev.pid, ''); // every event line carries its gateway pid
   if (ev.kind === 'client') { gateways.set(ev.pid, String(ev.name || '')); return null; }
   let t = tasks.get(ev.id);
   if (ev.kind === 'task_start') {
@@ -271,6 +272,12 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ now: Date.now() / 1000, tasks: list, ...cfg, services: sv, connected, selected,
       saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
+  }
+  if (url.pathname === '/health') { // gateway liveness for the STATUS chip; pids stay server-side
+    const live = [...gateways].filter(([pid]) => alive(pid));
+    const clients = [...new Set(live.map(([, n]) => n).filter(Boolean))];
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ status: live.length ? 'up' : 'down', clients }));
   }
   if (url.pathname === '/api/usage') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
