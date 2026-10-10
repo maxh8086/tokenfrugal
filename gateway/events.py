@@ -12,7 +12,7 @@ EVENTS_PATH = Path(os.getenv("GATEWAY_EVENTS", Path(__file__).parent / "events.j
 ROLES_PATH = EVENTS_PATH.with_name("roles.json")
 UI_TEXT = Path(__file__).parent / "ui.yaml"
 MAX_BYTES = 2_000_000
-USAGE_FIELDS = ("ts", "pid", "kind", "id", "role", "model", "saved")  # long-term ledger for the dashboard usage popup
+USAGE_FIELDS = ("ts", "pid", "kind", "id", "role", "model", "saved", "task", "agent", "calls", "input", "output")  # long-term ledger for the dashboard usage popup
 
 
 def emit(kind: str, **fields) -> None:

@@ -296,8 +296,9 @@ function renderUsage() {
   $('usage').replaceChildren(close, el('h2', '', X.title),
     el('p', 'note', fill(X.period, { a: day(u.periodStart), b: day(u.periodEnd) }) + '. ' + X.scope_note),
     el('h3', '', X.sessions),
-    table([[X.session], [X.started], [X.last], [X.tasks, 1], [X.saved, 1]],
-      u.sessions.map((r) => [`#${r.pid} (${r.live ? X.live : X.ended})`, ago(r.first), ago(r.last), r.tasks, num(r.saved)])),
+    table([[X.session], [X.started], [X.last], [X.tasks, 1], [X.saved, 1], [X.local_models]],
+      u.sessions.map((r) => [`#${r.pid} (${r.live ? X.live : X.ended})`, ago(r.first), ago(r.last), r.tasks, num(r.saved),
+        r.models.map((m) => `${m.model} ×${m.tasks}${m.failed ? ` (${m.failed} ${X.failed})` : ''}`).join(', ') || '-'])),
     el('h3', '', X.days),
     table([[X.day], [X.tasks, 1], [X.saved, 1]], u.days.map((r) => [r.day, r.tasks, num(r.saved)])),
     el('h3', '', X.roles),
@@ -310,7 +311,10 @@ function renderUsage() {
       table([[X.model], [X.calls, 1], [X.total, 1]], u.claude.modelsWindow.map((r) => [r.model, r.calls, num(r.total)])),
       el('h3', '', X.claude_tasks),
       table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
-        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
+        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)])),
+      el('h3', '', X.local_tasks),
+      table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+        u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
 }
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
