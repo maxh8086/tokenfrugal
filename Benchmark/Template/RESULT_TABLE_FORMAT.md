@@ -1,7 +1,7 @@
 # Result table format and style
 
-Audience: people on GitHub who do not know this project. Use public, searchable MCP server names and no internal
-persona or role names.
+Audience: people on GitHub who do not know this project. Use public, searchable MCP server names and persona names (the agency-agents slug) in the header row.
+
 
 ## Header (on every table)
 Round id, date, hardware (GPU, VRAM), context window, runs per case (n), baseline round if any.
