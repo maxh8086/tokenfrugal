@@ -1,0 +1,228 @@
+{
+ "tag": "full-yarn3b-solo",
+ "stamp": "20261010-090428",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.7,
+     "p50": 12.7,
+     "p95": 19.5,
+     "max": 19.5,
+     "mean": 16.1
+    },
+    "notes": [
+     "\\Downloads\\Projects\\tokenfrugal\\bench\\scratch\\slug.py\", line 4, in slugify\n    s = re.sub(r'[^a-z0-9]+', '-', s)\n        ^^\nNameError: name "
+    ]
+   },
+   "fix_bug": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.4,
+     "p50": 12.4,
+     "p95": 15.9,
+     "max": 15.9,
+     "mean": 14.2
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.8,
+     "p50": 9.8,
+     "p95": 9.8,
+     "max": 9.8,
+     "mean": 9.8
+    },
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=3)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 15.5,
+     "p50": 15.5,
+     "p95": 35.4,
+     "max": 35.4,
+     "mean": 25.4
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 def new_name(x):     return x + 1 from a_mod i",
+     "def new_name(x):     return x + 1 from a_mod import new_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "1/2",
+    "ran": "1/2",
+    "s": {
+     "min": 8.3,
+     "p50": 8.3,
+     "p95": 15.3,
+     "max": 15.3,
+     "mean": 11.8
+    },
+    "notes": [
+     "FAILED (builder/qwen2.5-coder-yarn:3b): InternalServerError: Error code: 500 - {'error': {'message': 'predicti"
+    ]
+   },
+   "review_sqli": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.9,
+     "p50": 7.9,
+     "p95": 54.5,
+     "max": 54.5,
+     "mean": 31.2
+    },
+    "notes": [
+     "[0e653f7bae] No security vulnerabilities found in /workspace/tokenfrugal/bench/scratch/db.py."
+    ]
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 33.6,
+     "p50": 33.6,
+     "p95": 35.6,
+     "max": 35.6,
+     "mean": 34.6
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 11.3,
+     "p50": 11.3,
+     "p95": 11.4,
+     "max": 11.4,
+     "mean": 11.4
+    },
+    "notes": [
+     "[0eca9b0337] The file /workspace/tokenfrugal/README.md was not found.",
+     "[a889ca966b] The file /workspace/tokenfrugal/README.md was not found."
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.2,
+     "p50": 9.2,
+     "p95": 9.3,
+     "max": 9.3,
+     "mean": 9.2
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 4.8,
+     "p50": 4.8,
+     "p95": 5.1,
+     "max": 5.1,
+     "mean": 4.9
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.0,
+     "p50": 8.0,
+     "p95": 8.8,
+     "max": 8.8,
+     "mean": 8.4
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 64.0,
+     "p50": 64.0,
+     "p95": 64.2,
+     "max": 64.2,
+     "mean": 64.1
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 25.8,
+     "p50": 25.8,
+     "p95": 27.0,
+     "max": 27.0,
+     "mean": 26.4
+    },
+    "notes": [
+     "FAILED (designer/qwen2.5-coder-yarn:3b): LoopError: no final answer in 10 steps. Call resume_task('3cf317477c'",
+     "FAILED (designer/qwen2.5-coder-yarn:3b): LoopError: no final answer in 10 steps. Call resume_task('eec4510966'"
+    ]
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 24.1,
+     "p50": 24.1,
+     "p95": 47.7,
+     "max": 47.7,
+     "mean": 35.9
+    },
+    "notes": [
+     "FAILED (browser/qwen2.5-coder-yarn:3b): LoopError: no final answer in 8 steps. Call resume_task('e400bbf6e1') ",
+     "[48d05c2472] Verdict: Failed  Next action: Investigate the page structure and ensure the correct sna"
+    ]
+   },
+   "role_tracker": {
+    "verified": "1/2",
+    "ran": "1/2",
+    "s": {
+     "min": 4.6,
+     "p50": 4.6,
+     "p95": 6.4,
+     "max": 6.4,
+     "mean": 5.5
+    },
+    "notes": [
+     "FAILED (tracker/qwen2.5-coder-yarn:3b): LoopError: no final answer in 6 steps. Call resume_task('8a833bd23e') "
+    ]
+   },
+   "role_research": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 21.4,
+     "p50": 21.4,
+     "p95": 22.0,
+     "max": 22.0,
+     "mean": 21.7
+    },
+    "notes": [
+     "[87c0227497] The page at https://example.com was not found.",
+     "[9a0901201c] The crawl_markdown function was unable to find the page at https://example.com. Please "
+    ]
+   }
+  }
+ }
+}

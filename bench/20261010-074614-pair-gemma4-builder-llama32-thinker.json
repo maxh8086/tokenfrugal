@@ -1,0 +1,208 @@
+{
+ "tag": "pair-gemma4-builder-llama32-thinker",
+ "stamp": "20261010-074614",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 13.4,
+     "p50": 13.4,
+     "p95": 28.1,
+     "max": 28.1,
+     "mean": 20.8
+    },
+    "notes": []
+   },
+   "fix_bug": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.9,
+     "p50": 12.9,
+     "p95": 12.9,
+     "max": 12.9,
+     "mean": 12.9
+    },
+    "notes": []
+   },
+   "write_tests": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 16.3,
+     "p50": 16.3,
+     "p95": 16.7,
+     "max": 16.7,
+     "mean": 16.5
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 22.2,
+     "p50": 22.2,
+     "p95": 27.0,
+     "max": 27.0,
+     "mean": 24.6
+    },
+    "notes": [
+     "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.9,
+     "p50": 9.9,
+     "p95": 10.0,
+     "max": 10.0,
+     "mean": 9.9
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.4,
+     "p50": 9.4,
+     "p95": 18.3,
+     "max": 18.3,
+     "mean": 13.9
+    },
+    "notes": [
+     "[449a686e06] The tool call to `ast-grep` failed because the specified directory `/workspace/tokenfru"
+    ]
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.8,
+     "p50": 10.8,
+     "p95": 11.3,
+     "max": 11.3,
+     "mean": 11.1
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 13.9,
+     "p50": 13.9,
+     "p95": 15.9,
+     "max": 15.9,
+     "mean": 14.9
+    },
+    "notes": [
+     "[2a06f6b2d1] /workspace/tokenfrugal/README.md Project Summary: Frugal Token Usage optimizes token co",
+     "[46707ad697] /workspace/tokenfrugal/README.md Project Summary: Frugal Token Usage optimizes token co"
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.3,
+     "p50": 8.3,
+     "p95": 8.9,
+     "max": 8.9,
+     "mean": 8.6
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.2,
+     "p50": 8.2,
+     "p95": 21.7,
+     "max": 21.7,
+     "mean": 14.9
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.3,
+     "p50": 7.3,
+     "p95": 15.2,
+     "max": 15.2,
+     "mean": 11.2
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 42.9,
+     "p50": 42.9,
+     "p95": 46.6,
+     "max": 46.6,
+     "mean": 44.8
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 13.1,
+     "p50": 13.1,
+     "p95": 14.1,
+     "max": 14.1,
+     "mean": 13.6
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.0,
+     "p50": 8.0,
+     "p95": 8.7,
+     "max": 8.7,
+     "mean": 8.3
+    },
+    "notes": []
+   },
+   "role_tracker": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 3.9,
+     "p50": 3.9,
+     "p95": 4.6,
+     "max": 4.6,
+     "mean": 4.2
+    },
+    "notes": []
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 22.2,
+     "p50": 22.2,
+     "p95": 23.0,
+     "max": 23.0,
+     "mean": 22.6
+    },
+    "notes": []
+   }
+  }
+ }
+}

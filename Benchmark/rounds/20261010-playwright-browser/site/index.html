@@ -1,0 +1,10 @@
+<!doctype html><html><head><title>Acme Dashboard</title></head><body>
+<h1>Acme Dashboard</h1>
+<button id="d" onclick="document.getElementById('o').hidden=false">Show details</button>
+<p id="o" hidden>Order 4821 shipped</p>
+<form onsubmit="event.preventDefault();document.getElementById('w').textContent='Welcome back, '+document.getElementById('u').value">
+<label>Username <input id="u" name="username"></label>
+<label>Password <input id="p" type="password" name="password"></label>
+<button type="submit">Sign in</button></form><p id="w"></p>
+<script>console.error("widget-init failed: missing config key theme");fetch("/api/missing");</script>
+</body></html>

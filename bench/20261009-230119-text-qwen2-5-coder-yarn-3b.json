@@ -1,0 +1,67 @@
+{
+ "tag": "text-qwen2-5-coder-yarn-3b",
+ "stamp": "20261009-230119",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 11.0,
+     "p50": 11.0,
+     "p95": 13.1,
+     "max": 13.1,
+     "mean": 12.1
+    },
+    "notes": [
+     "rc=1 tests=3 -----------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 23.1,
+     "p50": 23.1,
+     "p95": 23.2,
+     "max": 23.2,
+     "mean": 23.1
+    },
+    "notes": [
+     "FAILED (builder/qwen2.5-coder-yarn:3b): LoopError: no final answer in 12 steps. Call resume_task('4f899f781d')",
+     "FAILED (builder/qwen2.5-coder-yarn:3b): LoopError: no final answer in 12 steps. Call resume_task('db69b43b76')"
+    ]
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 11.9,
+     "p50": 11.9,
+     "p95": 12.0,
+     "max": 12.0,
+     "mean": 11.9
+    },
+    "notes": [
+     "FAILED (research/qwen2.5-coder-yarn:3b): LoopError: you wrote a tool call as text; use the tool-calling interf"
+    ]
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 17.5,
+     "p50": 17.5,
+     "p95": 18.0,
+     "max": 18.0,
+     "mean": 17.8
+    },
+    "notes": [
+     "FAILED (browser/qwen2.5-coder-yarn:3b): LoopError: no final answer in 8 steps. Call resume_task('0c4fb840c7') ",
+     "FAILED (browser/qwen2.5-coder-yarn:3b): LoopError: no final answer in 8 steps. Call resume_task('8167914577') "
+    ]
+   }
+  }
+ }
+}

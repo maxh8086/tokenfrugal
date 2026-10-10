@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import time
+from pathlib import Path
 from datetime import datetime, timezone
 
 from . import store
@@ -17,7 +18,17 @@ RETENTION_DAYS = int(os.getenv("PLAN_RETENTION_DAYS", "30"))
 URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7697")
 STATUSES = ("pending", "in_progress", "done", "blocked", "cancelled")
 SHA = re.compile(r"^[0-9a-f]{7,40}$")
-REPO = os.getenv("CC_WORKSPACE") or os.getcwd()
+def _default_repo() -> str:
+    """Repo that evidence shas are checked in: PLAN_REPO, else CC_WORKSPACE if it is a git repo, else this checkout."""
+    ws = os.getenv("CC_WORKSPACE")
+    if os.getenv("PLAN_REPO"):
+        return os.environ["PLAN_REPO"]
+    if ws and os.path.exists(os.path.join(ws, ".git")):
+        return ws
+    return str(Path(__file__).resolve().parent.parent)
+
+
+REPO = _default_repo()
 _driver = None
 
 

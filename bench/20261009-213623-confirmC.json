@@ -1,0 +1,213 @@
+{
+ "tag": "confirmC",
+ "stamp": "20261009-213623",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.0,
+     "p50": 10.0,
+     "p95": 15.8,
+     "max": 15.8,
+     "mean": 12.9
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n",
+     "\\Downloads\\Projects\\tokenfrugal\\bench\\scratch\\slug.py\", line 4, in slugify\n    s = re.sub(r'[^a-z0-9]+', '-', s)\n        ^^\nNameError: name "
+    ]
+   },
+   "fix_bug": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.5,
+     "p50": 9.5,
+     "p95": 11.3,
+     "max": 11.3,
+     "mean": 10.4
+    },
+    "notes": []
+   },
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.6,
+     "p50": 9.6,
+     "p95": 10.1,
+     "max": 10.1,
+     "mean": 9.8
+    },
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=3)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.7,
+     "p50": 14.7,
+     "p95": 35.6,
+     "max": 35.6,
+     "mean": 25.1
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 from a_mod import new_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.3,
+     "p50": 14.3,
+     "p95": 15.4,
+     "max": 15.4,
+     "mean": 14.9
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.0,
+     "p50": 10.0,
+     "p95": 17.7,
+     "max": 17.7,
+     "mean": 13.8
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.4,
+     "p50": 12.4,
+     "p95": 13.0,
+     "max": 13.0,
+     "mean": 12.7
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 15.1,
+     "p50": 15.1,
+     "p95": 15.1,
+     "max": 15.1,
+     "mean": 15.1
+    },
+    "notes": [
+     "[2352298088] /workspace/tokenfrugal/README.md Project Summary: Frugal Token Usage optimizes token co",
+     "[6b0cf1f653] The project \"token frugal\" aims to reduce token usage in large language models through "
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.6,
+     "p50": 8.6,
+     "p95": 8.8,
+     "max": 8.8,
+     "mean": 8.7
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 4.7,
+     "p50": 4.7,
+     "p95": 11.8,
+     "max": 11.8,
+     "mean": 8.2
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.5,
+     "p50": 7.5,
+     "p95": 14.7,
+     "max": 14.7,
+     "mean": 11.1
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 43.6,
+     "p50": 43.6,
+     "p95": 45.8,
+     "max": 45.8,
+     "mean": 44.7
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.7,
+     "p50": 12.7,
+     "p95": 13.3,
+     "max": 13.3,
+     "mean": 13.0
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.2,
+     "p50": 7.2,
+     "p95": 8.0,
+     "max": 8.0,
+     "mean": 7.6
+    },
+    "notes": [
+     "[52ab1209ba] * File Path: N/A * URL: https://example.com * Verdict: Successful navigation * Next Act"
+    ]
+   },
+   "role_tracker": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 4.0,
+     "p50": 4.0,
+     "p95": 4.8,
+     "max": 4.8,
+     "mean": 4.4
+    },
+    "notes": []
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 22.6,
+     "p50": 22.6,
+     "p95": 23.1,
+     "max": 23.1,
+     "mean": 22.9
+    },
+    "notes": []
+   }
+  }
+ }
+}
