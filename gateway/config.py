@@ -107,6 +107,7 @@ def load_personas() -> dict:
     cfg["persona_mcps"] = {} if disabled else {k: v for k, v in mc.items() if isinstance(v, list)}
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
+    cfg["persona_skills"] = dict(cfg.get("persona_skills") or {})
     return cfg
 
 
@@ -118,6 +119,8 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     r = dict(cfg["roles"][role])
     r["role"] = role
     r["model"] = cfg["models"][r["model"]]
+    own = list(r.get("skills") or [])
+    r["skills"] = own + [s for s in cfg.get("persona_skills", {}).get(agent, []) if s not in own]
     sel = [n for n in cfg.get("persona_mcps", {}).get(agent, []) if n in cfg.get("mcp_catalog", {})]
     if sel:  # user-chosen toolkit: open the distinct profiles/natives/backends and allow the union of tools
         ms = [cfg["mcp_catalog"][n] for n in sel]
