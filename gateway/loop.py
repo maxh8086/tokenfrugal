@@ -15,6 +15,27 @@ from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
 
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0)
+USAGE: dict[str, dict] = {}  # per task id: model calls and tokens, taken by the gateway when the task ends
+
+
+def _count(tid: str, r, msgs: list, m) -> None:
+    """Add one model call to the task's totals. Uses the backend's usage when sent, else chars / 4."""
+    u = getattr(r, "usage", None)
+    inp = getattr(u, "prompt_tokens", None)
+    out = getattr(u, "completion_tokens", None)
+    if inp is None:
+        inp = sum(len(str(x.get("content") or "")) for x in msgs) // 4
+    if out is None:
+        out = len(m.content or "") // 4
+    a = USAGE.setdefault(tid, {"calls": 0, "input": 0, "output": 0})
+    a["calls"] += 1
+    a["input"] += int(inp)
+    a["output"] += int(out)
+
+
+def take_usage(tid: str) -> dict:
+    """Totals for one task id; cleared so a resumed run starts its own count."""
+    return USAGE.pop(tid, {"calls": 0, "input": 0, "output": 0})
 SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls per step. "
           "Work only inside the workspace, which is mounted at /workspace: always use absolute paths like /workspace/README.md. Be terse. When done, reply with the final result "
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
@@ -182,6 +203,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 temperature=0.1, max_tokens=2048, tools=None if text_mode else (tools or None),
                 **({} if used_tools or not tools or text_mode else {"tool_choice": "required"}))
             m = r.choices[0].message
+            _count(tid, r, msgs, m)
             thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()
             if thought:
                 events.emit("say", id=tid, text=thought[:1000])

@@ -154,7 +154,8 @@ function usage(now = Date.now() / 1000) {
   for (const f of [EVENTS + '.1', EVENTS, path.join(path.dirname(EVENTS), 'usage.jsonl')])
     for (const e of readJsonl(f)) if (e && (e.kind === 'task_done' || e.kind === 'task_failed') && e.id) rows.set(e.id, { ...rows.get(e.id), ...e });
   const list = [...rows.values()].map((e) => ({ ts: e.ts, pid: e.pid, id: e.id, ok: e.kind === 'task_done', saved: Number(e.saved) || 0,
-    role: e.role || (tasks.get(e.id) || {}).role || '', model: e.model || (tasks.get(e.id) || {}).model || '' }));
+    role: e.role || (tasks.get(e.id) || {}).role || '', model: e.model || (tasks.get(e.id) || {}).model || '',
+    task: e.task || (tasks.get(e.id) || {}).prompt || '', agent: e.agent || (tasks.get(e.id) || {}).agent || '', calls: Number(e.calls) || 0, input: Number(e.input) || 0, output: Number(e.output) || 0 }));
   const d = new Date(now * 1000);
   const day = Math.min(Math.max(cfgNum('renewal_day', 1), 1), 28);
   let start = new Date(d.getFullYear(), d.getMonth(), day);
@@ -190,6 +191,9 @@ function usage(now = Date.now() / 1000) {
   out.sessions = group(scopes.window, (x) => x.pid).map((a) => ({ ...a, pid: a.key, live: alive(a.key), models: modelsOf(a.key) }));
   out.days = group(scopes.month, (x) => new Date(x.ts * 1000).toLocaleDateString('en-CA')).map((a) => ({ ...a, day: a.key })).sort((a, b) => (a.day < b.day ? 1 : -1));
   out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
+  // Local tasks this period, one row per task id, same columns as Claude's subagent table (input/output are estimates when the backend sends no usage).
+  out.localTasks = list.filter((x) => x.ts >= scopes.month).sort((a, b) => b.ts - a.ts).slice(0, 200)
+    .map((x) => ({ task: x.task || x.id, persona: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output }));
   out.claude = claudeUsage(scopes);
   return out;
 }
