@@ -41,7 +41,8 @@ class Router:
 @contextlib.asynccontextmanager
 async def open_role(profile: str | list[str] | None, native: list[str] | None = None):
     async with contextlib.AsyncExitStack() as stack:
-        sessions = [await stack.enter_async_context(open_profile(profile))] if profile else []
+        profiles = [profile] if isinstance(profile, str) else list(profile or [])
+        sessions = [await stack.enter_async_context(open_profile(p)) for p in profiles]
         nat = set()
         for n in native or []:
             ns = await stack.enter_async_context(open_native(n))
