@@ -65,3 +65,4 @@ Baselines: highest score qwen3-8b 28/32 in 1164 s; fastest >=75% qwen25c-7b 23/3
 | full-llama3-2-3b-16k | gemma4 | 20/32 | 7 | 30/32 | 371 | yes | no |
 | gemma4-e4b | llama32 | 27/32 | 3 | 30/32 | 413 | yes | no |
 | full-defaults-yarn3b-llama32 | gemma4 | 22/32 | 8 | 29/32 | 500 | yes | no |
+| full-yarn3b-solo | gemma4 | 15/32 | 11 | 29/32 | 540 | yes | no |

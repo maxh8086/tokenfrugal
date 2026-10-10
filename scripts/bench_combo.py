@@ -90,7 +90,8 @@ def main():
     # Measured cascades: primary solo run (all cases) + partner run on the primary's non-2/2 cases only.
     # Add a line to PRIMARY when you run scripts/cascade_run.py with a new <name>.
     PRIMARY = {"qwen25c-then-gemma4": "full-ts-qwen25c-7b-16384", "llama32-then-gemma4": "full-llama3-2-3b-16k",
-               "gemma4-then-llama32": "full-ts-gemma4-e4b-16384", "defaults-then-gemma4": "full-defaults-yarn3b-llama32"}
+               "gemma4-then-llama32": "full-ts-gemma4-e4b-16384", "defaults-then-gemma4": "full-defaults-yarn3b-llama32",
+               "yarn3b-solo-then-gemma4": "full-yarn3b-solo"}
     allruns = load(["bench/*full-*.json"])
     out += ["", "## Measured cascades (primary on all cases, partner only on the cases the primary did not fully pass)", "",
             f"Baselines: highest score {name(best)} {solo[best][0]}/32 in {solo[best][1]:.0f} s; "

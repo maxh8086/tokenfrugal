@@ -124,8 +124,20 @@ CASE_PUBLIC = {
 }
 
 
+# agency-agents persona used by each case (scripts/bench_real.py)
+CASE_PERSONA = {
+    "write_function": "engineering-backend-architect", "fix_bug": "engineering-backend-architect",
+    "write_tests": "engineering-backend-architect", "rename_across_files": "engineering-backend-architect",
+    "find_symbol": "engineering-backend-architect", "review_sqli": "testing-code-reviewer",
+    "debug_trace": "engineering-sre", "summarize_readme": "support-docs-writer", "role_analyzer": "finance-analyst",
+    "role_data": "gis-analyst", "role_docs": "engineering-technical-writer", "role_security": "security-auditor",
+    "role_designer": "design-ui-designer", "role_browser": "testing-evidence-collector",
+    "role_tracker": "project-management-project-shepherd", "role_research": "support-docs-writer",
+}
+
+
 def case_meta():
-    return {c: {"name": n, "srv": srv, "tools": t} for c, (n, srv, t) in CASE_PUBLIC.items()}
+    return {c: {"name": n, "srv": srv, "tools": t, "persona": CASE_PERSONA[c]} for c, (n, srv, t) in CASE_PUBLIC.items()}
 
 
 def params(tag):
@@ -157,7 +169,7 @@ const D=__DATA__,C=__CASES__,M=__META__;let sk="ok",sd=-1;
 const cols=[["Sr",null],["Model","tag"],["Params (B)","pk"],["Time (s)","mean"],["Verified","ok"],["Ran","ran"],["Note","note"],...C.map(c=>[M[c].name,c])];
 const th=document.querySelector("thead");const NF=6;
 const fc=(i)=>i<NF?` class="f${i==NF-1?" fl":""}"`:"";
-const gh="<tr class=m>"+cols.slice(0,NF).map((x,i)=>`<th class="f${i==NF-1?" fl":""}"></th>`).join("")+"<th></th>"+C.map(c=>`<th class=mt><b>${M[c].srv}</b><br>tools: <i>${M[c].tools}</i></th>`).join("")+"</tr>";
+const gh="<tr class=m>"+cols.slice(0,NF).map((x,i)=>`<th class="f${i==NF-1?" fl":""}"></th>`).join("")+"<th></th>"+C.map(c=>`<th class=mt><b>${M[c].srv}</b><br>persona: <i>${M[c].persona}</i><br>tools: <i>${M[c].tools}</i></th>`).join("")+"</tr>";
 th.innerHTML=gh+"<tr>"+cols.map(([n,k],i)=>`<th data-k="${k}"${fc(i)}>${n}</th>`).join("")+"</tr>";
 const cs=document.getElementById("cs");C.forEach(c=>cs.add(new Option(M[c].name,c)));
 const val=(r,k)=>C.includes(k)?r.cases[k]:r[k];
@@ -193,7 +205,7 @@ def main():
         table.append((ok / max(tot, 1), tag, ok, tot, ran, mean, rw))
     table.sort(reverse=True)
     out = ["# Model comparison (realworld suite, all cases)", "",
-           "| Model / run tag | Params | Verified | Ran | Mean s/case | " + " | ".join(CASE_PUBLIC[c][0] for c in cases) + " |",
+           "| Model / run tag | Params | Verified | Ran | Mean s/case | " + " | ".join(f"{CASE_PUBLIC[c][0]}<br>{CASE_PUBLIC[c][1]}<br>persona: {CASE_PERSONA[c]}" for c in cases) + " |",
            "|---|---|---|---|---|" + "---|" * len(cases)]
     for _, tag, ok, tot, ran, mean, rw in table:
         out.append(f"| {tag} | {params(tag)[0]} | {ok}/{tot} | {ran}/{tot} | {mean:.1f} | " + " | ".join(rw[c]["verified"] if c in rw else "-" for c in cases) + " |")
