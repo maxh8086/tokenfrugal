@@ -1,0 +1,220 @@
+{
+ "tag": "full-ts-qwen3-4b-16384",
+ "stamp": "20261010-001328",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "1/2",
+    "ran": "1/2",
+    "s": {
+     "min": 44.2,
+     "p50": 44.2,
+     "p95": 96.5,
+     "max": 96.5,
+     "mean": 70.3
+    },
+    "notes": [
+     "FAILED (builder/ts-qwen3-4b-16384): LoopError: empty answer. Call resume_task('efe05e3de8') to retry."
+    ]
+   },
+   "fix_bug": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 52.2,
+     "p50": 52.2,
+     "p95": 62.0,
+     "max": 62.0,
+     "mean": 57.1
+    },
+    "notes": []
+   },
+   "write_tests": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 52.6,
+     "p50": 52.6,
+     "p95": 116.6,
+     "max": 116.6,
+     "mean": 84.6
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 116.7,
+     "p50": 116.7,
+     "p95": 154.1,
+     "max": 154.1,
+     "mean": 135.4
+    },
+    "notes": [
+     "FAILED (builder/ts-qwen3-4b-16384): LoopError: empty answer. Call resume_task('ca5b456243') to retry.",
+     "FAILED (builder/ts-qwen3-4b-16384): LoopError: task timed out after 150s. Call resume_task('5c8dd8a1a4') to re"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 38.0,
+     "p50": 38.0,
+     "p95": 62.7,
+     "max": 62.7,
+     "mean": 50.4
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 62.7,
+     "p50": 62.7,
+     "p95": 65.0,
+     "max": 65.0,
+     "mean": 63.9
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 25.2,
+     "p50": 25.2,
+     "p95": 36.6,
+     "max": 36.6,
+     "mean": 30.9
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 150.0,
+     "p50": 150.0,
+     "p95": 152.9,
+     "max": 152.9,
+     "mean": 151.4
+    },
+    "notes": [
+     "FAILED (research/ts-qwen3-4b-16384): LoopError: task timed out after 150s. Call resume_task('94c8f99d69') to r",
+     "FAILED (research/ts-qwen3-4b-16384): LoopError: task timed out after 150s. Call resume_task('b478c94e78') to r"
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 26.0,
+     "p50": 26.0,
+     "p95": 27.9,
+     "max": 27.9,
+     "mean": 26.9
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.2,
+     "p50": 14.2,
+     "p95": 16.0,
+     "max": 16.0,
+     "mean": 15.1
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 42.2,
+     "p50": 42.2,
+     "p95": 52.1,
+     "max": 52.1,
+     "mean": 47.2
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 154.2,
+     "p50": 154.2,
+     "p95": 154.3,
+     "max": 154.3,
+     "mean": 154.2
+    },
+    "notes": [
+     "FAILED (security/ts-qwen3-4b-16384): LoopError: task timed out after 150s. Call resume_task('28494b21f1') to r",
+     "FAILED (security/ts-qwen3-4b-16384): LoopError: task timed out after 150s. Call resume_task('5796323352') to r"
+    ]
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 46.3,
+     "p50": 46.3,
+     "p95": 71.4,
+     "max": 71.4,
+     "mean": 58.9
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 85.5,
+     "p50": 85.5,
+     "p95": 147.6,
+     "max": 147.6,
+     "mean": 116.5
+    },
+    "notes": [
+     "[63726c9c33] Page heading not found (about:blank)",
+     "[f7306992c8] The page heading is not found in the snapshot."
+    ]
+   },
+   "role_tracker": {
+    "verified": "1/2",
+    "ran": "1/2",
+    "s": {
+     "min": 69.1,
+     "p50": 69.1,
+     "p95": 113.8,
+     "max": 113.8,
+     "mean": 91.4
+    },
+    "notes": [
+     "FAILED (tracker/ts-qwen3-4b-16384): LoopError: empty answer. Call resume_task('712668668d') to retry."
+    ]
+   },
+   "role_research": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 62.8,
+     "p50": 62.8,
+     "p95": 85.2,
+     "max": 85.2,
+     "mean": 74.0
+    },
+    "notes": [
+     "[4849655a9e] The page heading is not present in the crawled content. The response from `crawl_markdo",
+     "[975b5aac73] findings: The page content from https://example.com shows no markdown heading (e.g., # "
+    ]
+   }
+  }
+ }
+}

@@ -24,7 +24,7 @@ from gateway import loop, server  # noqa: E402
 from scripts import bench_real  # noqa: E402
 from gateway.config import OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
-OUT = ROOT / "bench"
+OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
 
 # One short, checkable task per role: (agent slug, task).
@@ -291,4 +291,6 @@ async def main():
 
 
 if __name__ == "__main__":
+    for s in (sys.stdout, sys.stderr):  # piped Windows consoles default to cp1252 and die on model output like U+2011
+        s.reconfigure(encoding="utf-8", errors="replace")
     asyncio.run(main())

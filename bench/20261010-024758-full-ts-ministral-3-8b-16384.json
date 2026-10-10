@@ -1,0 +1,215 @@
+{
+ "tag": "full-ts-ministral-3-8b-16384",
+ "stamp": "20261010-024758",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 46.2,
+     "p50": 46.2,
+     "p95": 46.7,
+     "max": 46.7,
+     "mean": 46.5
+    },
+    "notes": [
+     "t = re.sub(r'[-]+', '-', text)\\n    text = text.strip('-')\\n    return text\n              ^\nSyntaxError: unexpected character after line con"
+    ]
+   },
+   "fix_bug": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 19.4,
+     "p50": 19.4,
+     "p95": 21.7,
+     "max": 21.7,
+     "mean": 20.5
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 42.7,
+     "p50": 42.7,
+     "p95": 43.4,
+     "max": 43.4,
+     "mean": 43.0
+    },
+    "notes": [
+     "rc=1 tests=3 -----------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 25.0,
+     "p50": 25.0,
+     "p95": 31.9,
+     "max": 31.9,
+     "mean": 28.4
+    },
+    "notes": [
+     "def new_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))",
+     "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.6,
+     "p50": 10.6,
+     "p95": 12.5,
+     "max": 12.5,
+     "mean": 11.6
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 18.4,
+     "p50": 18.4,
+     "p95": 25.5,
+     "max": 25.5,
+     "mean": 21.9
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 18.5,
+     "p50": 18.5,
+     "p95": 22.4,
+     "max": 22.4,
+     "mean": 20.4
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 27.2,
+     "p50": 27.2,
+     "p95": 27.3,
+     "max": 27.3,
+     "mean": 27.2
+    },
+    "notes": [
+     "FAILED (research/ts-ministral-3-8b-16384): InternalServerError: Error code: 500 - {'error': {'message': \"tool "
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.4,
+     "p50": 12.4,
+     "p95": 14.5,
+     "max": 14.5,
+     "mean": 13.4
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 11.9,
+     "p50": 11.9,
+     "p95": 14.7,
+     "max": 14.7,
+     "mean": 13.3
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 19.3,
+     "p50": 19.3,
+     "p95": 19.3,
+     "max": 19.3,
+     "mean": 19.3
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 63.4,
+     "p50": 63.4,
+     "p95": 71.7,
+     "max": 71.7,
+     "mean": 67.5
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 29.3,
+     "p50": 29.3,
+     "p95": 58.3,
+     "max": 58.3,
+     "mean": 43.8
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 15.5,
+     "p50": 15.5,
+     "p95": 17.7,
+     "max": 17.7,
+     "mean": 16.6
+    },
+    "notes": [
+     "[8a3a98179c] **Verdict:** No semantic heading (`<h1>`\u2013`<h6>`) detected on `https://example.com`. **S",
+     "[9229d2caf6] **Summary:** - **URL:** `https://example.com` - **Snapshot:** Confirmed via visual insp"
+    ]
+   },
+   "role_tracker": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.7,
+     "p50": 10.7,
+     "p95": 11.6,
+     "max": 11.6,
+     "mean": 11.1
+    },
+    "notes": []
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 26.1,
+     "p50": 26.1,
+     "p95": 26.4,
+     "max": 26.4,
+     "mean": 26.2
+    },
+    "notes": []
+   }
+  }
+ }
+}
