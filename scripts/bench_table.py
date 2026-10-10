@@ -38,7 +38,7 @@ PARAMS = {
     "full-ts-qwen25c-7b-builder-granite-thinker": ("7B + 3B", 7), "full-ts-granite3-3-8b-16384": ("8B", 8),
     "full-ts-llama3-1-8b-16384": ("8B", 8), "full-ts-qwen2-5-7b-16384": ("7B", 7),
     "full-ts-qwen3-8b-16384": ("8B", 8), "full-ts-ministral-3-8b-16384": ("8B", 8),
-    "full-ts-qwen2-5vl-7b-16384": ("7B", 7), "full-ts-deepseek-r1-8b-16384": ("8B", 8),
+    "full-ts-qwen2-5vl-7b-16384": ("7B", 7), "full-ts-deepseek-r1-8b-16384": ("8B", 8), "full-ts-deepseek-r1-distill-qwen-7b-16384": ("7B", 7),
     "full-ts-starcoder2-7b-16384": ("7B", 7), "full-ts-michelrosselli-bonsai-27b-16384": ("27B", 27),
 }
 
@@ -129,7 +129,7 @@ CASE_PERSONA = {
     "write_function": "engineering-backend-architect", "fix_bug": "engineering-backend-architect",
     "write_tests": "engineering-backend-architect", "rename_across_files": "engineering-backend-architect",
     "find_symbol": "engineering-backend-architect", "review_sqli": "testing-code-reviewer",
-    "debug_trace": "engineering-sre", "summarize_readme": "support-docs-writer", "role_analyzer": "finance-analyst",
+    "debug_trace": "engineering-sre", "summarize_readme": "support-docs-writer", "role_analyzer": "engineering-software-architect",
     "role_data": "gis-analyst", "role_docs": "engineering-technical-writer", "role_security": "security-auditor",
     "role_designer": "design-ui-designer", "role_browser": "testing-evidence-collector",
     "role_tracker": "project-management-project-shepherd", "role_research": "support-docs-writer",

@@ -1,6 +1,7 @@
 """Per-persona model mapping page, built from the solo full-suite runs.
 
-Default model per persona = most verified runs on that persona's cases, then least seconds.
+Default model per persona = among models that verify at least 75% of the best score on that persona's cases,
+the smallest (parameters), then the fastest (seconds). Rule and tables: Benchmark/persona-model-selection.md.
 The page lets you pick a model per persona, shows predicted score/time, and exports the mapping.
     PYTHONIOENCODING=utf-8 PYTHONPATH=. python -m scripts.bench_persona
 Output: Benchmark/persona-config.html and Benchmark/persona-defaults.md
@@ -31,6 +32,7 @@ INFO = {
     "gemma4-e4b": ("ts-gemma4-e4b-16384", "gemma4:e4b", "7.5B (4B effective)", "Q4_K_M", 16384, _T + ", top_k 64, top_p 0.95, vision projector"),
     "qwen2-5vl-7b": ("ts-qwen2-5vl-7b-16384", "qwen2.5vl:7b", "8.3B", "Q4_K_M", 16384, _T + ", vision"),
     "deepseek-r1-8b": ("ts-deepseek-r1-8b-16384", "deepseek-r1:8b", "8.2B", "Q4_K_M", 16384, _T + ", reasoning model"),
+    "deepseek-r1-distill-qwen-7b": ("ts-deepseek-r1-distill-qwen-7b-16384", "hf.co/lmstudio-community/DeepSeek-R1-Distill-Qwen-7B-GGUF", "7.6B", "Q4_K_M", 16384, _T + ", reasoning model"),
     "starcoder2-7b": ("ts-starcoder2-7b-16384", "starcoder2:7b", "7B", "Q4_0", 16384, _T + ", code-completion model"),
 }
 
@@ -45,8 +47,10 @@ def main():
         personas[p].append(c)
     best = {}
     for p, cs in personas.items():
-        best[p] = min(models, key=lambda m: (-sum(models[m][c][0] for c in cs), sum(models[m][c][1] for c in cs)))
-    out = ["# Default model per persona (best measured solo result)", "",
+        sc = {m: sum(models[m][c][0] for c in cs) for m in models}
+        ok = [m for m in models if sc[m] >= 0.75 * max(sc.values())]
+        best[p] = min(ok, key=lambda m: (float(INFO[m][2].split("B")[0]), sum(models[m][c][1] for c in cs)))
+    out = ["# Default model per persona (smallest adequate model, then fastest)", "",
            "| Persona | Cases | Default model (Ollama tag) | Quant | Ctx | Verified | s |", "|---|---|---|---|---|---|---|"]
     ts = tv = 0
     for p, cs in personas.items():

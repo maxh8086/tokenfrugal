@@ -105,7 +105,7 @@ def cases():
          f"Read /workspace/{SYNAPTREE_PROJECT}/README.md and summarize what the project does in 3 sentences.",
          _has("mcp", "local")),
         # one verified case per remaining role: analyzer, data, docs, security, designer, browser, tracker, research
-        ("role_analyzer", "finance-analyst", _none,
+        ("role_analyzer", "engineering-software-architect", _none,
          "Use search_graph to find where resolve_role is defined and give its file path.",
          _has("gateway/config.py", "gateway\\config.py")),
         ("role_data", "gis-analyst", s_files,

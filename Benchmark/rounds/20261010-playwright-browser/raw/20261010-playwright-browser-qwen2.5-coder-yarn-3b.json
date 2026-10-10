@@ -1,0 +1,236 @@
+{
+ "round": "20261010-playwright-browser",
+ "model": "qwen2.5-coder-yarn:3b",
+ "results": {
+  "A-chrome-devtools": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 11.4,
+    "runs": [
+     {
+      "s": 17.3,
+      "verified": false,
+      "note": "## Findings  - **Page Heading**: The page heading is not found in the snapshot. - **Console Messages"
+     },
+     {
+      "s": 5.6,
+      "verified": false,
+      "note": "<tool_response> ## Page Heading RootWebArea </tool_response>"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 5.8,
+    "runs": [
+     {
+      "s": 5.7,
+      "verified": false,
+      "note": "<tool_response> ## Console messages <no console messages found> </tool_response>"
+     },
+     {
+      "s": 6.0,
+      "verified": false,
+      "note": "<tool_response> ## Console messages <no console messages found> </tool_response>"
+     }
+    ]
+   },
+   "pw_network": {
+    "verified": "0/2",
+    "s": 8.3,
+    "runs": [
+     {
+      "s": 6.3,
+      "verified": false,
+      "note": "<tool_response> tool error: Input validation error: Invalid arguments for tool navigate_page: pageId"
+     },
+     {
+      "s": 10.3,
+      "verified": false,
+      "note": "The page failed to load, and no network requests were found."
+     }
+    ]
+   },
+   "pw_perf": {
+    "verified": "0/2",
+    "s": 37.4,
+    "runs": [
+     {
+      "s": 65.0,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 9.7,
+      "verified": false,
+      "note": "It seems there was an issue with the Lighthouse audit. Let's try running it again with a different a"
+     }
+    ]
+   }
+  },
+  "B-playwright": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 7.0,
+    "runs": [
+     {
+      "s": 6.7,
+      "verified": false,
+      "note": "not found"
+     },
+     {
+      "s": 7.2,
+      "verified": false,
+      "note": "### Findings - The page did not load successfully. The URL `http://host.docker.internal:9101` could "
+     }
+    ]
+   },
+   "pw_click": {
+    "verified": "0/2",
+    "s": 7.3,
+    "runs": [
+     {
+      "s": 7.3,
+      "verified": false,
+      "note": "### Error Error: \"Show details button\" does not match any elements."
+     },
+     {
+      "s": 7.4,
+      "verified": false,
+      "note": "### Error Error: \"Show details\" does not match any elements."
+     }
+    ]
+   },
+   "pw_login": {
+    "verified": "0/2",
+    "s": 41.3,
+    "runs": [
+     {
+      "s": 16.6,
+      "verified": false,
+      "note": "It seems there might be an issue with the element selector. Let's try a different approach. Can you "
+     },
+     {
+      "s": 66.1,
+      "verified": false,
+      "note": "It seems there is an issue with the element selector for the Username field. Let's try a different a"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 7.5,
+    "runs": [
+     {
+      "s": 7.5,
+      "verified": false,
+      "note": "Final result: - **Verdict**: The page did not load successfully. The browser navigated to `about:bla"
+     },
+     {
+      "s": 7.5,
+      "verified": false,
+      "note": "Final result: - **Verdict**: The page did not load successfully. The browser navigated to `about:bla"
+     }
+    ]
+   },
+   "pw_network": {
+    "verified": "0/2",
+    "s": 56.7,
+    "runs": [
+     {
+      "s": 46.1,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     },
+     {
+      "s": 67.2,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     }
+    ]
+   }
+  },
+  "C-playwright+lighthouse": {
+   "pw_heading": {
+    "verified": "0/2",
+    "s": 9.5,
+    "runs": [
+     {
+      "s": 10.0,
+      "verified": false,
+      "note": "### Findings - The page URL is `about:blank`, which is the default blank page in web browsers. This "
+     },
+     {
+      "s": 9.0,
+      "verified": false,
+      "note": "not found"
+     }
+    ]
+   },
+   "pw_click": {
+    "verified": "0/2",
+    "s": 123.9,
+    "runs": [
+     {
+      "s": 112.5,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     },
+     {
+      "s": 135.3,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     }
+    ]
+   },
+   "pw_login": {
+    "verified": "0/2",
+    "s": 25.2,
+    "runs": [
+     {
+      "s": 36.7,
+      "verified": false,
+      "note": "### Findings - The page navigated to `about:blank` instead of `http://host.docker.internal:9101`. - "
+     },
+     {
+      "s": 13.7,
+      "verified": false,
+      "note": "It seems there might be an issue with the selectors used in the previous steps. Let's try a differen"
+     }
+    ]
+   },
+   "pw_console": {
+    "verified": "0/2",
+    "s": 48.6,
+    "runs": [
+     {
+      "s": 48.3,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     },
+     {
+      "s": 48.9,
+      "verified": false,
+      "note": "LoopError: no final answer in 8 steps"
+     }
+    ]
+   },
+   "pw_perf": {
+    "verified": "0/2",
+    "s": 14.2,
+    "runs": [
+     {
+      "s": 14.5,
+      "verified": false,
+      "note": "It seems there was an issue with the URL provided. Please ensure that the URL is correctly formatted"
+     },
+     {
+      "s": 13.9,
+      "verified": false,
+      "note": "It seems there was an issue with the URL provided. Let's try navigating to a different URL that is a"
+     }
+    ]
+   }
+  }
+ }
+}
