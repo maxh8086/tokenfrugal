@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from . import store
 from .config import COMPOSE_PROJECT, OLLAMA_URL, ROOT
 
 EVENTS_PATH = Path(os.getenv("GATEWAY_EVENTS", Path(__file__).parent / "events.jsonl"))
@@ -23,6 +24,8 @@ def emit(kind: str, **fields) -> None:
         line = json.dumps({"ts": time.time(), "pid": os.getpid(), "kind": kind, **fields}, ensure_ascii=False)
         with EVENTS_PATH.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
+        if "id" in fields:  # per-task trail, readable through get_detail after events.jsonl rotates
+            store.append_trail(fields["id"], {k: v for k, v in json.loads(line).items() if k != "pid"})
         if kind in ("task_done", "task_failed"):  # events.jsonl rotates; usage.jsonl keeps month-long totals
             row = {"ts": time.time(), "pid": os.getpid(), "kind": kind, **fields}
             with EVENTS_PATH.with_name("usage.jsonl").open("a", encoding="utf-8") as f:
