@@ -44,3 +44,5 @@ summarization and browsing, a 3B model is unreliable: the orchestrator must veri
 Screenshot below is rendered from the raw JSON by `make_report.py` (HTML captured with headless Edge; no extra software installed).
 
 ![iter4 results](iter4-results.png)
+
+Interactive version of the 3B results table, sortable and filterable by role: [results-3b.html](results-3b.html)
