@@ -311,7 +311,10 @@ function renderUsage() {
       table([[X.model], [X.calls, 1], [X.total, 1]], u.claude.modelsWindow.map((r) => [r.model, r.calls, num(r.total)])),
       el('h3', '', X.claude_tasks),
       table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
-        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
+        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)])),
+      el('h3', '', X.local_tasks),
+      table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+        u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
 }
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
