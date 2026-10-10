@@ -31,7 +31,7 @@ roles:
   designer: {model: thinker, profile: design,     max_steps: 10, compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape]}
   browser:  {model: thinker, profile: browser,    max_steps: 8,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
   tracker:  {model: thinker, max_steps: 6,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note]}
-  github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents, create_pull_request]}  # read + open PRs only; close/merge stay with Haiku
+  github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents]}  # read-only; create/close/merge PRs stay with Haiku
   github-actions-read: {model: thinker, profile: github, max_steps: 8, tools: [actions_list, actions_get, get_job_logs]}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code]}
   finance:  {model: thinker, profile: docs,       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown]}

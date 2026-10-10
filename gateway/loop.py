@@ -89,25 +89,48 @@ def coerce_args(args: dict, schema: dict) -> dict:
                 out[k] = float(v)
             elif t == "boolean" and v.lower() in ("true", "false"):
                 out[k] = v.lower() == "true"
-        except ValueError:
+            elif t == "array":  # live failure: fields='["number", ...]' sent as text; the server wants a list
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    out[k] = parsed
+        except ValueError:  # json.JSONDecodeError is a ValueError
             pass
     return out
 
 
+JSON_TYPES = {  # schema type -> Python check; bool is excluded from number/integer below
+    "string": lambda v: isinstance(v, str),
+    "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
+    "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool),
+    "boolean": lambda v: isinstance(v, bool),
+    "array": lambda v: isinstance(v, list),
+    "object": lambda v: isinstance(v, dict),
+}
+
+
 def arg_error(args: dict, schema: dict) -> str:
-    """Reject calls the schema cannot accept before they reach the MCP server: unknown or missing arguments."""
+    """Reject calls the schema cannot accept before they reach the MCP server: unknown, missing or mistyped arguments."""
     props = (schema or {}).get("properties")
     if props is None:
         return ""
     unknown = sorted(k for k in args if k not in props)
     missing = sorted(k for k in (schema or {}).get("required", []) if k not in args)
-    if not unknown and not missing:
+    # top-level "type" only; anyOf/oneOf/$ref and unknown type names are not checked
+    mistyped = sorted(
+        f"{k} must be {props[k]['type']}, got {type(v).__name__}"
+        for k, v in args.items()
+        if k in props and isinstance(props[k], dict) and props[k].get("type") in JSON_TYPES
+        and not JSON_TYPES[props[k]["type"]](v)
+    )
+    if not unknown and not missing and not mistyped:
         return ""
     parts = []
     if unknown:
         parts.append(f"unknown argument(s) {', '.join(unknown)}")
     if missing:
         parts.append(f"missing required argument(s) {', '.join(missing)}")
+    if mistyped:
+        parts.append(f"wrong type: {'; '.join(mistyped)}")
     return f"tool error: {'; '.join(parts)}. Valid arguments: {', '.join(sorted(props)) or 'none'}. Call again with only those."
 
 
@@ -258,6 +281,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             used_tools = True
             for c in calls:
                 events.emit("tool", id=tid, name=c.function.name, args=(c.function.arguments or "")[:160])
+                bad_args = ""
                 try:
                     a = coerce_args(json.loads(c.function.arguments or "{}"), schemas.get(c.function.name, {}))
                     if role["role"] == "browser":
@@ -280,5 +304,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     out = f"tool error: {c.function.name} timed out after {TOOL_TIMEOUT:g}s; try a narrower path or query"
                 except Exception as e:  # tool errors go back to the model, not up
                     out = f"tool error: {e}"
+                if out.startswith("tool error") or bad_args:  # the trail keeps the error text, so get_detail shows why a call failed
+                    events.emit("tool_error", id=tid, name=c.function.name, error=out[:300])
                 msgs.append({"role": "tool", "tool_call_id": c.id, "content": out[:TOOL_CAP]})
         raise LoopError(f"no final answer in {role['max_steps']} steps")

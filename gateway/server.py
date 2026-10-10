@@ -18,6 +18,7 @@ from .loop import leaf, run, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_personas()
+STALE_REASON = "gateway stopped while task was running (no heartbeat)"
 
 
 async def _warm_up():
@@ -35,6 +36,8 @@ async def _warm_up():
 async def _lifespan(_server):
     """The last gateway to exit stops every ts-mcp container (also on SIGTERM and interpreter exit)."""
     events.write_roles(CFG)
+    store.sweep_stale(STALE_REASON)
+    sweeper = asyncio.create_task(_sweep_loop())
     await asyncio.to_thread(ui_launcher.start)
     atexit.register(ui_launcher.stop)
     compose.register()
@@ -48,6 +51,7 @@ async def _lifespan(_server):
         yield
     finally:
         warm.cancel()
+        sweeper.cancel()
         ui_launcher.stop()
         compose.release()
 
@@ -73,12 +77,27 @@ async def _plan(fn, *a, **kw):
         return False, f"{type(e).__name__}: {str(e)[:150]}"
 
 
+async def _heartbeat(tid: str) -> None:
+    """Keep this task's row fresh so other gateways' sweeps leave it alone."""
+    while True:
+        await asyncio.sleep(store.HEARTBEAT_EVERY)
+        await asyncio.to_thread(store.beat, tid)
+
+
+async def _sweep_loop() -> None:
+    """Fail rows left running by gateways that were killed without a restart of this one."""
+    while True:
+        await asyncio.sleep(store.HEARTBEAT_EVERY * 2)
+        await asyncio.to_thread(store.sweep_stale, STALE_REASON)
+
+
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0) -> str:
     row = store.get(tid)
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
                 max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300])
     base = len(messages or [])  # messages from an earlier run were already counted
+    beat = asyncio.create_task(_heartbeat(tid))
     try:
         detail, msgs = await run(agent, role, prompt, messages, tid)
         summary = summarize(role["model"], detail, prompt)
@@ -102,6 +121,8 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "gateway", err)
         return f"[{tid}] FAILED ({role['role']}/{role['model']}): {err}. Call resume_task('{tid}') to retry."
+    finally:
+        beat.cancel()
 
 
 @mcp.tool()
@@ -179,6 +200,8 @@ def _trail_line(e: dict) -> str:
         return f"say {e.get('text', '')[:160]}"
     if kind == "retry":
         return f"retry {e.get('reason', '')[:160]}"
+    if kind == "tool_error":
+        return f"tool_error {e.get('name')}: {e.get('error', '')[:200]}"
     return f"{kind} {e.get('error') or e.get('summary') or ''}"[:200]
 
 

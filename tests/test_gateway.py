@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -99,6 +100,13 @@ class TextCalls(unittest.TestCase):
 
 
 class Store(unittest.TestCase):
+    def setUp(self):
+        # store copies DB_PATH at import; other test modules import gateway first, so the env var above is too late
+        from unittest import mock
+        patch = mock.patch.object(store, "DB_PATH", Path(tempfile.mkdtemp()) / "t.db")
+        patch.start()
+        self.addCleanup(patch.stop)
+
     def test_roundtrip(self):
         tid = store.create("a", "builder", "p")
         store.update(tid, status="done", messages=[{"role": "user", "content": "x"}])
@@ -119,6 +127,38 @@ class Store(unittest.TestCase):
         self.assertEqual(len(trail), store.TRAIL_MAX)
         self.assertEqual(trail[-1]["text"], str(store.TRAIL_MAX + 4))
         store.append_trail("missing", {"kind": "step"})  # unknown task: silently ignored
+
+    def _age(self, tid, seconds):
+        with store._db() as c:
+            c.execute("UPDATE tasks SET heartbeat=? WHERE id=?", (time.time() - seconds, tid))
+
+    def test_sweep_leaves_live_gateway_rows_alone(self):
+        live = store.create("a", "builder", "p")  # fresh heartbeat: another gateway is running it
+        store.sweep_stale("restart")
+        self.assertEqual(store.get(live)["status"], "running")
+
+    def test_sweep_fails_only_stale_running_rows(self):
+        dead = store.create("a", "builder", "p")
+        self._age(dead, store.STALE_AFTER + 1)  # its gateway was killed and stopped heartbeating
+        no_beat = store.create("a", "builder", "p")
+        with store._db() as c:
+            c.execute("UPDATE tasks SET heartbeat=NULL WHERE id=?", (no_beat,))  # row from before heartbeats
+        done = store.create("a", "builder", "p")
+        store.update(done, status="done")
+        self._age(done, store.STALE_AFTER + 1)
+        self.assertEqual(store.sweep_stale("gone"), 2)
+        self.assertEqual(store.get(dead)["status"], "failed")
+        self.assertEqual(store.get(dead)["error"], "gone")
+        self.assertEqual(store.get(no_beat)["status"], "failed")
+        self.assertEqual(store.get(done)["status"], "done")
+        self.assertEqual(store.sweep_stale("again"), 0)
+
+    def test_beat_keeps_row_alive_through_sweep(self):
+        tid = store.create("a", "builder", "p")
+        self._age(tid, store.STALE_AFTER + 1)
+        store.beat(tid)  # the owning gateway is still running it
+        self.assertEqual(store.sweep_stale("gone"), 0)
+        self.assertEqual(store.get(tid)["status"], "running")
 
 
 class Tools(unittest.TestCase):
@@ -152,6 +192,15 @@ class Tools(unittest.TestCase):
             await r.call_tool("search_graph", {"q": 1})
         asyncio.run(go())
         self.assertIn("project", calls[0])
+
+class ReadOnlyRoles(unittest.TestCase):
+    WRITE_VERBS = ("create", "update", "delete", "merge", "close", "run", "rerun", "cancel", "write", "edit", "add", "remove", "set")
+
+    def test_read_roles_have_no_write_tools(self):
+        for name in ("github-read", "github-actions-read"):
+            for tool in CFG["roles"][name]["tools"]:
+                self.assertFalse(any(v in tool.split("_") for v in self.WRITE_VERBS), f"{name}: {tool}")
+
 
 class SynaptreeProject(unittest.TestCase):
     def test_project_defaults_to_checkout_folder_name(self):
@@ -193,6 +242,16 @@ class Coerce(unittest.TestCase):
     def test_bad_values_left_alone(self):
         self.assertEqual(coerce_args({"pageId": "abc", "other": "1"}, self.SCHEMA), {"pageId": "abc", "other": "1"})
 
+    def test_json_string_becomes_array_when_schema_wants_array(self):
+        # live failure: list_pull_requests got fields='["number", ...]' and the server wanted an array
+        schema = {"properties": {"fields": {"type": "array", "items": {"type": "string"}}}}
+        out = coerce_args({"fields": '["number", "title", "state"]'}, schema)
+        self.assertEqual(out, {"fields": ["number", "title", "state"]})
+
+    def test_non_json_string_for_array_left_alone(self):
+        schema = {"properties": {"fields": {"type": "array"}}}
+        self.assertEqual(coerce_args({"fields": "number,title"}, schema), {"fields": "number,title"})
+
     def test_unknown_argument_rejected_before_call(self):
         err = arg_error({"owner": "a", "fields": "x"}, {"properties": {"owner": {"type": "string"}}})
         self.assertTrue(err.startswith("tool error: unknown argument(s) fields"))
@@ -206,6 +265,23 @@ class Coerce(unittest.TestCase):
         schema = {"properties": {"owner": {}, "repo": {}}, "required": ["owner"]}
         self.assertEqual(arg_error({"owner": "a", "repo": "b"}, schema), "")
         self.assertEqual(arg_error({"owner": "a"}, {}), "")  # no schema properties: nothing to check
+
+    def test_wrong_type_rejected(self):
+        schema = {"properties": {"s": {"type": "string"}, "i": {"type": "integer"}, "n": {"type": "number"},
+                                 "b": {"type": "boolean"}, "a": {"type": "array"}, "o": {"type": "object"}}}
+        self.assertIn("i must be integer, got str", arg_error({"i": "3"}, schema))
+        self.assertIn("s must be string, got int", arg_error({"s": 3}, schema))
+        self.assertIn("i must be integer, got bool", arg_error({"i": True}, schema))
+        self.assertIn("n must be number, got bool", arg_error({"n": False}, schema))
+        self.assertIn("b must be boolean, got str", arg_error({"b": "false"}, schema))
+        self.assertIn("a must be array, got str", arg_error({"a": "x"}, schema))
+        self.assertIn("o must be object, got list", arg_error({"o": []}, schema))
+
+    def test_right_type_passes(self):
+        schema = {"properties": {"i": {"type": "integer"}, "n": {"type": "number"}, "b": {"type": "boolean"},
+                                 "a": {"type": "array"}, "o": {"type": "object"}, "x": {}}}
+        self.assertEqual(arg_error({"i": 2, "n": 1.5, "b": True, "a": [], "o": {}, "x": object()}, schema), "")
+        self.assertEqual(arg_error({"n": 2}, schema), "")  # int is a valid number
 
 
 class Lint(unittest.TestCase):
