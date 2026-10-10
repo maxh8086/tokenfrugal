@@ -211,6 +211,12 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
     if role["role"] == "browser":
         system += BROWSER_RULE
+    for name in role.get("skills") or []:
+        path = Path(__file__).parent / "skills" / name / "SKILL.md"
+        if not path.exists():
+            continue
+        body = path.read_text(encoding="utf-8").split("---", 2)[-1].strip()
+        system += f"\n\nSkill {name}:\n{body}"
     msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
     try:
         return await asyncio.wait_for(_run(agent, role, msgs, tid), TASK_TIMEOUT or None)
