@@ -178,7 +178,16 @@ function usage(now = Date.now() / 1000) {
     }
     return [...g.values()].sort((a, b) => b.last - a.last);
   };
-  out.sessions = group(scopes.window, (x) => x.pid).map((a) => ({ ...a, pid: a.key, live: alive(a.key) }));
+  // Per session: which local models ran its tasks in the window (count, failures and tokens saved per model).
+  const modelsOf = (pid) => {
+    const m = new Map();
+    for (const x of list.filter((r) => r.ts >= scopes.window && r.pid === pid)) {
+      const k = x.model || '?'; const a = m.get(k) || { model: k, tasks: 0, failed: 0, saved: 0 };
+      a.tasks += 1; a.failed += x.ok ? 0 : 1; a.saved += x.saved; m.set(k, a);
+    }
+    return [...m.values()].sort((a, b) => b.tasks - a.tasks);
+  };
+  out.sessions = group(scopes.window, (x) => x.pid).map((a) => ({ ...a, pid: a.key, live: alive(a.key), models: modelsOf(a.key) }));
   out.days = group(scopes.month, (x) => new Date(x.ts * 1000).toLocaleDateString('en-CA')).map((a) => ({ ...a, day: a.key })).sort((a, b) => (a.day < b.day ? 1 : -1));
   out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
   out.claude = claudeUsage(scopes);
