@@ -12,7 +12,7 @@ mcps:
   code-interpreter:   {label: "Code Interpreter (mcp/mcp-code-interpreter)", profile: debug, tools: [execute_code]}
   fetch:              {label: "Fetch (mcp/fetch)",                         profile: docs,     tools: [fetch]}
   web-search:         {label: "SearXNG + Crawl4AI",                        native: crawl4ai,  compose: [crawl4ai, searxng], tools: [web_search, crawl_markdown, crawl_links]}
-  sonarqube:          {label: "SonarQube",                                 profile: security, native: sonarqube, compose: [sonarqube], tools: [search_sonar_issues_in_projects, search_security_hotspots, show_rule]}
+  sonarqube:          {label: "SonarQube",                                 native: sonarqube, compose: [sonarqube], tools: [search_sonar_issues_in_projects, search_security_hotspots, show_rule]}
   penpot:             {label: "Penpot",                                    profile: design,   compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape]}
   chrome-devtools:    {label: "Chrome DevTools",                           profile: browser,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
   plan:               {label: "Task plan store (Neo4j)",                   native: plan,      compose: [neo4j], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note]}
