@@ -1,0 +1,210 @@
+{
+ "tag": "confirmB",
+ "stamp": "20261009-211955",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.2,
+     "p50": 10.2,
+     "p95": 13.8,
+     "max": 13.8,
+     "mean": 12.0
+    },
+    "notes": []
+   },
+   "fix_bug": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.2,
+     "p50": 14.2,
+     "p95": 19.7,
+     "max": 19.7,
+     "mean": 16.9
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.8,
+     "p50": 14.8,
+     "p95": 50.2,
+     "max": 50.2,
+     "mean": 32.5
+    },
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=2)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.4,
+     "p50": 7.4,
+     "p95": 7.6,
+     "max": 7.6,
+     "mean": 7.5
+    },
+    "notes": [
+     "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 7.2,
+     "p50": 7.2,
+     "p95": 7.3,
+     "max": 7.3,
+     "mean": 7.2
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.2,
+     "p50": 9.2,
+     "p95": 16.8,
+     "max": 16.8,
+     "mean": 13.0
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.1,
+     "p50": 12.1,
+     "p95": 12.6,
+     "max": 12.6,
+     "mean": 12.3
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 15.0,
+     "p50": 15.0,
+     "p95": 16.3,
+     "max": 16.3,
+     "mean": 15.7
+    },
+    "notes": []
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.3,
+     "p50": 8.3,
+     "p95": 8.6,
+     "max": 8.6,
+     "mean": 8.4
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 6.1,
+     "p50": 6.1,
+     "p95": 14.8,
+     "max": 14.8,
+     "mean": 10.4
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 6.9,
+     "p50": 6.9,
+     "p95": 15.0,
+     "max": 15.0,
+     "mean": 10.9
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 42.5,
+     "p50": 42.5,
+     "p95": 43.7,
+     "max": 43.7,
+     "mean": 43.1
+    },
+    "notes": []
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 12.3,
+     "p50": 12.3,
+     "p95": 12.4,
+     "max": 12.4,
+     "mean": 12.4
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 13.1,
+     "p50": 13.1,
+     "p95": 14.3,
+     "max": 14.3,
+     "mean": 13.7
+    },
+    "notes": [
+     "FAILED (browser/ts-granite4-micro-16384): LoopError: no final answer in 8 steps. Call resume_task('28fb5ec1c9'",
+     "[8ba1225489] Navigated to https://example.com, captured a snapshot, and the page heading is **RootWe"
+    ]
+   },
+   "role_tracker": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 4.1,
+     "p50": 4.1,
+     "p95": 5.9,
+     "max": 5.9,
+     "mean": 5.0
+    },
+    "notes": []
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 22.0,
+     "p50": 22.0,
+     "p95": 22.1,
+     "max": 22.1,
+     "mean": 22.1
+    },
+    "notes": []
+   }
+  }
+ }
+}

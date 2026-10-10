@@ -8,7 +8,7 @@ os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from gateway import store  # noqa: E402
 from gateway.config import load_personas, resolve_role  # noqa: E402
-from gateway.loop import slop_check  # noqa: E402
+from gateway.loop import coerce_args, parse_text_calls, slop_check  # noqa: E402
 from gateway.mcp_client import Router, to_openai_tools  # noqa: E402
 from gateway.summarize import hard_trim, tokens  # noqa: E402
 
@@ -80,6 +80,24 @@ class Slop(unittest.TestCase):
         self.assertIsNone(slop_check("Found 3 issues in a.py"))
 
 
+class TextCalls(unittest.TestCase):
+    N = {"edit_file", "read_file"}
+    FENCE = "`" * 3 + "json" + chr(10) + '{"name": "edit_file", "arguments": {"path": "/a"}}' + chr(10) + "`" * 3
+
+    def test_fenced_call_is_slop(self):
+        self.assertIn("tool call", slop_check(self.FENCE))
+
+    def test_fenced_call_parsed(self):
+        self.assertEqual([x.function.name for x in parse_text_calls(self.FENCE, self.N)], ["edit_file"])
+
+    def test_missing_closing_brace_repaired(self):
+        c = parse_text_calls('{"name": "edit_file", "arguments": {"path": "/a", "edits": [{"oldText": "x"}]}', self.N)
+        self.assertEqual(len(c), 1)
+
+    def test_unknown_tool_ignored(self):
+        self.assertEqual(parse_text_calls('{"name": "rm", "arguments": {}}', self.N), [])
+
+
 class Store(unittest.TestCase):
     def test_roundtrip(self):
         tid = store.create("a", "builder", "p")
@@ -149,3 +167,38 @@ class SavedTokensTest(unittest.TestCase):
         self.assertEqual(saved_tokens(msgs, "z" * 40), 1100 - 10)
         self.assertEqual(saved_tokens([], "z" * 40), 0)
         self.assertEqual(saved_tokens([{"content": None}], "z" * 400), 0)
+
+
+class Coerce(unittest.TestCase):
+    SCHEMA = {"properties": {"pageId": {"type": "integer"}, "verbose": {"type": "boolean"},
+                             "ratio": {"type": "number"}, "url": {"type": "string"}}}
+
+    def test_strings_become_typed(self):
+        out = coerce_args({"pageId": "1", "verbose": "false", "ratio": "0.5", "url": "x"}, self.SCHEMA)
+        self.assertEqual(out, {"pageId": 1, "verbose": False, "ratio": 0.5, "url": "x"})
+
+    def test_bad_values_left_alone(self):
+        self.assertEqual(coerce_args({"pageId": "abc", "other": "1"}, self.SCHEMA), {"pageId": "abc", "other": "1"})
+
+
+class Lint(unittest.TestCase):
+    def test_missing_import_flagged(self):
+        from gateway.lint import check_python
+        self.assertIn("re", check_python("def f(s):\n    return re.sub('a', 'b', s)\n"))
+
+    def test_valid_code_clean(self):
+        from gateway.lint import check_python
+        self.assertIsNone(check_python("import re\n\n\ndef f(s, *a):\n    try:\n        return [x for x in re.findall('a', s)]\n    except ValueError as e:\n        return e\n"))
+
+    def test_syntax_error(self):
+        from gateway.lint import check_python
+        self.assertIn("syntax error", check_python("def f(:\n"))
+
+    def test_star_import_skipped(self):
+        from gateway.lint import check_python
+        self.assertIsNone(check_python("from os.path import *\njoin('a')\n"))
+
+
+class Refusal(unittest.TestCase):
+    def test_refusal_is_slop(self):
+        self.assertIsNotNone(slop_check("I'm sorry, but I'm not able to assist with that request."))

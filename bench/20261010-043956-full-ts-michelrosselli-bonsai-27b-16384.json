@@ -1,0 +1,217 @@
+{
+ "tag": "full-ts-michelrosselli-bonsai-27b-16384",
+ "stamp": "20261010-043956",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 32.0,
+     "p50": 32.0,
+     "p95": 44.5,
+     "max": 44.5,
+     "mean": 38.2
+    },
+    "notes": []
+   },
+   "fix_bug": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 24.3,
+     "p50": 24.3,
+     "p95": 25.3,
+     "max": 25.3,
+     "mean": 24.8
+    },
+    "notes": []
+   },
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 44.9,
+     "p50": 44.9,
+     "p95": 44.9,
+     "max": 44.9,
+     "mean": 44.9
+    },
+    "notes": [
+     "rc=1 tests=3 -----------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (errors=1)\n"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 38.6,
+     "p50": 38.6,
+     "p95": 39.3,
+     "max": 39.3,
+     "mean": 39.0
+    },
+    "notes": []
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 19.9,
+     "p50": 19.9,
+     "p95": 20.4,
+     "max": 20.4,
+     "mean": 20.1
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 19.8,
+     "p50": 19.8,
+     "p95": 21.9,
+     "max": 21.9,
+     "mean": 20.9
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 27.0,
+     "p50": 27.0,
+     "p95": 28.9,
+     "max": 28.9,
+     "mean": 27.9
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 26.0,
+     "p50": 26.0,
+     "p95": 76.3,
+     "max": 76.3,
+     "mean": 51.1
+    },
+    "notes": [
+     "FAILED (research/ts-michelrosselli-bonsai-27b-16384): InternalServerError: Error code: 500 - {'error': {'messa",
+     "FAILED (research/ts-michelrosselli-bonsai-27b-16384): LoopError: no final answer in 8 steps. Call resume_task("
+    ]
+   },
+   "role_analyzer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 22.6,
+     "p50": 22.6,
+     "p95": 28.7,
+     "max": 28.7,
+     "mean": 25.6
+    },
+    "notes": []
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 21.6,
+     "p50": 21.6,
+     "p95": 23.0,
+     "max": 23.0,
+     "mean": 22.3
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "1/2",
+    "ran": "1/2",
+    "s": {
+     "min": 26.2,
+     "p50": 26.2,
+     "p95": 150.1,
+     "max": 150.1,
+     "mean": 88.1
+    },
+    "notes": [
+     "FAILED (docs/ts-michelrosselli-bonsai-27b-16384): LoopError: task timed out after 150s. Call resume_task('256f"
+    ]
+   },
+   "role_security": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 153.9,
+     "p50": 153.9,
+     "p95": 153.9,
+     "max": 153.9,
+     "mean": 153.9
+    },
+    "notes": [
+     "FAILED (security/ts-michelrosselli-bonsai-27b-16384): LoopError: task timed out after 150s. Call resume_task('"
+    ]
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 54.6,
+     "p50": 54.6,
+     "p95": 59.0,
+     "max": 59.0,
+     "mean": 56.8
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 42.2,
+     "p50": 42.2,
+     "p95": 49.3,
+     "max": 49.3,
+     "mean": 45.8
+    },
+    "notes": [
+     "FAILED (browser/ts-michelrosselli-bonsai-27b-16384): LoopError: no final answer in 8 steps. Call resume_task('"
+    ]
+   },
+   "role_tracker": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 150.3,
+     "p50": 150.3,
+     "p95": 150.3,
+     "max": 150.3,
+     "mean": 150.3
+    },
+    "notes": [
+     "FAILED (tracker/ts-michelrosselli-bonsai-27b-16384): LoopError: task timed out after 150s. Call resume_task('3",
+     "FAILED (tracker/ts-michelrosselli-bonsai-27b-16384): LoopError: task timed out after 150s. Call resume_task('e"
+    ]
+   },
+   "role_research": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 56.8,
+     "p50": 56.8,
+     "p95": 157.1,
+     "max": 157.1,
+     "mean": 106.9
+    },
+    "notes": [
+     "[ccd8297475] The page has no heading. The content consists of plain text paragraphs and a link, with"
+    ]
+   }
+  }
+ }
+}

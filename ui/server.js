@@ -5,12 +5,19 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
+const os = require('node:os');
 
 function configPort() { // `port: N` from gateway/ui.yaml, the same file the launcher reads
   try {
     const m = /^port:\s*(\d+)/m.exec(fs.readFileSync(path.join(__dirname, '..', 'gateway', 'ui.yaml'), 'utf8'));
     return m ? Number(m[1]) : 7777;
   } catch { return 7777; }
+}
+function cfgNum(key, dflt) {
+  try {
+    const m = new RegExp('^' + key + ':\\s*(\\d+)', 'm').exec(fs.readFileSync(path.join(__dirname, '..', 'gateway', 'ui.yaml'), 'utf8'));
+    return m ? Number(m[1]) : dflt;
+  } catch { return dflt; }
 }
 const PORT = Number(process.env.UI_PORT || configPort());
 const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
@@ -138,6 +145,102 @@ function mcpRows(cfg, sv, list, only) {
   return [...rows.values()];
 }
 
+// Token-saved totals per time scope, from usage.jsonl (never rotated) plus the rotating events logs, deduped by task id.
+function readJsonl(file) {
+  try { return fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }); } catch { return []; }
+}
+function usage(now = Date.now() / 1000) {
+  const rows = new Map();
+  for (const f of [EVENTS + '.1', EVENTS, path.join(path.dirname(EVENTS), 'usage.jsonl')])
+    for (const e of readJsonl(f)) if (e && (e.kind === 'task_done' || e.kind === 'task_failed') && e.id) rows.set(e.id, { ...rows.get(e.id), ...e });
+  const list = [...rows.values()].map((e) => ({ ts: e.ts, pid: e.pid, id: e.id, ok: e.kind === 'task_done', saved: Number(e.saved) || 0,
+    role: e.role || (tasks.get(e.id) || {}).role || '', model: e.model || (tasks.get(e.id) || {}).model || '' }));
+  const d = new Date(now * 1000);
+  const day = Math.min(Math.max(cfgNum('renewal_day', 1), 1), 28);
+  let start = new Date(d.getFullYear(), d.getMonth(), day);
+  if (start > d) start = new Date(d.getFullYear(), d.getMonth() - 1, day);
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, day);
+  const hours = cfgNum('window_hours', 5);
+  const scopes = {
+    window: now - hours * 3600,
+    today: new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 1000,
+    week: now - 7 * 86400,
+    month: start.getTime() / 1000,
+  };
+  const total = (from) => { const r = list.filter((x) => x.ts >= from); return { saved: r.reduce((n, x) => n + x.saved, 0), tasks: r.length, failed: r.filter((x) => !x.ok).length }; };
+  const out = { windowHours: hours, renewalDay: day, periodStart: start.getTime() / 1000, periodEnd: end.getTime() / 1000, totals: {} };
+  for (const [k, from] of Object.entries(scopes)) out.totals[k] = total(from);
+  const group = (from, keyOf) => {
+    const g = new Map();
+    for (const x of list.filter((r) => r.ts >= from)) {
+      const k = keyOf(x); const a = g.get(k) || { key: k, saved: 0, tasks: 0, first: x.ts, last: x.ts };
+      a.saved += x.saved; a.tasks += 1; a.first = Math.min(a.first, x.ts); a.last = Math.max(a.last, x.ts); g.set(k, a);
+    }
+    return [...g.values()].sort((a, b) => b.last - a.last);
+  };
+  out.sessions = group(scopes.window, (x) => x.pid).map((a) => ({ ...a, pid: a.key, live: alive(a.key) }));
+  out.days = group(scopes.month, (x) => new Date(x.ts * 1000).toLocaleDateString('en-CA')).map((a) => ({ ...a, day: a.key })).sort((a, b) => (a.day < b.day ? 1 : -1));
+  out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
+  out.claude = claudeUsage(scopes);
+  return out;
+}
+
+// Claude token usage from Claude Code transcripts (~/.claude/projects/**), deduped by message id; subagent files carry the task description.
+const PROJECTS = process.env.CLAUDE_PROJECTS || path.join(os.homedir(), '.claude', 'projects');
+const fileCache = new Map();
+function transcriptFiles() {
+  const out = [];
+  const walk = (dir, depth) => {
+    let ents = []; try { ents = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      const f = path.join(dir, e.name);
+      if (e.isDirectory() && depth < 3 && e.name !== 'tool-results' && e.name !== 'memory') walk(f, depth + 1);
+      else if (e.isFile() && e.name.endsWith('.jsonl')) out.push(f);
+    }
+  };
+  walk(PROJECTS, 0);
+  return out;
+}
+function parseTranscript(f) {
+  let st; try { st = fs.statSync(f); } catch { return []; }
+  const hit = fileCache.get(f);
+  if (hit && hit.key === st.mtimeMs + ':' + st.size) return hit.rows;
+  const isSub = path.basename(path.dirname(f)) === 'subagents';
+  let meta = {}; if (isSub) { try { meta = JSON.parse(fs.readFileSync(f.replace(/\.jsonl$/, '.meta.json'), 'utf8')); } catch { /* no meta */ } }
+  const byId = new Map();
+  for (const e of readJsonl(f)) {
+    const m = e && e.type === 'assistant' && e.message;
+    if (!m || !m.usage || !m.model || m.model === '<synthetic>') continue;
+    const u = m.usage, t = Date.parse(e.timestamp) / 1000;
+    byId.set(m.id || e.uuid, { ts: t, model: m.model, input: u.input_tokens || 0, cacheRead: u.cache_read_input_tokens || 0,
+      cacheWrite: u.cache_creation_input_tokens || 0, output: u.output_tokens || 0,
+      agent: isSub ? (e.agentId || path.basename(f, '.jsonl')) : '', task: meta.description || '' });
+  }
+  const rows = [...byId.values()];
+  fileCache.set(f, { key: st.mtimeMs + ':' + st.size, rows });
+  return rows;
+}
+function claudeUsage(scopes) {
+  const rows = transcriptFiles().flatMap(parseTranscript);
+  const sum = (a) => a.reduce((n, x) => n + x.input + x.cacheRead + x.cacheWrite + x.output, 0);
+  const byModel = (from) => {
+    const g = new Map();
+    for (const x of rows.filter((r) => r.ts >= from)) {
+      const a = g.get(x.model) || { model: x.model, calls: 0, input: 0, cacheRead: 0, cacheWrite: 0, output: 0 };
+      a.calls++; a.input += x.input; a.cacheRead += x.cacheRead; a.cacheWrite += x.cacheWrite; a.output += x.output; g.set(x.model, a);
+    }
+    return [...g.values()].map((a) => ({ ...a, total: a.input + a.cacheRead + a.cacheWrite + a.output })).sort((a, b) => b.total - a.total);
+  };
+  const totals = {}; for (const [k, from] of Object.entries(scopes)) totals[k] = sum(rows.filter((r) => r.ts >= from));
+  const g = new Map();
+  for (const x of rows.filter((r) => r.agent && r.ts >= scopes.month)) {
+    const a = g.get(x.agent) || { agent: x.agent, task: x.task, model: x.model, calls: 0, input: 0, output: 0, cached: 0, first: x.ts };
+    a.calls++; a.input += x.input; a.output += x.output; a.cached += x.cacheRead + x.cacheWrite; a.first = Math.min(a.first, x.ts); g.set(x.agent, a);
+  }
+  const subagents = [...g.values()].map((a) => ({ ...a, total: a.input + a.output + a.cached })).sort((a, b) => b.first - a.first).slice(0, 200);
+  return { totals, models: byModel(scopes.month).slice(0, 12), modelsWindow: byModel(scopes.window).slice(0, 12), subagents };
+}
+
 function roles() {
   try { return JSON.parse(fs.readFileSync(ROLES, 'utf8')); } catch { return { roles: [], divisions: {} }; }
 }
@@ -155,6 +258,10 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ now: Date.now() / 1000, tasks: list, ...cfg, services: sv, connected, selected,
       saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
+  }
+  if (url.pathname === '/api/usage') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify(usage()));
   }
   if (url.pathname === '/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });

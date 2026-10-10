@@ -1,0 +1,234 @@
+{
+ "tag": "full-ts-phi4-mini-16384",
+ "stamp": "20261010-005428",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 7.5,
+     "p50": 7.5,
+     "p95": 10.2,
+     "max": 10.2,
+     "mean": 8.8
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea"
+    ]
+   },
+   "fix_bug": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 10.8,
+     "p50": 10.8,
+     "p95": 13.9,
+     "max": 13.9,
+     "mean": 12.4
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea",
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 12.4,
+     "p50": 12.4,
+     "p95": 12.4,
+     "max": 12.4,
+     "mean": 12.4
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 9.0,
+     "p50": 9.0,
+     "p95": 9.1,
+     "max": 9.1,
+     "mean": 9.1
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea"
+    ]
+   },
+   "find_symbol": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 6.5,
+     "p50": 6.5,
+     "p95": 6.9,
+     "max": 6.9,
+     "mean": 6.7
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea"
+    ]
+   },
+   "review_sqli": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 7.7,
+     "p50": 7.7,
+     "p95": 10.2,
+     "max": 10.2,
+     "mean": 8.9
+    },
+    "notes": [
+     "FAILED (reviewer/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read re"
+    ]
+   },
+   "debug_trace": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 10.4,
+     "p50": 10.4,
+     "p95": 10.7,
+     "max": 10.7,
+     "mean": 10.6
+    },
+    "notes": [
+     "FAILED (debugger/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read re"
+    ]
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 12.8,
+     "p50": 12.8,
+     "p95": 12.9,
+     "max": 12.9,
+     "mean": 12.9
+    },
+    "notes": [
+     "FAILED (research/ts-phi4-mini-16384): LoopError: answer contains filler/placeholder text; redo with concrete c"
+    ]
+   },
+   "role_analyzer": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 7.8,
+     "p50": 7.8,
+     "p95": 8.3,
+     "max": 8.3,
+     "mean": 8.1
+    },
+    "notes": [
+     "FAILED (analyzer/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read re"
+    ]
+   },
+   "role_data": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 6.7,
+     "p50": 6.7,
+     "p95": 8.6,
+     "max": 8.6,
+     "mean": 7.7
+    },
+    "notes": [
+     "FAILED (data/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read real d"
+    ]
+   },
+   "role_docs": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 12.5,
+     "p50": 12.5,
+     "p95": 43.4,
+     "max": 43.4,
+     "mean": 27.9
+    },
+    "notes": [
+     "FAILED (docs/ts-phi4-mini-16384): LoopError: no final answer in 8 steps. Call resume_task('30fe54f64f') to ret",
+     "[c1bb7df7fe] The `list_directory` method in `stack.py` requires a valid directory path as an argumen"
+    ]
+   },
+   "role_security": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 36.5,
+     "p50": 36.5,
+     "p95": 38.4,
+     "max": 38.4,
+     "mean": 37.5
+    },
+    "notes": [
+     "FAILED (security/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read re"
+    ]
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 13.9,
+     "p50": 13.9,
+     "p95": 17.5,
+     "max": 17.5,
+     "mean": 15.7
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 4.1,
+     "p50": 4.1,
+     "p95": 6.5,
+     "max": 6.5,
+     "mean": 5.3
+    },
+    "notes": [
+     "FAILED (browser/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea"
+    ]
+   },
+   "role_tracker": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 9.3,
+     "p50": 9.3,
+     "p95": 25.2,
+     "max": 25.2,
+     "mean": 17.2
+    },
+    "notes": [
+     "FAILED (tracker/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read rea"
+    ]
+   },
+   "role_research": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 13.8,
+     "p50": 13.8,
+     "p95": 30.7,
+     "max": 30.7,
+     "mean": 22.2
+    },
+    "notes": [
+     "FAILED (research/ts-phi4-mini-16384): LoopError: you answered without calling any tool; call a tool to read re",
+     "[3283fe0ee8] Task: Use crawl_markdown on https://example.com and report the page heading.  Result: T"
+    ]
+   }
+  }
+ }
+}

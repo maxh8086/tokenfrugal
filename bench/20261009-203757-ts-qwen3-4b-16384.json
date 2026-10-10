@@ -1,0 +1,65 @@
+{
+ "tag": "ts-qwen3-4b-16384",
+ "stamp": "20261009-203757",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_tests": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 69.5,
+     "p50": 69.5,
+     "p95": 123.8,
+     "max": 123.8,
+     "mean": 96.7
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 114.1,
+     "p50": 114.1,
+     "p95": 125.1,
+     "max": 125.1,
+     "mean": 119.6
+    },
+    "notes": [
+     "FAILED (builder/ts-qwen3-4b-16384): LoopError: empty answer. Call resume_task('42b1507d61') to retry.",
+     "FAILED (builder/ts-qwen3-4b-16384): LoopError: empty answer. Call resume_task('bf8c99817e') to retry."
+    ]
+   },
+   "summarize_readme": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 76.0,
+     "p50": 76.0,
+     "p95": 97.1,
+     "max": 97.1,
+     "mean": 86.5
+    },
+    "notes": [
+     "[86baaaffe8] not found"
+    ]
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 95.2,
+     "p50": 95.2,
+     "p95": 147.0,
+     "max": 147.0,
+     "mean": 121.1
+    },
+    "notes": [
+     "FAILED (browser/ts-qwen3-4b-16384): LoopError: empty answer. Call resume_task('98a314bb7d') to retry.",
+     "[a60cf6d5b9] The page heading is not present in the snapshot. The latest snapshot shows a root eleme"
+    ]
+   }
+  }
+ }
+}

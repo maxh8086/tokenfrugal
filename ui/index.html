@@ -107,6 +107,13 @@
   .chip.idle::before { background: var(--stale); } .chip.native::before { background: var(--blue); }
   .chip.active { border-color: var(--run); background: var(--accent-bg); } .chip small { color: var(--muted); }
   .saved { text-align: center; margin: 8px 0 24px; color: var(--muted); } .saved b { display: block; font-size: 32px; color: var(--blue); }
+  .saved .scope { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .saved .row { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; } .saved .row b { display: inline; font-size: 13px; color: var(--text, inherit); }
+  .saved button { margin-top: 8px; background: none; border: 1px solid var(--line); color: var(--blue); border-radius: 99px; padding: 3px 14px; cursor: pointer; font: inherit; font-size: 12px; }
+  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: inherit; padding: 16px 20px; width: min(720px, 94vw); max-height: 86vh; overflow: auto; }
+  dialog::backdrop { background: rgba(0,0,0,.45); } dialog h2 { margin: 0 0 4px; } dialog h3 { margin: 16px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  dialog table { width: 100%; border-collapse: collapse; font-size: 13px; } dialog th, dialog td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); } dialog td.n, dialog th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  dialog .note { color: var(--muted); font-size: 12px; margin: 2px 0 0; } dialog .x { float: right; }
   .empty { color: var(--muted); padding: 24px 0; text-align: center; }
 </style>
 </head>
@@ -122,6 +129,7 @@
   <div class="grid" id="bar"></div>
   <div id="tasks"></div>
   <div id="saved" class="saved"></div>
+  <dialog id="usage"></dialog>
 </main>
 <script>
 const BOT = `<svg class="bot" viewBox="0 0 72 84" aria-hidden="true">
@@ -258,9 +266,51 @@ function renderChrome() {
   $('bar').replaceChildren(cell('status', '', sc), cell('ollama', '', oc), cell('docker', '', dc), cell('graph', '', gc));
 }
 
+let usage = null;
+const ago = (ts) => new Date(ts * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+const num = (n) => Number(n || 0).toLocaleString();
+async function loadUsage() { usage = await (await fetch('/api/usage')).json(); renderSaved(); if ($('usage').open) renderUsage(); }
 function renderSaved() {
-  const n = [...tasks.values()].reduce((a, t) => a + (t.saved || 0), 0);
-  const b = $('saved'); b.replaceChildren(el('b', '', n.toLocaleString()), el('span', '', T('tokens_saved')));
+  const u = T('usage').window ? usage : null, tot = u ? u.totals : {}; // strings arrive via roles.json on the next gateway start
+  const n = u ? tot.window.saved : [...tasks.values()].reduce((a, t) => a + (t.saved || 0), 0);
+  const kids = [el('span', 'scope', u ? fill(T('usage').window, { h: u.windowHours }) : T('tokens_saved')), el('b', '', n.toLocaleString()), el('span', '', T('tokens_saved'))];
+  if (u) {
+    const row = el('div', 'row');
+    for (const k of ['today', 'week', 'month']) { const sp = el('span', '', T('usage')[k] + ' '); sp.append(el('b', '', num(tot[k].saved))); row.append(sp); }
+    const btn = el('button', '', T('usage').details); btn.onclick = () => { renderUsage(); $('usage').showModal(); };
+    kids.push(row, btn);
+  }
+  $('saved').replaceChildren(...kids);
+}
+function table(cols, rows) {
+  const t = el('table'), h = el('tr');
+  cols.forEach(([label, num]) => h.append(el('th', num ? 'n' : '', label))); t.append(h);
+  if (!rows.length) { const r = el('tr'), c = el('td', '', T('usage').none); c.colSpan = cols.length; r.append(c); t.append(r); }
+  rows.forEach((cells) => { const r = el('tr'); cells.forEach((v, i) => r.append(el('td', cols[i][1] ? 'n' : '', String(v)))); t.append(r); });
+  return t;
+}
+function renderUsage() {
+  const u = usage, X = T('usage'); if (!u) return;
+  const close = el('button', 'x', X.close); close.onclick = () => $('usage').close();
+  const day = (ts) => new Date(ts * 1000).toLocaleDateString();
+  $('usage').replaceChildren(close, el('h2', '', X.title),
+    el('p', 'note', fill(X.period, { a: day(u.periodStart), b: day(u.periodEnd) }) + '. ' + X.scope_note),
+    el('h3', '', X.sessions),
+    table([[X.session], [X.started], [X.last], [X.tasks, 1], [X.saved, 1]],
+      u.sessions.map((r) => [`#${r.pid} (${r.live ? X.live : X.ended})`, ago(r.first), ago(r.last), r.tasks, num(r.saved)])),
+    el('h3', '', X.days),
+    table([[X.day], [X.tasks, 1], [X.saved, 1]], u.days.map((r) => [r.day, r.tasks, num(r.saved)])),
+    el('h3', '', X.roles),
+    table([[X.role], [X.tasks, 1], [X.saved, 1]], u.roles.map((r) => [r.role, r.tasks, num(r.saved)])),
+    ...(X.claude_models && u.claude ? [
+      el('h3', '', X.claude_models),
+      table([[X.model], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+        u.claude.models.map((r) => [r.model, r.calls, num(r.input), num(r.cacheRead + r.cacheWrite), num(r.output), num(r.total)])),
+      el('h3', '', fill(X.claude_window, { h: u.windowHours })),
+      table([[X.model], [X.calls, 1], [X.total, 1]], u.claude.modelsWindow.map((r) => [r.model, r.calls, num(r.total)])),
+      el('h3', '', X.claude_tasks),
+      table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
 }
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
@@ -279,8 +329,9 @@ function connect() {
 }
 
 load().catch(() => {});
+loadUsage().catch(() => {});
 connect();
-setInterval(() => load().catch(() => {}), 5000); // services / MCP status
+setInterval(() => { load().catch(() => {}); loadUsage().catch(() => {}); }, 5000); // services / MCP status, usage totals
 setInterval(() => { renderTasks(); renderSaved(); }, 1000); // keeps elapsed timers ticking
 
 </script>

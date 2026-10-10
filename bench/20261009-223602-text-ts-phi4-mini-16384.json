@@ -1,0 +1,68 @@
+{
+ "tag": "text-ts-phi4-mini-16384",
+ "stamp": "20261009-223602",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_tests": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 19.3,
+     "p50": 19.3,
+     "p95": 20.1,
+     "max": 20.1,
+     "mean": 19.7
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: no final answer in 12 steps. Call resume_task('34c5dac7cd') to",
+     "no test file written"
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 16.7,
+     "p50": 16.7,
+     "p95": 18.3,
+     "max": 18.3,
+     "mean": 17.5
+    },
+    "notes": [
+     "FAILED (builder/ts-phi4-mini-16384): LoopError: no final answer in 12 steps. Call resume_task('03db81c172') to",
+     "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1))"
+    ]
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "1/2",
+    "s": {
+     "min": 13.1,
+     "p50": 13.1,
+     "p95": 25.8,
+     "max": 25.8,
+     "mean": 19.4
+    },
+    "notes": [
+     "FAILED (research/ts-phi4-mini-16384): LoopError: you wrote a tool call as text; use the tool-calling interface",
+     "[8a444b52c3] The GitHub repository at the provided URL appears to be a project related to tokenfruga"
+    ]
+   },
+   "role_browser": {
+    "verified": "1/2",
+    "ran": "2/2",
+    "s": {
+     "min": 9.7,
+     "p50": 9.7,
+     "p95": 12.5,
+     "max": 12.5,
+     "mean": 11.1
+    },
+    "notes": [
+     "[ca2f77f75c] Snapshot URL: https://example.com Page Heading: Not available (Page likely empty or con"
+    ]
+   }
+  }
+ }
+}
