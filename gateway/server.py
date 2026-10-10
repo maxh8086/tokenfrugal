@@ -161,7 +161,25 @@ async def ask_followup(task_id: str, question: str) -> str:
 def get_detail(task_id: str, max_chars: int = 4000) -> str:
     """Fetch the full stored output of a task (use sparingly; costs Claude tokens)."""
     t = store.get(task_id)
-    return (t["detail"] or t["error"] or "no output")[:max_chars] if t else f"unknown task {task_id}"
+    if not t:
+        return f"unknown task {task_id}"
+    head = (t["detail"] or t["error"] or "no output")[:max_chars]
+    trail = [_trail_line(e) for e in t["trail"]]
+    return head + ("\n\nevent trail:\n" + "\n".join(trail) if trail else "")
+
+
+def _trail_line(e: dict) -> str:
+    """One line per event: step number, tool name and args, model thought, retry reason, or failure."""
+    kind = e.get("kind", "?")
+    if kind == "step":
+        return f"step {e.get('n')}"
+    if kind == "tool":
+        return f"tool {e.get('name')} {e.get('args', '')}"
+    if kind == "say":
+        return f"say {e.get('text', '')[:160]}"
+    if kind == "retry":
+        return f"retry {e.get('reason', '')[:160]}"
+    return f"{kind} {e.get('error') or e.get('summary') or ''}"[:200]
 
 
 @mcp.tool()
