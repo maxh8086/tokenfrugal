@@ -1,0 +1,75 @@
+{
+ "tag": "cascade-qwen25c-then-gemma4",
+ "stamp": "20261010-084555",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "fix_bug": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.0,
+     "p50": 14.0,
+     "p95": 23.3,
+     "max": 23.3,
+     "mean": 18.6
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 20.4,
+     "p50": 20.4,
+     "p95": 21.7,
+     "max": 21.7,
+     "mean": 21.0
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 27.2,
+     "p50": 27.2,
+     "p95": 29.5,
+     "max": 29.5,
+     "mean": 28.4
+    },
+    "notes": [
+     "FAILED (research/ts-gemma4-e4b-16384): LoopError: no final answer in 8 steps. Call resume_task('0100db390b') t",
+     "FAILED (research/ts-gemma4-e4b-16384): LoopError: no final answer in 8 steps. Call resume_task('5e041408b4') t"
+    ]
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.8,
+     "p50": 14.8,
+     "p95": 20.5,
+     "max": 20.5,
+     "mean": 17.6
+    },
+    "notes": [
+     "[458de43b03] Navigation to `https://example.com` was successful. A snapshot was taken, but the retur",
+     "[e09f79fdd6] The page was successfully navigated to https://example.com. A snapshot was taken, but t"
+    ]
+   },
+   "role_research": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 27.6,
+     "p50": 27.6,
+     "p95": 29.1,
+     "max": 29.1,
+     "mean": 28.4
+    },
+    "notes": []
+   }
+  }
+ }
+}

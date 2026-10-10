@@ -1,0 +1,225 @@
+{
+ "tag": "full-ts-llama3-1-8b-16384",
+ "stamp": "20261010-014452",
+ "n": 2,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 17.7,
+     "p50": 17.7,
+     "p95": 22.8,
+     "max": 22.8,
+     "mean": 20.2
+    },
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n"
+    ]
+   },
+   "fix_bug": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 154.0,
+     "p50": 154.0,
+     "p95": 154.0,
+     "max": 154.0,
+     "mean": 154.0
+    },
+    "notes": [
+     "FAILED (builder/ts-llama3-1-8b-16384): LoopError: task timed out after 150s. Call resume_task('c050a56c62') to",
+     "FAILED (builder/ts-llama3-1-8b-16384): LoopError: task timed out after 150s. Call resume_task('dd55922f25') to"
+    ]
+   },
+   "write_tests": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 21.0,
+     "p50": 21.0,
+     "p95": 22.2,
+     "max": 22.2,
+     "mean": 21.6
+    },
+    "notes": []
+   },
+   "rename_across_files": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 37.9,
+     "p50": 37.9,
+     "p95": 65.2,
+     "max": 65.2,
+     "mean": 51.5
+    },
+    "notes": [
+     "FAILED (builder/ts-llama3-1-8b-16384): LoopError: no final answer in 12 steps. Call resume_task('bb66156f33') ",
+     "FAILED (builder/ts-llama3-1-8b-16384): LoopError: no final answer in 12 steps. Call resume_task('bfc416eb2d') "
+    ]
+   },
+   "find_symbol": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.5,
+     "p50": 8.5,
+     "p95": 9.5,
+     "max": 9.5,
+     "mean": 9.0
+    },
+    "notes": []
+   },
+   "review_sqli": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 14.7,
+     "p50": 14.7,
+     "p95": 16.1,
+     "max": 16.1,
+     "mean": 15.4
+    },
+    "notes": []
+   },
+   "debug_trace": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 22.4,
+     "p50": 22.4,
+     "p95": 22.4,
+     "max": 22.4,
+     "mean": 22.4
+    },
+    "notes": []
+   },
+   "summarize_readme": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 14.2,
+     "p50": 14.2,
+     "p95": 14.3,
+     "max": 14.3,
+     "mean": 14.2
+    },
+    "notes": [
+     "FAILED (research/ts-llama3-1-8b-16384): LoopError: you wrote a tool call as text; use the tool-calling interfa"
+    ]
+   },
+   "role_analyzer": {
+    "verified": "1/2",
+    "ran": "1/2",
+    "s": {
+     "min": 9.5,
+     "p50": 9.5,
+     "p95": 19.5,
+     "max": 19.5,
+     "mean": 14.5
+    },
+    "notes": [
+     "FAILED (analyzer/ts-llama3-1-8b-16384): LoopError: no final answer in 10 steps. Call resume_task('484b724583')"
+    ]
+   },
+   "role_data": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 8.2,
+     "p50": 8.2,
+     "p95": 8.3,
+     "max": 8.3,
+     "mean": 8.2
+    },
+    "notes": []
+   },
+   "role_docs": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 10.3,
+     "p50": 10.3,
+     "p95": 11.3,
+     "max": 11.3,
+     "mean": 10.8
+    },
+    "notes": []
+   },
+   "role_security": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 51.2,
+     "p50": 51.2,
+     "p95": 51.7,
+     "max": 51.7,
+     "mean": 51.5
+    },
+    "notes": [
+     "FAILED (security/ts-llama3-1-8b-16384): LoopError: no final answer in 10 steps. Call resume_task('ca448d289a')",
+     "FAILED (security/ts-llama3-1-8b-16384): LoopError: no final answer in 10 steps. Call resume_task('d5f1258338')"
+    ]
+   },
+   "role_designer": {
+    "verified": "2/2",
+    "ran": "2/2",
+    "s": {
+     "min": 18.1,
+     "p50": 18.1,
+     "p95": 18.4,
+     "max": 18.4,
+     "mean": 18.2
+    },
+    "notes": []
+   },
+   "role_browser": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 15.2,
+     "p50": 15.2,
+     "p95": 15.3,
+     "max": 15.3,
+     "mean": 15.2
+    },
+    "notes": [
+     "[2f5fa82c11] Here is a summary of the task and result in 150-300 tokens:  **Task:**  * Navigate to h",
+     "[da5e376363] ## Latest page snapshot uid=1_0 RootWebArea url=\"https://example.com/\"  ## Latest page "
+    ]
+   },
+   "role_tracker": {
+    "verified": "0/2",
+    "ran": "0/2",
+    "s": {
+     "min": 7.0,
+     "p50": 7.0,
+     "p95": 8.0,
+     "max": 8.0,
+     "mean": 7.5
+    },
+    "notes": [
+     "FAILED (tracker/ts-llama3-1-8b-16384): LoopError: no final answer in 6 steps. Call resume_task('3997799d0f') t",
+     "FAILED (tracker/ts-llama3-1-8b-16384): LoopError: no final answer in 6 steps. Call resume_task('e15fcc3e12') t"
+    ]
+   },
+   "role_research": {
+    "verified": "0/2",
+    "ran": "2/2",
+    "s": {
+     "min": 24.6,
+     "p50": 24.6,
+     "p95": 24.7,
+     "max": 24.7,
+     "mean": 24.6
+    },
+    "notes": [
+     "[22451b4d99] **Error Report**  * **Status Code**: 404 * **Error Message**: \"Not Found\" * **Server Re",
+     "[9392c2ff1a] **Error Report**  * **Status Code:** 404 * **Error Message:** Not Found * **URL:** http"
+    ]
+   }
+  }
+ }
+}
