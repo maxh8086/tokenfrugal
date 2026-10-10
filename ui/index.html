@@ -247,15 +247,14 @@ function renderChrome() {
   $('title').replaceChildren(...parts.map((p) => el('span', null, p)));
   $('title').setAttribute('aria-label', u.title || '');
   const sv = state.services || {}, o = sv.ollama, d = sv.docker;
-  const L = u.bar || {}, none = u.bar_none || '', sn = u.services || {}, names = u.bar_names || {};
+  const L = u.bar || {}, none = u.bar_none || '', sn = u.services || {};
   const cell = (k, cls, ...v) => { const c = el('div', 'cell ' + cls); c.append(el('h3', null, L[k] || ''), ...v); return c; };
   const val = (text, small) => { const v = el('div', 'val', text || none); if (small) v.append(' ', el('small', null, small)); return v; };
   const health = state.health || {};
-  const who = [...new Set((health.clients || []).map((n) => names[Object.keys(names).find((k) => n.toLowerCase().includes(k))] || n))];
   const list = [...tasks.values()].filter((t) => t.status === 'running').sort((a, b) => b.startedAt - a.startedAt);
   const running = list.length > 0;
   const st = health.status !== 'up' ? 'disconnected' : (o && !o.ok) ? 'unavailable' : running ? 'running' : 'idle';
-  const sc = el('div', 'chips'); sc.append(chip(word('state', st), st, who.join(' + ')));
+  const sc = el('div', 'chips'); sc.append(chip(word('state', st), st));
   const oc = el('div', 'chips'); oc.append(o ? chip(sn.ollama, o.ok ? 'up' : 'down', word('status', o.ok ? 'up' : 'down') + (o.ok ? ' · ' + o.models.length : ''), o.url) : none);
   const dc = el('div', 'chips'); dc.append(d ? chip(sn.docker, d.ok ? 'up' : 'down', word('status', d.ok ? 'up' : 'down') + (d.version ? ' · ' + d.version : '')) : none);
   const g = sv.graph, gc = el('div', 'chips');
@@ -320,7 +319,7 @@ function renderUsage() {
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
 async function load() {
-  const [s, h] = await Promise.all([fetch('/api/state').then((r) => r.json()), fetch('/health').then((r) => r.json()).catch(() => ({ status: 'down', clients: [] }))]);
+  const [s, h] = await Promise.all([fetch('/api/state').then((r) => r.json()), fetch('/health').then((r) => r.json()).catch(() => ({ status: 'down' }))]);
   state = { ...s, health: h }; roles = s.roles || [];
   tasks.clear(); for (const t of s.tasks) tasks.set(t.id, t);
   render();
