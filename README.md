@@ -122,6 +122,7 @@ A weekly GitHub Actions job (`.github/workflows/bump-pins.yml`, also runnable by
 - [High-level design](docs/hld.svg): cloud agent, gateway, local LLMs, Docker MCP profiles, Neo4j, dashboard
 - [Low-level design: modules](docs/lld-modules.svg)
 - [Low-level design: dispatch_task sequence](docs/lld-sequence.svg)
+- [Interactive routing flowchart](docs/architecture-routing.html): step through a routine task and a fallback task
 - [Full write-up](docs/architecture.md)
 
 ## FAQ
