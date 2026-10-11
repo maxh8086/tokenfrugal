@@ -15,8 +15,19 @@ load_dotenv(ROOT / ".env")  # LLM endpoint etc.; real environment variables win
 # Any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM, a hosted API). Host and port live in .env.
 OLLAMA_URL = os.getenv("TOKENFRUGAL_LLM_URL") or os.getenv("OLLAMA_URL", "http://localhost:11434/v1")
 LLM_API_KEY = os.getenv("TOKENFRUGAL_LLM_API_KEY", "ollama")
+
+
+def _git_root(start: str):
+    """Nearest ancestor of `start` that holds a .git entry, as a posix path; None if there is none."""
+    here = Path(start).resolve()
+    for p in [here, *here.parents]:
+        if (p / ".git").exists():
+            return p.as_posix()
+    return None
+
+
 # Exact host path the Docker gateway may bind writable (defaults to the checkout; see docker catalogue volume).
-WORKSPACE = os.getenv("CC_WORKSPACE", ROOT.as_posix())
+WORKSPACE = os.getenv("CC_WORKSPACE") or _git_root(os.getcwd()) or ROOT.as_posix()
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
 SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "synaptree-mcp")
 NATIVE_SERVERS = {
