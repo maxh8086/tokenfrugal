@@ -2,6 +2,7 @@
 import asyncio
 import json
 import re
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -18,8 +19,8 @@ _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, 
 USAGE: dict[str, dict] = {}  # per task id: model calls and tokens, taken by the gateway when the task ends
 
 
-def _count(tid: str, r, msgs: list, m) -> None:
-    """Add one model call to the task's totals. Uses the backend's usage when sent, else chars / 4."""
+def _count(tid: str, r, msgs: list, m, secs: float) -> None:
+    """Add one model call to the task's totals. Uses the backend's usage when sent, else chars / 4. secs is the call's wall time."""
     u = getattr(r, "usage", None)
     inp = getattr(u, "prompt_tokens", None)
     out = getattr(u, "completion_tokens", None)
@@ -27,15 +28,16 @@ def _count(tid: str, r, msgs: list, m) -> None:
         inp = sum(len(str(x.get("content") or "")) for x in msgs) // 4
     if out is None:
         out = len(m.content or "") // 4
-    a = USAGE.setdefault(tid, {"calls": 0, "input": 0, "output": 0})
+    a = USAGE.setdefault(tid, {"calls": 0, "input": 0, "output": 0, "secs": 0.0})
     a["calls"] += 1
     a["input"] += int(inp)
     a["output"] += int(out)
+    a["secs"] += secs
 
 
 def take_usage(tid: str) -> dict:
     """Totals for one task id; cleared so a resumed run starts its own count."""
-    return USAGE.pop(tid, {"calls": 0, "input": 0, "output": 0})
+    return USAGE.pop(tid, {"calls": 0, "input": 0, "output": 0, "secs": 0.0})
 SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls per step. "
           "Work only inside the workspace, which is mounted at /workspace: always use absolute paths like /workspace/README.md. Be terse. When done, reply with the final result "
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
@@ -254,12 +256,13 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 msgs.append({"role": "user", "content": "Step limit reached. Do not call any more tools. "
                                                         "Answer now using only the tool results above."})
             use_tools = bool(tools) and not text_mode and not force_answer
+            t0 = time.monotonic()
             r = await asyncio.to_thread(  # off the event loop so keepalives and other tasks keep running
                 _client.chat.completions.create, model=role["model"], messages=text_view(msgs) if text_mode else msgs,
                 temperature=0.1, max_tokens=2048, tools=(tools or None) if use_tools else None,
                 **({} if used_tools or not use_tools else {"tool_choice": "required"}))
             m = r.choices[0].message
-            _count(tid, r, msgs, m)
+            _count(tid, r, msgs, m, time.monotonic() - t0)
             thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()
             if thought:
                 events.emit("say", id=tid, text=thought[:1000])

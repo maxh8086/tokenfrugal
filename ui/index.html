@@ -313,8 +313,8 @@ function renderUsage() {
       table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
         u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)])),
       el('h3', '', X.local_tasks),
-      table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
-        u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))] : []));
+      table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1], [X.e2e, 1], [X.tps, 1]],
+        u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total), r.e2e ? r.e2e.toFixed(1) + 's' : '-', r.tps ? r.tps.toFixed(1) : '-']))] : []));
 }
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
