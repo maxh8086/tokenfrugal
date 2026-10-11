@@ -67,7 +67,7 @@ function apply(ev) {
     note(t, ev.ts, ev.text); t.think = ev.text; t.updatedAt = ev.ts;
   } else if (ev.kind === 'task_done') {
     note(t, ev.ts, 'done: ' + ev.summary);
-    Object.assign(t, { status: 'done', summary: ev.summary, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0 });
+    Object.assign(t, { status: 'done', summary: ev.summary, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0, e2e: Number(ev.e2e) || 0 });
   } else if (ev.kind === 'task_failed') {
     note(t, ev.ts, 'failed: ' + ev.error);
     Object.assign(t, { status: 'failed', error: ev.error, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0 });
@@ -155,7 +155,7 @@ function usage(now = Date.now() / 1000) {
     for (const e of readJsonl(f)) if (e && (e.kind === 'task_done' || e.kind === 'task_failed') && e.id) rows.set(e.id, { ...rows.get(e.id), ...e });
   const list = [...rows.values()].map((e) => ({ ts: e.ts, pid: e.pid, id: e.id, ok: e.kind === 'task_done', saved: Number(e.saved) || 0,
     role: e.role || (tasks.get(e.id) || {}).role || '', model: e.model || (tasks.get(e.id) || {}).model || '',
-    task: e.task || (tasks.get(e.id) || {}).prompt || '', agent: e.agent || (tasks.get(e.id) || {}).agent || '', calls: Number(e.calls) || 0, input: Number(e.input) || 0, output: Number(e.output) || 0 }));
+    task: e.task || (tasks.get(e.id) || {}).prompt || '', agent: e.agent || (tasks.get(e.id) || {}).agent || '', calls: Number(e.calls) || 0, input: Number(e.input) || 0, output: Number(e.output) || 0, e2e: Number(e.e2e) || 0, secs: Number(e.secs) || 0 }));
   const d = new Date(now * 1000);
   const day = Math.min(Math.max(cfgNum('renewal_day', 1), 1), 28);
   let start = new Date(d.getFullYear(), d.getMonth(), day);
@@ -193,7 +193,8 @@ function usage(now = Date.now() / 1000) {
   out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
   // Local tasks this period, one row per task id, same columns as Claude's subagent table (input/output are estimates when the backend sends no usage).
   out.localTasks = list.filter((x) => x.ts >= scopes.month).sort((a, b) => b.ts - a.ts).slice(0, 200)
-    .map((x) => ({ task: x.task || x.id, persona: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output }));
+    .map((x) => ({ task: x.task || x.id, persona: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output,
+      e2e: x.e2e, tps: x.secs > 0 ? Math.round((x.output / x.secs) * 10) / 10 : 0 }));
   out.claude = claudeUsage(scopes);
   return out;
 }
