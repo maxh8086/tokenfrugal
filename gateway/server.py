@@ -14,7 +14,7 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import compose, events, plan, store, ui_launcher
-from .config import check_persona, load_personas, resolve_role
+from .config import check_agent, load_personas, resolve_role
 from .loop import leaf, run, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
@@ -99,7 +99,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
                 max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300],
-                persona=agent, tools=role.get("tools") or [], skills=role.get("skills") or [])
+                tools=role.get("tools") or [], skills=role.get("skills") or [])
     base = len(messages or [])  # messages from an earlier run were already counted
     t0 = time.monotonic()
     beat = asyncio.create_task(_heartbeat(tid))
@@ -131,16 +131,13 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
 
 
 @mcp.tool()
-async def dispatch_task(agent: str, task: str, plan_id: int = 0, persona: str = "") -> str:
+async def dispatch_task(agent: str, task: str, plan_id: int = 0) -> str:
     """Run a task on a local agent (agency-agents slug, e.g. 'engineering-code-reviewer').
     Optional plan_id links it to a plan task (claimed first, marked done/blocked after).
-    persona (optional) is the explicit persona slug the router chose; it must be known (see list_roles) and replaces agent.
     Returns a 150-300 token summary and a task_id."""
-    if persona:
-        err = check_persona(persona, CFG)
-        if err:
-            return err
-        agent = persona
+    err = check_agent(agent, CFG)
+    if err:
+        return err
     role = resolve_role(agent, CFG)
     if plan_id:
         ok, msg = await _plan(plan.claim, plan_id, "gateway")
