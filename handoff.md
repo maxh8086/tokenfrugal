@@ -1,0 +1,190 @@
+# Handoff: tokenfrugal
+
+Last updated: 2026-10-12
+
+This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS chip and client names. Part B covers the PRISM Bonsai / Ternary-Bonsai benchmark and the Ollama 16k roster. Only this file is tracked in git. The worktree copy `prism-handoff.md` stays untracked and is superseded by Part B.
+
+---
+
+## Part A: text-tool fix, dashboard STATUS chip, client names
+
+### Where things are
+
+- **Worktree (this session):** `C:\Users\vaibh\Downloads\Projects\tokenfrugal\.claude\worktrees\hiku-fallback-issue-8209ee`, branch `claude/hiku-fallback-issue-8209ee`.
+- **Main checkout:** `C:\Users\vaibh\Downloads\Projects\tokenfrugal`, branch `fix/devops-list-profile`. Gateways run from here.
+- Base for the fixes: commit `afe5329` ("Fix text-mode tool calls and dashboard client tracking").
+- On main checkout, `afe5329` was cherry-picked as `98b500b`. Offline tests: 105 pass (`.venv/Scripts/python.exe -m unittest discover -s tests -t . -q`).
+
+### Done
+
+1. **Text-tool parsing** (`gateway/loop.py`): `parse_text_calls`, `text_tool_prompt`, `text_view`. Unit tests in `tests/test_text_tools.py`. A live builder dispatch wrote the expected file (to the main checkout, see Open issues).
+2. **client_info fix** (`gateway/server.py`): the MCP field is snake_case `client_info`, not `clientInfo`. The old lookup raised AttributeError, which was suppressed, so no `client` event was emitted. Regression test: `tests/test_client_seen.py`. Present on main as `98b500b`, and in the worktree as `afe5329`.
+3. **`/health` route** (`ui/server.js`, uncommitted in worktree): reports `{status, clients}`. `status` is `up` if any gateway pid that has written to the events file is alive, else `down`. Pids are never exposed. Client names come from `client` events.
+4. **STATUS chip** (`ui/index.html`, uncommitted in worktree): `load()` fetches `/api/state` and `/health` in parallel. The chip is `disconnected` when `health.status !== 'up'`, otherwise `unavailable`, `running` or `idle`, per `renderChrome()`.
+
+### Open / not yet verified
+
+- **Dashboard on port 7777 is stale.** Node pid 5840 runs `C:\Users\vaibh\Downloads\Projects\tokenfrugal\ui\server.js` (main checkout, started 00:25). It has no `/health` route. Restart it from the worktree, or copy the changes to main first. Restarting Claude does not restart it.
+- **STATUS chip not verified in a browser.** `/health` was checked only on a fresh instance on port 7792. It returned `down`, correctly, since no gateway pid was alive at the time.
+- **Gateways must restart to pick up code.** Each Claude session starts its own gateway (`python -m gateway.server`). Start a new session that uses tokenfrugal, then run a task and check the dashboard for `up` and client names.
+- **Uncommitted worktree changes:** `ui/server.js`, `ui/index.html`. Not committed yet. Commits must have no Co-Authored-By trailer (user's rule).
+- **Main checkout has an uncommitted `gateway/config.py` change** that predates this work. Left alone.
+- **Builder writes go to the main checkout**, not the worktree, because the gateway's workspace is the main checkout. Fix the workspace or accept it.
+- **Process note:** `ui/server.js` and `ui/index.html` were edited directly, not via tokenfrugal. CLAUDE.md says routine code goes to tokenfrugal first. Disclose this in any commit or PR.
+
+### GitHub issues (maxh8086/tokenfrugal)
+
+- #16: queue status. A new session can't tell if tokenfrugal is busy. Still open.
+- #17: browser role fails. Docker container resolves `127.0.0.1` to itself, and Playwright tools are missing. Still open.
+
+### Do not touch
+
+- The other session's `ui/app/api.py` Haiku-fallback work.
+
+### Next steps (Part A)
+
+1. Stop pid 5840 and start the dashboard from the worktree: `UI_PORT=7777 GATEWAY_EVENTS=C:/Users/vaibh/Downloads/Projects/tokenfrugal/gateway/events.jsonl node ui/server.js`. Confirm `curl http://127.0.0.1:7777/health` returns JSON with `status`.
+2. Start a new Claude session that uses tokenfrugal, run a small task, and confirm `/health` returns `up` with a client name. Confirm the STATUS chip reads running or idle.
+3. If both pass, commit the two worktree files on `claude/hiku-fallback-issue-8209ee`, with no Co-Authored-By trailer.
+4. Decide whether the dashboard change goes to main too.
+
+---
+
+## Part B: PRISM Bonsai / Ternary-Bonsai benchmark
+
+Date: 2026-10-11, results updated 2026-10-12. Status: in progress. Full test not yet run.
+
+### B1. Why this started
+
+The persona model table (`gateway/personas.yaml`, `persona_models`) maps each persona to one of two local models: builder `qwen2.5-coder-yarn:3b` or thinker `llama3.2:3b-16k`. Some personas are assigned Gemma or Qwen3 models through overrides. The question: do newer small models (PrismML Bonsai, Ternary-Bonsai) beat the current picks on verified quality and speed, and should any persona move to them?
+
+### B2. Purpose
+
+Pick each persona's model on evidence, not on size alone:
+
+- Quality: pass counts on the 16 real-world cases with verifiers, at 16384 context, n=2.
+- Output length: the direct output-length test (128 to 4096 tokens), with tok/s and failures.
+- Selection rule (`Benchmark/persona-model-selection.md`): keep models scoring at least 75% of the best, then choose the smallest parameter count, then the fastest.
+
+Standing constraints: no `ollama pull` or Hugging Face search without approval; no Docker install without approval; no Co-Authored-By trailers.
+
+### B3. What we will conclude after the run
+
+For each model:
+
+- Realworld pass count (of 16 cases x 2 runs), per section (output, realworld, roles).
+- Output-cap result at 4096 tokens and tok/s at each length.
+- Whether it clears the 75%-of-best threshold and beats the current persona model on the same persona.
+
+Outputs: a per-model table in `bench/prism-round2/`, and a recommendation for `persona_models`. No change to `personas.yaml` or `persona_models.json` without your approval.
+
+### B4. Model roster
+
+Included: everything installed except the 27B models.
+
+- Bonsai Q1_0 (Ollama import from local GGUF): `prism-bonsai-1.7b-q1`, `prism-bonsai-4b-q1`, `prism-bonsai-8b-q1`.
+- Ternary-Bonsai Q2_0_g64 (PrismML llama.cpp image `maxh8086/prism-llama:e8fd209`, OpenAI-compatible, loopback only): 1.7B, 4B, 8B. Local GGUFs in `prism-models`. Ollama 0.35.1 cannot load these.
+- Ollama models (about 40, including the ts-* variants at 16384 context, e.g. `ts-gemma4-e4b-16384`, `ts-qwen3-8b-16384`, `qwen2.5-coder-yarn:3b`, `llama3.2:3b-16k`).
+- Added 2026-10-12: `ts-hf-co-bartowski-google_gemma-3-12b-it-gguf-16384`, `ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-16384`, `ts-hf-co-bartowski-mistral-nemo-minitron-8b-instruct-gguf-16384` (see B6).
+
+Excluded: `ts-michelrosselli-bonsai-27b-16384`, `MichelRosselli/bonsai-27b`, `hf.co/prism-ml/Ternary-Bonsai-2-27B-gguf:PTQ1_0`, and the 27B blob that `prism-llama-build/.env` points to.
+
+### B5. Execution plan
+
+1. Build `scripts/bench_model.py`: a reusable runner for any model. It takes an Ollama tag or an OpenAI-compatible URL (`TOKENFRUGAL_LLM_URL`), runs the output test and the 16-case real-world bench, and writes to `bench/<tag>/`. Currently the bench only targets Ollama tags, so URL support must be added. Delegate the code to tokenfrugal (`resume_task` on `2b7737f8bf` first, then re-scope if it fails).
+2. Run the Ternary models through the prism image, one at a time: start on loopback (`127.0.0.1:8282`), run, then stop the container. Do not leave containers running.
+3. Run the Bonsai Ollama models (`run_all.sh`, already started).
+4. Run the rest of the Ollama roster, one model at a time, each under the same settings.
+5. Compare against the current persona assignments using the 75% rule. Report.
+
+### B6. Current stage
+
+- Done: Bonsai 1.7B, 4B and 8B Q1_0 import into Ollama and generate text.
+- Done: Ternary 1.7B Q2_0_g64 loads in the prism image; `/health` ok; one correct code answer at about 146 tok/s. Container `prism-tern-1p7b` is stopped, not removed.
+- Partial: `run_all.sh` (Bonsai Ollama) reached realworld for 4B. Recorded so far: debug_trace 2/2, summarize_readme 1/2, role_analyzer 2/2, role_data 0/2, role_docs 0/2; role_security failed with a LoopError (no final answer in 10 steps). Logs: `scratchpad/prism/run_all.log`, output in `bench/prism-round2/`.
+- Done (2026-10-11 16:26): Ternary-Bonsai 1.7B Q2_0_g64 full bench via `prism-tern-1p7b` (tag `prism-ternary-1.7b-q2`, `bench/prism-round2/20261011-162616-prism-ternary-1.7b-q2.md`). Realworld verified 12/32 (n=2 x 16 cases). Passes: find_symbol, role_analyzer, role_security, role_designer, role_tracker, role_research. Zero passes: write_function, fix_bug, write_tests, rename_across_files, review_sqli, debug_trace, summarize_readme, role_data, role_docs (1/2 ran), role_browser. Caveats: role_browser/role_research hit a crawl4ai 400 error, and the role_docs failure names `qwen2.5-coder-yarn:3b`, so check the routing before trusting those rows. Output-length (direct) 128 to 4096: 0 fails, 104 to 238 tok/s. Container stopped after the run.
+- Earlier throughput files (`bench/20261011-15*-prism-*.md`) have no model tag, no endpoint and no quality check, so treat them as unverified.
+- Done (2026-10-11 16:31): Bonsai-8B Q1_0 full bench (tag `prism-bonsai-8b-q1`, `bench/prism-round2/20261011-163241-prism-bonsai-8b-q1.md`). Realworld verified 12/32. Passes: find_symbol, debug_trace, role_analyzer, role_security, role_designer, role_tracker. Zero passes: write_function, fix_bug, write_tests, rename_across_files, review_sqli, summarize_readme, role_data, role_docs, role_browser, role_research. Output-length 128 to 4096: 0 fails, 97 to 114 tok/s. Caveat: thinker 4096 row has p50 4.7 s, which means the run stopped early at EOS and did not reach the cap. Recheck before quoting that row.
+- Done (2026-10-11 17:21): Ternary-Bonsai 4B Q2_0_g64 full bench (tag `prism-ternary-4b-q2`, `bench/prism-round2/20261011-172151-prism-ternary-4b-q2.md`). Realworld verified 11/32. Passes: find_symbol, role_analyzer, role_designer, role_tracker, role_security 1/2, role_research 1/2, summarize_readme 1/2. Zero passes: write_function, fix_bug, write_tests, rename_across_files, review_sqli, debug_trace, role_data, role_docs, role_browser (returned an `about:blank` snapshot, so the row is unreliable). Output-length: 0 fails, roughly 104 to 238 tok/s (see the 4B file).
+- Done (2026-10-11 17:40): Ternary-Bonsai 8B Q2_0_g64 full bench via `prism-llama` (ts-mcp compose, port 8282, tag `prism-ternary-8b-q2`, `bench/prism-ternary-8b-q2/20261011-174049-prism-ternary-8b-q2.md`). Realworld verified 12/32. Passes: find_symbol, role_analyzer, role_security, role_designer, role_browser, role_tracker. Zero passes: write_function, fix_bug, write_tests, rename_across_files, review_sqli, debug_trace, summarize_readme, role_data, role_docs, role_research. Output-length: 0 fails, builder 82 to 91 tok/s, thinker 67 to 91 tok/s. Caveat: role_browser passes 2/2 here but was unreliable on the 4B run, so check it before relying on it.
+- Summary so far (realworld verified, of 32): Ternary 1.7B 12, Bonsai 8B Q1 12, Ternary 8B 12, Ternary 4B 11. Under the 75%-of-best rule, the cut is 9 of 12. All four clear it, so the smallest-then-fastest tiebreak decides. Per-persona recommendations are not made yet. The `role_browser` and `role_research` rows depend on crawl4ai and on the browser snapshot, so they need a check before they count.
+- Checked (2026-10-11): crawl4ai is not failing on every model, so the Playwright switch is not made. role_browser passes 2/2 on Ternary 8B and Bonsai 1.7B Q1, and fails on others with snapshot-parse answers (Ternary 4B returned `about:blank`). role_research passes on Ternary 1.7B, Bonsai 4B and Ternary 4B 1/2, and fails on Bonsai 8B Q1 and Ternary 8B with "heading not found" answers. The failures are model-specific, not a crawl4ai outage. The crawl4ai 400 seen in earlier runs has not been traced to a cause.
+- Running (started 2026-10-11 18:48): the Ollama 16k roster, 18 existing tags, sequential, via `scratchpad/roster/run_roster.sh`. Log: `scratchpad/roster/roster.log`. The run ended with `ROSTER DONE` (2026-10-12 00:27:33). The roster was not modified. Still to do: the context sweep (16k/32k/48k/64k).
+- Five new models requested (2026-10-11 19:02, `scratchpad/roster/queue_new.sh`, log `scratchpad/roster/queue_new.log`). All five pulls failed, so nothing was added to the roster:
+  - `gemma4:12b-nvfp4`: needs MLX, which this Windows Ollama cannot run.
+  - `hf.co/NeoChen1024/gemma-3-12b-it-NVFP4`, `hf.co/DataSnake/Mistral-Nemo-Instruct-2407-NVFP4-FP8`, `hf.co/nvidia/Llama-3.1-Nemotron-Nano-VL-8B-V1-FP4-QAD`: NVFP4 safetensors, not GGUF. Ollama rejects them.
+  - `mistral-nemo-minitron-8b-instruct:q4_k_m`: tag does not exist in the Ollama library.
+  - GGUF substitutes found by web search (the Hugging Face MCP is not connected in this session, so this used WebSearch):
+    - Gemma 3 12B: `bartowski/google_gemma-3-12b-it-GGUF`, Q4_K_M. NeoChen1024 was not found.
+    - Mistral Nemo 12B: `bartowski/Mistral-Nemo-Instruct-2407-GGUF`, Q4_K_M. DataSnake was not found.
+    - Nemotron Nano VL 8B: no GGUF found. The text-only `bartowski/nvidia_Llama-3.1-Nemotron-Nano-8B-v1-GGUF` is a different model and not a VL substitute. Dropped.
+    - Mistral NeMo Minitron 8B: `bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF`, Q4_K_M. The `:q4_k_m` Ollama tag does not exist, so use the Hugging Face form.
+  - Decided 2026-10-11 19:05 (user go-ahead): pull and create 16k variants for the bartowski Gemma 3 12B, Mistral Nemo 12B and Mistral NeMo Minitron 8B repos. Nemotron Nano VL 8B is dropped. Queue: `scratchpad/roster/queue_gguf.sh`, log `scratchpad/roster/queue_gguf.log`. It benches the created models only after `ROSTER DONE`.
+  - Results (2026-10-12, from `queue_gguf.log`): pulls and 16k creates succeeded for all three. Bench OK: `ts-hf-co-bartowski-google_gemma-3-12b-it-gguf-16384` (00:43:01) and `ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-16384` (00:59:33).
+  - Minitron (`ts-hf-co-bartowski-mistral-nemo-minitron-8b-instruct-gguf-16384`): no result. Every realworld case timed out at about 150 s (`LoopError: task timed out`, `ran=False`), so it has zero passes. That is a timeout result, not a quality verdict. The model stayed in "Stopping..." in `ollama ps` while the bench was still running. The bench and runner were still alive at 01:50. A stop was approved but denied by the permission classifier, so the user must stop them (see open items). Retry later with a longer per-case timeout. Ask before retrying.
+  - Open: stop the Minitron bench (python PIDs 11632 and 28676, queue shell 38560/41156, llama-server 32868). Not yet done.
+  - Open: `ollama ps` showed CONTEXT 8192 for the Minitron tag, while the runner command line used `-c 16384`. Not investigated.
+- Not started: the context sweep (16k/32k/48k/64k).
+
+### B7. Decisions and answers (2026-10-11)
+
+Recorded before the session break.
+
+1. **chrome-devtools image.** The image is pushed to Docker Hub as `maxh8086/chrome-devtools-mcp:1` (digest `sha256:a80eacd46dbc8781d2cff416f352471022b39ed802ee13c5c1a76993c0ca87d8`). The user approved these ref edits in the **main checkout** `C:\Users\vaibh\Downloads\Projects\tokenfrugal` (not the worktree):
+   - `profiles/browser.yaml` lines 14 and 19: `tokenfrugal/chrome-devtools-mcp:1` becomes `maxh8086/chrome-devtools-mcp:1`.
+   - `scripts/install_profiles.py` line 19: same change.
+   - `docker/pins.yaml` line 8: same change.
+   - Status at break: **not applied.** The worktree session's PreToolUse guard blocks edits to base-checkout paths. Do not bypass it with shell writes. Apply the edits from a session opened in the base checkout, or run them yourself.
+   - Also check `scripts/bench_table.py:121` and `scripts/mirror.sh`. They reference the chrome-devtools name, not the image tag, so they probably need no change.
+2. **Commit.** The user asked to commit the base-checkout working tree with a sensible message. Status at break: **not committed.** Its contents: deletes of the 27B bench files (`bench/20261010-043956-full-ts-michelrosselli-bonsai-27b-16384.{json,md}`, excluded from the roster), untracked `docs/haiku-fallback-log.md`, `scripts/bench_model.py`, and `handoff.md`. Review `handoff.md` before committing, because it belongs to other work. Commit from the base checkout, with no Co-Authored-By trailer (memory and CLAUDE.md rule).
+3. **Consolidated benchmark file.** `bench/Readme.md` as the GitHub landing page, plus `bench/results.json` (schema_version 1) as the data source, with present results, Mermaid/SVG visuals, conclusions, and a "how to add a benchmark" section. Opus is the review model, but its weekly limit resets 2026-10-14 01:30 Asia/Kolkata. Its last attempt produced nothing usable, so do not trust any partial output from it. Renderer code goes to tokenfrugal per CLAUDE.md.
+4. **Ollama roster, 16k only**, about 40 models, unattended, multi-hour. Approved by the user. Done 2026-10-12 (see B6).
+5. **Context sweep** (16k/32k/48k/64k) on the surviving candidates after the roster. The user said "limit to 16k if it's enough". Keep 16k unless a result requires more context.
+6. **8–12B pulls.** Approved, but the exact tag list is not confirmed yet. Confirm the list before pulling. The three GGUF pulls in B6 were the approved set.
+7. **ts-mcp placement of `prism-llama`.** Inline the service from `docker/prism-llama/compose.yml` into the base `docker-compose.yml`, or keep the override file and document it. The user said "do what's right". The choice is the orchestrator's. Pick one and state it.
+8. **crawl4ai.** Keep crawl4ai. No Playwright switch. See B6 "Checked".
+9. **Bonsai-8B Q1 thinker 4096 row** is suspect (p50 4.7 s at 109 tok/s, early EOS). Re-run that row before quoting it.
+
+### B8. Restart prompt (new session)
+
+Paste this into a new Claude Code session opened in `C:\Users\vaibh\Downloads\Projects\tokenfrugal`:
+
+> Read `handoff.md` at the repo root `C:\Users\vaibh\Downloads\Projects\tokenfrugal\handoff.md`, Part B, sections B6 to B7. Work in the base checkout `C:\Users\vaibh\Downloads\Projects\tokenfrugal` for changes to base files.
+> Steps, in order:
+> 1. Apply the three chrome-devtools image-ref edits (`profiles/browser.yaml`, `scripts/install_profiles.py`, `docker/pins.yaml`) from `tokenfrugal/chrome-devtools-mcp:1` to `maxh8086/chrome-devtools-mcp:1`. Check `scripts/bench_table.py` and `scripts/mirror.sh`.
+> 2. Review the base-checkout working tree and commit it with a sensible message. Do not add a Co-Authored-By trailer. Do not restore the 27B bench files. Review `handoff.md` before committing.
+> 3. Consolidate `bench/` into `bench/Readme.md` plus `bench/results.json`, with visuals and conclusions. Use the 75%-of-best rule from `Benchmark/persona-model-selection.md`. Delegate renderer code to tokenfrugal (`dispatch_task`). Use Opus for review only after the rate limit resets on 2026-10-14.
+> 4. Stop the stuck Minitron bench (B6 open items) before anything else. Then confirm the 8–12B pulls before pulling anything else.
+> Never sign out or change credentials in the browser pane.
+
+## Part B open decisions
+
+- Gemma and Qwen3 persona assignments: decided by the best-performing model in the sweep. Each persona takes the top verified model for its workload under the 75%-of-best rule, then smallest params, then fastest. The Gemma and Qwen3 choices are not made in advance; they follow from the results.
+- Whether the Ollama roster bench runs in the background unattended (multi-hour). Decided: yes, approved by the user (see B7).
+
+### B9. Final task
+
+- [x] Consolidate all benchmark results into `bench/Readme.md` (landing page) and `bench/results.json` (source data, schema_version 1). Include present results, visuals, conclusions and a section on adding future benchmarks. Built by `scripts/bench_consolidate.py` and `scripts/bench_render.py`; renderer written by a Haiku fallback after tokenfrugal timed out.
+- [ ] Opus review of the consolidation (`bench/Readme.md`, `bench/results.json`, `scripts/bench_consolidate.py`). Gated: do not start before 2026-10-14 01:30 Asia/Kolkata (Opus weekly limit reset). Discard any partial Opus output from before that time.
+
+---
+
+## Part C: persona routing plan and eval script (2026-10-12)
+
+Plan: `docs/persona-routing-plan.md`. Eval script: `scripts/persona_routing_eval.py`, tests in `tests/test_persona_routing_eval.py`.
+
+### Done
+
+1. Plan written. Haiku routes personas, local model plus skill plus tools make up each persona, and laya is scoped as a classifier aid only (encoder, no generation, no tool calls, 512-token English root).
+2. Eval script written. It computes the keyword baseline, scores predictions per persona, and exits 2 when labels name slugs that are not in `personas.yaml`.
+
+### Process note (disclose)
+
+- tokenfrugal `dispatch_task` (agent `engineering-senior-developer`) failed twice for `scripts/persona_routing_eval.py`: first "empty answer", then "tool call written as text". `resume_task` timed out. Per CLAUDE.md the script was written by a Haiku subagent instead. Tests run by that subagent; see the commit message for the result.
+
+### Open
+
+- The labelled set (about 100 tasks) does not exist yet. Eval cannot run without it.
+- Laya is not installed or tested. Adoption needs the labelled set first.
+- Gateway routing change (explicit persona slug in `dispatch_task`) not started.
+- Branch is `fix/devops-list-profile`, not main. Part A's worktree changes are not in this commit.
