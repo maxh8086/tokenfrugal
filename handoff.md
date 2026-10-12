@@ -186,5 +186,32 @@ Plan: `docs/persona-routing-plan.md`. Eval script: `scripts/persona_routing_eval
 
 - The labelled set (about 100 tasks) does not exist yet. Eval cannot run without it.
 - Laya is not installed or tested. Adoption needs the labelled set first.
-- Gateway routing change (explicit persona slug in `dispatch_task`) not started.
+- Gateway routing change: superseded by Part D (rename to `agent` done in 81e5092).
 - Branch is `fix/devops-list-profile`, not main. Part A's worktree changes are not in this commit.
+
+## Part D: rename persona to agent and agent skills (2026-10-12)
+
+### Done
+
+1. `dispatch_task(agent, task, plan_id)` is the only slug argument. The `persona` parameter and the duplicate `persona=` key in `task_start` are removed. `check_persona` is renamed to `check_agent` (commit 81e5092). Error text is now "unknown agent".
+2. Skills for four agents, wired via `persona_skills` in `gateway/personas.yaml` (commit 630ae8b):
+   - `testing-code-reviewer` -> `code-review`
+   - `engineering-sre` -> `sre-triage`
+   - `security-auditor` -> `security-audit`
+   - `engineering-technical-writer` -> `docs-style`
+   - Other agents have no skill. Recommendation: skills only where a fixed checklist changes the output. The local model's context is 16k-32k, and a skill is added to every system prompt for that agent.
+3. Offline suite: `.venv/Scripts/python.exe -m unittest discover -s tests -t . -q` gives 141 tests, OK.
+
+### Process note (disclose)
+
+- Rename was delegated to tokenfrugal (task `0cf6dd6716`, agent `engineering-senior-developer`). The builder reported four files changed. `git diff` showed no changes. `resume_task` gave the same false report. Per CLAUDE.md the edit was made by a Haiku fallback instead. Skill files were written the same way.
+- Re-check `0cf6dd6716` before trusting builder "done" reports. Treat a "done" report with no diff as a failure.
+
+### Open
+
+- Builder timeouts: `dispatch_task` timed out twice on `qwen2.5-coder-yarn:3b`. Probably `TOKENFRUGAL_TASK_TIMEOUT` (default 540s) close to the client tool timeout. Not root-caused. Check the task duration in the logs before raising the timeout.
+- `synaptree-host` MCP server fails with CONNECTION_CLOSED. The plugin server `plugin_synaptree` works. Code-graph queries in this session used Grep for that reason.
+- Dashboard: restarted (pid 5840 earlier). The Part A STATUS chip check is not re-verified in this session. Confirm it in the browser.
+- Persona naming left in place (rename needs a decision): `gateway/personas.yaml` file name and keys (`persona_models`, `persona_skills`, `persona_mcps`), env vars `TOKENFRUGAL_PERSONA_MODELS`, `TOKENFRUGAL_PERSONA_MODELS_FILE`, `TOKENFRUGAL_PERSONA_MCPS_FILE`, `gateway/persona_models.json`, `gateway/persona_mcps.json`, `scripts/persona_ui.py`, `docs/persona-routing-plan.md`, `scripts/persona_routing_eval.py`, `tests/test_check_persona.py` and `tests/test_dispatch_persona.py` (file names only; contents now say agent), the `ui/` dashboard `persona` fields, and README/CLAUDE.md prose.
+- `task_start` still emits the `persona` fields and some `persona` wording in code comments in `gateway/config.py` (`load_personas`). Not changed.
+- Labelled routing set (about 100 tasks) still missing. Eval cannot run.
