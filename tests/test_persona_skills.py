@@ -17,7 +17,7 @@ class PersonaSkillsTest(unittest.TestCase):
         self.assertIn("planning", r["skills"])
 
     def test_unmapped_agent_has_no_skills(self):
-        r = resolve_role("engineering-sre", self.cfg)
+        r = resolve_role("engineering-backend-architect", self.cfg)
         self.assertEqual(r["skills"], [])
 
 
