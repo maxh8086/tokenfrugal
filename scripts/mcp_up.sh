@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
-# Start MCP backends for compose profiles (research security design; default all) and wait until healthy.
-# First run creates ~/.docker/mcp/mcp.env (outside the repo) with a random CRAWL4AI_API_TOKEN; set SONARQUBE_TOKEN there yourself.
+# Start MCP backends for compose profiles (research security design plan; default all) and wait until healthy.
+# Backend secrets live in the OS secret store (python -m gateway.secrets_store), not in a file. Random secrets
+# (CRAWL4AI_API_TOKEN, SEARXNG_SECRET, NEO4J_AUTH) are created on first run; set SONARQUBE_TOKEN yourself:
+#   python -m gateway.secrets_store set SONARQUBE_TOKEN
 # Usage: scripts/mcp_up.sh [research] [security] [design] [plan]      (ROTATE=1 regenerates the crawl4ai token)
 set -euo pipefail
-env_file="${MCP_ENV_FILE:-$HOME/.docker/mcp/mcp.env}"
-compose="$(cd "$(dirname "$0")/.." && pwd)/docker-compose.yml"
-if [ "${ROTATE:-}" = 1 ] || [ ! -f "$env_file" ]; then
-  keep=$( [ -f "$env_file" ] && grep -v '^CRAWL4AI_API_TOKEN=' "$env_file" || printf 'SONARQUBE_TOKEN=\nSONARQUBE_ORG=\n' )
-  mkdir -p "$(dirname "$env_file")"; umask 077
-  { echo "CRAWL4AI_API_TOKEN=$(openssl rand -hex 32)"; echo "$keep"; } > "$env_file"
-  echo "Wrote $env_file (see README step 3 for SONARQUBE_TOKEN)"
-fi
-grep -q '^SEARXNG_SECRET=' "$env_file" || echo "SEARXNG_SECRET=$(openssl rand -hex 32)" >> "$env_file"
-grep -q "^NEO4J_AUTH=" "$env_file" || echo "NEO4J_AUTH=neo4j/$(openssl rand -hex 16)" >> "$env_file"
-export MCP_ENV_FILE="$env_file"
-export NEO4J_AUTH="$(grep '^NEO4J_AUTH=' "$env_file" | head -1 | cut -d= -f2-)"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+compose="$root/docker-compose.yml"
+py="$root/.venv/bin/python"
+[ -x "$py" ] || py="$root/.venv/Scripts/python.exe"
+[ -x "$py" ] || py=python3
+cd "$root"
+if [ "${ROTATE:-}" = 1 ]; then "$py" -m gateway.secrets_store delete CRAWL4AI_API_TOKEN >/dev/null || true; fi
+created="$("$py" -m gateway.secrets_store ensure-generated)"
+if [ -n "$created" ]; then echo "Created in OS secret store: $(echo "$created" | tr '\n' ' ')"; fi
+# NAME=value lines; exported into this shell only so docker compose can read them. Values are never printed.
+while IFS= read -r line; do export "$line"; done < <("$py" -m gateway.secrets_store export-env)
 [ $# -gt 0 ] && profiles=("$@") || profiles=(research security design plan)
 args=(); svcs=()
 for p in "${profiles[@]}"; do
