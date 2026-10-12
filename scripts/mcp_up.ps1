@@ -1,30 +1,30 @@
 <#
 Start the MCP backends for one or more compose profiles (research, security, design, plan) and wait until healthy.
-First run creates ~/.docker/mcp/mcp.env (outside the repo) with a random CRAWL4AI_API_TOKEN and an empty
-SONARQUBE_TOKEN line; set the SonarQube token there yourself. Token values are never printed.
+Backend secrets live in the OS secret store (python -m gateway.secrets_store), not in a file. Missing random
+secrets (CRAWL4AI_API_TOKEN, SEARXNG_SECRET, NEO4J_AUTH) are created on first run; SONARQUBE_TOKEN and SONARQUBE_ORG
+are set by you: python -m gateway.secrets_store set SONARQUBE_TOKEN. Values are never printed.
 Usage: powershell -File scripts/mcp_up.ps1 [research] [security] [design] [plan] [-Rotate]   (no profile = all)
 #>
 param([switch]$Rotate, [Parameter(ValueFromRemainingArguments)][string[]]$Profiles)
 $ErrorActionPreference = "Stop"
-$envFile = if ($env:MCP_ENV_FILE) { $env:MCP_ENV_FILE } else { Join-Path $HOME ".docker\mcp\mcp.env" }
-$compose = Join-Path (Split-Path $PSScriptRoot) "docker-compose.yml"
-if ($Rotate -or -not (Test-Path $envFile)) {
-    $old = if (Test-Path $envFile) { Get-Content $envFile | Where-Object { $_ -notmatch '^CRAWL4AI_API_TOKEN=' } } else { @("SONARQUBE_TOKEN=", "SONARQUBE_ORG=") }
-    $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
-    New-Item -ItemType Directory -Force (Split-Path $envFile) | Out-Null
-    (@("CRAWL4AI_API_TOKEN=" + ([BitConverter]::ToString($b) -replace '-', '').ToLower()) + $old) | Set-Content $envFile -Encoding ascii
-    Write-Host "Wrote $envFile (see README step 3 for SONARQUBE_TOKEN)"
+$root = Split-Path $PSScriptRoot
+$compose = Join-Path $root "docker-compose.yml"
+$py = Join-Path $root ".venv\Scripts\python.exe"
+if (-not (Test-Path $py)) { $py = "python" }
+Push-Location $root
+try {
+    if ($Rotate) { & $py -m gateway.secrets_store delete CRAWL4AI_API_TOKEN | Out-Null }
+    $created = & $py -m gateway.secrets_store ensure-generated
+    if ($LASTEXITCODE -ne 0) { throw "gateway.secrets_store ensure-generated failed (see message above)" }
+    if ($created) { Write-Host "Created in OS secret store: $($created -join ', ')" }
+    # NAME=value lines; set them in this process only so docker compose can read them
+    foreach ($line in (& $py -m gateway.secrets_store export-env)) {
+        $k, $v = $line -split '=', 2
+        Set-Item -Path "Env:$k" -Value $v
+    }
+} finally {
+    Pop-Location
 }
-if (-not (Select-String -Path $envFile -Pattern '^SEARXNG_SECRET=' -Quiet)) {
-    $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
-    Add-Content $envFile ("SEARXNG_SECRET=" + ([BitConverter]::ToString($b) -replace '-', '').ToLower()) -Encoding ascii
-}
-if (-not (Select-String -Path $envFile -Pattern '^NEO4J_AUTH=' -Quiet)) {
-    $b = New-Object byte[] 16; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
-    Add-Content $envFile ("NEO4J_AUTH=neo4j/" + ([BitConverter]::ToString($b) -replace '-', '').ToLower()) -Encoding ascii
-}
-$env:MCP_ENV_FILE = $envFile
-$env:NEO4J_AUTH = ((Select-String -Path $envFile -Pattern '^NEO4J_AUTH=' | Select-Object -First 1).Line -replace '^NEO4J_AUTH=', '')
 if (-not $Profiles) { $Profiles = @("research", "security", "design", "plan") }
 $args = @("compose", "-p", "ts-mcp", "-f", $compose)
 foreach ($p in $Profiles) { $args += @("--profile", $p) }
