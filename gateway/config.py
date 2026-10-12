@@ -147,11 +147,11 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     return r
 
 
-def check_persona(slug: str, cfg: dict) -> str:
-    """Return '' when slug is a known persona, else a short error."""
+def check_agent(slug: str, cfg: dict) -> str:
+    """Return '' when slug is a known agent, else a short error."""
     known = set(cfg.get("overrides") or {}) | set(cfg.get("persona_models") or {}) | set(cfg.get("persona_skills") or {})
     for slugs in (cfg.get("members") or {}).values():
         known |= set(slugs)
     if slug in known:
         return ""
-    return f"unknown persona '{slug}'; call list_roles for valid slugs"
+    return f"unknown agent '{slug}'; call list_roles for valid slugs"

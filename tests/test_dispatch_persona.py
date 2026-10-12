@@ -1,6 +1,6 @@
 import unittest
 
-from gateway.config import check_persona
+from gateway.config import check_agent
 
 CFG = {
     "overrides": {"engineering-code-reviewer": "thinker"},
@@ -10,20 +10,20 @@ CFG = {
 }
 
 
-class CheckPersonaTests(unittest.TestCase):
+class CheckAgentTests(unittest.TestCase):
     def test_known_override_slug_is_accepted(self):
-        self.assertEqual(check_persona("engineering-code-reviewer", CFG), "")
+        self.assertEqual(check_agent("engineering-code-reviewer", CFG), "")
 
     def test_known_member_slug_is_accepted(self):
-        self.assertEqual(check_persona("engineering-backend-architect", CFG), "")
+        self.assertEqual(check_agent("engineering-backend-architect", CFG), "")
 
     def test_known_persona_model_slug_is_accepted(self):
-        self.assertEqual(check_persona("engineering-test-writer", CFG), "")
+        self.assertEqual(check_agent("engineering-test-writer", CFG), "")
 
     def test_unknown_slug_returns_error(self):
-        err = check_persona("no-such-persona", CFG)
+        err = check_agent("no-such-agent", CFG)
         self.assertTrue(err)
-        self.assertIn("no-such-persona", err)
+        self.assertIn("no-such-agent", err)
 
 
 if __name__ == "__main__":
