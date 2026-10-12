@@ -145,3 +145,13 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     if pm:  # a logical name (builder/thinker) or a concrete model tag
         r["model"] = cfg["models"].get(pm, pm)
     return r
+
+
+def check_persona(slug: str, cfg: dict) -> str:
+    """Return '' when slug is a known persona, else a short error."""
+    known = set(cfg.get("overrides") or {}) | set(cfg.get("persona_models") or {}) | set(cfg.get("persona_skills") or {})
+    for slugs in (cfg.get("members") or {}).values():
+        known |= set(slugs)
+    if slug in known:
+        return ""
+    return f"unknown persona '{slug}'; call list_roles for valid slugs"
