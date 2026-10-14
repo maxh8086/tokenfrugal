@@ -1,0 +1,8 @@
+model,role,step,tool,arguments,result,error
+hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS,builder,1,search_graph,"{""query"":""sweep_probe"",""limit"":1}",ok,
+hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS,builder,2,search_graph,"{""query"":""README"",""limit"":5}",ok,
+hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS,analyzer,1,search_graph,"{""query"":""resolve_role"",""format"":""json""}",ok,
+hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K,builder,1,get_code_snippet,"{""qualified_name"":""sweep_probe.txt"",""format"":""compact""}",ok,
+hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K,builder,2,search_graph,"{""query"":""sweep_probe.txt""}",ok,
+hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K,builder,3,get_code_snippet,"{""qualified_name"":""sweep_probe.txt"",""format"":""compact""}",ok,
+hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K,analyzer,1,search_graph,"{""query"":""resolve_role"",""format"":""compact""}",ok,
