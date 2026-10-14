@@ -237,7 +237,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
 
 async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]:
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
-            open_role(role.get("profile"), role.get("native")) as sess:
+            open_role(role.get("profile"), role.get("native"), role.get("params")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
         names = {t["function"]["name"] for t in tools}
         text_mode = bool(tools) and (role.get("tool_mode") or TOOL_MODE) == "text"

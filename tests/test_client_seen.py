@@ -8,7 +8,7 @@ from unittest import mock
 
 import mcp.types as mcp_types
 
-from gateway import events, server
+from router import events, server
 
 
 class ClientSeenTests(unittest.TestCase):

@@ -338,61 +338,61 @@ The **TokenFrugal** project is an open‑source initiative that provides a light
 ## role_analyzer #1  ·  2026-10-09 21:15  ·  task 36c1d44d86  ·  status done
 
 ````text
-The function **resolve_role** is defined in the file **/workspace/tokenfrugal/gateway/config.py** at line **65**.
+The function **resolve_role** is defined in the file **/workspace/tokenfrugal/router/config.py** at line **65**.
 ````
 
 ## role_analyzer #2  ·  2026-10-09 21:16  ·  task 36006b1609  ·  status done
 
 ````text
-The function **resolve_role** is defined in the file **/workspace/tokenfrugal/gateway/config.py** at line 65.
+The function **resolve_role** is defined in the file **/workspace/tokenfrugal/router/config.py** at line 65.
 ````
 
 ## role_analyzer #3  ·  2026-10-09 21:23  ·  task dfdf282eea  ·  status done
 
 ````text
-The function **resolve_role** is defined in the file **/workspace/tokenfrugal/gateway/config.py** at line **65**.
+The function **resolve_role** is defined in the file **/workspace/tokenfrugal/router/config.py** at line **65**.
 ````
 
 ## role_analyzer #4  ·  2026-10-09 21:23  ·  task 89d3739f09  ·  status done
 
 ````text
-The function **resolve_role** is defined in the file **/workspace/tokenfrugal/gateway/config.py** at line **65**.
+The function **resolve_role** is defined in the file **/workspace/tokenfrugal/router/config.py** at line **65**.
 ````
 
 ## role_analyzer #5  ·  2026-10-10 00:07  ·  task 79ca1d71b9  ·  status done
 
 ````text
-The `resolve_role` function is defined in **/workspace/tokenfrugal/gateway/config.py** at line 65.
+The `resolve_role` function is defined in **/workspace/tokenfrugal/router/config.py** at line 65.
 ````
 
 ## role_analyzer #6  ·  2026-10-10 00:07  ·  task 87e06b1dda  ·  status done
 
 ````text
-The `resolve_role` function is defined in **gateway/config.py** at line 65.
+The `resolve_role` function is defined in **router/config.py** at line 65.
 ````
 
 ## role_analyzer #7  ·  2026-10-10 00:09  ·  task 29a213983b  ·  status done
 
 ````text
-The function `resolve_role` is defined in **gateway/config.py** at line 65.
+The function `resolve_role` is defined in **router/config.py** at line 65.
 ````
 
 ## role_analyzer #8  ·  2026-10-10 00:09  ·  task 4bebb1c924  ·  status done
 
 ````text
-The function **resolve_role** is defined in **gateway/config.py** at line 65.
+The function **resolve_role** is defined in **router/config.py** at line 65.
 ````
 
 ## role_analyzer #9  ·  2026-10-10 01:18  ·  task f17d6262f6  ·  status done
 
 ````text
-The function **resolve_role** is defined in the file **/workspace/tokenfrugal/gateway/config.py** at line **81**.
+The function **resolve_role** is defined in the file **/workspace/tokenfrugal/router/config.py** at line **81**.
 ````
 
 ## role_analyzer #10  ·  2026-10-10 01:18  ·  task 8d32d45a08  ·  status done
 
 ````text
-The function **resolve_role** is defined in the file **/workspace/tokenfrugal/gateway/config.py** at line 81.
+The function **resolve_role** is defined in the file **/workspace/tokenfrugal/router/config.py** at line 81.
 ````
 
 ## role_data #1  ·  2026-10-10 00:09  ·  task 20d535975e  ·  status done

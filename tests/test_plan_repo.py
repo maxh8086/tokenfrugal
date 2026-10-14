@@ -4,7 +4,7 @@ import unittest
 from importlib import reload
 from unittest import mock
 
-from gateway import plan
+from router import plan
 
 
 class PlanRepo(unittest.TestCase):

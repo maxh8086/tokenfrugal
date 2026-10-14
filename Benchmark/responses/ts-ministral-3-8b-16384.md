@@ -190,13 +190,13 @@ InternalServerError: Error code: 500 - {'error': {'message': "tool 'read_file' n
 ## role_analyzer #1  ·  2026-10-10 02:52  ·  task eea2135111  ·  status done
 
 ````text
-The `resolve_role` function is defined in `/workspace/tokenfrugal/gateway/config.py` at line 81.
+The `resolve_role` function is defined in `/workspace/tokenfrugal/router/config.py` at line 81.
 ````
 
 ## role_analyzer #2  ·  2026-10-10 02:52  ·  task d6bbb0a636  ·  status done
 
 ````text
-**File path:** `/workspace/tokenfrugal/gateway/config.py` (line 81)
+**File path:** `/workspace/tokenfrugal/router/config.py` (line 81)
 
 **Next step:** Should I inspect the implementation of `resolve_role` or check its usage?
 ````
@@ -204,7 +204,7 @@ The `resolve_role` function is defined in `/workspace/tokenfrugal/gateway/config
 ## role_analyzer #3  ·  2026-10-10 02:55  ·  task 819377b117  ·  status done
 
 ````text
-**File path:** `/workspace/tokenfrugal/gateway/config.py` (line 81)
+**File path:** `/workspace/tokenfrugal/router/config.py` (line 81)
 
 **Next step:** Should I inspect the function definition or trace its callers/callees?
 ````
@@ -213,7 +213,7 @@ The `resolve_role` function is defined in `/workspace/tokenfrugal/gateway/config
 
 ````text
 **Findings:**
-- `resolve_role` is defined in `/workspace/tokenfrugal/gateway/config.py` at line 81.
+- `resolve_role` is defined in `/workspace/tokenfrugal/router/config.py` at line 81.
 
 **Files changed:** None
 **Verdict:** Confirmed definition location.

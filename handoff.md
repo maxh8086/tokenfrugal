@@ -17,8 +17,8 @@ This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS
 
 ### Done
 
-1. **Text-tool parsing** (`gateway/loop.py`): `parse_text_calls`, `text_tool_prompt`, `text_view`. Unit tests in `tests/test_text_tools.py`. A live builder dispatch wrote the expected file (to the main checkout, see Open issues).
-2. **client_info fix** (`gateway/server.py`): the MCP field is snake_case `client_info`, not `clientInfo`. The old lookup raised AttributeError, which was suppressed, so no `client` event was emitted. Regression test: `tests/test_client_seen.py`. Present on main as `98b500b`, and in the worktree as `afe5329`.
+1. **Text-tool parsing** (`router/loop.py`): `parse_text_calls`, `text_tool_prompt`, `text_view`. Unit tests in `tests/test_text_tools.py`. A live builder dispatch wrote the expected file (to the main checkout, see Open issues).
+2. **client_info fix** (`router/server.py`): the MCP field is snake_case `client_info`, not `clientInfo`. The old lookup raised AttributeError, which was suppressed, so no `client` event was emitted. Regression test: `tests/test_client_seen.py`. Present on main as `98b500b`, and in the worktree as `afe5329`.
 3. **`/health` route** (`ui/server.js`, uncommitted in worktree): reports `{status, clients}`. `status` is `up` if any gateway pid that has written to the events file is alive, else `down`. Pids are never exposed. Client names come from `client` events.
 4. **STATUS chip** (`ui/index.html`, uncommitted in worktree): `load()` fetches `/api/state` and `/health` in parallel. The chip is `disconnected` when `health.status !== 'up'`, otherwise `unavailable`, `running` or `idle`, per `renderChrome()`.
 
@@ -26,9 +26,9 @@ This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS
 
 - **Dashboard on port 7777 is stale.** Node pid 5840 runs `C:\Users\vaibh\Downloads\Projects\tokenfrugal\ui\server.js` (main checkout, started 00:25). It has no `/health` route. Restart it from the worktree, or copy the changes to main first. Restarting Claude does not restart it.
 - **STATUS chip not verified in a browser.** `/health` was checked only on a fresh instance on port 7792. It returned `down`, correctly, since no gateway pid was alive at the time.
-- **Gateways must restart to pick up code.** Each Claude session starts its own gateway (`python -m gateway.server`). Start a new session that uses tokenfrugal, then run a task and check the dashboard for `up` and client names.
+- **Gateways must restart to pick up code.** Each Claude session starts its own gateway (`python -m router.server`). Start a new session that uses tokenfrugal, then run a task and check the dashboard for `up` and client names.
 - **Uncommitted worktree changes:** `ui/server.js`, `ui/index.html`. Not committed yet. Commits must have no Co-Authored-By trailer (user's rule).
-- **Main checkout has an uncommitted `gateway/config.py` change** that predates this work. Left alone.
+- **Main checkout has an uncommitted `router/config.py` change** that predates this work. Left alone.
 - **Builder writes go to the main checkout**, not the worktree, because the gateway's workspace is the main checkout. Fix the workspace or accept it.
 - **Process note:** `ui/server.js` and `ui/index.html` were edited directly, not via tokenfrugal. CLAUDE.md says routine code goes to tokenfrugal first. Disclose this in any commit or PR.
 
@@ -43,7 +43,7 @@ This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS
 
 ### Next steps (Part A)
 
-1. Stop pid 5840 and start the dashboard from the worktree: `UI_PORT=7777 GATEWAY_EVENTS=C:/Users/vaibh/Downloads/Projects/tokenfrugal/gateway/events.jsonl node ui/server.js`. Confirm `curl http://127.0.0.1:7777/health` returns JSON with `status`.
+1. Stop pid 5840 and start the dashboard from the worktree: `UI_PORT=7777 GATEWAY_EVENTS=C:/Users/vaibh/Downloads/Projects/tokenfrugal/router/events.jsonl node ui/server.js`. Confirm `curl http://127.0.0.1:7777/health` returns JSON with `status`.
 2. Start a new Claude session that uses tokenfrugal, run a small task, and confirm `/health` returns `up` with a client name. Confirm the STATUS chip reads running or idle.
 3. If both pass, commit the two worktree files on `claude/hiku-fallback-issue-8209ee`, with no Co-Authored-By trailer.
 4. Decide whether the dashboard change goes to main too.
@@ -56,7 +56,7 @@ Date: 2026-10-11, results updated 2026-10-12. Status: in progress. Full test not
 
 ### B1. Why this started
 
-The persona model table (`gateway/personas.yaml`, `persona_models`) maps each persona to one of two local models: builder `qwen2.5-coder-yarn:3b` or thinker `llama3.2:3b-16k`. Some personas are assigned Gemma or Qwen3 models through overrides. The question: do newer small models (PrismML Bonsai, Ternary-Bonsai) beat the current picks on verified quality and speed, and should any persona move to them?
+The persona model table (`router/personas.yaml`, `persona_models`) maps each persona to one of two local models: builder `qwen2.5-coder-yarn:3b` or thinker `llama3.2:3b-16k`. Some personas are assigned Gemma or Qwen3 models through overrides. The question: do newer small models (PrismML Bonsai, Ternary-Bonsai) beat the current picks on verified quality and speed, and should any persona move to them?
 
 ### B2. Purpose
 
@@ -194,7 +194,7 @@ Plan: `docs/persona-routing-plan.md`. Eval script: `scripts/persona_routing_eval
 ### Done
 
 1. `dispatch_task(agent, task, plan_id)` is the only slug argument. The `persona` parameter and the duplicate `persona=` key in `task_start` are removed. `check_persona` is renamed to `check_agent` (commit 81e5092). Error text is now "unknown agent".
-2. Skills for four agents, wired via `persona_skills` in `gateway/personas.yaml` (commit 630ae8b):
+2. Skills for four agents, wired via `persona_skills` in `router/personas.yaml` (commit 630ae8b):
    - `testing-code-reviewer` -> `code-review`
    - `engineering-sre` -> `sre-triage`
    - `security-auditor` -> `security-audit`
@@ -212,8 +212,8 @@ Plan: `docs/persona-routing-plan.md`. Eval script: `scripts/persona_routing_eval
 - Builder timeouts: `dispatch_task` timed out twice on `qwen2.5-coder-yarn:3b`. Probably `TOKENFRUGAL_TASK_TIMEOUT` (default 540s) close to the client tool timeout. Not root-caused. Check the task duration in the logs before raising the timeout.
 - `synaptree-host` MCP server fails with CONNECTION_CLOSED. The plugin server `plugin_synaptree` works. Code-graph queries in this session used Grep for that reason.
 - Dashboard: restarted (pid 5840 earlier). The Part A STATUS chip check is not re-verified in this session. Confirm it in the browser.
-- Persona naming left in place (rename needs a decision): `gateway/personas.yaml` file name and keys (`persona_models`, `persona_skills`, `persona_mcps`), env vars `TOKENFRUGAL_PERSONA_MODELS`, `TOKENFRUGAL_PERSONA_MODELS_FILE`, `TOKENFRUGAL_PERSONA_MCPS_FILE`, `gateway/persona_models.json`, `gateway/persona_mcps.json`, `scripts/persona_ui.py`, `docs/persona-routing-plan.md`, `scripts/persona_routing_eval.py`, `tests/test_check_persona.py` and `tests/test_dispatch_persona.py` (file names only; contents now say agent), the `ui/` dashboard `persona` fields, and README/CLAUDE.md prose.
-- `task_start` still emits the `persona` fields and some `persona` wording in code comments in `gateway/config.py` (`load_personas`). Not changed.
+- Persona naming left in place (rename needs a decision): `router/personas.yaml` file name and keys (`persona_models`, `persona_skills`, `persona_mcps`), env vars `TOKENFRUGAL_PERSONA_MODELS`, `TOKENFRUGAL_PERSONA_MODELS_FILE`, `TOKENFRUGAL_PERSONA_MCPS_FILE`, `router/persona_models.json`, `router/persona_mcps.json`, `scripts/persona_ui.py`, `docs/persona-routing-plan.md`, `scripts/persona_routing_eval.py`, `tests/test_check_persona.py` and `tests/test_dispatch_persona.py` (file names only; contents now say agent), the `ui/` dashboard `persona` fields, and README/CLAUDE.md prose.
+- `task_start` still emits the `persona` fields and some `persona` wording in code comments in `router/config.py` (`load_personas`). Not changed.
 - Labelled routing set (about 100 tasks) still missing. Eval cannot run.
 
 ## Current plan (2026-10-12)
@@ -221,8 +221,8 @@ Plan: `docs/persona-routing-plan.md`. Eval script: `scripts/persona_routing_eval
 Status at this point:
 
 1. Dashboard on port 7777 (done, verified in a browser): three tabs (Dashboard, Configuration, Usage). "Show details" switches to Usage. The page has no console errors.
-2. Configuration tab (done, verified in a browser): global fields (CC_WORKSPACE, both bind-path variables, OPENAI_BASE_URL, LOCAL_LLM_TEMPERATURE, LOCAL_LLM_MAX_TOKENS), a model per role, and an MCP checklist per role with each MCP's tools listed. Save POSTs `/api/config`, which writes `gateway/config_overrides.json`. Verified: GET returns the saved values, POST round-trips, invalid values are dropped. Not yet verified: a gateway restart applying the saved values.
-3. Gateway wiring (done, not yet exercised): `gateway/config.py` loads the overrides (`role_models`, `role_mcps`, env-backed settings; real environment variables still win). `gateway/events.py` writes `roles.json` with `mcp_catalog`. `roles.json` must be regenerated after changes (`write_roles(load_personas())`).
+2. Configuration tab (done, verified in a browser): global fields (CC_WORKSPACE, both bind-path variables, OPENAI_BASE_URL, LOCAL_LLM_TEMPERATURE, LOCAL_LLM_MAX_TOKENS), a model per role, and an MCP checklist per role with each MCP's tools listed. Save POSTs `/api/config`, which writes `router/config_overrides.json`. Verified: GET returns the saved values, POST round-trips, invalid values are dropped. Not yet verified: a gateway restart applying the saved values.
+3. Gateway wiring (done, not yet exercised): `router/config.py` loads the overrides (`role_models`, `role_mcps`, env-backed settings; real environment variables still win). `router/events.py` writes `roles.json` with `mcp_catalog`. `roles.json` must be regenerated after changes (`write_roles(load_personas())`).
 4. Bind mounts (open): restart the gateway, then verify `ts-fs-rw`, `ast-grep`, `ts-fs-ro`. `.env` already holds both `MCP_GATEWAY_DOCKER_BIND_*` variables. Also check that a shell-level `CC_WORKSPACE` does not override `.env`.
 5. Benchmark (open): finish the priority run for list 1 only, classify the 4B `slug`/`AssertionError` failures (model output vs mount), then Qwythos, then `scripts/bench_append.py` without `--dry-run`. List 2 (about 60 models) waits for explicit confirmation in chat.
 6. Housekeeping (open): re-check task `0cf6dd6716` (it claimed four files changed; git diff showed none). Close plan task 50 by hand (no delete tool). Plan task 51 (`ui-config`) can close once step 2 is verified after a gateway restart.
@@ -236,7 +236,7 @@ Request: make `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` (and related parameters: O
 
 ### Findings (read only, no code changed)
 
-- Dashboard (port 7777, `ui/index.html`, `ui/server.js`, text in `gateway/ui.yaml`): status, usage and tokens-saved views only. No settings tab. Git history (`-S "onfiguration"`, `-S "BIND_ALLOWED"`) shows no config tab was ever committed.
+- Dashboard (port 7777, `ui/index.html`, `ui/server.js`, text in `router/ui.yaml`): status, usage and tokens-saved views only. No settings tab. Git history (`-S "onfiguration"`, `-S "BIND_ALLOWED"`) shows no config tab was ever committed.
 - Persona editor (port 7878, `scripts/persona_ui.py`): one section, "Toolkit and model per persona". No global parameters.
 - `Benchmark/persona-config.html`: static report table, not an editor.
 - synaptree-mcp UI (port 8787, linked from the dashboard's "Open UI"): has LLM settings. `get_llm_settings` returned provider `local`, base_url `http://localhost:11434/v1`, model `llama3.2:3b-16k`, guardrails (confirm_tokens 50000, max_input_tokens 100000, daily_token_budget 500000, max_calls_per_minute 6, timeout_s 120), `api_key_set: false`, `local_ready: false`. Most likely the tab the user remembers. It has no bind-path or tool-to-model fields.
@@ -245,7 +245,7 @@ Request: make `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` (and related parameters: O
 ### Open decisions (waiting on user)
 
 1. Where the new settings go: a "Configuration" tab on the 7777 dashboard (suggested), the 7878 persona editor, or synaptree's UI on 8787.
-2. Which parameters are editable: the Docker bind paths, `OPENAI_BASE_URL`, and the tool-to-model mapping from `gateway/personas.yaml` (suggested).
+2. Which parameters are editable: the Docker bind paths, `OPENAI_BASE_URL`, and the tool-to-model mapping from `router/personas.yaml` (suggested).
 3. Write target: `.env` (needs a gateway restart) or a JSON file the gateway reads at startup.
 
 ### Open
@@ -271,15 +271,15 @@ Also covers the bind-path and endpoint settings from Part E.
 
 ### Design defaults (change if wrong)
 
-- Storage: `gateway/config_overrides.json`, read at gateway start. It overrides `gateway/personas.yaml` and `.env` values where set. Real environment variables still win. Missing file means current behaviour.
+- Storage: `router/config_overrides.json`, read at gateway start. It overrides `router/personas.yaml` and `.env` values where set. Real environment variables still win. Missing file means current behaviour.
 - Bind-path variables are applied when the gateway starts, so a change needs a gateway restart. The tab shows a "restart required" notice.
 
 ### Current structure the tab edits
 
-- `gateway/personas.yaml`: `models` (builder, thinker), `persona_models`, `roles` (model, profile, max_steps, native, tools, compose), `persona_skills`, `divisions`.
-- `gateway/mcp_catalog.yaml`: MCP catalogue (43 lines).
-- `gateway/config.py`: `WORKSPACE` from `CC_WORKSPACE`, `OLLAMA_URL`, `resolve_role`, `load_personas`.
-- `gateway/roles.json`: generated by `gateway/events.py` `write_roles()`. Regenerate it after config changes if the gateway is not running: `python -c "from gateway.config import load_personas; from gateway.events import write_roles; write_roles(load_personas())"`.
+- `router/personas.yaml`: `models` (builder, thinker), `persona_models`, `roles` (model, profile, max_steps, native, tools, compose), `persona_skills`, `divisions`.
+- `router/mcp_catalog.yaml`: MCP catalogue (43 lines).
+- `router/config.py`: `WORKSPACE` from `CC_WORKSPACE`, `OLLAMA_URL`, `resolve_role`, `load_personas`.
+- `router/roles.json`: generated by `router/events.py` `write_roles()`. Regenerate it after config changes if the gateway is not running: `python -c "from router.config import load_personas; from router.events import write_roles; write_roles(load_personas())"`.
 
 ### Global settings to expose
 

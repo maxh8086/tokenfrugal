@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from gateway import compose, plan
+from router import compose, plan
 
 
 class PlanTest(unittest.TestCase):

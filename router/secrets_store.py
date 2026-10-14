@@ -2,7 +2,7 @@
 
 Values never go in repo files, logs or chat. Config refers to a secret by name, either as `keyring:NAME`
 in a native server's env block or as a known name such as `llm-api-key`. Names are kept in a small index
-(gateway/secret_names.json, gitignored) because keyring cannot list entries on every backend.
+(router/secret_names.json, gitignored) because keyring cannot list entries on every backend.
 """
 import json
 import os
@@ -76,7 +76,7 @@ def resolve(value: str) -> str:
     name = value[len(REF_PREFIX):]
     got = get(name)
     if got is None:
-        raise SecretStoreError(f"secret '{name}' is not set; run: python -m gateway.secrets_store set {name}")
+        raise SecretStoreError(f"secret '{name}' is not set; run: python -m router.secrets_store set {name}")
     return got
 
 
@@ -119,7 +119,7 @@ def export_env() -> dict[str, str]:
 
 def _cli(argv: list[str]) -> int:
     import getpass
-    usage = ("usage: python -m gateway.secrets_store {set NAME | get-status NAME | list | delete NAME | "
+    usage = ("usage: python -m router.secrets_store {set NAME | get-status NAME | list | delete NAME | "
              "ensure-generated | export-env}")
     if len(argv) < 1:
         print(usage, file=sys.stderr)

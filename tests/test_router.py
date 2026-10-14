@@ -7,11 +7,11 @@ from types import SimpleNamespace
 
 os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
-from gateway import store  # noqa: E402
-from gateway.config import load_personas, resolve_role  # noqa: E402
-from gateway.loop import arg_error, coerce_args, parse_text_calls, slop_check  # noqa: E402
-from gateway.mcp_client import Router, to_openai_tools  # noqa: E402
-from gateway.summarize import hard_trim, tokens  # noqa: E402
+from router import store  # noqa: E402
+from router.config import load_personas, resolve_role  # noqa: E402
+from router.loop import arg_error, coerce_args, parse_text_calls, slop_check  # noqa: E402
+from router.mcp_client import Router, to_openai_tools  # noqa: E402
+from router.summarize import hard_trim, tokens  # noqa: E402
 
 CFG = load_personas()
 
@@ -101,7 +101,7 @@ class TextCalls(unittest.TestCase):
 
 class Store(unittest.TestCase):
     def setUp(self):
-        # store copies DB_PATH at import; other test modules import gateway first, so the env var above is too late
+        # store copies DB_PATH at import; other test modules import router first, so the env var above is too late
         from unittest import mock
         patch = mock.patch.object(store, "DB_PATH", Path(tempfile.mkdtemp()) / "t.db")
         patch.start()
@@ -204,7 +204,7 @@ class ReadOnlyRoles(unittest.TestCase):
 
 class SynaptreeProject(unittest.TestCase):
     def test_project_defaults_to_checkout_folder_name(self):
-        from gateway import config
+        from router import config
         if not os.getenv('SYNAPTREE_PROJECT'):
             self.assertEqual(config.SYNAPTREE_PROJECT, Path(config.__file__).resolve().parent.parent.name)
         self.assertIn('synaptree', config.NATIVE_SERVERS)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
 class TextCalls(unittest.TestCase):
     def test_parse(self):
-        from gateway.loop import parse_text_calls
+        from router.loop import parse_text_calls
         c = parse_text_calls('<tool_call>{"name": "read_file", "arguments": {"path": "a"}}</tool_call>', {"read_file"})
         self.assertEqual(c[0].function.name, "read_file")
         self.assertEqual(parse_text_calls('{"name": "nope", "arguments": {}}', {"read_file"}), [])
@@ -224,7 +224,7 @@ class TextCalls(unittest.TestCase):
 
 class SavedTokensTest(unittest.TestCase):
     def test_saved_is_work_minus_summary_and_never_negative(self):
-        from gateway.summarize import saved_tokens
+        from router.summarize import saved_tokens
         msgs = [{"role": "user", "content": "x" * 400}, {"role": "tool", "content": "y" * 4000}]
         self.assertEqual(saved_tokens(msgs, "z" * 40), 1100 - 10)
         self.assertEqual(saved_tokens([], "z" * 40), 0)
@@ -286,19 +286,19 @@ class Coerce(unittest.TestCase):
 
 class Lint(unittest.TestCase):
     def test_missing_import_flagged(self):
-        from gateway.lint import check_python
+        from router.lint import check_python
         self.assertIn("re", check_python("def f(s):\n    return re.sub('a', 'b', s)\n"))
 
     def test_valid_code_clean(self):
-        from gateway.lint import check_python
+        from router.lint import check_python
         self.assertIsNone(check_python("import re\n\n\ndef f(s, *a):\n    try:\n        return [x for x in re.findall('a', s)]\n    except ValueError as e:\n        return e\n"))
 
     def test_syntax_error(self):
-        from gateway.lint import check_python
+        from router.lint import check_python
         self.assertIn("syntax error", check_python("def f(:\n"))
 
     def test_star_import_skipped(self):
-        from gateway.lint import check_python
+        from router.lint import check_python
         self.assertIsNone(check_python("from os.path import *\njoin('a')\n"))
 
 

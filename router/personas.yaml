@@ -6,7 +6,7 @@ models:
   thinker: llama3.2:3b-16k
 # Per-persona model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
 # Defaults = smallest adequate, then fastest measured solo model per persona (Benchmark/persona-model-selection.md). Edit here, or override
-# without touching this file via `python -m scripts.persona_ui` (writes gateway/persona_models.json).
+# without touching this file via `python -m scripts.persona_ui` (writes router/persona_models.json).
 # Personas not listed use their role's model. Tags come from models/trial/*.Modelfile.
 persona_models:
   engineering-backend-architect: ts-gemma4-e4b-16384

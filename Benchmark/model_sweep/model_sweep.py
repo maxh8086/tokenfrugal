@@ -14,8 +14,8 @@ import subprocess
 import time
 from pathlib import Path
 
-from gateway.config import load_personas, resolve_role
-from gateway.loop import leaf, run
+from router.config import load_personas, resolve_role
+from router.loop import leaf, run
 
 CFG = load_personas()
 DEFAULT_OUT = Path(r"C:\Users\vaibh\AppData\Local\Temp\claude\C--Users-vaibh-Downloads-Projects-tokenfrugal\1471e18d-f8ff-4197-ab1e-e98cf205d815\scratchpad\model_sweep.csv")
@@ -35,7 +35,7 @@ ROLES = {
     "analyzer": (
         "engineering-software-architect",
         "Use search_graph to find function resolve_role and say which file defines it.",
-        lambda out: "gateway/config.py" in out.replace("\\", "/").lower(),
+        lambda out: "router/config.py" in out.replace("\\", "/").lower(),
     ),
 }
 

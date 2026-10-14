@@ -8,7 +8,7 @@ Run a new TokenFrugal benchmark round from scratch.
 1. Read `Benchmark/Template/README.md` and follow its no-overlap rules. Do not modify `bench/`, the existing
    `Benchmark/*` files or any earlier round.
 2. Ask me for: round name, models to test (Ollama tags), context window, VRAM limit, and whether
-   `gateway/personas.yaml` may change (default: no).
+   `router/personas.yaml` may change (default: no).
 3. Create the round: `python Benchmark/Template/new_round.py <YYYYMMDD-name>`.
 4. Run each model solo with `run_round.sh <round-id> <model>`, serially on the GPU, in the background, and report
    every 10 minutes. Models over the VRAM limit are skipped and listed as skipped.

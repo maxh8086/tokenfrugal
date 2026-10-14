@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from gateway.loop import parse_text_calls, text_tool_prompt, text_view
+from router.loop import parse_text_calls, text_tool_prompt, text_view
 
 TOOLS = [{"type": "function", "function": {"name": "read_file", "description": "Read a file",
                                            "parameters": {"properties": {"path": {"type": "string"}}}}}]

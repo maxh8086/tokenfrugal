@@ -43,7 +43,7 @@ PARAMS = {
 }
 
 
-# case -> role that serves it (see gateway/personas.yaml; agent slug -> role via division/overrides)
+# case -> role that serves it (see router/personas.yaml; agent slug -> role via division/overrides)
 CASE_ROLE = {
     "write_function": "builder", "fix_bug": "builder", "write_tests": "builder", "rename_across_files": "builder",
     "find_symbol": "builder", "review_sqli": "reviewer", "debug_trace": "debugger", "summarize_readme": "research",

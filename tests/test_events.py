@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from gateway import events
+from router import events
 
 CFG = {"models": {"builder": "m1"}, "divisions": {},
        "roles": {"builder": {"model": "builder", "profile": "p", "tools": ["a", "b"], "max_steps": 3}}}

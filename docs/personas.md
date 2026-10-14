@@ -1,4 +1,4 @@
-# Personas (generated from gateway/personas.yaml)
+# Personas (generated from router/personas.yaml)
 
 | Role | Model | Profile | Native | Tools |
 |---|---|---|---|---|
