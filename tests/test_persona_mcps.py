@@ -34,14 +34,14 @@ class PersonaMcps(unittest.TestCase):
 
     def test_no_selection_keeps_role(self):
         r = config.resolve_role("finance-analyst", config.load_personas())
-        self.assertEqual(r["profile"], "docs")
+        self.assertEqual(r["profile"], ["build", "docs"])
 
     def test_disabled_by_env(self):
         config.PERSONA_MCPS_FILE.write_text(json.dumps({"finance-analyst": ["fetch"]}))
         os.environ["TOKENFRUGAL_PERSONA_MODELS"] = "0"
         try:
             r = config.resolve_role("finance-analyst", config.load_personas())
-            self.assertEqual(r["profile"], "docs")
+            self.assertEqual(r["profile"], ["build", "docs"])
         finally:
             del os.environ["TOKENFRUGAL_PERSONA_MODELS"]
 
