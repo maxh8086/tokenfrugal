@@ -1,7 +1,10 @@
-"""Live smoke: one tiny task per role/profile. Usage: python -m scripts.smoke [role ...]"""
+"""Live smoke: one tiny task per role/profile. Usage: python scripts/smoke.py [--list] [role ...]"""
 import asyncio
 import sys
 import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from router.config import load_personas, resolve_role
 from router.loop import leaf, run
@@ -32,17 +35,28 @@ async def one(role_name):
     try:
         out, _ = await asyncio.wait_for(run(agent, role, task), 240)
         ok = EXPECT.get(role_name, "").lower() in out.lower()
-        return f"{'PASS' if ok else 'WRONG'} {role_name:9} {time.time()-t:5.0f}s {role.get('profile') or '-':10} {out[:90]!r}"
+        return f"{'PASS' if ok else 'WRONG'} {role_name:9} {time.time()-t:5.0f}s {str(role.get('profile') or '-'):10} {out[:90]!r}"
     except BaseException as e:  # noqa: BLE001
-        return f"FAIL {role_name:9} {time.time()-t:5.0f}s {role.get('profile') or '-':10} {type(leaf(e)).__name__}: {str(leaf(e))[:120]}"
+        return f"FAIL {role_name:9} {time.time()-t:5.0f}s {str(role.get('profile') or '-'):10} {type(leaf(e)).__name__}: {str(leaf(e))[:120]}"
 
 
 async def main():
     bad = 0
-    for r in (sys.argv[1:] or TASKS):
+    names = [a for a in sys.argv[1:] if not a.startswith("--")]
+    unknown = [n for n in names if n not in TASKS]
+    if unknown:
+        print(f"unknown role(s): {', '.join(unknown)}; known: {', '.join(TASKS)}", file=sys.stderr)
+        return 2
+    for r in (names or TASKS):
         line = await one(r)
         bad += not line.startswith("PASS")
         print(line, flush=True)
     return bad
 
-sys.exit(1 if asyncio.run(main()) else 0)
+if "--list" in sys.argv:
+    for name in TASKS:
+        print(name)
+    sys.exit(0)
+
+_rc = asyncio.run(main())
+sys.exit(_rc if _rc == 2 else (1 if _rc else 0))

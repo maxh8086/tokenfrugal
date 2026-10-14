@@ -11,8 +11,6 @@ SMOKE = ROOT / "scripts" / "smoke.py"
 
 
 class SmokePathTests(unittest.TestCase):
-    # TODO(step a): remove @expectedFailure once smoke.py bootstraps sys.path and supports --list.
-    @unittest.expectedFailure
     def test_list_runs_without_pythonpath(self):
         env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
         with tempfile.TemporaryDirectory() as cwd:  # neither the repo root nor PYTHONPATH can help
