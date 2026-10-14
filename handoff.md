@@ -9,7 +9,7 @@ This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS
 
 Goal: any Haiku version can call every TokenFrugal router tool and every Docker-gateway-backed role tool. Executor is Haiku (claude-haiku-5-5); Sonnet drafts this plan and the tests. Commit after each step, no trailers. Python: `.venv/Scripts/python.exe`.
 
-- [ ] (a) smoke.py sys.path bootstrap and `--list`. Accept: runs from any cwd without PYTHONPATH. Test: `.venv/Scripts/python.exe -m unittest tests.test_smoke_path -v` (remove `@expectedFailure` when green).
+- [x] (a) smoke.py sys.path bootstrap and `--list` (done in commit below). Accept: runs from any cwd without PYTHONPATH. Test: `.venv/Scripts/python.exe -m unittest tests.test_smoke_path -v` (remove `@expectedFailure` when green).
 - [ ] (b) Haiku harness for every router tool and role tool. Accept: per-tool PASS table, exit 0. Test: `ANTHROPIC_API_KEY=... .venv/Scripts/python.exe tests/test_haiku_toolcalls.py --roles` (exit 2 = prerequisites missing, 1 = failures).
 - [ ] (c) Fix docs/security "you wrote a tool call as text". Accept: both roles pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py docs security`.
 - [ ] (d) Fix builder/debugger/data/browser answers missing the expected token. Accept: all four pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py builder debugger data browser`.
