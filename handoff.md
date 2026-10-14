@@ -10,7 +10,7 @@ This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS
 Goal: any Haiku version can call every TokenFrugal router tool and every Docker-gateway-backed role tool. Executor is Haiku (claude-haiku-5-5); Sonnet drafts this plan and the tests. Commit after each step, no trailers. Python: `.venv/Scripts/python.exe`.
 
 - [x] (a) smoke.py sys.path bootstrap and `--list` (done in commit below). Accept: runs from any cwd without PYTHONPATH. Test: `.venv/Scripts/python.exe -m unittest tests.test_smoke_path -v` (remove `@expectedFailure` when green).
-- [ ] (b) Haiku harness for every router tool and role tool. Accept: per-tool PASS table, exit 0. Test: `ANTHROPIC_API_KEY=... .venv/Scripts/python.exe tests/test_haiku_toolcalls.py --roles` (exit 2 = prerequisites missing, 1 = failures).
+- [ ] (b) Router tools: DONE (Haiku called all 9 via subagent, PASS). Remaining: role tools behind Docker gateway (`--roles`). Harness CLI mode needs `claude` login (OAuth expired headless) or ANTHROPIC_API_KEY. Probe task 52 left in plan main.
 - [ ] (c) Fix docs/security "you wrote a tool call as text". Accept: both roles pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py docs security`.
 - [ ] (d) Fix builder/debugger/data/browser answers missing the expected token. Accept: all four pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py builder debugger data browser`.
 - [ ] (e) Haiku fallback wrapper path in the router, only if (b) shows Haiku cannot call tools directly (alternative without API key: `claude -p --model haiku`). Accept: `tests/test_haiku_toolcalls.py --roles` exits 0 through the wrapper.
