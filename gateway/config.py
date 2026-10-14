@@ -2,21 +2,64 @@
 import json
 import os
 import re
-import secrets
 import sys
 from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
 
+from . import secrets_store
+
 ROOT = Path(__file__).resolve().parent.parent
+_REAL_ENV = set(os.environ)  # set before .env is read: these beat both .env and the dashboard overrides
 load_dotenv(ROOT / ".env")  # LLM endpoint etc.; real environment variables win
+
+# Settings saved from the dashboard Configuration tab (ui/server.js POST /api/config). They override .env;
+# real environment variables still win.
+_OVERRIDE_ENV = {
+    "workspace": "CC_WORKSPACE",
+    "bind_writable": "MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS",
+    "bind_readonly": "MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS",
+    "llm_url": "OPENAI_BASE_URL",
+    "temperature": "LOCAL_LLM_TEMPERATURE",
+    "max_tokens": "LOCAL_LLM_MAX_TOKENS",
+}
+try:
+    _overrides = json.loads((Path(__file__).parent / "config_overrides.json").read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    _overrides = {}
+for _k, _env in _OVERRIDE_ENV.items():
+    if _k in _overrides and _env not in _REAL_ENV:
+        os.environ[_env] = str(_overrides[_k])
 
 # Any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM, a hosted API). Host and port live in .env.
 OLLAMA_URL = os.getenv("TOKENFRUGAL_LLM_URL") or os.getenv("OLLAMA_URL", "http://localhost:11434/v1")
-LLM_API_KEY = os.getenv("TOKENFRUGAL_LLM_API_KEY", "ollama")
+
+
+def _llm_api_key() -> str:
+    """TOKENFRUGAL_LLM_API_KEY wins; otherwise the OS secret store entry `llm-api-key`; otherwise the local default."""
+    if os.getenv("TOKENFRUGAL_LLM_API_KEY"):
+        return os.environ["TOKENFRUGAL_LLM_API_KEY"]
+    try:
+        return secrets_store.get("llm-api-key") or "ollama"
+    except secrets_store.SecretStoreError:  # no usable OS store here: keep the local default
+        return "ollama"
+
+
+LLM_API_KEY = _llm_api_key()
+
+
+def _git_root(start: str):
+    """Nearest ancestor of `start` that holds a .git entry, as a posix path; None if there is none."""
+    here = Path(start).resolve()
+    for p in [here, *here.parents]:
+        if (p / ".git").exists():
+            return p.as_posix()
+    return None
+
+
 # Exact host path the Docker gateway may bind writable (defaults to the checkout; see docker catalogue volume).
-WORKSPACE = os.getenv("CC_WORKSPACE", ROOT.as_posix())
+WORKSPACE = os.getenv("CC_WORKSPACE") or _git_root(os.getcwd()) or ROOT.as_posix()
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
 SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "synaptree-mcp")
 NATIVE_SERVERS = {
@@ -35,27 +78,23 @@ MCP_ENV_FILE = os.getenv("MCP_ENV_FILE", str(Path.home() / ".docker" / "mcp" / "
 os.environ["MCP_ENV_FILE"] = MCP_ENV_FILE
 
 
-def _load_neo4j_env() -> None:
-    """Make NEO4J_AUTH (user/password) available to this process and compose; created once if missing.
-    The value lives only in the secrets env file; it is never printed or logged."""
-    f = Path(MCP_ENV_FILE)
+def _load_backend_env() -> None:
+    """Export the backend secrets from the OS store (compose reads them from the environment).
+    Values already in the environment win. Nothing is written to disk; values are never printed or logged."""
     try:
-        if f.exists() and "NEO4J_AUTH=" not in f.read_text(encoding="utf-8"):
-            with f.open("a", encoding="ascii") as fh:
-                fh.write(f"{chr(10)}NEO4J_AUTH=neo4j/{secrets.token_hex(16)}{chr(10)}")
-        for line in f.read_text(encoding="utf-8").splitlines():
-            k, _, v = line.partition("=")
-            if k.strip() == "NEO4J_AUTH" and v.strip():
-                os.environ.setdefault("NEO4J_AUTH", v.strip())
-    except OSError:
-        pass
+        for name, value in secrets_store.export_env().items():
+            os.environ.setdefault(name, value)
+    except secrets_store.SecretStoreError:
+        pass  # no usable store here; compose then fails with a message naming the missing variable
 
 
-_load_neo4j_env()
+_load_backend_env()
 KEEP_ALIVE = os.getenv("MCP_KEEP_ALIVE", "") == "1"  # leave backends running after a task
 for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
     NATIVE_SERVERS[_n] = {"command": "docker", "args": ["compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE),
                                                          "run", "--rm", "-T", _svc]}
+# keyring: refs are resolved from the OS store by mcp_client.open_native and passed to compose as ${SONARQUBE_TOKEN}
+NATIVE_SERVERS["sonarqube"]["env"] = {"SONARQUBE_TOKEN": "keyring:SONARQUBE_TOKEN"}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "gateway.plan_mcp"]}
 # synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
 SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().parent.parent.name
@@ -108,6 +147,10 @@ def load_personas() -> dict:
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
     cfg["persona_skills"] = dict(cfg.get("persona_skills") or {})
+    # Role -> model tag from the dashboard Configuration tab; wins over the logical model in personas.yaml.
+    cfg["role_models"] = {k: v for k, v in (_overrides.get("role_models") or {}).items() if isinstance(v, str) and v.strip()}
+    # Role -> MCP names from the dashboard Configuration tab; a persona_mcps entry for one agent still wins.
+    cfg["role_mcps"] = {k: [n for n in v if isinstance(n, str)] for k, v in (_overrides.get("role_mcps") or {}).items() if isinstance(v, list)}
     return cfg
 
 
@@ -118,10 +161,11 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     role = cfg["overrides"].get(agent) or (cfg["divisions"][div] if div else "builder")
     r = dict(cfg["roles"][role])
     r["role"] = role
-    r["model"] = cfg["models"][r["model"]]
+    r["model"] = cfg.get("role_models", {}).get(role) or cfg["models"][r["model"]]
     own = list(r.get("skills") or [])
     r["skills"] = own + [s for s in cfg.get("persona_skills", {}).get(agent, []) if s not in own]
-    sel = [n for n in cfg.get("persona_mcps", {}).get(agent, []) if n in cfg.get("mcp_catalog", {})]
+    chosen = cfg.get("persona_mcps", {}).get(agent) or cfg.get("role_mcps", {}).get(role) or []
+    sel = [n for n in chosen if n in cfg.get("mcp_catalog", {})]
     if sel:  # user-chosen toolkit: open the distinct profiles/natives/backends and allow the union of tools
         ms = [cfg["mcp_catalog"][n] for n in sel]
         uniq = lambda xs: list(dict.fromkeys(x for x in xs if x))
@@ -134,3 +178,13 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     if pm:  # a logical name (builder/thinker) or a concrete model tag
         r["model"] = cfg["models"].get(pm, pm)
     return r
+
+
+def check_agent(slug: str, cfg: dict) -> str:
+    """Return '' when slug is a known agent, else a short error."""
+    known = set(cfg.get("overrides") or {}) | set(cfg.get("persona_models") or {}) | set(cfg.get("persona_skills") or {})
+    for slugs in (cfg.get("members") or {}).values():
+        known |= set(slugs)
+    if slug in known:
+        return ""
+    return f"unknown agent '{slug}'; call list_roles for valid slugs"

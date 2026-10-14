@@ -38,6 +38,10 @@ roles:
   research: {model: thinker,                       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links]}
 persona_skills:
   project-management-project-shepherd: [planning]
+  testing-code-reviewer: [code-review]
+  engineering-sre: [sre-triage]
+  security-auditor: [security-audit]
+  engineering-technical-writer: [docs-style]
 # Division (agency-agents folder) -> default role. Overrides by agent slug below.
 divisions:
   engineering: builder

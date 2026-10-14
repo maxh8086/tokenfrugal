@@ -7,13 +7,13 @@ from pathlib import Path
 import yaml
 
 from . import store
-from .config import COMPOSE_PROJECT, OLLAMA_URL, ROOT
+from .config import COMPOSE_PROJECT, OLLAMA_URL, ROOT, default_mcps
 
 EVENTS_PATH = Path(os.getenv("GATEWAY_EVENTS", Path(__file__).parent / "events.jsonl"))
 ROLES_PATH = EVENTS_PATH.with_name("roles.json")
 UI_TEXT = Path(__file__).parent / "ui.yaml"
 MAX_BYTES = 2_000_000
-USAGE_FIELDS = ("ts", "pid", "kind", "id", "role", "model", "saved", "task", "agent", "calls", "input", "output")  # long-term ledger for the dashboard usage popup
+USAGE_FIELDS = ("ts", "pid", "kind", "id", "role", "model", "saved", "task", "agent", "calls", "input", "output", "e2e", "secs")  # long-term ledger for the dashboard usage popup
 
 
 def emit(kind: str, **fields) -> None:
@@ -35,14 +35,22 @@ def emit(kind: str, **fields) -> None:
 
 
 def roles_rows(cfg: dict) -> list[dict]:
-    return [{"role": k, "model": cfg["models"][v["model"]], "profile": v.get("profile") or "",
-             "backends": v.get("compose", []), "native": v.get("native", []), "tools": v["tools"], "max_steps": v["max_steps"]}
-            for k, v in cfg["roles"].items()]
+    catalog = cfg.get("mcp_catalog", {})
+    rows = []
+    for k, v in cfg["roles"].items():
+        # MCPs the role uses: the dashboard override (role_mcps) when set, else the benchmarked default toolkit
+        mcps = [n for n in cfg.get("role_mcps", {}).get(k, []) if n in catalog] or default_mcps(v, {"mcps": catalog})
+        model = cfg.get("role_models", {}).get(k) or cfg["models"][v["model"]]  # dashboard override wins, as in resolve_role
+        rows.append({"role": k, "model": model, "profile": v.get("profile") or "",
+                     "backends": v.get("compose", []), "native": v.get("native", []), "tools": v["tools"],
+                     "max_steps": v["max_steps"], "mcps": mcps})
+    return rows
 
 
 def write_roles(cfg: dict) -> None:
     try:
         ROLES_PATH.write_text(json.dumps({"roles": roles_rows(cfg), "divisions": cfg["divisions"],
+                                          "mcp_catalog": {n: {"tools": m["tools"]} for n, m in cfg.get("mcp_catalog", {}).items()},
                                           "root": str(ROOT), "llm_url": OLLAMA_URL, "compose_project": COMPOSE_PROJECT,
                                           "ui": yaml.safe_load(UI_TEXT.read_text(encoding="utf-8"))}), encoding="utf-8")
     except (OSError, yaml.YAMLError):

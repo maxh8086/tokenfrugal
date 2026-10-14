@@ -3,14 +3,16 @@
 #   backends  : long-running services (crawl4ai, sonarqube, penpot-mcp)
 #   neo4j     : plan/task graph; started with the gateway, kept up until the gateway exits (which stops every ts-mcp container)
 #   mcp-*     : stdio MCP wrappers, started per task with `docker compose run --rm -T` (gateway native servers)
-# Secrets live outside the repo in ${MCP_ENV_FILE} (default ~/.docker/mcp/mcp.env); see scripts/mcp_up.*.
+# Secrets live in the OS secret store (python -m gateway.secrets_store); scripts/mcp_up.* export them into the
+# environment and each service below takes only the variables it needs. No env file is read.
 name: ts-mcp
 
 services:
   crawl4ai:
     image: unclecode/crawl4ai:latest
     profiles: [research]
-    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
+    environment:
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:?run scripts/mcp_up first}
     ports: ["127.0.0.1:11235:11235"]
     shm_size: 1g
     mem_limit: 2g
@@ -26,8 +28,8 @@ services:
     image: tokenfrugal/crawl4ai-mcp:1
     build: ./docker/crawl4ai-mcp   # built on first use, then reused
     profiles: [research]
-    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
     environment:
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:?run scripts/mcp_up first}
       CRAWL4AI_URL: http://crawl4ai:11235
       SEARXNG_URL: http://searxng:8080
     stdin_open: true
@@ -35,7 +37,8 @@ services:
   searxng:
     image: searxng/searxng:latest
     profiles: [research]
-    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?run scripts/mcp_up first}
     volumes:
       - ./docker/searxng/settings.yml:/etc/searxng/settings.yml:ro
     ports: ["127.0.0.1:8088:8080"]
@@ -68,8 +71,9 @@ services:
   mcp-sonarqube:
     image: mcp/sonarqube@sha256:925c88bc7cab2a1e1025b0bd43f0af504cd8ce1b99e9663ececaca914fb632e7
     profiles: [security]
-    env_file: ${MCP_ENV_FILE:?run scripts/mcp_up first}
     environment:
+      SONARQUBE_TOKEN: ${SONARQUBE_TOKEN:-}
+      SONARQUBE_ORG: ${SONARQUBE_ORG:-}
       SONARQUBE_URL: http://sonarqube:9000
       STORAGE_PATH: /tmp
     stdin_open: true
