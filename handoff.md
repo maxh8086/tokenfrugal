@@ -5,6 +5,19 @@ Last updated: 2026-10-12
 This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS chip and client names. Part B covers the PRISM Bonsai / Ternary-Bonsai benchmark and the Ollama 16k roster. Only this file is tracked in git. The worktree copy `prism-handoff.md` stays untracked and is superseded by Part B.
 
 ---
+## Current plan: Haiku tool-call verification
+
+Goal: any Haiku version can call every TokenFrugal router tool and every Docker-gateway-backed role tool. Executor is Haiku (claude-haiku-5-5); Sonnet drafts this plan and the tests. Commit after each step, no trailers. Python: `.venv/Scripts/python.exe`.
+
+- [ ] (a) smoke.py sys.path bootstrap and `--list`. Accept: runs from any cwd without PYTHONPATH. Test: `.venv/Scripts/python.exe -m unittest tests.test_smoke_path -v` (remove `@expectedFailure` when green).
+- [ ] (b) Haiku harness for every router tool and role tool. Accept: per-tool PASS table, exit 0. Test: `ANTHROPIC_API_KEY=... .venv/Scripts/python.exe tests/test_haiku_toolcalls.py --roles` (exit 2 = prerequisites missing, 1 = failures).
+- [ ] (c) Fix docs/security "you wrote a tool call as text". Accept: both roles pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py docs security`.
+- [ ] (d) Fix builder/debugger/data/browser answers missing the expected token. Accept: all four pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py builder debugger data browser`.
+- [ ] (e) Haiku fallback wrapper path in the router, only if (b) shows Haiku cannot call tools directly (alternative without API key: `claude -p --model haiku`). Accept: `tests/test_haiku_toolcalls.py --roles` exits 0 through the wrapper.
+- [ ] (f) Final verification and handoff cleanup. Test: `.venv/Scripts/python.exe -m unittest discover -s tests -t . -q` and `tests/test_haiku_toolcalls.py --roles`; delete completed steps here.
+
+---
+
 
 ## Part A: text-tool fix, dashboard STATUS chip, client names
 
@@ -130,20 +143,14 @@ Excluded: `ts-michelrosselli-bonsai-27b-16384`, `MichelRosselli/bonsai-27b`, `hf
 
 Recorded before the session break.
 
-1. **chrome-devtools image.** The image is pushed to Docker Hub as `maxh8086/chrome-devtools-mcp:1` (digest `sha256:a80eacd46dbc8781d2cff416f352471022b39ed802ee13c5c1a76993c0ca87d8`). The user approved these ref edits in the **main checkout** `C:\Users\vaibh\Downloads\Projects\tokenfrugal` (not the worktree):
-   - `profiles/browser.yaml` lines 14 and 19: `tokenfrugal/chrome-devtools-mcp:1` becomes `maxh8086/chrome-devtools-mcp:1`.
-   - `scripts/install_profiles.py` line 19: same change.
-   - `docker/pins.yaml` line 8: same change.
-   - Status at break: **not applied.** The worktree session's PreToolUse guard blocks edits to base-checkout paths. Do not bypass it with shell writes. Apply the edits from a session opened in the base checkout, or run them yourself.
-   - Also check `scripts/bench_table.py:121` and `scripts/mirror.sh`. They reference the chrome-devtools name, not the image tag, so they probably need no change.
-2. **Commit.** The user asked to commit the base-checkout working tree with a sensible message. Status at break: **not committed.** Its contents: deletes of the 27B bench files (`bench/20261010-043956-full-ts-michelrosselli-bonsai-27b-16384.{json,md}`, excluded from the roster), untracked `docs/haiku-fallback-log.md`, `scripts/bench_model.py`, and `handoff.md`. Review `handoff.md` before committing, because it belongs to other work. Commit from the base checkout, with no Co-Authored-By trailer (memory and CLAUDE.md rule).
-3. **Consolidated benchmark file.** `bench/Readme.md` as the GitHub landing page, plus `bench/results.json` (schema_version 1) as the data source, with present results, Mermaid/SVG visuals, conclusions, and a "how to add a benchmark" section. Opus is the review model, but its weekly limit resets 2026-10-14 01:30 Asia/Kolkata. Its last attempt produced nothing usable, so do not trust any partial output from it. Renderer code goes to tokenfrugal per CLAUDE.md.
-4. **Ollama roster, 16k only**, about 40 models, unattended, multi-hour. Approved by the user. Done 2026-10-12 (see B6).
-5. **Context sweep** (16k/32k/48k/64k) on the surviving candidates after the roster. The user said "limit to 16k if it's enough". Keep 16k unless a result requires more context.
-6. **8–12B pulls.** Approved, but the exact tag list is not confirmed yet. Confirm the list before pulling. The three GGUF pulls in B6 were the approved set.
-7. **ts-mcp placement of `prism-llama`.** Inline the service from `docker/prism-llama/compose.yml` into the base `docker-compose.yml`, or keep the override file and document it. The user said "do what's right". The choice is the orchestrator's. Pick one and state it.
-8. **crawl4ai.** Keep crawl4ai. No Playwright switch. See B6 "Checked".
-9. **Bonsai-8B Q1 thinker 4096 row** is suspect (p50 4.7 s at 109 tok/s, early EOS). Re-run that row before quoting it.
+1. **Commit.** The user asked to commit the base-checkout working tree with a sensible message. Status at break: **not committed.** Its contents: deletes of the 27B bench files (`bench/20261010-043956-full-ts-michelrosselli-bonsai-27b-16384.{json,md}`, excluded from the roster), untracked `docs/haiku-fallback-log.md`, `scripts/bench_model.py`, and `handoff.md`. Review `handoff.md` before committing, because it belongs to other work. Commit from the base checkout, with no Co-Authored-By trailer (memory and CLAUDE.md rule).
+2. **Consolidated benchmark file.** `bench/Readme.md` as the GitHub landing page, plus `bench/results.json` (schema_version 1) as the data source, with present results, Mermaid/SVG visuals, conclusions, and a "how to add a benchmark" section. Opus is the review model, but its weekly limit resets 2026-10-14 01:30 Asia/Kolkata. Its last attempt produced nothing usable, so do not trust any partial output from it. Renderer code goes to tokenfrugal per CLAUDE.md.
+3. **Ollama roster, 16k only**, about 40 models, unattended, multi-hour. Approved by the user. Done 2026-10-12 (see B6).
+4. **Context sweep** (16k/32k/48k/64k) on the surviving candidates after the roster. The user said "limit to 16k if it's enough". Keep 16k unless a result requires more context.
+5. **8–12B pulls.** Approved, but the exact tag list is not confirmed yet. Confirm the list before pulling. The three GGUF pulls in B6 were the approved set.
+6. **ts-mcp placement of `prism-llama`.** Inline the service into the base `docker-compose.yml`, or keep the override file and document it. Open. The only copy of the service definition is `.claude/worktrees/gateway-server-setup-84525b/docker/prism-llama/compose.yml` (image `maxh8086/prism-llama:e8fd209`, profile `bench`, port `127.0.0.1:8282`). Copy it out before that worktree folder is deleted.
+7. **crawl4ai.** Keep crawl4ai. No Playwright switch. See B6 "Checked".
+8. **Bonsai-8B Q1 thinker 4096 row** is suspect (p50 4.7 s at 109 tok/s, early EOS). Re-run that row before quoting it.
 
 ### B8. Restart prompt (new session)
 
@@ -151,10 +158,8 @@ Paste this into a new Claude Code session opened in `C:\Users\vaibh\Downloads\Pr
 
 > Read `handoff.md` at the repo root `C:\Users\vaibh\Downloads\Projects\tokenfrugal\handoff.md`, Part B, sections B6 to B7. Work in the base checkout `C:\Users\vaibh\Downloads\Projects\tokenfrugal` for changes to base files.
 > Steps, in order:
-> 1. Apply the three chrome-devtools image-ref edits (`profiles/browser.yaml`, `scripts/install_profiles.py`, `docker/pins.yaml`) from `tokenfrugal/chrome-devtools-mcp:1` to `maxh8086/chrome-devtools-mcp:1`. Check `scripts/bench_table.py` and `scripts/mirror.sh`.
-> 2. Review the base-checkout working tree and commit it with a sensible message. Do not add a Co-Authored-By trailer. Do not restore the 27B bench files. Review `handoff.md` before committing.
-> 3. Consolidate `bench/` into `bench/Readme.md` plus `bench/results.json`, with visuals and conclusions. Use the 75%-of-best rule from `Benchmark/persona-model-selection.md`. Delegate renderer code to tokenfrugal (`dispatch_task`). Use Opus for review only after the rate limit resets on 2026-10-14.
-> 4. Stop the stuck Minitron bench (B6 open items) before anything else. Then confirm the 8–12B pulls before pulling anything else.
+> 1. Stop the stuck Minitron bench (B6 open items) before anything else. Then confirm the 8–12B pulls before pulling anything else.
+> 2. Opus review of the consolidation: see B9. The gate has passed.
 > Never sign out or change credentials in the browser pane.
 
 ## Part B open decisions
@@ -165,7 +170,7 @@ Paste this into a new Claude Code session opened in `C:\Users\vaibh\Downloads\Pr
 ### B9. Final task
 
 - [x] Consolidate all benchmark results into `bench/Readme.md` (landing page) and `bench/results.json` (source data, schema_version 1). Include present results, visuals, conclusions and a section on adding future benchmarks. Built by `scripts/bench_consolidate.py` and `scripts/bench_render.py`; renderer written by a Haiku fallback after tokenfrugal timed out.
-- [ ] Opus review of the consolidation (`bench/Readme.md`, `bench/results.json`, `scripts/bench_consolidate.py`). Gated: do not start before 2026-10-14 01:30 Asia/Kolkata (Opus weekly limit reset). Discard any partial Opus output from before that time.
+- [ ] Opus review of the consolidation (`bench/Readme.md`, `bench/results.json`, `scripts/bench_consolidate.py`). The gate (2026-10-14 01:30 Asia/Kolkata, Opus weekly limit reset) has passed. Not started as of 2026-10-15. Discard any partial Opus output from before that time.
 
 ---
 
