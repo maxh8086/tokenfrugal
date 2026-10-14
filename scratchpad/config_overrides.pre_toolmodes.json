@@ -1,0 +1,73 @@
+{
+  "role_models": {},
+  "role_mcps": {
+    "builder": [
+      "filesystem",
+      "synaptree"
+    ],
+    "data": [
+      "filesystem"
+    ],
+    "analyzer": [
+      "filesystem",
+      "synaptree",
+      "ast-grep",
+      "git"
+    ],
+    "security": [
+      "filesystem",
+      "ast-grep",
+      "sonarqube"
+    ],
+    "reviewer": [
+      "filesystem",
+      "synaptree",
+      "ast-grep",
+      "git"
+    ],
+    "debugger": [
+      "filesystem",
+      "synaptree",
+      "git-history",
+      "sequentialthinking",
+      "code-interpreter",
+      "penpot"
+    ],
+    "docs": [
+      "filesystem",
+      "git-history",
+      "fetch"
+    ],
+    "designer": [
+      "code-interpreter",
+      "penpot"
+    ],
+    "browser": [
+      "chrome-devtools"
+    ],
+    "tracker": [
+      "plan"
+    ],
+    "github-read": [
+      "github"
+    ],
+    "github-actions-read": [
+      "github-actions"
+    ],
+    "devops": [
+      "filesystem",
+      "git",
+      "git-history",
+      "code-interpreter",
+      "penpot"
+    ],
+    "finance": [
+      "filesystem",
+      "fetch",
+      "web-search"
+    ],
+    "research": [
+      "web-search"
+    ]
+  }
+}
