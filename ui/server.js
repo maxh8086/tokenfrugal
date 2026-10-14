@@ -23,6 +23,8 @@ const PORT = Number(process.env.UI_PORT || configPort());
 const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
 const ROLES = path.join(path.dirname(EVENTS), 'roles.json');
 const OVERRIDES = path.join(path.dirname(EVENTS), 'config_overrides.json');
+const RECONNECT_REQUEST = path.join(path.dirname(EVENTS), 'reconnect_request.json');
+const RECONNECT_RESULT = path.join(path.dirname(EVENTS), 'reconnect_result.json');
 const MAX_TASKS = 200;
 
 const tasks = new Map(); // id -> task
@@ -346,6 +348,38 @@ const server = http.createServer(async (req, res) => {
     } catch { return res.writeHead(500).end('write failed'); }
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     return res.end(JSON.stringify({ ok: true, saved }));
+  }
+  // Ask a running gateway to restart/reconnect one MCP server or all of them (no gateway restart).
+  // The gateway polls the request file (gateway/reconnect.py) and writes the outcome to the result file.
+  if (url.pathname === '/api/mcp/restart' && req.method === 'POST') {
+    let body = '';
+    for await (const chunk of req) { body += chunk; if (body.length > 4096) return res.writeHead(413).end('too large'); }
+    let input;
+    try { input = JSON.parse(body || '{}'); } catch { return res.writeHead(400).end('bad json'); }
+    const target = input && input.target;
+    const known = Object.keys(roles().mcp_catalog || {});
+    if (typeof target !== 'string' || (target !== 'all' && !known.includes(target))) return res.writeHead(400).end('unknown target');
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const reply = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
+    try {
+      try { fs.unlinkSync(RECONNECT_RESULT); } catch { /* none yet */ }
+      fs.writeFileSync(RECONNECT_REQUEST + '.tmp', JSON.stringify({ id, target }));
+      fs.renameSync(RECONNECT_REQUEST + '.tmp', RECONNECT_REQUEST);
+    } catch { return reply(500, { ok: false, message: 'could not write request' }); }
+    const t0 = Date.now();
+    while (Date.now() - t0 < 180000) {
+      await new Promise((r) => setTimeout(r, 500));
+      try {
+        const out = JSON.parse(fs.readFileSync(RECONNECT_RESULT, 'utf8'));
+        if (out.id === id) return reply(200, out);
+      } catch { /* not written yet */ }
+      // still unclaimed after 5s: no gateway is polling
+      if (Date.now() - t0 > 5000 && fs.existsSync(RECONNECT_REQUEST)) {
+        try { fs.unlinkSync(RECONNECT_REQUEST); } catch { /* claimed meanwhile */ }
+        return reply(200, { ok: false, message: 'no gateway is running to handle the request' });
+      }
+    }
+    return reply(200, { ok: false, message: 'timed out waiting for the gateway' });
   }
   if (url.pathname === '/api/usage') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
