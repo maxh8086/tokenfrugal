@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest import mock
 
-from gateway import loop
+from router import loop
 
 
 class TaskTimeout(unittest.TestCase):

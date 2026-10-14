@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest import mock
 
-from gateway import compose
+from router import compose
 
 
 class BackendsTest(unittest.TestCase):

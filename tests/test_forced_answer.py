@@ -4,7 +4,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from gateway import loop
+from router import loop
 
 PARAMS = {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}
 

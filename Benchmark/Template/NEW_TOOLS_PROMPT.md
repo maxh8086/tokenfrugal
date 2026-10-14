@@ -10,7 +10,7 @@ Replaces or adds to: <current server used by that case>
 
 1. Create a round with `new_round.py`, named after the tool (e.g. `20261101-fetch-replacement`). Do not touch older rounds.
 2. Add the tool as a Docker MCP profile entry or native server in a copy of the profile, pinned by digest. Ask me
-   before installing images or editing `gateway/personas.yaml`.
+   before installing images or editing `router/personas.yaml`.
 3. Add or adjust only the cases that exercise the new tool, in a round-specific cases file. Keep the existing 16
    cases unchanged so scores stay comparable.
 4. Run the models that scored at least 1/2 on the matching case in the baseline round, plus any I name. Same

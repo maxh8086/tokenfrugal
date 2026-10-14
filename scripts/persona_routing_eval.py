@@ -70,7 +70,7 @@ def _fmt(result: Dict) -> str:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Evaluate keyword persona routing.")
-    parser.add_argument("--personas", default="gateway/personas.yaml", help="personas YAML path")
+    parser.add_argument("--personas", default="router/personas.yaml", help="personas YAML path")
     parser.add_argument("--labels", required=True, help="labels JSONL with 'task' and 'persona'")
     parser.add_argument("--predictions", help="predictions JSONL with 'persona'")
     args = parser.parse_args(argv)

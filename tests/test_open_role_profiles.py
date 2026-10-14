@@ -7,7 +7,7 @@ from unittest import mock
 
 os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
-from gateway import mcp_client  # noqa: E402
+from router import mcp_client  # noqa: E402
 
 
 class OpenRoleProfiles(unittest.TestCase):
@@ -15,7 +15,7 @@ class OpenRoleProfiles(unittest.TestCase):
         opened = []
 
         @contextlib.asynccontextmanager
-        async def fake_open_profile(profile):
+        async def fake_open_profile(profile, params=None):
             opened.append(profile)
             yield object()
 
@@ -32,7 +32,7 @@ class OpenRoleProfiles(unittest.TestCase):
 
     def test_string_profile_still_opens_one_session(self):
         @contextlib.asynccontextmanager
-        async def fake_open_profile(profile):
+        async def fake_open_profile(profile, params=None):
             yield object()
 
         async def run():

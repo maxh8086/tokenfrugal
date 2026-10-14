@@ -4,8 +4,8 @@ import os
 import subprocess
 import sys
 
-from gateway import server
-from gateway.config import ROOT, SYNAPTREE_PROJECT
+from router import server
+from router.config import ROOT, SYNAPTREE_PROJECT
 
 SCRATCH = ROOT / "bench" / "scratch"
 WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
@@ -94,7 +94,7 @@ def cases():
          f"Rename old_name to new_name in {WS}/a_mod.py and {WS}/b_mod.py (definition, import and call).", c_rename),
         ("find_symbol", "engineering-backend-architect", _none,
          "Use search_graph to find where resolve_role is defined and give its file path.",
-         _has("gateway/config.py", "gateway\\config.py")),
+         _has("router/config.py", "router\\config.py")),
         ("review_sqli", "testing-code-reviewer", s_review,
          f"Review {WS}/db.py for security problems. Name the vulnerability class.",
          _has("sql injection", "sqli", "injection")),
@@ -107,7 +107,7 @@ def cases():
         # one verified case per remaining role: analyzer, data, docs, security, designer, browser, tracker, research
         ("role_analyzer", "engineering-software-architect", _none,
          "Use search_graph to find where resolve_role is defined and give its file path.",
-         _has("gateway/config.py", "gateway\\config.py")),
+         _has("router/config.py", "router\\config.py")),
         ("role_data", "gis-analyst", s_files,
          f"List the files in {WS} with list_directory and name them.", _has("calc.py", "stack.py")),
         ("role_docs", "engineering-technical-writer", s_tests,

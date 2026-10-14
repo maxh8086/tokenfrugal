@@ -1,12 +1,12 @@
 """Thin client for `docker mcp gateway run --profile <p>` (stdio)."""
+import asyncio
 import contextlib
 import os
-import shutil
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from . import secrets_store
+from . import docker_mcp, secrets_store
 from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
@@ -40,10 +40,10 @@ class Router:
 
 
 @contextlib.asynccontextmanager
-async def open_role(profile: str | list[str] | None, native: list[str] | None = None):
+async def open_role(profile: str | list[str] | None, native: list[str] | None = None, params: dict | None = None):
     async with contextlib.AsyncExitStack() as stack:
         profiles = [profile] if isinstance(profile, str) else list(profile or [])
-        sessions = [await stack.enter_async_context(open_profile(p)) for p in profiles]
+        sessions = [await stack.enter_async_context(open_profile(p, (params or {}).get(p))) for p in profiles]
         nat = set()
         for n in native or []:
             ns = await stack.enter_async_context(open_native(n))
@@ -65,14 +65,17 @@ async def open_native(name: str):
 
 
 @contextlib.asynccontextmanager
-async def open_profile(profile: str):
-    params = StdioServerParameters(command=shutil.which("docker") or "docker",
-                                   args=["mcp", "gateway", "run", "--profile", profile,
-                                         "--cpus", MCP_CPUS, "--memory", MCP_MEMORY],
+async def open_profile(profile: str, params: dict | None = None):
+    """`docker mcp gateway run --profile`; catalog `params` (config/secrets, keyring: refs resolved) are pushed first."""
+    docker = docker_mcp.docker_bin()
+    if params:
+        await asyncio.to_thread(docker_mcp.apply_params, profile, params)
+    sp = StdioServerParameters(command=docker,
+                                   args=docker_mcp.gateway_argv(profile, MCP_CPUS, MCP_MEMORY, docker)[1:],
                                    env={**os.environ,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS": WORKSPACE,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS": WORKSPACE})
-    async with stdio_client(params) as (r, w):
+    async with stdio_client(sp) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()
             yield s

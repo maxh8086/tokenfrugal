@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from gateway.config import load_personas, resolve_role
+from router.config import load_personas, resolve_role
 
 ROOT = Path(__file__).resolve().parent.parent
 READ_ONLY_WRITES = {"merge_pull_request", "update_pull_request", "issue_write", "actions_run_trigger"}

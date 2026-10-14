@@ -2,7 +2,7 @@
 
 Default model per persona = among models that verify at least 75% of the best score on that persona's cases,
 the **smallest** (parameters), then the **fastest** (seconds). Implemented in `scripts/bench_persona.py`;
-output in `persona-defaults.md` and `persona-config.html`; stored in `gateway/personas.yaml` (`persona_models`).
+output in `persona-defaults.md` and `persona-config.html`; stored in `router/personas.yaml` (`persona_models`).
 
 Solo results (16 cases x 2 runs, RTX 4060 8 GB, 16384 ctx): see `model-conclusions.md` and `combos.md`.
 

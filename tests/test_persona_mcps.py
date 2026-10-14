@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from gateway import config
+from router import config
 
 
 class PersonaMcps(unittest.TestCase):

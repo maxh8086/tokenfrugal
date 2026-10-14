@@ -1,18 +1,18 @@
 __pycache__/
 *.pyc
 *.bak
-gateway/tasks.db
-gateway/secret_names.json
+router/tasks.db
+router/secret_names.json
 .env
 .secrets/
 mcp.env
-gateway/events.jsonl*
-gateway/usage.jsonl
-gateway/roles.json
+router/events.jsonl*
+router/usage.jsonl
+router/roles.json
 ui/node_modules/
 
 # runtime lock files
-gateway/gateways/
+router/gateways/
 
 # virtualenvs
 .venv/
@@ -20,16 +20,18 @@ venv/
 data/
 bench/scratch/
 bench/*.log
-gateway/persona_models.json
+router/persona_models.json
 
 # local tooling, not shipped
 .claude/
 .github/
 .gitattributes
-gateway/persona_mcps.json
+router/persona_mcps.json
 
 # local run state and scratch (not source)
 plan/
 bench/
-gateway/usage.jsonl
-gateway/persona_mcps.json
+router/usage.jsonl
+router/persona_mcps.json
+router/reconnect_request.json
+router/reconnect_result.json

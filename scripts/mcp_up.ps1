@@ -1,8 +1,8 @@
 <#
 Start the MCP backends for one or more compose profiles (research, security, design, plan) and wait until healthy.
-Backend secrets live in the OS secret store (python -m gateway.secrets_store), not in a file. Missing random
+Backend secrets live in the OS secret store (python -m router.secrets_store), not in a file. Missing random
 secrets (CRAWL4AI_API_TOKEN, SEARXNG_SECRET, NEO4J_AUTH) are created on first run; SONARQUBE_TOKEN and SONARQUBE_ORG
-are set by you: python -m gateway.secrets_store set SONARQUBE_TOKEN. Values are never printed.
+are set by you: python -m router.secrets_store set SONARQUBE_TOKEN. Values are never printed.
 Usage: powershell -File scripts/mcp_up.ps1 [research] [security] [design] [plan] [-Rotate]   (no profile = all)
 #>
 param([switch]$Rotate, [Parameter(ValueFromRemainingArguments)][string[]]$Profiles)
@@ -13,12 +13,12 @@ $py = Join-Path $root ".venv\Scripts\python.exe"
 if (-not (Test-Path $py)) { $py = "python" }
 Push-Location $root
 try {
-    if ($Rotate) { & $py -m gateway.secrets_store delete CRAWL4AI_API_TOKEN | Out-Null }
-    $created = & $py -m gateway.secrets_store ensure-generated
-    if ($LASTEXITCODE -ne 0) { throw "gateway.secrets_store ensure-generated failed (see message above)" }
+    if ($Rotate) { & $py -m router.secrets_store delete CRAWL4AI_API_TOKEN | Out-Null }
+    $created = & $py -m router.secrets_store ensure-generated
+    if ($LASTEXITCODE -ne 0) { throw "router.secrets_store ensure-generated failed (see message above)" }
     if ($created) { Write-Host "Created in OS secret store: $($created -join ', ')" }
     # NAME=value lines; set them in this process only so docker compose can read them
-    foreach ($line in (& $py -m gateway.secrets_store export-env)) {
+    foreach ($line in (& $py -m router.secrets_store export-env)) {
         $k, $v = $line -split '=', 2
         Set-Item -Path "Env:$k" -Value $v
     }

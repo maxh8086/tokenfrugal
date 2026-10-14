@@ -3,15 +3,15 @@ import asyncio
 import sys
 import time
 
-from gateway.config import load_personas, resolve_role
-from gateway.loop import leaf, run
+from router.config import load_personas, resolve_role
+from router.loop import leaf, run
 
 CFG = load_personas()
 TASKS = {
     "builder": ("engineering-backend-architect", "Read /workspace/README.md and name the first heading."),
     "analyzer": ("engineering-software-architect", "Use search_graph to find function resolve_role and say which file defines it."),
     "reviewer": ("engineering-code-reviewer", "Use git_diff on the workspace and say in one line whether anything changed."),
-    "debugger": ("engineering-sre", "Read /workspace/gateway/loop.py and name the exception class it defines."),
+    "debugger": ("engineering-sre", "Read /workspace/router/loop.py and name the exception class it defines."),
     "docs": ("engineering-technical-writer", "List the files in the workspace root directory."),
     "security": ("engineering-privacy-engineer", "Use search_files under /workspace to call search_files with path /workspace and pattern 'example', then list the matching file names."),
     "data": ("engineering-data-engineer", "List the directory of the workspace root."),

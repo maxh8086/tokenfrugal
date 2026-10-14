@@ -1,5 +1,5 @@
 """Export every stored benchmark response per model: Benchmark/responses/<model>.md.
-Joins gateway/events.jsonl* (task_start: model, prompt, ts) with gateway/tasks.db (status, summary, detail)."""
+Joins router/events.jsonl* (task_start: model, prompt, ts) with router/tasks.db (status, summary, detail)."""
 import datetime as dt
 import json
 import re
@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from gateway.config import DB_PATH, ROOT
+from router.config import DB_PATH, ROOT
 from scripts.bench_real import cases
 
 OUT = ROOT / "Benchmark" / "responses"

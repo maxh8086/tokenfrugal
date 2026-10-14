@@ -396,10 +396,10 @@ The bug is that the function `avg` attempts to divide by zero when given an empt
 To fix this, we can add a simple check at the beginning of the function to return 0 (or some other default value) when the input list is empty:
 
 ```python
-def avg(xs):
-    if not xs:
-        return 0
-    return sum(xs) / len(xs)
+def avg(xs):
+    if not xs:
+        return 0
+    return sum(xs) / len(xs)
 ```
 
 Alternatively, you could also raise a custom exception or handle it in a way that makes sense for your specific use case.
@@ -443,24 +443,24 @@ The bug in this code is that it attempts to calculate the average of an empty li
 To fix this bug, we can add a simple check at the beginning of the `avg` function to return 0 or handle the error in some other way when given an empty list. Here's how you could modify the code:
 
 ```python
-def avg(xs):
-    if not xs:
-        return 0
-    return sum(xs) / len(xs)
-
-print(avg([]))
+def avg(xs):
+    if not xs:
+        return 0
+    return sum(xs) / len(xs)
+
+print(avg([]))
 ```
 
 Alternatively, we can use a try-except block to catch and handle the `ZeroDivisionError`:
 
 ```python
-def avg(xs):
-    try:
-        return sum(xs) / len(xs)
-    except ZeroDivisionError:
-        return None
-
-print(avg([]))
+def avg(xs):
+    try:
+        return sum(xs) / len(xs)
+    except ZeroDivisionError:
+        return None
+
+print(avg([]))
 ```
 ````
 
@@ -543,13 +543,13 @@ The bug in this code is that it attempts to divide by zero when trying to calcul
 To fix this bug, we can add a simple check to make sure the list is not empty before trying to calculate its average. Here's the corrected code:
 
 ```python
-def avg(xs):
-    if xs:
-        return sum(xs) / len(xs)
-    else:
-        return None
-
-print(avg([]))
+def avg(xs):
+    if xs:
+        return sum(xs) / len(xs)
+    else:
+        return None
+
+print(avg([]))
 ```
 
 Alternatively, you could also raise a custom error or handle it in some other way that makes sense for your specific use case.
@@ -684,79 +684,79 @@ The label 'resolve_role' is not found in the graph.
 ## role_analyzer #2  ·  2026-10-09 19:13  ·  task c6c0dfe6f5  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #3  ·  2026-10-09 19:19  ·  task b680eff1a5  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #4  ·  2026-10-09 19:29  ·  task 48af1c54bd  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #5  ·  2026-10-09 19:29  ·  task 579ec6bd0e  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #6  ·  2026-10-09 19:29  ·  task ecb10eaba4  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #7  ·  2026-10-09 21:40  ·  task b643f6ef56  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`, line 65.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`, line 65.
 ````
 
 ## role_analyzer #8  ·  2026-10-09 21:40  ·  task eccc638500  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #9  ·  2026-10-09 23:51  ·  task 0ce09da55a  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`, line 65.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`, line 65.
 ````
 
 ## role_analyzer #10  ·  2026-10-09 23:51  ·  task 15016d0d5c  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_analyzer #11  ·  2026-10-10 00:00  ·  task 8b9dabcf56  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`, line 65.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`, line 65.
 ````
 
 ## role_analyzer #12  ·  2026-10-10 00:00  ·  task 54402e9473  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`, line 65.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`, line 65.
 ````
 
 ## role_analyzer #13  ·  2026-10-10 00:02  ·  task e2cd2d93c9  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`, line 65.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`, line 65.
 ````
 
 ## role_analyzer #14  ·  2026-10-10 00:02  ·  task 74e2207aa4  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `/workspace/tokenfrugal/gateway/config.py`.
+The `resolve_role` function is defined in the file `/workspace/tokenfrugal/router/config.py`.
 ````
 
 ## role_data #1  ·  2026-10-10 00:02  ·  task e3eaeba5f4  ·  status done

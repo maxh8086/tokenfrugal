@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-from . import secrets_store
+from . import claude_import, secrets_store
 
 ROOT = Path(__file__).resolve().parent.parent
 _REAL_ENV = set(os.environ)  # set before .env is read: these beat both .env and the dashboard overrides
@@ -95,8 +95,10 @@ for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
                                                          "run", "--rm", "-T", _svc]}
 # keyring: refs are resolved from the OS store by mcp_client.open_native and passed to compose as ${SONARQUBE_TOKEN}
 NATIVE_SERVERS["sonarqube"]["env"] = {"SONARQUBE_TOKEN": "keyring:SONARQUBE_TOKEN"}
-NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "gateway.plan_mcp"]}
+NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "router.plan_mcp"]}
 # synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
+for _n, _spec in claude_import.load()["servers"].items():  # Claude-JSON imports (python -m router.claude_import)
+    NATIVE_SERVERS.setdefault(_n, _spec)
 SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().parent.parent.name
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
@@ -118,7 +120,10 @@ PERSONA_MCPS_FILE = Path(os.getenv("TOKENFRUGAL_PERSONA_MCPS_FILE", Path(__file_
 
 
 def load_catalog() -> dict:
-    return yaml.safe_load((Path(__file__).parent / "mcp_catalog.yaml").read_text(encoding="utf-8"))
+    cat = yaml.safe_load((Path(__file__).parent / "mcp_catalog.yaml").read_text(encoding="utf-8"))
+    imported = claude_import.load()  # MCPs added from Claude `mcpServers` JSON; built-in names win
+    cat["mcps"] = {**imported["mcps"], **cat["mcps"]}
+    return cat
 
 
 def default_mcps(role: dict, catalog: dict) -> list[str]:
@@ -173,6 +178,7 @@ def resolve_role(agent: str, cfg: dict) -> dict:
         r["native"] = uniq(m.get("native") for m in ms)
         r["compose"] = uniq(c for m in ms for c in m.get("compose", []))
         r["tools"] = uniq(t for m in ms for t in m["tools"])
+        r["params"] = {m["profile"]: m["params"] for m in ms if m.get("profile") and m.get("params")}
         r["mcps"] = sel
     pm = cfg.get("persona_models", {}).get(agent)
     if pm:  # a logical name (builder/thinker) or a concrete model tag

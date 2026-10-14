@@ -3,7 +3,7 @@
 #   backends  : long-running services (crawl4ai, sonarqube, penpot-mcp)
 #   neo4j     : plan/task graph; started with the gateway, kept up until the gateway exits (which stops every ts-mcp container)
 #   mcp-*     : stdio MCP wrappers, started per task with `docker compose run --rm -T` (gateway native servers)
-# Secrets live in the OS secret store (python -m gateway.secrets_store); scripts/mcp_up.* export them into the
+# Secrets live in the OS secret store (python -m router.secrets_store); scripts/mcp_up.* export them into the
 # environment and each service below takes only the variables it needs. No env file is read.
 name: ts-mcp
 

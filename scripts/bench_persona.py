@@ -78,7 +78,7 @@ select,button{font:inherit}pre{background:#8882;padding:8px;overflow:auto}.d{opa
 <p>Defaults are the best measured solo model for each persona. The Model column shows the exact Ollama tag; the columns to its right are the settings that tag was tested with (quantization, context window, Modelfile config). Predicted score and time are sums of measured per-case means, 2 runs per case, model swap time not included.</p>
 <div class=w><table><thead><tr><th>Persona<th>MCP server(s)<th>Cases<th>Model (Ollama tag)<th>Base<th>Params<th>Quant<th>Context<th>Config<th>Verified<th>Time s</tr></thead><tbody></tbody></table></div>
 <p><b id=tot></b> <button id=rs>Reset to defaults</button> <button id=dl>Download persona_models.json</button></p>
-<p>Mapping for <code>gateway/persona_models.json</code> (valid as-is; or use <code>python -m scripts.persona_ui</code>):</p><pre id=ex></pre>
+<p>Mapping for <code>router/persona_models.json</code> (valid as-is; or use <code>python -m scripts.persona_ui</code>):</p><pre id=ex></pre>
 <script>
 const I=__I__,M=__M__,P=__P__,B=__B__;let sel={...B};
 const tb=document.querySelector("tbody");

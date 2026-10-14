@@ -3,8 +3,8 @@
     python -m scripts.persona_ui [--port 7878]     # then open http://127.0.0.1:7878
 
 Pick a profile type (Financial analyst, Programmer, Data scientist, ...), a persona, the MCPs it may use
-(checkboxes or multi-select) and its model. Saves only changes to gateway/persona_mcps.json and
-gateway/persona_models.json. A blank model resets a persona to its role's model. Restart the MCP client to apply.
+(checkboxes or multi-select) and its model. Saves only changes to router/persona_mcps.json and
+router/persona_models.json. A blank model resets a persona to its role's model. Restart the MCP client to apply.
 """
 import argparse
 import json
@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import yaml
 
-from gateway import config
+from router import config
 
 YAML = config.Path(config.__file__).parent / "personas.yaml"
 
