@@ -15,9 +15,9 @@ TASKS = {
     "analyzer": ("engineering-software-architect", "Use search_graph to find function resolve_role and say which file defines it."),
     "reviewer": ("engineering-code-reviewer", "Use git_diff on the workspace and say in one line whether anything changed."),
     "debugger": ("engineering-sre", "Read /workspace/router/loop.py and name the exception class it defines."),
-    "docs": ("engineering-technical-writer", "List the files in the workspace root directory."),
+    "docs": ("engineering-technical-writer", "Call read_file on /workspace/README.md and name its first heading."),
     "security": ("engineering-privacy-engineer", "Use search_files under /workspace to call search_files with path /workspace and pattern 'example', then list the matching file names."),
-    "data": ("engineering-data-engineer", "List the directory of the workspace root."),
+    "data": ("engineering-data-engineer", "Call list_directory with path /workspace and name one file you see."),
     "designer": ("design-ui-designer", "Call high_level_overview and report what it says in one line."),
     "browser": ("design-persona-walkthrough", "Call navigate_page with url http://host.docker.internal:9100, then call take_snapshot and report the page title."),
     "tracker": ("project-management-project-shepherd", "Call plan_next and report the task it returns, or say there is no ready task."),
@@ -25,7 +25,7 @@ TASKS = {
 }
 
 
-EXPECT = {'tracker': 'task', 'security': '.env.example', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'Login', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'README', 'data': 'README', 'designer': 'penpot'}
+EXPECT = {'tracker': 'task', 'security': '.env.example', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'Login', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'TokenFrugal', 'data': 'README', 'designer': 'penpot'}
 
 
 async def one(role_name):
