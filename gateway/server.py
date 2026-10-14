@@ -13,7 +13,7 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import compose, events, plan, store, ui_launcher
+from . import compose, events, plan, reconnect, store, ui_launcher
 from .config import check_agent, load_personas, resolve_role
 from .loop import leaf, run, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
@@ -48,10 +48,12 @@ async def _lifespan(_server):
             with contextlib.suppress(ValueError, OSError):
                 signal.signal(getattr(signal, name), lambda *_: sys.exit(0))
     warm = asyncio.create_task(_warm_up())
+    reconnector = asyncio.create_task(reconnect.poll_loop(CFG["mcp_catalog"]))
     try:
         yield
     finally:
         warm.cancel()
+        reconnector.cancel()
         sweeper.cancel()
         ui_launcher.stop()
         compose.release()

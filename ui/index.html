@@ -167,9 +167,13 @@
   </section>
   <section id="tab-configuration" hidden>
     <h2>Configuration</h2>
-    <p class="note">Saved to <code>gateway/config_overrides.json</code>. The gateway reads it at start, so restart it to apply. Blank fields use the value from <code>.env</code>.</p>
+    <p class="note">Saved to <code>gateway/config_overrides.json</code>. The gateway reads it at start, so restart it to apply (MCP servers can be restarted below without that). Blank fields use the value from <code>.env</code>.</p>
     <h3>Global settings</h3>
     <div class="cfg-grid" id="cfg-global"></div>
+    <h3>MCP servers</h3>
+    <p class="note">Restart recreates a server's backend containers and reconnects to it. The gateway keeps running. A server used by a running task is skipped.</p>
+    <div class="cfg-actions"><button type="button" id="mcp-all" onclick="restartMcp('all')">Reconnect all</button><span id="mcp-all-status" class="meta"></span></div>
+    <div id="cfg-mcp-servers"></div>
     <h3>Roles: model and MCPs</h3>
     <p class="note">Each role runs one model with the MCPs ticked below. If no MCP is ticked, the role uses its default toolkit.</p>
     <p class="cfg-note">Expand an agent to change its model and MCP servers. Expand an MCP server to see its tools and set each one to Auto, Ask or Disable. The checkbox sets which MCP servers the agent may use. The Auto / Ask / Disable settings are saved, but the gateway does not enforce them yet.</p>
@@ -411,6 +415,15 @@ async function buildConfig() {
   const models = (state.services && state.services.ollama && state.services.ollama.models) || [];
   const catalog = state.mcp_catalog || {};
   const savedToolModes = saved.role_tool_modes || {};
+  const srv = $('cfg-mcp-servers');
+  srv.replaceChildren();
+  for (const name of Object.keys(catalog)) {
+    const line = el('div', 'cfg-tool');
+    const btn = el('button', '', 'Restart'); btn.type = 'button'; btn.onclick = () => restartMcp(name);
+    const st = el('span', 'meta'); st.id = 'mcp-status-' + name;
+    line.append(el('span', 'cfg-tool-name', name), btn, st);
+    srv.append(line);
+  }
   const rolesBox = $('cfg-roles');
   rolesBox.replaceChildren();
   cfgRoleInputs = [];
@@ -485,6 +498,24 @@ async function buildConfig() {
   if (!roles.length) rolesBox.append(el('p', 'empty', 'No roles loaded yet. Reload once the gateway has started.'));
   cfgBuilt = roles.length > 0;
   cfgStatus('');
+}
+
+// Ask the gateway to restart one MCP server (or 'all'); shows the result or the returned error next to the button.
+async function restartMcp(target) {
+  const st = $(target === 'all' ? 'mcp-all-status' : 'mcp-status-' + target);
+  const btns = document.querySelectorAll('#tab-configuration button');
+  btns.forEach((b) => { b.disabled = true; });
+  st.textContent = 'restarting...';
+  try {
+    const r = await fetch('/api/mcp/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target }) });
+    const out = r.ok ? await r.json() : { ok: false, message: 'HTTP ' + r.status };
+    st.textContent = (out.ok ? 'OK: ' : 'Failed: ') + (out.message || '');
+    for (const x of (target === 'all' ? out.results || [] : [])) {
+      const s = $('mcp-status-' + x.name);
+      if (s) s.textContent = (x.ok ? 'OK: ' : 'Failed: ') + x.message;
+    }
+  } catch (e) { st.textContent = 'Failed: ' + e.message; }
+  btns.forEach((b) => { b.disabled = false; });
 }
 
 async function saveConfig() {
