@@ -20,6 +20,7 @@ from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_personas()
 STALE_REASON = "gateway stopped while task was running (no heartbeat)"
+HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a gateway down after ~3 missed beats
 
 
 async def _warm_up():
@@ -49,9 +50,12 @@ async def _lifespan(_server):
                 signal.signal(getattr(signal, name), lambda *_: sys.exit(0))
     warm = asyncio.create_task(_warm_up())
     reconnector = asyncio.create_task(reconnect.poll_loop(CFG["mcp_catalog"]))
+    beat = asyncio.create_task(_health_loop())
     try:
         yield
     finally:
+        beat.cancel()
+        events.emit("health", status="down")
         warm.cancel()
         reconnector.cancel()
         sweeper.cancel()
@@ -87,6 +91,13 @@ async def _heartbeat(tid: str) -> None:
     while True:
         await asyncio.sleep(store.HEARTBEAT_EVERY)
         await asyncio.to_thread(store.beat, tid)
+
+
+async def _health_loop() -> None:
+    """Publish this gateway's own health so the dashboard's /health reflects the gateway, not the dashboard."""
+    while True:
+        events.emit("health", status="up")
+        await asyncio.sleep(HEALTH_EVERY)
 
 
 async def _sweep_loop() -> None:
