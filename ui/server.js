@@ -22,6 +22,7 @@ function cfgNum(key, dflt) {
 const PORT = Number(process.env.UI_PORT || configPort());
 const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
 const ROLES = path.join(path.dirname(EVENTS), 'roles.json');
+const OVERRIDES = path.join(path.dirname(EVENTS), 'config_overrides.json');
 const MAX_TASKS = 200;
 
 const tasks = new Map(); // id -> task
@@ -259,6 +260,56 @@ function roles() {
   try { return JSON.parse(fs.readFileSync(ROLES, 'utf8')); } catch { return { roles: [], divisions: {} }; }
 }
 
+// Settings written from the Configuration tab; gateway/config.py reads the same file at start.
+function readOverrides() {
+  try { return JSON.parse(fs.readFileSync(OVERRIDES, 'utf8')) || {}; } catch { return {}; }
+}
+const MCP_MODES = ['allow', 'ask', 'disable'];
+function cleanOverrides(input) {
+  const out = {};
+  const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : null);
+  for (const k of ['workspace', 'bind_writable', 'bind_readonly', 'llm_url']) {
+    const v = str(input[k], 500);
+    if (v) out[k] = v; // empty means "use .env"
+  }
+  const t = Number(input.temperature);
+  if (input.temperature !== undefined && input.temperature !== '' && t >= 0 && t <= 2) out.temperature = t;
+  const m = Number(input.max_tokens);
+  if (input.max_tokens !== undefined && input.max_tokens !== '' && Number.isInteger(m) && m >= 1 && m <= 131072) out.max_tokens = m;
+  if (input.role_models && typeof input.role_models === 'object' && !Array.isArray(input.role_models)) {
+    out.role_models = {};
+    for (const [role, model] of Object.entries(input.role_models)) {
+      const v = str(model, 200);
+      if (v) out.role_models[role] = v;
+    }
+  }
+  // role -> MCP -> tool -> Auto/Ask/Disable (stored as allow/ask/disable)
+  if (input.role_tool_modes && typeof input.role_tool_modes === 'object' && !Array.isArray(input.role_tool_modes)) {
+    out.role_tool_modes = {};
+    for (const [role, mcps] of Object.entries(input.role_tool_modes).slice(0, 60)) {
+      if (!mcps || typeof mcps !== 'object' || Array.isArray(mcps)) continue;
+      const keptMcps = {};
+      for (const [mcp, tools] of Object.entries(mcps).slice(0, 60)) {
+        if (!tools || typeof tools !== 'object' || Array.isArray(tools) || mcp.length > 100) continue;
+        const keptTools = {};
+        for (const [tool, mode] of Object.entries(tools).slice(0, 100)) {
+          if (tool.length <= 100 && MCP_MODES.includes(mode)) keptTools[tool] = mode;
+        }
+        if (Object.keys(keptTools).length) keptMcps[mcp] = keptTools;
+      }
+      out.role_tool_modes[role] = keptMcps;
+    }
+  }
+  if (input.role_mcps && typeof input.role_mcps === 'object' && !Array.isArray(input.role_mcps)) {
+    out.role_mcps = {};
+    for (const [role, names] of Object.entries(input.role_mcps)) {
+      if (!Array.isArray(names)) continue;
+      out.role_mcps[role] = names.filter((n) => typeof n === 'string' && n.length <= 100).slice(0, 60);
+    }
+  }
+  return out;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/api/state') {
@@ -272,6 +323,29 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ now: Date.now() / 1000, tasks: list, ...cfg, services: sv, connected, selected,
       saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
+  }
+  if (url.pathname === '/api/config' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify(readOverrides()));
+  }
+  if (url.pathname === '/api/config' && req.method === 'POST') {
+    let body = '';
+    let size = 0;
+    for await (const chunk of req) {
+      size += chunk.length;
+      if (size > 65536) return res.writeHead(413).end('too large');
+      body += chunk;
+    }
+    let input;
+    try { input = JSON.parse(body || '{}'); } catch { return res.writeHead(400).end('bad json'); }
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return res.writeHead(400).end('bad json');
+    const saved = cleanOverrides(input);
+    try {
+      fs.writeFileSync(OVERRIDES + '.tmp', JSON.stringify(saved, null, 2));
+      fs.renameSync(OVERRIDES + '.tmp', OVERRIDES);
+    } catch { return res.writeHead(500).end('write failed'); }
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, saved }));
   }
   if (url.pathname === '/api/usage') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
