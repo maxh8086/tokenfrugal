@@ -16,7 +16,7 @@ from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
 
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0)
-USAGE: dict[str, dict] = {}  # per task id: model calls and tokens, taken by the gateway when the task ends
+USAGE: dict[str, dict] = {}  # per task id: model calls and tokens, taken by the router when the task ends
 
 
 def _count(tid: str, r, msgs: list, m, secs: float) -> None:
@@ -231,7 +231,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         e.msgs = msgs
         raise e
     except BaseException as e:
-        leaf(e).msgs = msgs  # failed runs still did local work; the gateway counts it as saved
+        leaf(e).msgs = msgs  # failed runs still did local work; the router counts it as saved
         raise
 
 
@@ -269,10 +269,13 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
             calls = (m.tool_calls or parse_text_calls(m.content, names))[:TOOLS_PER_STEP]
             if not calls:
                 bad = slop_check(m.content or "")
-                if bad and bad.startswith("you wrote a tool call") and text_mode:
-                    bad = ("that tool call could not be run: it is malformed JSON or names an unknown tool. Reply with ONLY "
-                           'one valid JSON object like {"name": "<tool>", "arguments": {...}}. Valid tool names: '
-                           + ", ".join(sorted(names)))
+                if bad and bad.startswith("you wrote a tool call"):
+                    if text_mode:
+                        bad = ("that tool call could not be run: it is malformed JSON or names an unknown tool. Reply with ONLY "
+                               'one valid JSON object like {"name": "<tool>", "arguments": {...}}. Valid tool names: '
+                               + ", ".join(sorted(names)))
+                    else:
+                        bad += ". Unknown tool name? Valid tool names: " + ", ".join(sorted(names))
                 if not bad and tools and not used_tools:
                     bad = "you answered without calling any tool; call a tool to read real data first"
                 failed = not bad and used_tools and not ok_calls and fail_retries < 2
