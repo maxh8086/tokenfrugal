@@ -136,6 +136,7 @@ def check_router_tools(only: str = "") -> list:
 
 async def _role_rows(only: str) -> list:
     from router.config import load_personas
+    from router.compose import backends
     from router.mcp_client import _schema, open_role
     cfg = load_personas()
     rows = []
@@ -144,8 +145,9 @@ async def _role_rows(only: str) -> list:
         if not allow or (only and only not in allow):
             continue
         try:
-            async with open_role(r.get("profile"), r.get("native"), r.get("params")) as sess:
-                listed = {t.name: t for t in (await sess.list_tools()).tools}
+            async with backends(list(r.get("compose") or [])):
+                async with open_role(r.get("profile"), r.get("native"), r.get("params")) as sess:
+                    listed = {t.name: t for t in (await sess.list_tools()).tools}
         except Exception as e:  # noqa: BLE001
             rows += [("%s/%s" % (rname, t), "FAIL", "role did not open: %s: %s" % (type(e).__name__, str(e)[:80]))
                      for t in allow]
