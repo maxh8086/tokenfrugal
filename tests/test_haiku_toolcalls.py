@@ -67,10 +67,38 @@ def anthropic_tool(name: str, desc: str, schema: dict) -> dict:
             "input_schema": schema or {"type": "object", "properties": {}}}
 
 
+def cli_haiku_pick(prompt: str, tools: list) -> tuple:
+    """Haiku through `claude -p` and the repo .mcp.json (real router, no API key).
+
+    No --allowedTools is passed, so the call is attempted and denied by permissions: the tool_use event proves
+    Haiku chose and shaped the call, and nothing is dispatched. Returns (router tool name, input) or ('', {}).
+    """
+    import subprocess
+    cmd = [shutil.which("claude") or "claude", "-p", prompt, "--model", os.getenv("HAIKU_CLI_MODEL", "haiku"),
+           "--output-format", "stream-json", "--verbose", "--mcp-config", str(ROOT / ".mcp.json"),
+           "--strict-mcp-config", "--no-session-persistence", "--permission-mode", "default"]
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=180, cwd=str(ROOT), encoding="utf-8").stdout
+    for line in out.splitlines():
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "result" and ev.get("is_error"):
+            raise RuntimeError("claude CLI error: %s" % str(ev.get("result"))[:120])
+        for b in (ev.get("message") or {}).get("content") or []:
+            if isinstance(b, dict) and b.get("type") == "tool_use" and b.get("name", "").startswith("mcp__tokenfrugal__"):
+                return b["name"].split("__", 2)[2], b.get("input") or {}
+    return "", {}
+
+
+def use_cli() -> bool:
+    return not os.getenv("ANTHROPIC_API_KEY") and bool(shutil.which("claude")) and (ROOT / ".mcp.json").exists()
+
+
 def live_blocker() -> str:
-    """Empty string when Haiku is reachable, else a clear reason."""
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return "ANTHROPIC_API_KEY is not set: cannot reach Haiku, so no tool call was verified"
+    """Empty string when Haiku is reachable (API key or the claude CLI), else a clear reason."""
+    if not os.getenv("ANTHROPIC_API_KEY") and not use_cli():
+        return "no ANTHROPIC_API_KEY and no claude CLI with .mcp.json: cannot reach Haiku, so no tool call was verified"
     return ""
 
 
@@ -95,7 +123,7 @@ def check_router_tools(only: str = "") -> list:
         if only and name != only:
             continue
         try:
-            got, args = haiku_pick(prompt, spec)
+            got, args = (cli_haiku_pick if use_cli() else haiku_pick)(prompt, spec)
             if got != name:
                 rows.append((name, "FAIL", "Haiku called %r" % (got or "no tool (wrote text)")))
                 continue
