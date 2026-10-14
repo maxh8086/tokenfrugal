@@ -22,6 +22,9 @@ function cfgNum(key, dflt) {
 const PORT = Number(process.env.UI_PORT || configPort());
 const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
 const ROLES = path.join(path.dirname(EVENTS), 'roles.json');
+const OVERRIDES = path.join(path.dirname(EVENTS), 'config_overrides.json');
+const RECONNECT_REQUEST = path.join(path.dirname(EVENTS), 'reconnect_request.json');
+const RECONNECT_RESULT = path.join(path.dirname(EVENTS), 'reconnect_result.json');
 const MAX_TASKS = 200;
 
 const tasks = new Map(); // id -> task
@@ -71,7 +74,7 @@ function apply(ev) {
     note(t, ev.ts, ev.text); t.think = ev.text; t.updatedAt = ev.ts;
   } else if (ev.kind === 'task_done') {
     note(t, ev.ts, 'done: ' + ev.summary);
-    Object.assign(t, { status: 'done', summary: ev.summary, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0 });
+    Object.assign(t, { status: 'done', summary: ev.summary, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0, e2e: Number(ev.e2e) || 0 });
   } else if (ev.kind === 'task_failed') {
     note(t, ev.ts, 'failed: ' + ev.error);
     Object.assign(t, { status: 'failed', error: ev.error, endedAt: ev.ts, updatedAt: ev.ts, tool: '', saved: Number(ev.saved) || 0 });
@@ -159,7 +162,7 @@ function usage(now = Date.now() / 1000) {
     for (const e of readJsonl(f)) if (e && (e.kind === 'task_done' || e.kind === 'task_failed') && e.id) rows.set(e.id, { ...rows.get(e.id), ...e });
   const list = [...rows.values()].map((e) => ({ ts: e.ts, pid: e.pid, id: e.id, ok: e.kind === 'task_done', saved: Number(e.saved) || 0,
     role: e.role || (tasks.get(e.id) || {}).role || '', model: e.model || (tasks.get(e.id) || {}).model || '',
-    task: e.task || (tasks.get(e.id) || {}).prompt || '', agent: e.agent || (tasks.get(e.id) || {}).agent || '', calls: Number(e.calls) || 0, input: Number(e.input) || 0, output: Number(e.output) || 0 }));
+    task: e.task || (tasks.get(e.id) || {}).prompt || '', agent: e.agent || (tasks.get(e.id) || {}).agent || '', calls: Number(e.calls) || 0, input: Number(e.input) || 0, output: Number(e.output) || 0, e2e: Number(e.e2e) || 0, secs: Number(e.secs) || 0 }));
   const d = new Date(now * 1000);
   const day = Math.min(Math.max(cfgNum('renewal_day', 1), 1), 28);
   let start = new Date(d.getFullYear(), d.getMonth(), day);
@@ -197,7 +200,8 @@ function usage(now = Date.now() / 1000) {
   out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
   // Local tasks this period, one row per task id, same columns as Claude's subagent table (input/output are estimates when the backend sends no usage).
   out.localTasks = list.filter((x) => x.ts >= scopes.month).sort((a, b) => b.ts - a.ts).slice(0, 200)
-    .map((x) => ({ task: x.task || x.id, persona: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output }));
+    .map((x) => ({ task: x.task || x.id, persona: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output,
+      e2e: x.e2e, tps: x.secs > 0 ? Math.round((x.output / x.secs) * 10) / 10 : 0 }));
   out.claude = claudeUsage(scopes);
   return out;
 }
@@ -262,6 +266,56 @@ function roles() {
   try { return JSON.parse(fs.readFileSync(ROLES, 'utf8')); } catch { return { roles: [], divisions: {} }; }
 }
 
+// Settings written from the Configuration tab; gateway/config.py reads the same file at start.
+function readOverrides() {
+  try { return JSON.parse(fs.readFileSync(OVERRIDES, 'utf8')) || {}; } catch { return {}; }
+}
+const MCP_MODES = ['allow', 'ask', 'disable'];
+function cleanOverrides(input) {
+  const out = {};
+  const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : null);
+  for (const k of ['workspace', 'bind_writable', 'bind_readonly', 'llm_url']) {
+    const v = str(input[k], 500);
+    if (v) out[k] = v; // empty means "use .env"
+  }
+  const t = Number(input.temperature);
+  if (input.temperature !== undefined && input.temperature !== '' && t >= 0 && t <= 2) out.temperature = t;
+  const m = Number(input.max_tokens);
+  if (input.max_tokens !== undefined && input.max_tokens !== '' && Number.isInteger(m) && m >= 1 && m <= 131072) out.max_tokens = m;
+  if (input.role_models && typeof input.role_models === 'object' && !Array.isArray(input.role_models)) {
+    out.role_models = {};
+    for (const [role, model] of Object.entries(input.role_models)) {
+      const v = str(model, 200);
+      if (v) out.role_models[role] = v;
+    }
+  }
+  // role -> MCP -> tool -> Auto/Ask/Disable (stored as allow/ask/disable)
+  if (input.role_tool_modes && typeof input.role_tool_modes === 'object' && !Array.isArray(input.role_tool_modes)) {
+    out.role_tool_modes = {};
+    for (const [role, mcps] of Object.entries(input.role_tool_modes).slice(0, 60)) {
+      if (!mcps || typeof mcps !== 'object' || Array.isArray(mcps)) continue;
+      const keptMcps = {};
+      for (const [mcp, tools] of Object.entries(mcps).slice(0, 60)) {
+        if (!tools || typeof tools !== 'object' || Array.isArray(tools) || mcp.length > 100) continue;
+        const keptTools = {};
+        for (const [tool, mode] of Object.entries(tools).slice(0, 100)) {
+          if (tool.length <= 100 && MCP_MODES.includes(mode)) keptTools[tool] = mode;
+        }
+        if (Object.keys(keptTools).length) keptMcps[mcp] = keptTools;
+      }
+      out.role_tool_modes[role] = keptMcps;
+    }
+  }
+  if (input.role_mcps && typeof input.role_mcps === 'object' && !Array.isArray(input.role_mcps)) {
+    out.role_mcps = {};
+    for (const [role, names] of Object.entries(input.role_mcps)) {
+      if (!Array.isArray(names)) continue;
+      out.role_mcps[role] = names.filter((n) => typeof n === 'string' && n.length <= 100).slice(0, 60);
+    }
+  }
+  return out;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/api/state') {
@@ -275,6 +329,61 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ now: Date.now() / 1000, tasks: list, ...cfg, services: sv, connected, selected,
       saved: list.reduce((n, t) => n + (t.saved || 0), 0),
       agent: cur && cur.status === 'running' ? cur.agent : '', mcp: mcpRows(cfg, sv, list, selected) }));
+  }
+  if (url.pathname === '/api/config' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify(readOverrides()));
+  }
+  if (url.pathname === '/api/config' && req.method === 'POST') {
+    let body = '';
+    let size = 0;
+    for await (const chunk of req) {
+      size += chunk.length;
+      if (size > 65536) return res.writeHead(413).end('too large');
+      body += chunk;
+    }
+    let input;
+    try { input = JSON.parse(body || '{}'); } catch { return res.writeHead(400).end('bad json'); }
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return res.writeHead(400).end('bad json');
+    const saved = cleanOverrides(input);
+    try {
+      fs.writeFileSync(OVERRIDES + '.tmp', JSON.stringify(saved, null, 2));
+      fs.renameSync(OVERRIDES + '.tmp', OVERRIDES);
+    } catch { return res.writeHead(500).end('write failed'); }
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, saved }));
+  }
+  // Ask a running gateway to restart/reconnect one MCP server or all of them (no gateway restart).
+  // The gateway polls the request file (gateway/reconnect.py) and writes the outcome to the result file.
+  if (url.pathname === '/api/mcp/restart' && req.method === 'POST') {
+    let body = '';
+    for await (const chunk of req) { body += chunk; if (body.length > 4096) return res.writeHead(413).end('too large'); }
+    let input;
+    try { input = JSON.parse(body || '{}'); } catch { return res.writeHead(400).end('bad json'); }
+    const target = input && input.target;
+    const known = Object.keys(roles().mcp_catalog || {});
+    if (typeof target !== 'string' || (target !== 'all' && !known.includes(target))) return res.writeHead(400).end('unknown target');
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const reply = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
+    try {
+      try { fs.unlinkSync(RECONNECT_RESULT); } catch { /* none yet */ }
+      fs.writeFileSync(RECONNECT_REQUEST + '.tmp', JSON.stringify({ id, target }));
+      fs.renameSync(RECONNECT_REQUEST + '.tmp', RECONNECT_REQUEST);
+    } catch { return reply(500, { ok: false, message: 'could not write request' }); }
+    const t0 = Date.now();
+    while (Date.now() - t0 < 180000) {
+      await new Promise((r) => setTimeout(r, 500));
+      try {
+        const out = JSON.parse(fs.readFileSync(RECONNECT_RESULT, 'utf8'));
+        if (out.id === id) return reply(200, out);
+      } catch { /* not written yet */ }
+      // still unclaimed after 5s: no gateway is polling
+      if (Date.now() - t0 > 5000 && fs.existsSync(RECONNECT_REQUEST)) {
+        try { fs.unlinkSync(RECONNECT_REQUEST); } catch { /* claimed meanwhile */ }
+        return reply(200, { ok: false, message: 'no gateway is running to handle the request' });
+      }
+    }
+    return reply(200, { ok: false, message: 'timed out waiting for the gateway' });
   }
   if (url.pathname === '/health') { // gateway health, published by each gateway as health events
     const now = Date.now() / 1000;

@@ -70,6 +70,13 @@ async def ensure(services: list[str], timeout: int = 300) -> None:
         await _compose("up", "-d", "--wait", *services, timeout=timeout)
 
 
+async def recreate(services: list[str], timeout: int = 300) -> None:
+    """Force-recreate backends (a no-op for none) so the next connection starts from a clean container."""
+    if services:
+        async with _lock:
+            await _compose("up", "-d", "--wait", "--force-recreate", *services, timeout=timeout)
+
+
 def stop_all_sync() -> None:
     """Stop every running container of the ts-mcp project (backends and stdio wrappers). Safe to call twice."""
     docker = shutil.which("docker") or "docker"

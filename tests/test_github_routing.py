@@ -16,13 +16,13 @@ class GithubRouting(unittest.TestCase):
     def test_github_ops_routes_to_read_role_with_github_profile(self):
         role = resolve_role("github-ops", self.cfg)
         self.assertEqual(role["role"], "github-read")
-        self.assertEqual(role["profile"], "github")
+        self.assertEqual(role["profile"], ["github"])
         self.assertIn("list_pull_requests", role["tools"])
 
     def test_github_actions_ops_routes_to_actions_role(self):
         role = resolve_role("github-actions-ops", self.cfg)
         self.assertEqual(role["role"], "github-actions-read")
-        self.assertEqual(role["profile"], "github")
+        self.assertEqual(role["profile"], ["github"])
         self.assertIn("actions_list", role["tools"])
 
     def test_github_roles_never_allow_write_tools(self):

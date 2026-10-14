@@ -1,0 +1,402 @@
+Target:         ollama (default LLM URL)
+Model override: hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M
+Output dir:     C:\Users\vaibh\Downloads\Projects\tokenfrugal\bench\hf.co_bartowski_Mistral-NeMo-Minitron-8B-Instruct-GGUF_Q4_K_M
+Tag:            hf.co_bartowski_Mistral-NeMo-Minitron-8B-Instruct-GGUF_Q4_K_M
+== realworld
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 124.2197ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.5745321s
+> Images pulled in 28.7042ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 1.0476ms
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 1.8852191s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+C:\Users\vaibh\Downloads\Projects\tokenfrugal\gateway\mcp_client.py:29: FastMCPDeprecationWarning: Accessing `Tool.inputSchema` is deprecated; MCP SDK v2 renamed this field to `input_schema`. Update your code to read `.input_schema` instead.
+  if s in self._native and "project" in ((getattr(t, "inputSchema", None) or getattr(t, "input_schema", None) or {}).get("properties") or {}):
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/write_function #1 185.3s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 102.7875ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.7116412s
+> Images pulled in 28.3701ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 512.4µs
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 1.9960916s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/write_function #2 185.2s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 104.0648ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.5760491s
+> Images pulled in 29.9584ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 529.6µs
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 1.8772792s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/fix_bug #1 185.2s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 117.7458ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.5804044s
+> Images pulled in 31.7787ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 509.6µs
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 2.0248709s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/fix_bug #2 185.2s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 91.5294ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.5259193s
+> Images pulled in 27.8378ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 527.5µs
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 1.8002838s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Client disconnected mcp@0.1.0, releasing containers
+  realworld/write_tests #1 185.2s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 100.0999ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.6983005s
+> Images pulled in 25.3302ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 0s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 1.9804464s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Client disconnected mcp@0.1.0, releasing containers
+  realworld/write_tests #2 185.2s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 109.7107ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.7917242s
+> Images pulled in 29.056ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 530.8µs
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 2.0915108s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/rename_across_files #1 185.2s ran=False verified=False FAILED (builder/hf.co/bartowski/Mistral-NeMo-Minitron-8B-Instruct-GGUF:Q4_K_M): APITimeoutError: Request timed
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 102.4718ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.5640971s
+> Images pulled in 28.9755ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  > Can't start ts-fs-rw: validate volume for ts-fs-rw: unsafe docker volume "C:/Users/vaibh/Downloads/Projects:/workspace:rw": host path bind mounts must be read-only unless the exact host path is allowed for writable binds. To allow this writable host path, run with MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS=C:/Users/vaibh/Downloads/Projects
+> 0 tools listed in 528.2µs
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 1.852302s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }

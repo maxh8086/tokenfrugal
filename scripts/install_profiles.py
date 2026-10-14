@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def ensure_images() -> None:
     """Build helper images that no compose service owns (penpot-mcp is built by compose)."""
-    img = "tokenfrugal/chrome-devtools-mcp:1"
+    img = "maxh8086/chrome-devtools-mcp:1"
     if subprocess.run(["docker", "image", "inspect", img], capture_output=True).returncode:
         print("building", img)
         subprocess.run(["docker", "build", "-t", img, str(ROOT / "docker" / "chrome-devtools-mcp")], check=True)
