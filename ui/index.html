@@ -110,15 +110,50 @@
   .saved .scope { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
   .saved .row { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; } .saved .row b { display: inline; font-size: 13px; color: var(--text, inherit); }
   .saved button { margin-top: 8px; background: none; border: 1px solid var(--line); color: var(--blue); border-radius: 99px; padding: 3px 14px; cursor: pointer; font: inherit; font-size: 12px; }
-  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: inherit; padding: 16px 20px; width: min(720px, 94vw); max-height: 86vh; overflow: auto; }
-  dialog::backdrop { background: rgba(0,0,0,.45); } dialog h2 { margin: 0 0 4px; } dialog h3 { margin: 16px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  dialog table { width: 100%; border-collapse: collapse; font-size: 13px; } dialog th, dialog td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); } dialog td.n, dialog th.n { text-align: right; font-variant-numeric: tabular-nums; }
-  dialog .note { color: var(--muted); font-size: 12px; margin: 2px 0 0; } dialog .x { float: right; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 0 0 16px; }
+  .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 8px 14px; margin-bottom: -1px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--run); border-bottom-color: var(--run); }
+  [hidden] { display: none !important; }
+  #usage { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: inherit; padding: 16px 20px; overflow-x: auto; }
+  #usage h2 { margin: 0 0 4px; } #usage h3 { margin: 16px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  #usage table { width: 100%; border-collapse: collapse; font-size: 13px; } #usage th, #usage td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); } #usage td.n, #usage th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  #usage .note { color: var(--muted); font-size: 12px; margin: 2px 0 0; }
   .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+  #tab-configuration h3 { margin: 18px 0 6px; font-size: 14px; }
+  #tab-configuration .note { color: var(--muted); font-size: 12px; margin: 2px 0 8px; }
+  .cfg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+  .cfg-field { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  .cfg-field input, .cfg-role select, .cfg-role input[type=checkbox] { font: inherit; }
+  .cfg-field input, .cfg-role select { padding: 6px 8px; border: 1px solid var(--line, #ccc); border-radius: 6px; background: var(--card, #fff); color: inherit; }
+  .cfg-role { border: 1px solid var(--line, #ccc); border-radius: 8px; margin-bottom: 10px; }
+  .cfg-role > summary { cursor: pointer; padding: 10px 12px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+  .cfg-role-body { padding: 0 12px 12px; display: grid; gap: 10px; }
+  .cfg-role-body .cfg-field { max-width: 360px; }
+  .cfg-mcp-box > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 4px 0; }
+  .cfg-mcp-list { display: grid; gap: 4px; margin-top: 6px; }
+  .cfg-mcp-row { border: 1px solid var(--line, #ccc); border-radius: 6px; padding: 6px 10px; }
+  .cfg-mcp-row > summary { cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .cfg-mcp-row small { display: block; margin: 4px 0 0 24px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+  .cfg-mode { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 2px 24px; font-size: 13px; }
+  .cfg-mode label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+  .cfg-tool-list { display: grid; gap: 6px; margin: 8px 0 2px 24px; }
+  .cfg-tool { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; }
+  .cfg-tool-name { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+  .cfg-tool .cfg-mode { margin: 0; }
+  .cfg-note { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+  .cfg-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .cfg-actions button { padding: 6px 14px; }
+  @media (max-width: 600px) { .cfg-grid, .cfg-mcps { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <main>
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="dashboard" aria-selected="true" onclick="showTab('dashboard')">Dashboard</button>
+    <button type="button" role="tab" data-tab="configuration" aria-selected="false" onclick="showTab('configuration')">Configuration</button>
+    <button type="button" role="tab" data-tab="usage" aria-selected="false" onclick="showTab('usage')">Usage</button>
+  </nav>
+  <section id="tab-dashboard">
   <div class="brand">
     <h1 id="title"></h1>
   </div>
@@ -129,7 +164,25 @@
   <div class="grid" id="bar"></div>
   <div id="tasks"></div>
   <div id="saved" class="saved"></div>
-  <dialog id="usage"></dialog>
+  </section>
+  <section id="tab-configuration" hidden>
+    <h2>Configuration</h2>
+    <p class="note">Saved to <code>gateway/config_overrides.json</code>. The gateway reads it at start, so restart it to apply. Blank fields use the value from <code>.env</code>.</p>
+    <h3>Global settings</h3>
+    <div class="cfg-grid" id="cfg-global"></div>
+    <h3>Roles: model and MCPs</h3>
+    <p class="note">Each role runs one model with the MCPs ticked below. If no MCP is ticked, the role uses its default toolkit.</p>
+    <p class="cfg-note">Expand an agent to change its model and MCP servers. Expand an MCP server to see its tools and set each one to Auto, Ask or Disable. The checkbox sets which MCP servers the agent may use. The Auto / Ask / Disable settings are saved, but the gateway does not enforce them yet.</p>
+    <div id="cfg-roles"></div>
+    <div class="cfg-actions">
+      <button type="button" id="cfg-save" onclick="saveConfig()">Save</button>
+      <button type="button" onclick="buildConfig()">Reload from file</button>
+      <span id="cfg-status" class="meta"></span>
+    </div>
+  </section>
+  <section id="tab-usage" hidden>
+    <div id="usage"></div>
+  </section>
 </main>
 <script>
 const BOT = `<svg class="bot" viewBox="0 0 72 84" aria-hidden="true">
@@ -269,7 +322,18 @@ function renderChrome() {
 let usage = null;
 const ago = (ts) => new Date(ts * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 const num = (n) => Number(n || 0).toLocaleString();
-async function loadUsage() { usage = await (await fetch('/api/usage')).json(); renderSaved(); if ($('usage').open) renderUsage(); }
+let activeTab = 'dashboard';
+function showTab(name) {
+  activeTab = name;
+  for (const n of ['dashboard', 'configuration', 'usage']) {
+    $('tab-' + n).hidden = n !== name;
+    const b = document.querySelector(`.tabs button[data-tab="${n}"]`);
+    b.setAttribute('aria-selected', String(n === name)); b.classList.toggle('active', n === name);
+  }
+  if (name === 'usage') renderUsage();
+  if (name === 'configuration') buildConfig();
+}
+async function loadUsage() { usage = await (await fetch('/api/usage')).json(); renderSaved(); if (activeTab === 'usage') renderUsage(); }
 function renderSaved() {
   const u = T('usage').window ? usage : null, tot = u ? u.totals : {}; // strings arrive via roles.json on the next gateway start
   const n = u ? tot.window.saved : [...tasks.values()].reduce((a, t) => a + (t.saved || 0), 0);
@@ -277,7 +341,7 @@ function renderSaved() {
   if (u) {
     const row = el('div', 'row');
     for (const k of ['today', 'week', 'month']) { const sp = el('span', '', T('usage')[k] + ' '); sp.append(el('b', '', num(tot[k].saved))); row.append(sp); }
-    const btn = el('button', '', T('usage').details); btn.onclick = () => { renderUsage(); $('usage').showModal(); };
+    const btn = el('button', '', T('usage').details); btn.onclick = () => showTab('usage');
     kids.push(row, btn);
   }
   $('saved').replaceChildren(...kids);
@@ -291,9 +355,8 @@ function table(cols, rows) {
 }
 function renderUsage() {
   const u = usage, X = T('usage'); if (!u) return;
-  const close = el('button', 'x', X.close); close.onclick = () => $('usage').close();
   const day = (ts) => new Date(ts * 1000).toLocaleDateString();
-  $('usage').replaceChildren(close, el('h2', '', X.title),
+  $('usage').replaceChildren(el('h2', '', X.title),
     el('p', 'note', fill(X.period, { a: day(u.periodStart), b: day(u.periodEnd) }) + '. ' + X.scope_note),
     el('h3', '', X.sessions),
     table([[X.session], [X.started], [X.last], [X.tasks, 1], [X.saved, 1], [X.local_models]],
@@ -316,6 +379,146 @@ function renderUsage() {
       table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1], [X.e2e, 1], [X.tps, 1]],
         u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total), r.e2e ? r.e2e.toFixed(1) + 's' : '-', r.tps ? r.tps.toFixed(1) : '-']))] : []));
 }
+const CFG_GLOBAL = [
+  ['workspace', 'CC_WORKSPACE', 'Local repo base path', 'text'],
+  ['bind_writable', 'MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS', 'Docker writable bind paths', 'text'],
+  ['bind_readonly', 'MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS', 'Docker read-only bind paths', 'text'],
+  ['llm_url', 'OPENAI_BASE_URL', 'Ollama / OpenAI endpoint', 'text'],
+  ['temperature', 'LOCAL_LLM_TEMPERATURE', 'Temperature (0 to 2)', 'number'],
+  ['max_tokens', 'LOCAL_LLM_MAX_TOKENS', 'Max tokens (1 to 131072)', 'number'],
+];
+const cfgGlobalInputs = {};
+const CFG_MCP_MODES = ['allow', 'ask', 'disable'];
+const CFG_MODE_LABEL = { allow: 'Auto', ask: 'Ask', disable: 'Disable' };
+let cfgRoleInputs = [];
+let cfgBuilt = false; // true once the role list was built from loaded roles
+const cfgStatus = (msg) => { $('cfg-status').textContent = msg; };
+
+async function buildConfig() {
+  let saved = {};
+  try { saved = await (await fetch('/api/config')).json(); } catch { cfgStatus('Could not read /api/config'); }
+  const global = $('cfg-global');
+  global.replaceChildren();
+  for (const [key, envName, label, type] of CFG_GLOBAL) {
+    const input = el('input');
+    input.type = type; if (type === 'number') input.step = 'any';
+    input.value = saved[key] != null ? String(saved[key]) : '';
+    input.placeholder = 'from ' + envName + ' in .env';
+    input.title = envName;
+    cfgGlobalInputs[key] = input;
+    global.append(el('label', 'cfg-field', label)); global.lastChild.append(input);
+  }
+  const models = (state.services && state.services.ollama && state.services.ollama.models) || [];
+  const catalog = state.mcp_catalog || {};
+  const savedToolModes = saved.role_tool_modes || {};
+  const rolesBox = $('cfg-roles');
+  rolesBox.replaceChildren();
+  cfgRoleInputs = [];
+  for (const r of roles) {
+    // One collapsible card per agent role, titled with its name
+    const card = el('details', 'cfg-role');
+    const title = el('summary', '');
+    title.append(el('span', '', r.role), el('span', 'meta', 'running: ' + r.model));
+    card.append(title);
+    const body = el('div', 'cfg-role-body');
+    const sel = el('select');
+    const pick = (saved.role_models || {})[r.role] || '';
+    sel.append(new Option('default (personas.yaml)', ''));
+    const names = [...new Set([...models, ...(pick ? [pick] : [])])];
+    for (const m of names) sel.append(new Option(m, m));
+    sel.value = pick;
+    body.append(el('label', 'cfg-field', 'Model'));
+    body.lastChild.append(sel);
+    // Collapsible MCP list, one checkbox per MCP name
+    const savedMcps = (saved.role_mcps || {})[r.role] || [];
+    const checked = new Set(savedMcps.length ? savedMcps : (r.mcps || []));
+    const mcpBox = el('details', 'cfg-mcp-box');
+    const mcpSum = el('summary', '');
+    const list = el('div', 'cfg-mcp-list');
+    const boxes = [];
+    const refresh = () => {
+      const n = boxes.filter((b) => b.box.checked).length;
+      mcpSum.textContent = 'MCP servers (' + n + ' of ' + boxes.length + ' selected)';
+    };
+    for (const [name, m] of Object.entries(catalog)) {
+      // One blade per MCP: checkbox in the summary, tools inside the blade
+      const row = el('details', 'cfg-mcp-row');
+      const rowSum = el('summary', '');
+      const box = el('input'); box.type = 'checkbox'; box.checked = checked.has(name);
+      box.addEventListener('click', (e) => e.stopPropagation()); // toggle the box without expanding the row
+      box.addEventListener('change', refresh);
+      rowSum.append(box, el('span', '', name));
+      row.append(rowSum);
+      // Each tool gets Auto / Ask / Disable, default Auto
+      const toolList = el('div', 'cfg-tool-list');
+      const savedTools = (savedToolModes[r.role] || {})[name] || {};
+      const tools = [];
+      for (const tool of (m.tools || [])) {
+        const line = el('div', 'cfg-tool');
+        line.append(el('span', 'cfg-tool-name', tool));
+        const modeBox = el('div', 'cfg-mode');
+        const current = savedTools[tool] || 'allow';
+        const modeInputs = {};
+        for (const mode of CFG_MCP_MODES) {
+          const radio = el('input'); radio.type = 'radio'; radio.name = 'tool-' + r.role + '-' + name + '-' + tool;
+          radio.value = mode; radio.checked = mode === current;
+          modeInputs[mode] = radio;
+          const lab = el('label', '', CFG_MODE_LABEL[mode]); lab.prepend(radio);
+          modeBox.append(lab);
+        }
+        line.append(modeBox);
+        toolList.append(line);
+        tools.push({ tool, modeInputs });
+      }
+      if (!tools.length) toolList.append(el('p', 'cfg-note', 'This MCP lists no tools.'));
+      row.append(toolList);
+      list.append(row);
+      boxes.push({ name, box, tools });
+    }
+    refresh();
+    mcpBox.append(mcpSum, list);
+    body.append(mcpBox);
+    card.append(body);
+    rolesBox.append(card);
+    cfgRoleInputs.push({ role: r.role, sel, boxes });
+  }
+  if (!roles.length) rolesBox.append(el('p', 'empty', 'No roles loaded yet. Reload once the gateway has started.'));
+  cfgBuilt = roles.length > 0;
+  cfgStatus('');
+}
+
+async function saveConfig() {
+  const body = {};
+  for (const [key] of CFG_GLOBAL) body[key] = cfgGlobalInputs[key].value.trim();
+  body.role_models = {};
+  body.role_mcps = {};
+  body.role_tool_modes = {};
+  for (const r of cfgRoleInputs) {
+    body.role_models[r.role] = r.sel.value;
+    body.role_mcps[r.role] = r.boxes.filter((b) => b.box.checked).map((b) => b.name);
+    body.role_tool_modes[r.role] = {};
+    for (const b of r.boxes) {
+      for (const t of b.tools) {
+        const mode = CFG_MCP_MODES.find((k) => t.modeInputs[k].checked);
+        if (!mode || mode === 'allow') continue; // Auto is the default, so only Ask and Disable are stored
+        if (!body.role_tool_modes[r.role][b.name]) body.role_tool_modes[r.role][b.name] = {};
+        body.role_tool_modes[r.role][b.name][t.tool] = mode;
+      }
+    }
+  }
+  const btn = $('cfg-save');
+  btn.disabled = true; cfgStatus('Saving...');
+  try {
+    const res = await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) { cfgStatus('Save failed (' + res.status + '): ' + (await res.text())); return; }
+    cfgStatus('Saved. Restart the gateway to apply.');
+  } catch (e) {
+    cfgStatus('Save failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function render() { renderChrome(); renderTasks(); renderSaved(); }
 
 async function load() {
@@ -323,6 +526,8 @@ async function load() {
   state = s; roles = s.roles || [];
   tasks.clear(); for (const t of s.tasks) tasks.set(t.id, t);
   render();
+  // Configuration may have been opened before roles arrived; build it once they are here
+  if (activeTab === 'configuration' && !cfgBuilt) buildConfig();
 }
 
 function connect() {
@@ -332,6 +537,7 @@ function connect() {
   es.onerror = () => { $('conn').className = ''; $('conn').textContent = word('conn', 'reconnecting'); };
 }
 
+showTab('dashboard');
 load().catch(() => {});
 loadUsage().catch(() => {});
 connect();

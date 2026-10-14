@@ -23,7 +23,7 @@ _ENV_AT_START = dict(os.environ)  # snapshot before the default below, so the ru
 os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep one bad run from stalling the matrix
 
 from gateway import loop, server  # noqa: E402
-from scripts import bench_env, bench_real  # noqa: E402
+from scripts import bench_csv, bench_env, bench_real  # noqa: E402
 from gateway.config import OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
@@ -312,6 +312,7 @@ async def main():
     data["hardware_samples"] = sampler.samples
     (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     (OUT / f"{stamp}-{a.tag}.md").write_text(markdown(data), encoding="utf-8")
+    bench_csv.write(data, OUT / f"{stamp}-{a.tag}-realworld.csv")
     print("wrote", OUT / f"{stamp}-{a.tag}.md")
 
 

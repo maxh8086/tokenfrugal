@@ -6,6 +6,7 @@ import shutil
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from . import secrets_store
 from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
@@ -54,7 +55,9 @@ async def open_role(profile: str | list[str] | None, native: list[str] | None = 
 @contextlib.asynccontextmanager
 async def open_native(name: str):
     cfg = NATIVE_SERVERS[name]
-    params = StdioServerParameters(command=cfg["command"], args=cfg["args"], env=dict(os.environ))
+    # "keyring:NAME" values in the server's env block are read from the OS secret store, never from a file
+    extra = secrets_store.resolve_env(cfg.get("env") or {})
+    params = StdioServerParameters(command=cfg["command"], args=cfg["args"], env={**os.environ, **extra})
     async with stdio_client(params) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()
