@@ -20,6 +20,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -52,6 +53,13 @@ def run_cmd(cmd):
         return 1, str(e)
 
 
+def mount_ok(shown: str, workspace: str) -> bool:
+    """True when every `docker mcp profile show` mount line points at `workspace` (slash/case-insensitive)."""
+    norm = lambda t: t.replace("\\", "/").lower().rstrip("/")  # noqa: E731
+    want = norm(workspace) + ":/workspace"
+    return want in norm(shown).replace(" ", "")
+
+
 def preflight(endpoint, key, models):
     """Every check prints PASS/FAIL with the fix; one FAIL stops the run before any model call."""
     bad = []
@@ -68,6 +76,13 @@ def preflight(endpoint, key, models):
     have = {p for p in PROFILES if p in out}
     check(f"docker mcp profiles ({len(have)}/{len(PROFILES)})", rc == 0 and have == set(PROFILES),
           "python scripts/install_profiles.py")
+    # bench cases address files as /workspace/<project>/..., so the profiles must mount the parent folder
+    from router.profile_sync import ensure_profiles
+    ws = ROOT.parent.as_posix()
+    ensure_profiles(ws)
+    shown = {p: run_cmd(["docker", "mcp", "profile", "show", p])[1] for p in PROFILES}
+    wrong = [p for p, t in shown.items() if ":/workspace" in t.replace("\\", "/") and not mount_ok(t, ws)]
+    check(f"profile mounts -> {ws}:/workspace", not wrong, f"python scripts/install_profiles.py --workspace {ws} (bad: {', '.join(wrong)})")
     try:
         socket.create_connection(("127.0.0.1", 7697), 3).close()
         up = True
@@ -98,7 +113,7 @@ else:
     raw = HERE.parent / "results" / "raw"
     raw.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "PYTHONPATH": str(ROOT), "PYTHONIOENCODING": "utf-8", "BENCH_OUT_DIR": str(raw),
-           "TOKENFRUGAL_MODEL_BUILDER": a.builder, "TOKENFRUGAL_MODEL_THINKER": thinker}
+           "CC_WORKSPACE": ROOT.parent.as_posix(), "TOKENFRUGAL_MODEL_BUILDER": a.builder, "TOKENFRUGAL_MODEL_THINKER": thinker}
     if a.endpoint:
         env["TOKENFRUGAL_LLM_URL"] = a.endpoint
     if a.api_key_env:

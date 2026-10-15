@@ -25,7 +25,7 @@ def hard_trim(text: str, limit: int = SUMMARY_MAX_TOKENS) -> str:
 
 
 def summarize(model: str, text: str, task: str) -> str:
-    if SUMMARY_MIN_TOKENS <= tokens(text) <= SUMMARY_MAX_TOKENS:
+    if tokens(text) <= SUMMARY_MAX_TOKENS:  # short answers are already the summary; a model pass only corrupts them
         return text
     for _ in range(2):
         kw = {"model": model, "max_tokens": SUMMARY_MAX_TOKENS,

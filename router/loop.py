@@ -331,7 +331,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     else:
                         res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
                         out = result_text(res)
-                        if getattr(res, "isError", False) or out.startswith(("Input validation error", "Error:")):
+                        if (hasattr(res, "is_error") and res.is_error) or (not hasattr(res, "is_error") and getattr(res, "isError", False)) or out.startswith(("Input validation error", "Error:")):
                             out = f"tool error: {out}"
                         else:
                             ok_calls += 1
