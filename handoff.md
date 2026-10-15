@@ -1,22 +1,20 @@
-# Handoff: tokenfrugal
+﻿# Handoff: tokenfrugal
 
 Last updated: 2026-10-12
 
 This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS chip and client names. Part B covers the PRISM Bonsai / Ternary-Bonsai benchmark and the Ollama 16k roster. Only this file is tracked in git. The worktree copy `prism-handoff.md` stays untracked and is superseded by Part B.
 
 ---
-## Current plan: Haiku tool-call verification
+## Haiku tool-call verification: DONE (2026-10-15)
 
-Goal: any Haiku version can call every TokenFrugal router tool and every Docker-gateway-backed role tool. Executor is Haiku (claude-haiku-5-5); Sonnet drafts this plan and the tests. Commit after each step, no trailers. Python: `.venv/Scripts/python.exe`.
+Haiku (claude-haiku-5-5) calls all 9 router tools and all 83 role tools behind the Docker gateway (`tests/test_haiku_toolcalls.py --roles`: 83 pass, 0 fail). Offline suite: 183 tests OK. Live smoke: all roles pass; security is occasionally flaky because the 3B model writes a tool call as text (rerun passes).
 
-- [x] (a) smoke.py sys.path bootstrap and `--list` (done in commit below). Accept: runs from any cwd without PYTHONPATH. Test: `.venv/Scripts/python.exe -m unittest tests.test_smoke_path -v` (remove `@expectedFailure` when green).
-- [ ] (c) Fix docs/security "you wrote a tool call as text". Accept: both roles pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py docs security`.
-- [ ] (d) Fix builder/debugger/data/browser answers missing the expected token. Accept: all four pass smoke. Test: `.venv/Scripts/python.exe scripts/smoke.py builder debugger data browser`.
-- [ ] (e) Haiku fallback wrapper path in the router, only if (b) shows Haiku cannot call tools directly (alternative without API key: `claude -p --model haiku`). Accept: `tests/test_haiku_toolcalls.py --roles` exits 0 through the wrapper.
-- [ ] (f) Final verification and handoff cleanup. Test: `.venv/Scripts/python.exe -m unittest discover -s tests -t . -q` and `tests/test_haiku_toolcalls.py --roles`; delete completed steps here.
+Gotchas:
+- A shell-level `CC_WORKSPACE` overrides `.env`; unset it or it hides the writable fs tools. `.env` must equal the installed profile's mount path.
+- `ANTHROPIC_API_KEY` must be in the process env; in Git Bash export it from the user env var.
+- Do not run docker-backed tests concurrently: the last router to exit stops every `ts-mcp` container.
 
 ---
-
 
 ## Part A: text-tool fix, dashboard STATUS chip, client names
 
@@ -146,7 +144,7 @@ Recorded before the session break.
 2. **Consolidated benchmark file.** `bench/Readme.md` as the GitHub landing page, plus `bench/results.json` (schema_version 1) as the data source, with present results, Mermaid/SVG visuals, conclusions, and a "how to add a benchmark" section. Opus is the review model, but its weekly limit resets 2026-10-14 01:30 Asia/Kolkata. Its last attempt produced nothing usable, so do not trust any partial output from it. Renderer code goes to tokenfrugal per CLAUDE.md.
 3. **Ollama roster, 16k only**, about 40 models, unattended, multi-hour. Approved by the user. Done 2026-10-12 (see B6).
 4. **Context sweep** (16k/32k/48k/64k) on the surviving candidates after the roster. The user said "limit to 16k if it's enough". Keep 16k unless a result requires more context.
-5. **8–12B pulls.** Approved, but the exact tag list is not confirmed yet. Confirm the list before pulling. The three GGUF pulls in B6 were the approved set.
+5. **8â€“12B pulls.** Approved, but the exact tag list is not confirmed yet. Confirm the list before pulling. The three GGUF pulls in B6 were the approved set.
 6. **ts-mcp placement of `prism-llama`.** Inline the service into the base `docker-compose.yml`, or keep the override file and document it. Open. The only copy of the service definition is `.claude/worktrees/gateway-server-setup-84525b/docker/prism-llama/compose.yml` (image `maxh8086/prism-llama:e8fd209`, profile `bench`, port `127.0.0.1:8282`). Copy it out before that worktree folder is deleted.
 7. **crawl4ai.** Keep crawl4ai. No Playwright switch. See B6 "Checked".
 8. **Bonsai-8B Q1 thinker 4096 row** is suspect (p50 4.7 s at 109 tok/s, early EOS). Re-run that row before quoting it.
@@ -157,7 +155,7 @@ Paste this into a new Claude Code session opened in `C:\Users\vaibh\Downloads\Pr
 
 > Read `handoff.md` at the repo root `C:\Users\vaibh\Downloads\Projects\tokenfrugal\handoff.md`, Part B, sections B6 to B7. Work in the base checkout `C:\Users\vaibh\Downloads\Projects\tokenfrugal` for changes to base files.
 > Steps, in order:
-> 1. Stop the stuck Minitron bench (B6 open items) before anything else. Then confirm the 8–12B pulls before pulling anything else.
+> 1. Stop the stuck Minitron bench (B6 open items) before anything else. Then confirm the 8â€“12B pulls before pulling anything else.
 > 2. Opus review of the consolidation: see B9. The gate has passed.
 > Never sign out or change credentials in the browser pane.
 
@@ -296,3 +294,4 @@ Also covers the bind-path and endpoint settings from Part E.
 
 - Implement through tokenfrugal in small tasks. Earlier multi-file builder tasks timed out, so Haiku fallback applies per CLAUDE.md if they fail.
 - Verify after restart: `ts-fs-rw`, `ast-grep`, `ts-fs-ro` mounts.
+
