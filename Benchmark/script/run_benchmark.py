@@ -76,7 +76,8 @@ def preflight(endpoint, key, models):
     check("neo4j plan store 127.0.0.1:7697", up, "scripts/mcp_up.ps1")
     ids = []
     try:
-        rq = urllib.request.Request(endpoint.rstrip("/") + "/models", headers={"Authorization": f"Bearer {key or 'x'}"})
+        rq = urllib.request.Request(endpoint.rstrip("/") + "/models", headers={"Authorization": f"Bearer {key or 'x'}", "x-api-key": key or "x",
+                                                           "anthropic-version": "2023-06-01"})
         ids = [m["id"] for m in json.load(urllib.request.urlopen(rq, timeout=20)).get("data", [])]
         check(f"llm endpoint {endpoint}", True)
     except Exception as e:  # noqa: BLE001
