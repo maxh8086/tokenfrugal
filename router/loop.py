@@ -15,7 +15,11 @@ from .compose import backends
 from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
 
-_client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0)
+_NO_TEMP: set[str] = set()  # models whose endpoint refuses `temperature`
+_LOCAL = any(h in OLLAMA_URL for h in ("localhost", "127.0.0.1", "[::1]", "host.docker.internal"))
+# hosted endpoints rate-limit (429/529): let the SDK back off and honour retry-after; local stays at 0
+_client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0 if _LOCAL else 4)
+DONE: dict[str, dict] = {}  # last taken totals per task id, read by the benchmark
 USAGE: dict[str, dict] = {}  # per task id: model calls and tokens, taken by the router when the task ends
 
 
@@ -31,13 +35,16 @@ def _count(tid: str, r, msgs: list, m, secs: float) -> None:
     a = USAGE.setdefault(tid, {"calls": 0, "input": 0, "output": 0, "secs": 0.0})
     a["calls"] += 1
     a["input"] += int(inp)
+    a["peak"] = max(a.get("peak", 0), int(inp))
     a["output"] += int(out)
     a["secs"] += secs
 
 
 def take_usage(tid: str) -> dict:
     """Totals for one task id; cleared so a resumed run starts its own count."""
-    return USAGE.pop(tid, {"calls": 0, "input": 0, "output": 0, "secs": 0.0})
+    u = USAGE.pop(tid, {"calls": 0, "input": 0, "output": 0, "secs": 0.0, "peak": 0})
+    DONE[tid] = u
+    return u
 SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls per step. "
           "Work only inside the workspace, which is mounted at /workspace: always use absolute paths like /workspace/README.md. Be terse. When done, reply with the final result "
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
@@ -257,10 +264,26 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                                                         "Answer now using only the tool results above."})
             use_tools = bool(tools) and not text_mode and not force_answer
             t0 = time.monotonic()
-            r = await asyncio.to_thread(  # off the event loop so keepalives and other tasks keep running
-                _client.chat.completions.create, model=role["model"], messages=text_view(msgs) if text_mode else msgs,
-                temperature=0.1, max_tokens=2048, tools=(tools or None) if use_tools else None,
-                **({} if used_tools or not use_tools else {"tool_choice": "required"}))
+            kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, "max_tokens": 2048}
+            if use_tools and tools:
+                kw["tools"] = tools
+                if not used_tools:
+                    kw["tool_choice"] = "required"
+            if role["model"] not in _NO_TEMP:
+                kw["temperature"] = 0.1
+            for _attempt in range(3):
+                try:
+                    r = await asyncio.to_thread(_client.chat.completions.create, **kw)  # off the event loop
+                    break
+                except Exception as e:
+                    s = str(e)
+                    if "temperature" in kw and "temperature" in s:
+                        _NO_TEMP.add(role["model"])  # endpoint rejects sampling params for this model
+                        del kw["temperature"]
+                    elif "tool_choice" in kw and "tool_choice" in s:
+                        del kw["tool_choice"]  # model/endpoint cannot force a tool call
+                    else:
+                        raise
             m = r.choices[0].message
             _count(tid, r, msgs, m, time.monotonic() - t0)
             thought = (getattr(m, "reasoning_content", None) or getattr(m, "reasoning", None) or m.content or "").strip()

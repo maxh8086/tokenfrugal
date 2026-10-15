@@ -124,3 +124,25 @@ _Maintained by a cloud reviewer from the CSV; see the prompt in `script/README.m
 - Bigger is not better: bonsai-27b (20/32, 57 s) and qwen3-4b (20/32, 70+ s) match a 3B model at several times the cost.
 - Six models score 0-2/32 because they lack tool calling; do not spend more benchmark time on them.
 - Hardware: all rows are one machine; add rows from other GPUs before generalising.
+
+## Haiku baseline and testing your own model
+
+**Baseline.** Row `haiku-baseline` is Claude Haiku (`claude-haiku-5-5`) as the worker through the Anthropic OpenAI-compatible endpoint. It counts as a baseline only when the script finishes with no error, no manual adjustment and no extra step. It is a cloud reference, not a local one: the hardware column reads `cloud:api.anthropic.com`, and the context window is about 200k tokens against 16k for the local models. Compare scores and the `ctx_peak_tokens` column (largest single prompt, i.e. the window a model needs), not seconds.
+
+**Columns added after the 16 case columns.** `date`, `endpoint`, `temperature` (`omitted` when the model rejects it), `max_tokens`, `builder_model`, `thinker_model`, `git_sha`, `n`, `ctx_peak_tokens`, `tokens_in_per_run`, `tokens_out_per_run`, and one `ctx_<case>` peak per case. Older rows leave them blank, so rows stay comparable over time.
+
+**Forced tool calls.** The loop sends `tool_choice="required"` on the first step. Ollama accepts the field but does not enforce it (a live check returned plain text instead of a tool call), so small local models can still skip tools; the loop's retry handles that. Endpoints that reject the field get it removed and retried.
+
+**Test your own model on your hardware.**
+
+1. `python scripts/doctor.py` and fix anything it reports; `python scripts/install_profiles.py`; start backends with `scripts/mcp_up.ps1` (or `.sh`).
+2. Pull the model: `ollama pull <model>`. Keep Ollama running with a 16384 context.
+3. Run (the script runs its own preflight and stops with a fix command if a backend is down):
+
+```bash
+python Benchmark/script/run_benchmark.py <builder-model> [thinker-model] --tag <name>
+```
+
+4. For a cloud endpoint add `--endpoint <base-url> --api-key-env <ENV_VAR_NAME>`; export the key in your own shell first, it is never printed or stored.
+5. `python Benchmark/script/build_report.py` rebuilds the tables from the CSV.
+6. Optionally have a cloud model review the CSV and update Observations (prompt in `Benchmark/script/README.md`).

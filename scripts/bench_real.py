@@ -1,10 +1,11 @@
 """Real-world benchmark cases: each task is verified by running the produced code or inspecting files,
 not by trusting the model's "done" report. Used by scripts/bench.py (section `realworld`)."""
 import os
+import re
 import subprocess
 import sys
 
-from router import server
+from router import loop, server
 from router.config import ROOT, SYNAPTREE_PROJECT
 
 SCRATCH = ROOT / "bench" / "scratch"
@@ -137,9 +138,13 @@ async def run(n, timed, ok, failure_mode, stats):
             setup()
             dt, r = await timed(server.dispatch_task(agent, task))
             good, note = (False, failure_mode(r)) if not ok(r) else check(r)
-            runs.append({"s": round(dt, 1), "ok": ok(r), "verified": bool(good), "note": str(note)[:140]})
+            m = re.match(r"\[([^\]]+)\]", r)
+            u = loop.DONE.get(m.group(1), {}) if m else {}
+            runs.append({"s": round(dt, 1), "ok": ok(r), "verified": bool(good), "note": str(note)[:140],
+                         "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0)})
             print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s ran={ok(r)} verified={bool(good)} {'' if good else note}"[:200],
                   flush=True)
         res[cid] = {"verified": f"{sum(x['verified'] for x in runs)}/{n}", "ran": f"{sum(x['ok'] for x in runs)}/{n}",
-                    "s": stats([x["s"] for x in runs]), "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3]}
+                    "s": stats([x["s"] for x in runs]), "peak": max(x["peak"] for x in runs),
+                    "input": round(sum(x["input"] for x in runs) / n), "output": round(sum(x["output"] for x in runs) / n), "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3]}
     return res

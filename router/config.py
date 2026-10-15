@@ -144,6 +144,7 @@ def load_personas() -> dict:
         pass
     # Benchmarks pin one model for every persona with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_PERSONA_MODELS=0 disables the mapping.
     disabled = os.getenv("TOKENFRUGAL_PERSONA_MODELS") == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
+    cfg["known_agents"] = sorted(pm)  # slugs stay valid when the model mapping is off
     if disabled:
         pm = {}
     cfg["persona_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
@@ -192,7 +193,7 @@ def resolve_role(agent: str, cfg: dict) -> dict:
 
 def check_agent(slug: str, cfg: dict) -> str:
     """Return '' when slug is a known agent, else a short error."""
-    known = set(cfg.get("overrides") or {}) | set(cfg.get("persona_models") or {}) | set(cfg.get("persona_skills") or {})
+    known = set(cfg.get("overrides") or {}) | set(cfg.get("persona_models") or {}) | set(cfg.get("known_agents") or []) | set(cfg.get("persona_skills") or {})
     for slugs in (cfg.get("members") or {}).values():
         known |= set(slugs)
     if slug in known:

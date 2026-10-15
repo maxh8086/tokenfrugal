@@ -24,7 +24,7 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
-from router.config import OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 SECTION_TIMEOUT = float(os.getenv("BENCH_SECTION_TIMEOUT", "3600"))  # seconds; one section with no result for 1 h is skipped
@@ -118,7 +118,7 @@ async def bench_context(n, sizes=(2000, 4000, 8000, 12000, 16000, 24000, 32000))
 def bench_output(n, lengths=(128, 512, 1024, 2048, 4096)):
     """Direct completions per model: tokens/s and whether the length cap is honoured."""
     from openai import OpenAI
-    c = OpenAI(base_url=OLLAMA_URL, api_key="x", timeout=180, max_retries=0)
+    c = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=180, max_retries=0)
     cfg = load_personas()["models"]
     res = {}
     for name, model in cfg.items():
@@ -308,6 +308,10 @@ async def main():
         data["hardware_samples"] = sampler.samples
         (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     sampler.stop()
+    data["meta"] = {"endpoint": OLLAMA_URL, "temperature": 0.1, "temperature_omitted": sorted(loop._NO_TEMP),
+                    "max_tokens": 2048, "builder": os.getenv("TOKENFRUGAL_MODEL_BUILDER", ""),
+                    "thinker": os.getenv("TOKENFRUGAL_MODEL_THINKER", ""),
+                    "git_sha": sh(["git", "rev-parse", "--short", "HEAD"]).strip()}
     data["hardware"] = sampler.summary()
     data["hardware_samples"] = sampler.samples
     (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
