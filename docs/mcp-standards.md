@@ -28,8 +28,8 @@ tokenfrugal maps Docker's layers onto three files and one set of scripts:
 | tokenfrugal file | Role | Docker equivalent |
 | --- | --- | --- |
 | `profiles/*.yaml` | Profile definitions (image, volumes, secrets, snapshot) | Profile + catalogue entry |
-| `gateway/mcp_catalog.yaml` | MCP catalogue: label, profile or native server, compose backends, tool names | Catalogue entry |
-| `gateway/personas.yaml` | Roles: model, profile, tool allowlist (6 or fewer for 3B models) | Client-side tool choice |
+| `router/mcp_catalog.yaml` | MCP catalogue: label, profile or native server, compose backends, tool names | Catalogue entry |
+| `router/agents.yaml` | Roles: model, profile, tool allowlist (6 or fewer for 3B models) | Client-side tool choice |
 | `scripts/install_profiles.py` | Imports profiles, fills `__WORKSPACE__` | `docker mcp profile import` |
 
 Key rule: Docker decides what a profile can expose. tokenfrugal decides what a role may call. Both layers must allow a tool before an agent can use it.
@@ -72,8 +72,8 @@ Do not add to `default`, `profile_test` or `claude`. They are for experiments an
 ### Step 5: Secrets
 
 - Docker-managed MCPs: store with `docker mcp secret set NAME` (value on stdin). Reference from the profile with `env:`.
-- tokenfrugal-managed secrets (native servers, LLM key, backend services): store in the OS secret store with `python -m gateway.secrets_store set NAME` (value typed at a hidden prompt). Reference it from config as `keyring:NAME` in a native server's `env` block, or by its known name (`llm-api-key`).
-- `python -m gateway.secrets_store list` shows names only; `get-status NAME` shows set/not set; neither prints a value.
+- tokenfrugal-managed secrets (native servers, LLM key, backend services): store in the OS secret store with `python -m router.secrets_store set NAME` (value typed at a hidden prompt). Reference it from config as `keyring:NAME` in a native server's `env` block, or by its known name (`llm-api-key`).
+- `python -m router.secrets_store list` shows names only; `get-status NAME` shows set/not set; neither prints a value.
 - Backend secrets used by `docker-compose.yml` are `CRAWL4AI_API_TOKEN`, `SEARXNG_SECRET`, `NEO4J_AUTH` (generated on first run by `ensure-generated`) and `SONARQUBE_TOKEN` / `SONARQUBE_ORG` (set by you). `scripts/mcp_up.*` read them with `export-env` and pass them to compose through the process environment. Each compose service receives only its own variables; there is no env file.
 - Never put a secret in a repo file, a catalogue YAML, a task payload, a log or a chat message.
 - Do not add keys to `~/.docker/mcp/mcp.env`. Its keys move to the OS store per section 6; the file is removed after a verified restart.
@@ -91,15 +91,15 @@ Adding an MCP from the dashboard follows the Claude-style import flow: **Add plu
 ### Step 7: Tool allowlists (two layers)
 
 1. **Profile level** (Docker): enable only the tools the role needs with `docker mcp profile tools <profile> --enable <server>.<tool>`. Do not use `--enable-all` for a new server.
-2. **Role level** (tokenfrugal): add the tool names to `gateway/personas.yaml` under the role, at most 6 per role. Do not add a tool at role level that the profile does not enable.
+2. **Role level** (tokenfrugal): add the tool names to `router/agents.yaml` under the role, at most 6 per role. Do not add a tool at role level that the profile does not enable.
 
 Confirm with `docker mcp tools ls` that the tool is exposed, and `docker mcp tools inspect <tool>` for its schema.
 
 ### Step 8: Register in tokenfrugal
 
-- Add an entry to `gateway/mcp_catalog.yaml` with `label`, one of `profile:` or `native:`, `compose:` if it needs backends, and `tools:`.
-- Add the MCP to the relevant role in `personas.yaml`.
-- For a native stdio server (not a Docker image), set `native:` and add the server to `gateway/config.py`. A compose backend goes in `docker-compose.yml` under project `ts-mcp`. Leave other compose projects alone.
+- Add an entry to `router/mcp_catalog.yaml` with `label`, one of `profile:` or `native:`, `compose:` if it needs backends, and `tools:`.
+- Add the MCP to the relevant role in `agents.yaml`.
+- For a native stdio server (not a Docker image), set `native:` and add the server to `router/config.py`. A compose backend goes in `docker-compose.yml` under project `ts-mcp`. Leave other compose projects alone.
 
 ### Step 9: Verify
 
@@ -120,7 +120,7 @@ python scripts/smoke.py
 
 ### Step 10: Remove an MCP
 
-Remove it in reverse order: `personas.yaml` roles, then `mcp_catalog.yaml`, then `docker mcp profile server remove`, then the profile YAML, then `docker mcp secret rm` for keys nothing else uses, then `docker mcp oauth revoke` if it was OAuth.
+Remove it in reverse order: `agents.yaml` roles, then `mcp_catalog.yaml`, then `docker mcp profile server remove`, then the profile YAML, then `docker mcp secret rm` for keys nothing else uses, then `docker mcp oauth revoke` if it was OAuth.
 
 ## 4. Standards that apply to every MCP
 
@@ -137,14 +137,14 @@ Remove it in reverse order: `personas.yaml` roles, then `mcp_catalog.yaml`, then
 
 - `profile_test`, `default` and `claude` profiles hold servers that are not used by any role.
 - `build` mounts the whole `Projects` folder (`C:/Users/vaibh/Downloads/Projects`), not the tokenfrugal repo. This is wider than the standard requires; a narrower root is recommended.
-- The chrome-devtools server is named three ways: catalogue key `chrome-devtools` (`gateway/mcp_catalog.yaml`), instance title `tokenfrugal-chrome-devtools` (`profiles/browser.yaml`), and image `maxh8086/chrome-devtools-mcp:1` (`profiles/browser.yaml`, `docker/pins.yaml`). The `ts-` prefix from section 3 is not applied to it yet.
+- The chrome-devtools server is named three ways: catalogue key `chrome-devtools` (`router/mcp_catalog.yaml`), instance title `tokenfrugal-chrome-devtools` (`profiles/browser.yaml`), and image `maxh8086/chrome-devtools-mcp:1` (`profiles/browser.yaml`, `docker/pins.yaml`). The `ts-` prefix from section 3 is not applied to it yet.
 - Secrets still reference `mcp.env` in `CLAUDE.md`. The OS secret store is the standard for tokenfrugal secrets; update `CLAUDE.md` once the `mcp.env` removal is verified.
 - `mcp.env` still holds the five backend keys until the restart is verified (section 6).
 - `dynamic-tools` is enabled.
 
 ## 6. Decisions pending
 
-1. Move secrets from `~/.docker/mcp/mcp.env` to the OS secret store (`gateway/secrets_store.py`, via `keyring`; Windows Credential Manager here). Implemented: native-server env refs, `llm-api-key`, compose reads backend secrets from the environment, and the launchers use the store. Remaining: remove the five `mcp.env` keys (`CRAWL4AI_API_TOKEN`, `SONARQUBE_TOKEN`, `SONARQUBE_ORG`, `SEARXNG_SECRET`, `NEO4J_AUTH`) and restart the backends, only after explicit user approval. Then update `CLAUDE.md`.
+1. Move secrets from `~/.docker/mcp/mcp.env` to the OS secret store (`router/secrets_store.py`, via `keyring`; Windows Credential Manager here). Implemented: native-server env refs, `llm-api-key`, compose reads backend secrets from the environment, and the launchers use the store. Remaining: remove the five `mcp.env` keys (`CRAWL4AI_API_TOKEN`, `SONARQUBE_TOKEN`, `SONARQUBE_ORG`, `SEARXNG_SECRET`, `NEO4J_AUTH`) and restart the backends, only after explicit user approval. Then update `CLAUDE.md`.
 2. Narrow the `build` workspace mount to the repo.
 3. Disable `dynamic-tools` for the tokenfrugal gateway.
 4. Confirm the exact `profile config --set` key format on a throwaway profile before the dashboard relies on it.

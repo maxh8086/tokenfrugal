@@ -27,9 +27,9 @@ def llm_url() -> str:
 
 
 def required_models() -> list[tuple[str, str]]:
-    """(tag, Modelfile name) for the builder and thinker models named in gateway/personas.yaml."""
+    """(tag, Modelfile name) for the builder and thinker models named in router/agents.yaml."""
     import yaml
-    models = yaml.safe_load((ROOT / "gateway" / "personas.yaml").read_text(encoding="utf-8"))["models"]
+    models = yaml.safe_load((ROOT / "router" / "agents.yaml").read_text(encoding="utf-8"))["models"]
     return [(models["builder"], "builder.Modelfile"), (models["thinker"], "thinker.Modelfile")]
 
 

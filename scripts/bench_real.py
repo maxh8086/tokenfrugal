@@ -1,11 +1,12 @@
 """Real-world benchmark cases: each task is verified by running the produced code or inspecting files,
 not by trusting the model's "done" report. Used by scripts/bench.py (section `realworld`)."""
 import os
+import re
 import subprocess
 import sys
 
-from gateway import server
-from gateway.config import ROOT, SYNAPTREE_PROJECT
+from router import loop, server
+from router.config import ROOT, SYNAPTREE_PROJECT
 
 SCRATCH = ROOT / "bench" / "scratch"
 WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
@@ -94,7 +95,7 @@ def cases():
          f"Rename old_name to new_name in {WS}/a_mod.py and {WS}/b_mod.py (definition, import and call).", c_rename),
         ("find_symbol", "engineering-backend-architect", _none,
          "Use search_graph to find where resolve_role is defined and give its file path.",
-         _has("gateway/config.py", "gateway\\config.py")),
+         _has("router/config.py", "router\\config.py")),
         ("review_sqli", "testing-code-reviewer", s_review,
          f"Review {WS}/db.py for security problems. Name the vulnerability class.",
          _has("sql injection", "sqli", "injection")),
@@ -107,7 +108,7 @@ def cases():
         # one verified case per remaining role: analyzer, data, docs, security, designer, browser, tracker, research
         ("role_analyzer", "engineering-software-architect", _none,
          "Use search_graph to find where resolve_role is defined and give its file path.",
-         _has("gateway/config.py", "gateway\\config.py")),
+         _has("router/config.py", "router\\config.py")),
         ("role_data", "gis-analyst", s_files,
          f"List the files in {WS} with list_directory and name them.", _has("calc.py", "stack.py")),
         ("role_docs", "engineering-technical-writer", s_tests,
@@ -137,9 +138,13 @@ async def run(n, timed, ok, failure_mode, stats):
             setup()
             dt, r = await timed(server.dispatch_task(agent, task))
             good, note = (False, failure_mode(r)) if not ok(r) else check(r)
-            runs.append({"s": round(dt, 1), "ok": ok(r), "verified": bool(good), "note": str(note)[:140]})
+            m = re.match(r"\[([^\]]+)\]", r)
+            u = loop.DONE.get(m.group(1), {}) if m else {}
+            runs.append({"s": round(dt, 1), "ok": ok(r), "verified": bool(good), "note": str(note)[:140],
+                         "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0)})
             print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s ran={ok(r)} verified={bool(good)} {'' if good else note}"[:200],
                   flush=True)
         res[cid] = {"verified": f"{sum(x['verified'] for x in runs)}/{n}", "ran": f"{sum(x['ok'] for x in runs)}/{n}",
-                    "s": stats([x["s"] for x in runs]), "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3]}
+                    "s": stats([x["s"] for x in runs]), "peak": max(x["peak"] for x in runs),
+                    "input": round(sum(x["input"] for x in runs) / n), "output": round(sum(x["output"] for x in runs) / n), "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3]}
     return res

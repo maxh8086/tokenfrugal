@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest import mock
 
-from gateway import ui_launcher
+from router import ui_launcher
 
 
 class UiLauncherTests(unittest.TestCase):

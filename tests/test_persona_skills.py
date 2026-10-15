@@ -1,6 +1,6 @@
 import unittest
 
-from gateway.config import load_personas, resolve_role
+from router.config import load_personas, resolve_role
 
 
 class PersonaSkillsTest(unittest.TestCase):

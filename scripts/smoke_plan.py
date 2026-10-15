@@ -6,7 +6,7 @@ import subprocess
 import sys
 import time
 
-from gateway import plan
+from router import plan
 
 OLD = "1960-01-01T00:00:00+00:00"
 TAG = f"smoke-{int(time.time())}"

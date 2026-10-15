@@ -1,6 +1,6 @@
 import unittest
 
-from gateway.config import check_agent
+from router.config import check_agent
 
 
 class CheckAgentTest(unittest.TestCase):

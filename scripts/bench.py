@@ -1,4 +1,4 @@
-"""Live stress benchmark for the gateway. Results go to bench/<stamp>.json and bench/<stamp>.md.
+"""Live stress benchmark for the router. Results go to bench/<stamp>.json and bench/<stamp>.md.
 
     python -m scripts.bench                   # everything, N=5
     python -m scripts.bench --n 3 --only roles,concurrency
@@ -22,9 +22,9 @@ TASK_TIMEOUT_DEFAULT = "150"
 _ENV_AT_START = dict(os.environ)  # snapshot before the default below, so the run records whether the timeout was set
 os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep one bad run from stalling the matrix
 
-from gateway import loop, server  # noqa: E402
+from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
-from gateway.config import OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 SECTION_TIMEOUT = float(os.getenv("BENCH_SECTION_TIMEOUT", "3600"))  # seconds; one section with no result for 1 h is skipped
@@ -35,15 +35,15 @@ ROLE_TASKS = {
     "builder": ("engineering-backend-architect",
                 "Use search_graph to find the symbol named summarize and report its file path."),
     "analyzer": ("engineering-software-architect", f"Use search_graph to find the symbol named run in project {SYNAPTREE_PROJECT} and say which file defines it."),
-    "reviewer": ("testing-code-reviewer", "Read /workspace/%s/gateway/summarize.py and say in two sentences what it does." % SYNAPTREE_PROJECT),
-    "debugger": ("engineering-sre", "Read /workspace/%s/gateway/summarize.py and name its public functions." % SYNAPTREE_PROJECT),
+    "reviewer": ("testing-code-reviewer", "Read /workspace/%s/router/summarize.py and say in two sentences what it does." % SYNAPTREE_PROJECT),
+    "debugger": ("engineering-sre", "Read /workspace/%s/router/summarize.py and name its public functions." % SYNAPTREE_PROJECT),
     "research": ("support-docs-writer", "Read /workspace/%s/README.md and give a one-sentence description of the project." % SYNAPTREE_PROJECT),
-    "data": ("gis-analyst", "List the files in /workspace/%s/gateway and name three." % SYNAPTREE_PROJECT),
+    "data": ("gis-analyst", "List the files in /workspace/%s/router and name three." % SYNAPTREE_PROJECT),
     "tracker": ("project-management-project-shepherd", "Report the plan status."),
-    "security": ("security-auditor", "Read /workspace/%s/gateway/config.py and list any hard-coded secrets (say none if none)." % SYNAPTREE_PROJECT),
+    "security": ("security-auditor", "Read /workspace/%s/router/config.py and list any hard-coded secrets (say none if none)." % SYNAPTREE_PROJECT),
     "designer": ("design-ui-designer", "Say what design tools you have."),
     "browser": ("testing-evidence-collector", "Say what browser tools you have."),
-    "docs": ("engineering-technical-writer", "Read /workspace/%s/gateway/summarize.py and say in one sentence what it does." % SYNAPTREE_PROJECT),
+    "docs": ("engineering-technical-writer", "Read /workspace/%s/router/summarize.py and say in one sentence what it does." % SYNAPTREE_PROJECT),
 }
 
 
@@ -118,7 +118,7 @@ async def bench_context(n, sizes=(2000, 4000, 8000, 12000, 16000, 24000, 32000))
 def bench_output(n, lengths=(128, 512, 1024, 2048, 4096)):
     """Direct completions per model: tokens/s and whether the length cap is honoured."""
     from openai import OpenAI
-    c = OpenAI(base_url=OLLAMA_URL, api_key="x", timeout=180, max_retries=0)
+    c = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=180, max_retries=0)
     cfg = load_personas()["models"]
     res = {}
     for name, model in cfg.items():
@@ -163,7 +163,7 @@ async def bench_concurrency(n, levels=(1, 2, 4, 8)):
 
 async def bench_resume(n, rounds=5):
     """Force a failure with a tiny task limit, then resume repeatedly and watch conversation growth and time."""
-    from gateway import store
+    from router import store
     old = loop.TASK_TIMEOUT
     loop.TASK_TIMEOUT = 2.0
     try:
@@ -308,6 +308,10 @@ async def main():
         data["hardware_samples"] = sampler.samples
         (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     sampler.stop()
+    data["meta"] = {"endpoint": OLLAMA_URL, "temperature": 0.1, "temperature_omitted": sorted(loop._NO_TEMP),
+                    "max_tokens": 2048, "builder": os.getenv("TOKENFRUGAL_MODEL_BUILDER", ""),
+                    "thinker": os.getenv("TOKENFRUGAL_MODEL_THINKER", ""),
+                    "git_sha": sh(["git", "rev-parse", "--short", "HEAD"]).strip()}
     data["hardware"] = sampler.summary()
     data["hardware_samples"] = sampler.samples
     (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")

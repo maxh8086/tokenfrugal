@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from gateway import compose, plan
+from router import compose, plan
 
 
 class PlanTest(unittest.TestCase):
@@ -30,7 +30,7 @@ class PlanTest(unittest.TestCase):
 
 
 class PlanEvidenceRegressionTest(unittest.TestCase):
-    def test_hex_gateway_id_is_run_not_commit(self):
+    def test_hex_router_id_is_run_not_commit(self):
         """A finished gateway id that also looks like a short sha must count as a run and never reach git."""
         with mock.patch.object(plan.store, "get", return_value={"status": "done"}),                 mock.patch.object(plan.subprocess, "run") as git:
             self.assertEqual(plan.check_evidence("deadbeef01"), "run")

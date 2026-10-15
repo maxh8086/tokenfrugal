@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from gateway import compose, reconnect
+from router import compose, reconnect
 
 CATALOG = {
     "web": {"native": "crawl4ai", "compose": ["crawl4ai", "searxng"], "tools": []},

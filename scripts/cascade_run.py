@@ -3,7 +3,7 @@
     PYTHONPATH=. python -m scripts.cascade_run <primary-solo-json> <partner-ollama-model> <name>
 
 Writes bench/<stamp>-cascade-<name>.json (partner run on the remaining cases only) and prints the
-combined score and time (primary on all cases + partner on the remaining ones). Candidates: Benchmark/combos.md.
+combined score and time (primary on all cases + partner on the remaining ones). Candidates: pick from Benchmark/Benchmark.md.
 """
 import json
 import os
