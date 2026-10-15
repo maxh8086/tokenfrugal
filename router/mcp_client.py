@@ -27,7 +27,7 @@ class Router:
             for t in (await s.list_tools()).tools:
                 if t.name not in self._owner:
                     self._owner[t.name] = s
-                    if s in self._native and "project" in ((getattr(t, "inputSchema", None) or getattr(t, "input_schema", None) or {}).get("properties") or {}):
+                    if s in self._native and "project" in ((getattr(t, "input_schema", None) or getattr(t, "inputSchema", None) or {}).get("properties") or {}):
                         self._needs_project.add(t.name)
                     tools.append(t)
         return type("Tools", (), {"tools": tools})()
@@ -83,7 +83,7 @@ async def open_profile(profile: str, params: dict | None = None):
 
 
 def _schema(t) -> dict:
-    sc = dict(getattr(t, "inputSchema", None) or getattr(t, "input_schema", None) or {"type": "object", "properties": {}})
+    sc = dict(getattr(t, "input_schema", None) or getattr(t, "inputSchema", None) or {"type": "object", "properties": {}})
     props = {k: v for k, v in (sc.get("properties") or {}).items() if k != "project"}
     return {**sc, "properties": props, "required": [r for r in sc.get("required", []) if r != "project"]}
 
