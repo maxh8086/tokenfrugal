@@ -80,8 +80,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/state":
             self._send(200, state())
         elif self.path == "/benchmark":
-            f = config.ROOT / "Benchmark" / "persona-config.html"
-            self._send(200 if f.exists() else 404, f.read_bytes() if f.exists() else b"run python -m scripts.bench_persona", "text/html; charset=utf-8")
+            f = config.ROOT / "Benchmark" / "explorer.html"
+            self._send(200 if f.exists() else 404, f.read_bytes() if f.exists() else b"run python Benchmark/script/build_report.py", "text/html; charset=utf-8")
         elif self.path in ("/", "/index.html"):
             self._send(200, PAGE.encode(), "text/html; charset=utf-8")
         else:
