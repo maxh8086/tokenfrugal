@@ -18,7 +18,9 @@ class BackendsTest(unittest.TestCase):
             async with compose.backends(["crawl4ai"], **kw):
                 calls.append(("body",))
 
-        with mock.patch.object(compose, "_compose", fake):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(compose, "LEASES", Path(d)),                 mock.patch.object(compose, "_compose", fake):
             try:
                 asyncio.run(go())
             except compose.ComposeError:
@@ -33,6 +35,36 @@ class BackendsTest(unittest.TestCase):
 
     def test_start_failure_stops_and_raises(self):
         self.assertEqual(self.run_cm(compose.ComposeError("x")), ["up", "stop", "error"])
+
+
+class LeaseTest(unittest.TestCase):
+    """Cross-process leases: a backend is stopped only when no other live router still uses it."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        p = mock.patch.object(compose, "LEASES", Path(self.tmp.name))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_sole_user_gets_idle(self):
+        t = compose.lease_acquire(["crawl4ai"])
+        self.assertEqual(compose.lease_release(t), ["crawl4ai"])
+
+    def test_live_peer_blocks_stop(self):
+        mine = compose.lease_acquire(["crawl4ai"])
+        (compose.LEASES / "crawl4ai.99999.peer").write_text("")
+        with mock.patch.object(compose, "_alive", lambda pid: pid == 99999 or pid == __import__("os").getpid()):
+            self.assertEqual(compose.lease_release(mine), [])
+
+    def test_dead_peer_is_pruned(self):
+        mine = compose.lease_acquire(["crawl4ai"])
+        (compose.LEASES / "crawl4ai.99999.peer").write_text("")
+        with mock.patch.object(compose, "_alive", lambda pid: pid != 99999):
+            self.assertEqual(compose.lease_release(mine), ["crawl4ai"])
+        self.assertFalse((compose.LEASES / "crawl4ai.99999.peer").exists())
 
 
 if __name__ == "__main__":

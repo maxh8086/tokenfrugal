@@ -5,14 +5,9 @@ Last updated: 2026-10-12
 This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS chip and client names. Part B covers the PRISM Bonsai / Ternary-Bonsai benchmark and the Ollama 16k roster. Only this file is tracked in git. The worktree copy `prism-handoff.md` stays untracked and is superseded by Part B.
 
 ---
-## PRIORITY NEXT: concurrent docker runs (lease-based teardown)
+## Concurrent docker runs: DONE (2026-10-15)
 
-Problem: `router/compose.py` stops every `ts-mcp` container when the last router process exits, but "last" is judged per process, so two concurrent runs can tear each other down.
-
-Fix (best of both: containers still exit when no task is left, never under a live peer):
-- Each router writes a lease file (pid + start time + heartbeat) in a shared dir on start and removes it on exit.
-- On exit, a router stops `ts-mcp` only if no other live lease remains; leases of dead pids or stale heartbeats are pruned first.
-- `MCP_KEEP_ALIVE=1` / `keep_alive` keeps current behaviour. Tests first (fake pids, stale lease, two peers), then implement.
+Backend stops are decided by per-backend lease files in `router/leases/` (`<service>.<pid>.<uuid>`), so a router stops a backend only when no other live router still uses it; stale leases of dead pids are pruned. `MCP_KEEP_ALIVE=1` / `keep_alive` still skips the stop. Docker-backed tests may now run concurrently.
 
 ---
 ## Workspace auto-sync: DONE (2026-10-15)
@@ -27,7 +22,6 @@ Haiku (claude-haiku-5-5) calls all 9 router tools and all 83 role tools behind t
 Gotchas:
 - A shell-level `CC_WORKSPACE` overrides `.env`; unset it or it hides the writable fs tools. `.env` must equal the installed profile's mount path.
 - `ANTHROPIC_API_KEY` must be in the process env; in Git Bash export it from the user env var.
-- Do not run docker-backed tests concurrently: the last router to exit stops every `ts-mcp` container.
 
 ---
 
