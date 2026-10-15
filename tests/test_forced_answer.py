@@ -68,7 +68,7 @@ class ForcedFinalAnswer(unittest.TestCase):
         self.assertEqual(create.call_count, 3)
         first, last = create.call_args_list[0].kwargs, create.call_args_list[2].kwargs
         self.assertTrue(first["tools"])
-        self.assertIsNone(last["tools"])
+        self.assertNotIn("tools", last)
         self.assertNotIn("tool_choice", last)
         forced = [m for m in last["messages"] if m.get("content", "").startswith("Step limit reached")]
         self.assertEqual(len(forced), 1)
