@@ -40,7 +40,7 @@ Constraints from the model card, all self-reported:
 - The card says the model ships overconfident (ECE 0.081 after per-domain temperature fitting).
 - `action.act_probability` has no usable signal, so the escalate gate needs a different signal.
 
-Adoption rule: laya is used only if it clearly beats the keyword baseline on our labels and stays within the 75%-of-best rule from `Benchmark/persona-model-selection.md`. Haiku stays the router either way.
+Adoption rule: laya is used only if it clearly beats the keyword baseline on our labels and stays within the 75%-of-best rule from `Benchmark/Benchmark.md`. Haiku stays the router either way.
 
 ## Evaluation (next step)
 

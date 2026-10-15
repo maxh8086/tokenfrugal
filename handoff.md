@@ -83,7 +83,7 @@ Pick each persona's model on evidence, not on size alone:
 
 - Quality: pass counts on the 16 real-world cases with verifiers, at 16384 context, n=2.
 - Output length: the direct output-length test (128 to 4096 tokens), with tok/s and failures.
-- Selection rule (`Benchmark/persona-model-selection.md`): keep models scoring at least 75% of the best, then choose the smallest parameter count, then the fastest.
+- Selection rule (`Benchmark/Benchmark.md`): keep models scoring at least 75% of the best, then choose the smallest parameter count, then the fastest.
 
 Standing constraints: no `ollama pull` or Hugging Face search without approval; no Docker install without approval; no Co-Authored-By trailers.
 
@@ -249,7 +249,6 @@ Request: make `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` (and related parameters: O
 
 - Dashboard (port 7777, `ui/index.html`, `ui/server.js`, text in `router/ui.yaml`): status, usage and tokens-saved views only. No settings tab. Git history (`-S "onfiguration"`, `-S "BIND_ALLOWED"`) shows no config tab was ever committed.
 - Persona editor (port 7878, `scripts/persona_ui.py`): one section, "Toolkit and model per persona". No global parameters.
-- `Benchmark/persona-config.html`: static report table, not an editor.
 - synaptree-mcp UI (port 8787, linked from the dashboard's "Open UI"): has LLM settings. `get_llm_settings` returned provider `local`, base_url `http://localhost:11434/v1`, model `llama3.2:3b-16k`, guardrails (confirm_tokens 50000, max_input_tokens 100000, daily_token_budget 500000, max_calls_per_minute 6, timeout_s 120), `api_key_set: false`, `local_ready: false`. Most likely the tab the user remembers. It has no bind-path or tool-to-model fields.
 - `tokenfrugal/.env` lines 9-10 hold both `MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS` and `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` set to `C:\Users\vaibh\Downloads\Projects`. The gateway must restart to read them. Until it does, `ts-fs-rw` and `ast-grep` keep refusing their mounts (see `Benchmark/model_sweep/RESULTS.md`, lines 92-93).
 
