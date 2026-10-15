@@ -4,10 +4,13 @@ import contextlib
 import os
 import shutil
 import subprocess
+import uuid
+from pathlib import Path
 
 from .config import COMPOSE_FILE, COMPOSE_PROJECT, DB_PATH, KEEP_ALIVE
 
 PERSISTENT = {"neo4j"}  # started with the router, only stopped by stop_all_sync() on router exit
+LEASES = DB_PATH.parent / "leases"  # one file per (service, router pid, task) using a backend
 _users: dict[str, int] = {}  # backend -> concurrent tasks using it (in this router process)
 _lock = asyncio.Lock()
 
@@ -36,32 +39,63 @@ async def backends(services: list[str], keep_alive: bool = False, timeout: int =
     if not services:
         yield
         return
+    leases: list[Path] = []
     async with _lock:
         for s in services:
             _users[s] = _users.get(s, 0) + 1
         try:
+            leases = lease_acquire(services)
             await _compose("up", "-d", "--wait", *services, timeout=timeout)
         except BaseException:
-            await _release(services, False)
+            await _release(services, leases, False)
             raise
     try:
         yield
     finally:
         async with _lock:
-            await _release(services, keep_alive or KEEP_ALIVE)
+            await _release(services, leases, keep_alive or KEEP_ALIVE)
 
 
-async def _release(services: list[str], keep: bool) -> None:
-    idle = []
+async def _release(services: list[str], leases: list[Path], keep: bool) -> None:
     for s in services:
         _users[s] = _users.get(s, 1) - 1
         if _users[s] <= 0:
             _users.pop(s, None)
-            idle.append(s)
-    idle = [s for s in idle if s not in PERSISTENT]
+    idle = [s for s in lease_release(leases) if s not in PERSISTENT]
     if idle and not keep:
         with contextlib.suppress(Exception):
             await _compose("stop", *idle, timeout=120)
+
+
+def lease_acquire(services: list[str]) -> list[Path]:
+    """Create one lease file per service, tagged with this router's pid, so other routers see the user."""
+    LEASES.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for s in services:
+        p = LEASES / f"{s}.{os.getpid()}.{uuid.uuid4().hex}"
+        p.write_text("")
+        paths.append(p)
+    return paths
+
+
+def lease_release(paths: list[Path]) -> list[str]:
+    """Drop our leases; return the services with no other live user (stale peer leases are pruned)."""
+    for p in paths:
+        with contextlib.suppress(OSError):
+            p.unlink()
+    free = []
+    for s in dict.fromkeys(p.name.split(".")[0] for p in paths):
+        live = False
+        for f in LEASES.glob(f"{s}.*") if LEASES.exists() else []:
+            pid = f.name.split(".")[1]
+            if pid.isdigit() and _alive(int(pid)):
+                live = True
+            else:
+                with contextlib.suppress(OSError):
+                    f.unlink()
+        if not live:
+            free.append(s)
+    return free
 
 
 async def ensure(services: list[str], timeout: int = 300) -> None:
