@@ -184,7 +184,7 @@ async def plan_revert(task_id: int = 0, since: str = "") -> str:
 
 @mcp.tool()
 async def plan_update_from(task_id: int) -> str:
-    """Re-open a task and everything depending on it (use after changing its approach)."""
+    """Re-open task task_id and every task depending on it, after that task changed approach. Call this (not plan_overview) when a plan task changed and must be redone."""
     return (await _plan(plan.update_from, task_id))[1]
 
 
@@ -228,7 +228,7 @@ def _trail_line(e: dict) -> str:
 
 @mcp.tool()
 async def resume_task(task_id: str) -> str:
-    """Retry a failed task from its saved conversation."""
+    """Retry a failed task by its task_id (e.g. abc123), from its saved conversation. Call this whenever a task failed and the user asks to retry it."""
     t = store.get(task_id)
     if not t:
         return f"unknown task {task_id}"

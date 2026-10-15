@@ -17,6 +17,7 @@ TASKS = {
     "debugger": ("engineering-sre", "Read /workspace/router/loop.py and name the exception class it defines."),
     "docs": ("engineering-technical-writer", "Call read_file on /workspace/README.md and name its first heading."),
     "security": ("engineering-privacy-engineer", "Use search_files under /workspace to call search_files with path /workspace and pattern 'example', then list the matching file names."),
+    "sonar": ("engineering-privacy-engineer", "Call search_sonar_issues_in_projects once and report how many issues it returned, or the error text it gave."),
     "data": ("engineering-data-engineer", "Call list_directory with path /workspace and name one file you see."),
     "designer": ("design-ui-designer", "Call high_level_overview and report what it says in one line."),
     "browser": ("design-persona-walkthrough", "Call navigate_page with url http://host.docker.internal:9100, then call take_snapshot and report the page title."),
@@ -25,7 +26,7 @@ TASKS = {
 }
 
 
-EXPECT = {'tracker': 'task', 'security': 'README', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'snapshot', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'TokenFrugal', 'data': 'README', 'designer': 'penpot'}
+EXPECT = {'tracker': 'task', 'security': 'README', 'sonar': 'issue', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'snapshot', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'TokenFrugal', 'data': 'README', 'designer': 'penpot'}
 
 
 async def one(role_name):
@@ -33,7 +34,7 @@ async def one(role_name):
     role = resolve_role(agent, CFG)
     t = time.time()
     try:
-        out, _ = await asyncio.wait_for(run(agent, role, task), 900 if role_name == "security" else 240)
+        out, _ = await asyncio.wait_for(run(agent, role, task), 900 if role_name in ("security", "sonar") else 240)
         ok = EXPECT.get(role_name, "").lower() in out.lower()
         return f"{'PASS' if ok else 'WRONG'} {role_name:9} {time.time()-t:5.0f}s {str(role.get('profile') or '-'):10} {out[:90]!r}"
     except BaseException as e:  # noqa: BLE001
