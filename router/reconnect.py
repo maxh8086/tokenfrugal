@@ -1,8 +1,8 @@
-"""Restart and reconnect MCP servers on request from the dashboard, without restarting the gateway.
+"""Restart and reconnect MCP servers on request from the dashboard, without restarting the router.
 
 Connections are opened per task (mcp_client.open_role), so "reconnect" means: recreate the server's compose
 backends, then open a fresh connection through the normal client path and list its tools to prove it works.
-The dashboard (ui/server.js) drops a request file next to events.jsonl; each gateway polls for it, claims it
+The dashboard (ui/server.js) drops a request file next to events.jsonl; each router polls for it, claims it
 with an atomic rename, and writes the outcome to a result file the dashboard reads. Secrets are never logged.
 """
 import asyncio
@@ -79,7 +79,7 @@ async def poll_once(catalog: dict) -> bool:
     """Handle one pending dashboard request, if any. Returns True when one was handled."""
     claim = REQUEST.with_suffix(f".{os.getpid()}")
     try:
-        os.replace(REQUEST, claim)  # atomic: only one gateway process wins the request
+        os.replace(REQUEST, claim)  # atomic: only one router process wins the request
     except OSError:
         return False
     try:

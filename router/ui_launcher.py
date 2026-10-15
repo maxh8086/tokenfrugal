@@ -1,6 +1,6 @@
-"""Starts the Node dashboard (ui/server.js) with the gateway and opens it in the browser.
+"""Starts the Node dashboard (ui/server.js) with the router and opens it in the browser.
 
-Optional and best-effort: no node, a busy port or a headless box never breaks the gateway.
+Optional and best-effort: no node, a busy port or a headless box never breaks the router.
 TOKENFRUGAL_UI=0 disables it, `port` in router/ui.yaml (or UI_PORT) sets the port, TOKENFRUGAL_UI_OPEN=0 skips the browser pop-up.
 """
 import os
@@ -46,7 +46,7 @@ def start() -> str | None:
         return None
     p = port()
     url = f"http://127.0.0.1:{p}"
-    opened = listening(p)  # another gateway already serves it: reuse, and do not pop a second tab
+    opened = listening(p)  # another router already serves it: reuse, and do not pop a second tab
     if not opened:
         node, script = shutil.which("node"), ROOT / "ui" / "server.js"
         if not node or not script.exists():

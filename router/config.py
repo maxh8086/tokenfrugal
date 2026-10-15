@@ -1,4 +1,4 @@
-"""Gateway configuration (env-overridable)."""
+"""Router configuration (env-overridable)."""
 import json
 import os
 import re
@@ -58,7 +58,7 @@ def _git_root(start: str):
     return None
 
 
-# Exact host path the Docker gateway may bind writable (defaults to the checkout; see docker catalogue volume).
+# Exact host path the Docker router may bind writable (defaults to the checkout; see docker catalogue volume).
 WORKSPACE = os.getenv("CC_WORKSPACE") or _git_root(os.getcwd()) or ROOT.as_posix()
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
 SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "synaptree-mcp")
@@ -132,7 +132,7 @@ def default_mcps(role: dict, catalog: dict) -> list[str]:
 
 
 def load_personas() -> dict:
-    cfg = yaml.safe_load((Path(__file__).parent / "personas.yaml").read_text(encoding="utf-8"))
+    cfg = yaml.safe_load((Path(__file__).parent / "agents.yaml").read_text(encoding="utf-8"))
     pm = dict(cfg.get("persona_models") or {})
     try:  # user overrides (written by scripts/persona_ui.py) win over the yaml defaults
         pm.update(json.loads(PERSONA_MODELS_FILE.read_text(encoding="utf-8")))
@@ -152,7 +152,7 @@ def load_personas() -> dict:
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
     cfg["persona_skills"] = dict(cfg.get("persona_skills") or {})
-    # Role -> model tag from the dashboard Configuration tab; wins over the logical model in personas.yaml.
+    # Role -> model tag from the dashboard Configuration tab; wins over the logical model in agents.yaml.
     cfg["role_models"] = {k: v for k, v in (_overrides.get("role_models") or {}).items() if isinstance(v, str) and v.strip()}
     # Role -> MCP names from the dashboard Configuration tab; a persona_mcps entry for one agent still wins.
     cfg["role_mcps"] = {k: [n for n in v if isinstance(n, str)] for k, v in (_overrides.get("role_mcps") or {}).items() if isinstance(v, list)}

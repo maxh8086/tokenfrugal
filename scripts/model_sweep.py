@@ -1,9 +1,9 @@
-"""Model sweep: one builder/analyzer task per local model through the gateway.
+"""Model sweep: one builder/analyzer task per local model through the router.
 
 Usage: python -m scripts.model_sweep [--models a,b] [--roles builder,analyzer] [--out PATH]
 
 The model for a role is pinned with TOKENFRUGAL_MODEL_<TIER>, where TIER is the
-role's model tier (builder or thinker) from personas.yaml. Setting it changes every
+role's model tier (builder or thinker) from agents.yaml. Setting it changes every
 role on that tier, so each run sets the env var and reloads the config first.
 """
 import argparse

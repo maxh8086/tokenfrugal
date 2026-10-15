@@ -17,7 +17,7 @@ OUT = ROOT / "Benchmark" / "responses"
 def main():
     by_prompt = {task: cid for cid, _a, _s, task, _c in cases()}
     starts = {}
-    for p in (ROOT / "gateway" / "events.jsonl.1", ROOT / "gateway" / "events.jsonl"):
+    for p in (ROOT / "router" / "events.jsonl.1", ROOT / "router" / "events.jsonl"):
         if p.exists():
             for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
                 try:
@@ -39,7 +39,7 @@ def main():
     idx = []
     for model, cs in sorted(per.items()):
         lines = [f"# {model}", "", "Every stored response, per case, oldest first. Pass/fail verification is in the model-comparison table; "
-                 "`status` here is only whether the gateway returned an answer.", ""]
+                 "`status` here is only whether the router returned an answer.", ""]
         n = 0
         for cid in order:
             for i, (ts, tid, t) in enumerate(sorted(cs.get(cid, []), key=lambda x: x[0]), 1):

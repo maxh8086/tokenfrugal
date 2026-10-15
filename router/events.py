@@ -17,7 +17,7 @@ USAGE_FIELDS = ("ts", "pid", "kind", "id", "role", "model", "saved", "task", "ag
 
 
 def emit(kind: str, **fields) -> None:
-    """kind: task_start | step | tool | say | task_done | task_failed. Every line carries ts and the gateway pid."""
+    """kind: task_start | step | tool | say | task_done | task_failed. Every line carries ts and the router pid."""
     try:
         if EVENTS_PATH.exists() and EVENTS_PATH.stat().st_size > MAX_BYTES:
             os.replace(EVENTS_PATH, EVENTS_PATH.with_suffix(".jsonl.1"))

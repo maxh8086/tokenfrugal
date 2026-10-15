@@ -7,8 +7,8 @@ import subprocess
 
 from .config import COMPOSE_FILE, COMPOSE_PROJECT, DB_PATH, KEEP_ALIVE
 
-PERSISTENT = {"neo4j"}  # started with the gateway, only stopped by stop_all_sync() on gateway exit
-_users: dict[str, int] = {}  # backend -> concurrent tasks using it (in this gateway process)
+PERSISTENT = {"neo4j"}  # started with the router, only stopped by stop_all_sync() on router exit
+_users: dict[str, int] = {}  # backend -> concurrent tasks using it (in this router process)
 _lock = asyncio.Lock()
 
 
@@ -87,7 +87,7 @@ def stop_all_sync() -> None:
             subprocess.run([docker, "stop", *ids], capture_output=True, timeout=120)
 
 
-# --- last-one-out shutdown: every gateway process (Claude, Codex, ...) drops a pid file; only the last stops containers
+# --- last-one-out shutdown: every router process (Claude, Codex, ...) drops a pid file; only the last stops containers
 REGISTRY = DB_PATH.parent / "gateways"
 
 
@@ -116,7 +116,7 @@ def register() -> None:
 
 
 def release() -> bool:
-    """Drop this process from the registry; stop all containers only if no other live gateway remains."""
+    """Drop this process from the registry; stop all containers only if no other live router remains."""
     with contextlib.suppress(OSError):
         (REGISTRY / str(os.getpid())).unlink()
     others = 0

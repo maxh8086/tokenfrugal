@@ -1,4 +1,4 @@
-"""Live stress benchmark for the gateway. Results go to bench/<stamp>.json and bench/<stamp>.md.
+"""Live stress benchmark for the router. Results go to bench/<stamp>.json and bench/<stamp>.md.
 
     python -m scripts.bench                   # everything, N=5
     python -m scripts.bench --n 3 --only roles,concurrency
@@ -38,7 +38,7 @@ ROLE_TASKS = {
     "reviewer": ("testing-code-reviewer", "Read /workspace/%s/router/summarize.py and say in two sentences what it does." % SYNAPTREE_PROJECT),
     "debugger": ("engineering-sre", "Read /workspace/%s/router/summarize.py and name its public functions." % SYNAPTREE_PROJECT),
     "research": ("support-docs-writer", "Read /workspace/%s/README.md and give a one-sentence description of the project." % SYNAPTREE_PROJECT),
-    "data": ("gis-analyst", "List the files in /workspace/%s/gateway and name three." % SYNAPTREE_PROJECT),
+    "data": ("gis-analyst", "List the files in /workspace/%s/router and name three." % SYNAPTREE_PROJECT),
     "tracker": ("project-management-project-shepherd", "Report the plan status."),
     "security": ("security-auditor", "Read /workspace/%s/router/config.py and list any hard-coded secrets (say none if none)." % SYNAPTREE_PROJECT),
     "designer": ("design-ui-designer", "Say what design tools you have."),
