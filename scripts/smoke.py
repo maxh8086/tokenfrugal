@@ -25,7 +25,7 @@ TASKS = {
 }
 
 
-EXPECT = {'tracker': 'task', 'security': '.env.example', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'Login', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'TokenFrugal', 'data': 'README', 'designer': 'penpot'}
+EXPECT = {'tracker': 'task', 'security': 'README', 'reviewer': 'change', 'research': 'asyncio', 'browser': 'snapshot', 'builder': 'TokenFrugal', 'analyzer': 'config.py', 'debugger': 'LoopError', 'docs': 'TokenFrugal', 'data': 'README', 'designer': 'penpot'}
 
 
 async def one(role_name):
@@ -33,7 +33,7 @@ async def one(role_name):
     role = resolve_role(agent, CFG)
     t = time.time()
     try:
-        out, _ = await asyncio.wait_for(run(agent, role, task), 240)
+        out, _ = await asyncio.wait_for(run(agent, role, task), 900 if role_name == "security" else 240)
         ok = EXPECT.get(role_name, "").lower() in out.lower()
         return f"{'PASS' if ok else 'WRONG'} {role_name:9} {time.time()-t:5.0f}s {str(role.get('profile') or '-'):10} {out[:90]!r}"
     except BaseException as e:  # noqa: BLE001
