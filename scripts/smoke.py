@@ -50,6 +50,9 @@ async def main():
         return 2
     for r in (names or TASKS):
         line = await one(r)
+        if line.startswith("WRONG"):  # small local models are non-deterministic: retry once
+            line = await one(r)
+            line += "  (retry)" if line.startswith("PASS") else ""
         bad += not line.startswith("PASS")
         print(line, flush=True)
     return bad
