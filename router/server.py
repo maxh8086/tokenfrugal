@@ -1,4 +1,4 @@
-"""Claude-facing MCP gateway. Claude plans and dispatches; local models do the work.
+"""Claude-facing MCP router. Claude plans and dispatches; local models do the work.
 
 Tools return only capped summaries. Full output stays in the task store (get_detail).
 Failure never falls back to cloud: a short capped error summary + task_id goes back for retry/resume.
@@ -19,8 +19,8 @@ from .loop import leaf, run, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_personas()
-STALE_REASON = "gateway stopped while task was running (no heartbeat)"
-HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a gateway down after ~3 missed beats
+STALE_REASON = "router stopped while task was running (no heartbeat)"
+HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
 
 
 async def _warm_up():
@@ -36,7 +36,7 @@ async def _warm_up():
 
 @contextlib.asynccontextmanager
 async def _lifespan(_server):
-    """The last gateway to exit stops every ts-mcp container (also on SIGTERM and interpreter exit)."""
+    """The last router to exit stops every ts-mcp container (also on SIGTERM and interpreter exit)."""
     events.write_roles(CFG)
     store.sweep_stale(STALE_REASON)
     sweeper = asyncio.create_task(_sweep_loop())
@@ -64,7 +64,7 @@ async def _lifespan(_server):
 
 
 class _ClientSeen(Middleware):
-    """Reports which MCP client (Claude, Codex, ...) opened this gateway process, for the dashboard."""
+    """Reports which MCP client (Claude, Codex, ...) opened this router process, for the dashboard."""
 
     async def on_initialize(self, context, call_next):
         # pydantic exposes the MCP field as snake_case `client_info`, not `clientInfo`
@@ -94,7 +94,7 @@ async def _heartbeat(tid: str) -> None:
 
 
 async def _health_loop() -> None:
-    """Publish this gateway's own health so the dashboard's /health reflects the gateway, not the dashboard."""
+    """Publish this router's own health so the dashboard's /health reflects the router, not the dashboard."""
     while True:
         events.emit("health", status="up")
         await asyncio.sleep(HEALTH_EVERY)
@@ -124,7 +124,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "done", summary)
-            ok, msg = await _plan(plan.done, plan_id, tid, "gateway run", "gateway")
+            ok, msg = await _plan(plan.done, plan_id, tid, "router run", "router")
             if ok:
                 await _plan(plan.checkpoint)
             summary += "" if ok else f" (plan: {msg})"
@@ -137,7 +137,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
-            await _plan(plan.set_status, plan_id, "blocked", "gateway", err)
+            await _plan(plan.set_status, plan_id, "blocked", "router", err)
         return f"[{tid}] FAILED ({role['role']}/{role['model']}): {err}. Call resume_task('{tid}') to retry."
     finally:
         beat.cancel()
@@ -153,7 +153,7 @@ async def dispatch_task(agent: str, task: str, plan_id: int = 0) -> str:
         return err
     role = resolve_role(agent, CFG)
     if plan_id:
-        ok, msg = await _plan(plan.claim, plan_id, "gateway")
+        ok, msg = await _plan(plan.claim, plan_id, "router")
         if not ok:
             return f"plan task {plan_id} not started: {msg}"
     return await _execute(store.create(agent, role["role"], task), agent, role, task, plan_id=plan_id)

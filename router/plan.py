@@ -83,7 +83,7 @@ def check_evidence(evidence: str, repo: str | None = None) -> str:
     """Return a label for valid evidence ('commit' or 'run'), else raise PlanError."""
     ev = (evidence or "").strip()
     row = store.get(ev) if ev else None
-    if row and row["status"] == "done":  # checked first: gateway ids are hex and look like short SHAs
+    if row and row["status"] == "done":  # checked first: router ids are hex and look like short SHAs
         return "run"
     if SHA.match(ev):
         r = subprocess.run(["git", "-C", repo or REPO, "cat-file", "-e", f"{ev}^{{commit}}"],
@@ -91,7 +91,7 @@ def check_evidence(evidence: str, repo: str | None = None) -> str:
         if r.returncode == 0:
             return "commit"
         raise PlanError(f"evidence {ev}: no such commit")
-    raise PlanError("evidence must be an existing git commit sha or a finished gateway task id")
+    raise PlanError("evidence must be an existing git commit sha or a finished router task id")
 
 
 def add(title: str, depends: list[int] | None = None, priority: int = 0, detail: str = "", tag: str = "") -> str:

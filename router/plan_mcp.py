@@ -41,7 +41,7 @@ def plan_blockers(task_id: int) -> str:
 
 @mcp.tool()
 def plan_done(task_id: int, evidence: str, note: str = "") -> str:
-    """Mark a task done. evidence = a real git commit sha or a finished gateway task id."""
+    """Mark a task done. evidence = a real git commit sha or a finished router task id."""
     return _safe(plan.done, task_id, evidence, note, "worker")
 
 

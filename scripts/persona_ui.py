@@ -15,7 +15,7 @@ import yaml
 
 from router import config
 
-YAML = config.Path(config.__file__).parent / "personas.yaml"
+YAML = config.Path(config.__file__).parent / "agents.yaml"
 
 
 def installed_models() -> list[str]:

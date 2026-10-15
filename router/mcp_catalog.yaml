@@ -1,7 +1,7 @@
 # MCPs a persona can use, and the profile types shown in scripts/persona_ui.py.
 # Each MCP names the Docker MCP profile and/or native server that serves it, the compose backends it needs,
 # and the tool names it adds to the role allowlist. A persona's selection may combine several MCPs; the
-# gateway opens the distinct profiles/natives and allows the union of tools (keep it at 6 or fewer for 3B models).
+# router opens the distinct profiles/natives and allows the union of tools (keep it at 6 or fewer for 3B models).
 mcps:
   filesystem:         {label: "Filesystem (mcp/filesystem)",              profile: build,    tools: [read_file, write_file, edit_file, search_files, list_directory]}
   synaptree:          {label: "synaptree-mcp code graph",                  native: synaptree, tools: [search_graph, get_code_snippet, trace_path]}

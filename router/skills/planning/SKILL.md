@@ -5,7 +5,7 @@ description: Turn a feature or fix into a tracked plan. Creates the plan in the 
 
 # Planning (SDLC)
 
-Use this when a request spans more than one task. The local plan store (`plan_add`) is the source of truth for the gateway. The GitHub issue is the public record. Keep them in step.
+Use this when a request spans more than one task. The local plan store (`plan_add`) is the source of truth for the router. The GitHub issue is the public record. Keep them in step.
 
 ## 1. Plan locally
 
@@ -29,7 +29,7 @@ Use this when a request spans more than one task. The local plan store (`plan_ad
 
 ## 4. Close the loop
 
-- Mark a plan task `done` only with evidence: a real git sha or a finished gateway task id.
+- Mark a plan task `done` only with evidence: a real git sha or a finished router task id.
 - Tick its checkbox in the issue body once evidence exists.
 - PRs reference the issue with `Refs #<n>`. Use `Closes #<n>` only when the whole plan is done.
 

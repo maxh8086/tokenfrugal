@@ -25,7 +25,7 @@ NOTES = {
     "confirmA": "yarn3b builder + granite4 thinker (earlier run)",
     "confirmB": "qwen25c-7b builder + granite4 thinker (earlier run)",
     "confirmC": "earlier run, config not recorded",
-    "full-defaults-yarn3b-llama32": "current personas.yaml pair",
+    "full-defaults-yarn3b-llama32": "current agents.yaml pair",
 }
 
 # parameters in billions: (label, sort key = largest model loaded)
@@ -43,7 +43,7 @@ PARAMS = {
 }
 
 
-# case -> role that serves it (see router/personas.yaml; agent slug -> role via division/overrides)
+# case -> role that serves it (see router/agents.yaml; agent slug -> role via division/overrides)
 CASE_ROLE = {
     "write_function": "builder", "fix_bug": "builder", "write_tests": "builder", "rename_across_files": "builder",
     "find_symbol": "builder", "review_sqli": "reviewer", "debug_trace": "debugger", "summarize_readme": "research",
@@ -66,7 +66,7 @@ FS = {"read_file", "write_file", "edit_file", "search_files", "list_directory"}
 
 
 def server_for(role, tool):
-    """MCP server that really exposes the tool (profiles/*.yaml, native servers in personas.yaml)."""
+    """MCP server that really exposes the tool (profiles/*.yaml, native servers in agents.yaml)."""
     rw = role in ("builder", "data")
     if tool in FS:
         return "ts-fs-rw" if rw else "ts-fs-ro"

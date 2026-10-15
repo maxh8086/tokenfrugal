@@ -6,8 +6,8 @@ import uuid
 
 from .config import DB_PATH
 
-HEARTBEAT_EVERY = 30  # seconds between heartbeats from a running gateway
-STALE_AFTER = 120  # a running row with no heartbeat for this long belongs to a dead gateway
+HEARTBEAT_EVERY = 30  # seconds between heartbeats from a running router
+STALE_AFTER = 120  # a running row with no heartbeat for this long belongs to a dead router
 
 
 def _db():
@@ -32,7 +32,7 @@ def create(agent, role, prompt) -> str:
 
 
 def beat(tid) -> None:
-    """Show that the gateway running this task is alive. Called every HEARTBEAT_EVERY seconds while it runs."""
+    """Show that the router running this task is alive. Called every HEARTBEAT_EVERY seconds while it runs."""
     with _db() as c:
         c.execute("UPDATE tasks SET heartbeat=? WHERE id=? AND status='running'", (time.time(), tid))
 
@@ -59,7 +59,7 @@ def append_trail(tid, event: dict) -> None:
 
 
 def sweep_stale(reason: str, stale_after: float = STALE_AFTER) -> int:
-    """Mark 'running' tasks whose gateway stopped heartbeating as failed. Live gateways keep their rows fresh, so this is safe with several gateways running. Rows without a heartbeat count as stale."""
+    """Mark 'running' tasks whose router stopped heartbeating as failed. Live gateways keep their rows fresh, so this is safe with several gateways running. Rows without a heartbeat count as stale."""
     cutoff = time.time() - stale_after
     with _db() as c:
         return c.execute("UPDATE tasks SET status='failed', error=? WHERE status='running' AND (heartbeat IS NULL OR heartbeat < ?)",

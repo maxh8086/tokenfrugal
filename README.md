@@ -4,7 +4,7 @@
 
 **Stop burning your Claude Code / Codex token quota on boilerplate. TokenFrugal hands routine coding, tests, docs, reviews and research to a free local LLM (Ollama or any OpenAI-compatible API) through one small MCP server, and keeps your paid cloud model for architecture and hard decisions.**
 
-Keywords: MCP server, Model Context Protocol, local LLM, Ollama, token saving, reduce Claude Code usage, Codex, LM Studio, vLLM, agent personas, Docker MCP gateway, offline coding assistant.
+Keywords: MCP server, Model Context Protocol, local LLM, Ollama, token saving, reduce Claude Code usage, Codex, LM Studio, vLLM, agent personas, Docker MCP router, offline coding assistant.
 
 ## The problem it solves
 
@@ -28,7 +28,7 @@ Good fit: side projects, college projects, corporate seats with tight quotas, la
 | Python 3.11+ and git | |
 | Docker (Desktop, Engine, Colima, Rancher Desktop or Podman with a `docker` shim) | Runs the tool backends. Docker Desktop is free only for personal/education/small-business use; check its licence for your company. |
 | Ollama **or any OpenAI-compatible LLM API** | Host and port set in `.env` (`TOKENFRUGAL_LLM_URL`). Default `http://localhost:11434/v1`. |
-| Two local models | Pull the bases, then create the tuned tags the gateway expects (`qwen2.5-coder-yarn:3b`, `llama3.2:3b-16k`; see `router/personas.yaml`):<br>`ollama pull qwen2.5-coder:3b` / `ollama pull llama3.2:3b`<br>`ollama create qwen2.5-coder-yarn:3b -f models/builder.Modelfile`<br>`ollama create llama3.2:3b-16k -f models/thinker.Modelfile` |
+| Two local models | Pull the bases, then create the tuned tags the router expects (`qwen2.5-coder-yarn:3b`, `llama3.2:3b-16k`; see `router/agents.yaml`):<br>`ollama pull qwen2.5-coder:3b` / `ollama pull llama3.2:3b`<br>`ollama create qwen2.5-coder-yarn:3b -f models/builder.Modelfile`<br>`ollama create llama3.2:3b-16k -f models/thinker.Modelfile` |
 | An MCP-capable agent | Claude Code, Codex, Cursor or any MCP client. |
 
 Check everything at once: `python scripts/doctor.py` (installs nothing; prints exact fix commands).
@@ -53,7 +53,7 @@ Then, once:
    python scripts/install_profiles.py          # mounts CC_WORKSPACE from .env, else this repo; --workspace PATH to override
    ```
    Set `CC_WORKSPACE` in `.env` to the same absolute path. Re-run it any time to refresh the profiles.
-3. **Security role only (SonarQube):** open http://localhost:9100, log in as `admin` / `admin` and set a new password, then *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...` (`SONARQUBE_ORG` is only needed for SonarCloud; leave it empty for the local server). If your secrets file lives elsewhere, set `MCP_ENV_FILE=<path>` in `.env` (or the environment); the gateway and `docker-compose.yml` both read that path instead. Then check it with `python scripts/smoke.py security`.
+3. **Security role only (SonarQube):** open http://localhost:9100, log in as `admin` / `admin` and set a new password, then *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...` (`SONARQUBE_ORG` is only needed for SonarCloud; leave it empty for the local server). If your secrets file lives elsewhere, set `MCP_ENV_FILE=<path>` in `.env` (or the environment); the router and `docker-compose.yml` both read that path instead. Then check it with `python scripts/smoke.py security`.
 4. **Smoke tests:** `python scripts/smoke.py` runs one tiny task per role (needs Ollama and the steps above); `python -m scripts.smoke_plan` exercises the Neo4j plan store (prune, checkpoint, dependency guard) with throwaway data.
 
 Register with your agent (stdio):
@@ -70,7 +70,7 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 ## Choosing a model per persona
 
-`persona_models` in `router/personas.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see `Benchmark/persona-defaults.md`). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
+`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see `Benchmark/persona-defaults.md`). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
 
 Edit the mapping in a browser instead of the yaml:
 
@@ -89,18 +89,18 @@ Measured on 16 real tool cases, 2 runs each, RTX 4060 8 GB, 16384 context. Full 
 
 ## Adding MCP servers
 
-**Recommended: the Docker MCP gateway with servers from the Docker MCP Toolkit catalogue.** Most MCP servers you will want (filesystem, git, fetch, browser, search, databases, ...) already exist in the catalogue as maintained, sandboxed containers. TokenFrugal runs each role through `docker mcp gateway run --profile <name>`, so adding one is a profile edit, not new code:
+**Recommended: the Docker MCP Gateway with servers from the Docker MCP Toolkit catalogue.** Most MCP servers you will want (filesystem, git, fetch, browser, search, databases, ...) already exist in the catalogue as maintained, sandboxed containers. TokenFrugal runs each role through `docker mcp gateway run --profile <name>`, so adding one is a profile edit, not new code:
 
 1. Add the catalogue server to a profile in `profiles/*.yaml` (or pick it with `docker mcp` / Docker Desktop's MCP Toolkit).
-2. Allowlist 4-6 of its tools for the role in `router/personas.yaml`; small local models do better with few tools.
-3. Run `python scripts/install_profiles.py` to import the profiles, then restart the gateway.
+2. Allowlist 4-6 of its tools for the role in `router/agents.yaml`; small local models do better with few tools.
+3. Run `python scripts/install_profiles.py` to import the profiles, then restart the router.
 
 **Servers that are not in the catalogue** are shipped with TokenFrugal rather than left to you. Two routes, both already used in this repo:
 
 - **Containerised helper:** a Dockerfile in `docker/` wraps the upstream tool (for example `tokenfrugal/chrome-devtools-mcp:1`, `tokenfrugal/penpot-mcp:1`), and `docker-compose.yml` (project `ts-mcp`) starts it on demand for the roles that list it under `compose:`.
-- **Native stdio server:** a role can list a local stdio MCP server under `native:` in `router/personas.yaml` when it cannot run in Docker.
+- **Native stdio server:** a role can list a local stdio MCP server under `native:` in `router/agents.yaml` when it cannot run in Docker.
 
-**When you need a new MCP server,** ask Claude Code or Codex to add it. Point it at this README and `CLAUDE.md`: it should check the Docker MCP catalogue first, fall back to a helper image or native server only if the catalogue has nothing, update the profile and `personas.yaml`, and re-run `scripts/install_profiles.py`. The dashboard then shows the new server on the agent card and logs each call as it happens.
+**When you need a new MCP server,** ask Claude Code or Codex to add it. Point it at this README and `CLAUDE.md`: it should check the Docker MCP catalogue first, fall back to a helper image or native server only if the catalogue has nothing, update the profile and `agents.yaml`, and re-run `scripts/install_profiles.py`. The dashboard then shows the new server on the agent card and logs each call as it happens.
 
 ### Building helper images from a pinned upstream commit
 
@@ -119,7 +119,7 @@ A weekly GitHub Actions job (`.github/workflows/bump-pins.yml`, also runnable by
 
 ![High-level design](docs/hld.svg)
 
-- [High-level design](docs/hld.svg): cloud agent, gateway, local LLMs, Docker MCP profiles, Neo4j, dashboard
+- [High-level design](docs/hld.svg): cloud agent, router, local LLMs, Docker MCP profiles, Neo4j, dashboard
 - [Low-level design: modules](docs/lld-modules.svg)
 - [Low-level design: dispatch_task sequence](docs/lld-sequence.svg)
 - [Interactive routing flowchart](docs/architecture-routing.html): step through a routine task and a fallback task
@@ -141,12 +141,12 @@ Developed by Vaibhav Pavtekar with AI assistance (Claude Code).
 
 ![TokenFrugal dashboard](assets/dashboard.jpg)
 
-The dashboard starts with the gateway and opens in your browser at http://127.0.0.1:7777 (configurable, see below). At the top is a two-row status table: Status (idle, running, disconnected or unavailable, plus which client is connected: Claude, Codex or both), Ollama, Model and Agent on the first row; Docker (one third) and the MCP servers of the selected role (two thirds) on the second. Below it are the running tasks, a thinking box and a log, with a character that works while a task runs and sleeps when idle. If another gateway already serves the port, it is reused.
+The dashboard starts with the router and opens in your browser at http://127.0.0.1:7777 (configurable, see below). At the top is a two-row status table: Status (idle, running, disconnected or unavailable, plus which client is connected: Claude, Codex or both), Ollama, Model and Agent on the first row; Docker (one third) and the MCP servers of the selected role (two thirds) on the second. Below it are the running tasks, a thinking box and a log, with a character that works while a task runs and sleeps when idle. If another router already serves the port, it is reused.
 
 - A **Tokens saved** counter sits below the animated character: the running total, per task (failed ones too, since the local work still ran), of the tokens the local model handled (prompts, tool output, its own text; estimated at 4 characters per token) minus the short summary returned to your cloud agent. The label is `tokens_saved` in `router/ui.yaml`.
 - `TOKENFRUGAL_UI=0` disables it, `TOKENFRUGAL_UI_OPEN=0` skips the browser pop-up, the port is `port:` in `router/ui.yaml` (default 7777); the `UI_PORT` environment variable overrides it.
-- The dashboard is the gateway's built-in MCP channel: every MCP call a local agent makes (tool name, arguments, step) is recorded as an event the moment it happens, and each agent card shows the MCP servers of its role with live status, the current tool, and a log of every call.
+- The dashboard is the router's built-in MCP channel: every MCP call a local agent makes (tool name, arguments, step) is recorded as an event the moment it happens, and each agent card shows the MCP servers of its role with live status, the current tool, and a log of every call.
 - The fourth top box shows synaptree-mcp (the code graph UI, http://127.0.0.1:8787/ui/): `running` becomes a link that opens its UI in a new tab, otherwise `unavailable`. The ports probed are `synaptree_ports` in `router/ui.yaml` (default 8787, probed via `/healthz`).
 - All dashboard text comes from `router/ui.yaml`; roles, models and tools come from `router/roles.json`.
-- Needs Node 18+ (no npm packages); without Node the gateway runs as before. `node ui/server.js` starts it by hand.
-- The gateway writes `router/events.jsonl` and `router/roles.json`; override with `GATEWAY_EVENTS`. Restart the gateway after updating so it emits events.
+- Needs Node 18+ (no npm packages); without Node the router runs as before. `node ui/server.js` starts it by hand.
+- The router writes `router/events.jsonl` and `router/roles.json`; override with `GATEWAY_EVENTS`. Restart the router after updating so it emits events.
