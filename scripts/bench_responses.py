@@ -38,7 +38,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     idx = []
     for model, cs in sorted(per.items()):
-        lines = [f"# {model}", "", "Every stored response, per case, oldest first. Pass/fail verification is in the model-comparison table; "
+        lines = [f"# {model}", "", "Every stored response, per case, oldest first. Pass/fail verification is in Benchmark.md; "
                  "`status` here is only whether the router returned an answer.", ""]
         n = 0
         for cid in order:
