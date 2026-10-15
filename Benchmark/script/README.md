@@ -13,6 +13,9 @@ Prerequisites: the repo `.env`, Ollama (or an OpenAI-compatible endpoint) with t
 profiles installed (`python scripts/doctor.py` lists what is missing). Run from the repo root.
 
 - `results/benchmark.csv` is the only source of truth; never edit the generated block in `Benchmark.md` by hand.
+- Cloud endpoint: add `--endpoint https://api.anthropic.com/v1 --api-key-env ANTHROPIC_API_KEY` (export the key in your own shell; it is never printed). The hardware column becomes `cloud:<host>`.
+- Context mismatch: a cloud model has ~200k context against 16k local. Compare scores and `ctx_peak_tokens` (the window a run needed), not seconds.
+- A preflight (Docker, MCP profiles, Neo4j, endpoint, models) runs first and stops with a fix command on any failure.
 - `run_benchmark.py --from-json bench/<stamp>-<tag>.json` imports an earlier run without re-running.
 - Each case cell is `verified/n`; a case only counts as verified when the output is checked (file diff, test run, expected text), not when the model claims success.
 - Compare runs only when the `hardware` column matches.
