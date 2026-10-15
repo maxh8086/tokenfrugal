@@ -5,7 +5,7 @@ models:
   builder: qwen2.5-coder-yarn:3b
   thinker: llama3.2:3b-16k
 # Per-persona model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
-# Defaults = smallest adequate, then fastest measured solo model per persona (Benchmark/persona-model-selection.md). Edit here, or override
+# Defaults = smallest adequate, then fastest measured solo model per persona (Benchmark/Benchmark.md). Edit here, or override
 # without touching this file via `python -m scripts.persona_ui` (writes router/persona_models.json).
 # Personas not listed use their role's model. Tags come from models/trial/*.Modelfile.
 persona_models:

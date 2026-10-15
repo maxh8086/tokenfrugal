@@ -70,7 +70,7 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 ## Choosing a model per persona
 
-`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see `Benchmark/persona-defaults.md`). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
+`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see `Benchmark/Benchmark.md`). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
 
 Edit the mapping in a browser instead of the yaml:
 
@@ -82,7 +82,7 @@ Your changes are saved to `router/persona_models.json` (git-ignored, or set `TOK
 
 ## Model conclusions
 
-Measured on 16 real tool cases, 2 runs each, RTX 4060 8 GB, 16384 context. Full table with the reason per model: [Benchmark/model-conclusions.md](Benchmark/model-conclusions.md).
+Measured on 16 real tool cases, 2 runs each, RTX 4060 8 GB, 16384 context. Full table with the reason per model: [Benchmark/Benchmark.md](Benchmark/Benchmark.md).
 
 - Keep: `ts-qwen3-8b-16384` (28/32, slow), `ts-gemma4-e4b-16384` (27/32), `ts-qwen25c-7b-16384` (23/32, fastest of the strong ones), `llama3.2:3b-16k` (thinker, 20/32), `qwen2.5-coder-yarn:3b` (builder).
 - Remove: models that scored 0 to 2 of 32 (gemma3-4b, qwen2.5vl-7b, starcoder2-7b, granite3.3-8b, deepseek-r1-8b, phi4-mini) and those beaten on both score and time (ministral-3-8b, qwen2.5-7b, qwen3-4b, llama3.1-8b).
