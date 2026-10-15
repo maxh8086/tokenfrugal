@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-from . import claude_import, secrets_store
+from . import claude_import, profile_sync, secrets_store
 
 ROOT = Path(__file__).resolve().parent.parent
 _REAL_ENV = set(os.environ)  # set before .env is read: these beat both .env and the dashboard overrides
@@ -59,7 +59,11 @@ def _git_root(start: str):
 
 
 # Exact host path the Docker router may bind writable (defaults to the checkout; see docker catalogue volume).
-WORKSPACE = os.getenv("CC_WORKSPACE") or _git_root(os.getcwd()) or ROOT.as_posix()
+# Priority: real env var, then the git repo the client launched us from, then .env / dashboard value, then this checkout.
+WORKSPACE = profile_sync.resolve_workspace(
+    os.environ.get("CC_WORKSPACE") if "CC_WORKSPACE" in _REAL_ENV else None,
+    _git_root(os.getcwd()), os.getenv("CC_WORKSPACE"), ROOT.as_posix())
+os.environ["CC_WORKSPACE"] = WORKSPACE  # plan.py and child processes read the same value
 # Non-Docker MCP servers a role may use directly (name -> stdio command).
 SYNAPTREE_DIR = os.getenv("SYNAPTREE_DIR") or str(Path(__file__).resolve().parent.parent.parent / "synaptree-mcp")
 NATIVE_SERVERS = {

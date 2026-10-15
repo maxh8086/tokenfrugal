@@ -5,6 +5,21 @@ Last updated: 2026-10-12
 This file merges two handoffs. Part A covers the text-tool fix, dashboard STATUS chip and client names. Part B covers the PRISM Bonsai / Ternary-Bonsai benchmark and the Ollama 16k roster. Only this file is tracked in git. The worktree copy `prism-handoff.md` stays untracked and is superseded by Part B.
 
 ---
+## PRIORITY NEXT: concurrent docker runs (lease-based teardown)
+
+Problem: `router/compose.py` stops every `ts-mcp` container when the last router process exits, but "last" is judged per process, so two concurrent runs can tear each other down.
+
+Fix (best of both: containers still exit when no task is left, never under a live peer):
+- Each router writes a lease file (pid + start time + heartbeat) in a shared dir on start and removes it on exit.
+- On exit, a router stops `ts-mcp` only if no other live lease remains; leases of dead pids or stale heartbeats are pruned first.
+- `MCP_KEEP_ALIVE=1` / `keep_alive` keeps current behaviour. Tests first (fake pids, stale lease, two peers), then implement.
+
+---
+## Workspace auto-sync: DONE (2026-10-15)
+
+`CC_WORKSPACE` resolves as real env var, then cwd git root, then `.env`, then repo root (`router/profile_sync.py`). The router re-imports Docker MCP profiles on startup only when the workspace changed (marker `router/profiles_workspace.json`, gitignored).
+
+---
 ## Haiku tool-call verification: DONE (2026-10-15)
 
 Haiku (claude-haiku-5-5) calls all 9 router tools and all 83 role tools behind the Docker gateway (`tests/test_haiku_toolcalls.py --roles`: 83 pass, 0 fail). Offline suite: 183 tests OK. Live smoke: all roles pass; security is occasionally flaky because the 3B model writes a tool call as text (rerun passes).

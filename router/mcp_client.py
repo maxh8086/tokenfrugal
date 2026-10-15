@@ -6,7 +6,7 @@ import os
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from . import docker_mcp, secrets_store
+from . import docker_mcp, profile_sync, secrets_store
 from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
@@ -68,6 +68,7 @@ async def open_native(name: str):
 async def open_profile(profile: str, params: dict | None = None):
     """`docker mcp gateway run --profile`; catalog `params` (config/secrets, keyring: refs resolved) are pushed first."""
     docker = docker_mcp.docker_bin()
+    await asyncio.to_thread(profile_sync.ensure_profiles, WORKSPACE)  # no-op unless the workspace changed
     if params:
         await asyncio.to_thread(docker_mcp.apply_params, profile, params)
     sp = StdioServerParameters(command=docker,
