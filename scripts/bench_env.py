@@ -1,6 +1,6 @@
 """Environment and hardware capture for scripts/bench.py.
 
-No gateway imports here, so tests can load these helpers without starting the gateway.
+No router imports here, so tests can load these helpers without starting the router.
 """
 import os
 import re

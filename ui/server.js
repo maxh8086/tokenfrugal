@@ -1,26 +1,26 @@
-// Live dashboard for the tokenfrugal gateway: which role/model is running which task.
-// Zero dependencies. Tails gateway/events.jsonl (written by gateway/events.py) and streams it over SSE.
-//   node ui/server.js        ->  http://127.0.0.1:7777   (`port:` in gateway/ui.yaml; UI_PORT / GATEWAY_EVENTS override)
+// Live dashboard for the tokenfrugal router: which role/model is running which task.
+// Zero dependencies. Tails router/events.jsonl (written by router/events.py) and streams it over SSE.
+//   node ui/server.js        ->  http://127.0.0.1:7777   (`port:` in router/ui.yaml; UI_PORT / GATEWAY_EVENTS override)
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
 const os = require('node:os');
 
-function configPort() { // `port: N` from gateway/ui.yaml, the same file the launcher reads
+function configPort() { // `port: N` from router/ui.yaml, the same file the launcher reads
   try {
-    const m = /^port:\s*(\d+)/m.exec(fs.readFileSync(path.join(__dirname, '..', 'gateway', 'ui.yaml'), 'utf8'));
+    const m = /^port:\s*(\d+)/m.exec(fs.readFileSync(path.join(__dirname, '..', 'router', 'ui.yaml'), 'utf8'));
     return m ? Number(m[1]) : 7777;
   } catch { return 7777; }
 }
 function cfgNum(key, dflt) {
   try {
-    const m = new RegExp('^' + key + ':\\s*(\\d+)', 'm').exec(fs.readFileSync(path.join(__dirname, '..', 'gateway', 'ui.yaml'), 'utf8'));
+    const m = new RegExp('^' + key + ':\\s*(\\d+)', 'm').exec(fs.readFileSync(path.join(__dirname, '..', 'router', 'ui.yaml'), 'utf8'));
     return m ? Number(m[1]) : dflt;
   } catch { return dflt; }
 }
 const PORT = Number(process.env.UI_PORT || configPort());
-const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'gateway', 'events.jsonl');
+const EVENTS = process.env.GATEWAY_EVENTS || path.join(__dirname, '..', 'router', 'events.jsonl');
 const ROLES = path.join(path.dirname(EVENTS), 'roles.json');
 const OVERRIDES = path.join(path.dirname(EVENTS), 'config_overrides.json');
 const RECONNECT_REQUEST = path.join(path.dirname(EVENTS), 'reconnect_request.json');
@@ -29,9 +29,9 @@ const MAX_TASKS = 200;
 
 const tasks = new Map(); // id -> task
 const clients = new Set();
-const gateways = new Map(); // gateway pid -> MCP client name (Claude, Codex, ...)
-const HEALTH_STALE = 30; // seconds without a gateway health event before it counts as down
-const health = new Map(); // gateway pid -> {ts, status} from its latest health event
+const gateways = new Map(); // router pid -> MCP client name (Claude, Codex, ...)
+const HEALTH_STALE = 30; // seconds without a router health event before it counts as down
+const health = new Map(); // router pid -> {ts, status} from its latest health event
 let offset = 0;
 let tail = '';
 
@@ -50,7 +50,7 @@ function note(t, ts, text) {
 }
 
 function apply(ev) {
-  if (ev.pid && !gateways.has(ev.pid)) gateways.set(ev.pid, ''); // every event line carries its gateway pid
+  if (ev.pid && !gateways.has(ev.pid)) gateways.set(ev.pid, ''); // every event line carries its router pid
   if (ev.kind === 'client') { gateways.set(ev.pid, String(ev.name || '')); return null; }
   if (ev.kind === 'health') { health.set(ev.pid, { ts: ev.ts, status: ev.status }); return null; }
   let t = tasks.get(ev.id);
@@ -266,7 +266,7 @@ function roles() {
   try { return JSON.parse(fs.readFileSync(ROLES, 'utf8')); } catch { return { roles: [], divisions: {} }; }
 }
 
-// Settings written from the Configuration tab; gateway/config.py reads the same file at start.
+// Settings written from the Configuration tab; router/config.py reads the same file at start.
 function readOverrides() {
   try { return JSON.parse(fs.readFileSync(OVERRIDES, 'utf8')) || {}; } catch { return {}; }
 }
@@ -353,8 +353,8 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     return res.end(JSON.stringify({ ok: true, saved }));
   }
-  // Ask a running gateway to restart/reconnect one MCP server or all of them (no gateway restart).
-  // The gateway polls the request file (gateway/reconnect.py) and writes the outcome to the result file.
+  // Ask a running router to restart/reconnect one MCP server or all of them (no router restart).
+  // The router polls the request file (router/reconnect.py) and writes the outcome to the result file.
   if (url.pathname === '/api/mcp/restart' && req.method === 'POST') {
     let body = '';
     for await (const chunk of req) { body += chunk; if (body.length > 4096) return res.writeHead(413).end('too large'); }
@@ -377,15 +377,15 @@ const server = http.createServer(async (req, res) => {
         const out = JSON.parse(fs.readFileSync(RECONNECT_RESULT, 'utf8'));
         if (out.id === id) return reply(200, out);
       } catch { /* not written yet */ }
-      // still unclaimed after 5s: no gateway is polling
+      // still unclaimed after 5s: no router is polling
       if (Date.now() - t0 > 5000 && fs.existsSync(RECONNECT_REQUEST)) {
         try { fs.unlinkSync(RECONNECT_REQUEST); } catch { /* claimed meanwhile */ }
-        return reply(200, { ok: false, message: 'no gateway is running to handle the request' });
+        return reply(200, { ok: false, message: 'no router is running to handle the request' });
       }
     }
-    return reply(200, { ok: false, message: 'timed out waiting for the gateway' });
+    return reply(200, { ok: false, message: 'timed out waiting for the router' });
   }
-  if (url.pathname === '/health') { // gateway health, published by each gateway as health events
+  if (url.pathname === '/health') { // router health, published by each router as health events
     const now = Date.now() / 1000;
     const up = [...health.values()].some((h) => h.status === 'up' && now - h.ts < HEALTH_STALE);
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });

@@ -167,16 +167,16 @@
   </section>
   <section id="tab-configuration" hidden>
     <h2>Configuration</h2>
-    <p class="note">Saved to <code>gateway/config_overrides.json</code>. The gateway reads it at start, so restart it to apply (MCP servers can be restarted below without that). Blank fields use the value from <code>.env</code>.</p>
+    <p class="note">Saved to <code>router/config_overrides.json</code>. The router reads it at start, so restart it to apply (MCP servers can be restarted below without that). Blank fields use the value from <code>.env</code>.</p>
     <h3>Global settings</h3>
     <div class="cfg-grid" id="cfg-global"></div>
     <h3>MCP servers</h3>
-    <p class="note">Restart recreates a server's backend containers and reconnects to it. The gateway keeps running. A server used by a running task is skipped.</p>
+    <p class="note">Restart recreates a server's backend containers and reconnects to it. The router keeps running. A server used by a running task is skipped.</p>
     <div class="cfg-actions"><button type="button" id="mcp-all" onclick="restartMcp('all')">Reconnect all</button><span id="mcp-all-status" class="meta"></span></div>
     <div id="cfg-mcp-servers"></div>
     <h3>Roles: model and MCPs</h3>
     <p class="note">Each role runs one model with the MCPs ticked below. If no MCP is ticked, the role uses its default toolkit.</p>
-    <p class="cfg-note">Expand an agent to change its model and MCP servers. Expand an MCP server to see its tools and set each one to Auto, Ask or Disable. The checkbox sets which MCP servers the agent may use. The Auto / Ask / Disable settings are saved, but the gateway does not enforce them yet.</p>
+    <p class="cfg-note">Expand an agent to change its model and MCP servers. Expand an MCP server to see its tools and set each one to Auto, Ask or Disable. The checkbox sets which MCP servers the agent may use. The Auto / Ask / Disable settings are saved, but the router does not enforce them yet.</p>
     <div id="cfg-roles"></div>
     <div class="cfg-actions">
       <button type="button" id="cfg-save" onclick="saveConfig()">Save</button>
@@ -339,7 +339,7 @@ function showTab(name) {
 }
 async function loadUsage() { usage = await (await fetch('/api/usage')).json(); renderSaved(); if (activeTab === 'usage') renderUsage(); }
 function renderSaved() {
-  const u = T('usage').window ? usage : null, tot = u ? u.totals : {}; // strings arrive via roles.json on the next gateway start
+  const u = T('usage').window ? usage : null, tot = u ? u.totals : {}; // strings arrive via roles.json on the next router start
   const n = u ? tot.window.saved : [...tasks.values()].reduce((a, t) => a + (t.saved || 0), 0);
   const kids = [el('span', 'scope', u ? fill(T('usage').window, { h: u.windowHours }) : T('tokens_saved')), el('b', '', n.toLocaleString()), el('span', '', T('tokens_saved'))];
   if (u) {
@@ -436,7 +436,7 @@ async function buildConfig() {
     const body = el('div', 'cfg-role-body');
     const sel = el('select');
     const pick = (saved.role_models || {})[r.role] || '';
-    sel.append(new Option('default (personas.yaml)', ''));
+    sel.append(new Option('default (agents.yaml)', ''));
     const names = [...new Set([...models, ...(pick ? [pick] : [])])];
     for (const m of names) sel.append(new Option(m, m));
     sel.value = pick;
@@ -495,12 +495,12 @@ async function buildConfig() {
     rolesBox.append(card);
     cfgRoleInputs.push({ role: r.role, sel, boxes });
   }
-  if (!roles.length) rolesBox.append(el('p', 'empty', 'No roles loaded yet. Reload once the gateway has started.'));
+  if (!roles.length) rolesBox.append(el('p', 'empty', 'No roles loaded yet. Reload once the router has started.'));
   cfgBuilt = roles.length > 0;
   cfgStatus('');
 }
 
-// Ask the gateway to restart one MCP server (or 'all'); shows the result or the returned error next to the button.
+// Ask the router to restart one MCP server (or 'all'); shows the result or the returned error next to the button.
 async function restartMcp(target) {
   const st = $(target === 'all' ? 'mcp-all-status' : 'mcp-status-' + target);
   const btns = document.querySelectorAll('#tab-configuration button');
@@ -542,7 +542,7 @@ async function saveConfig() {
   try {
     const res = await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!res.ok) { cfgStatus('Save failed (' + res.status + '): ' + (await res.text())); return; }
-    cfgStatus('Saved. Restart the gateway to apply.');
+    cfgStatus('Saved. Restart the router to apply.');
   } catch (e) {
     cfgStatus('Save failed: ' + e.message);
   } finally {

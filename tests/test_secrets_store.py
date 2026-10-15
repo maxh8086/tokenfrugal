@@ -8,7 +8,7 @@ from keyring.backend import KeyringBackend
 from keyring.backends import fail
 from keyring.errors import PasswordDeleteError
 
-from gateway import secrets_store
+from router import secrets_store
 
 
 class FakeKeyring(KeyringBackend):

@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from gateway import config
-from gateway.config import load_personas, resolve_role
+from router import config
+from router.config import load_personas, resolve_role
 
 CLEAN = {"TOKENFRUGAL_MODEL_BUILDER": "", "TOKENFRUGAL_MODEL_THINKER": "", "TOKENFRUGAL_PERSONA_MODELS": ""}
 

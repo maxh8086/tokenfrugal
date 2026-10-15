@@ -1,11 +1,11 @@
 """Browser-toolkit round: Chrome DevTools slim (A) vs Playwright (B) vs Playwright + Lighthouse only (C).
-Does not touch gateway/personas.yaml: the role dict is overridden here.
+Does not touch router/personas.yaml: the role dict is overridden here.
 Usage: PYTHONPATH=. python Benchmark/rounds/20261010-playwright-browser/run_pw.py <ollama-tag> [toolkit ...]
 """
 import asyncio, json, sys, time
 from pathlib import Path
-import gateway.loop as L
-from gateway.config import load_personas, resolve_role
+import router.loop as L
+from router.config import load_personas, resolve_role
 
 RID = "20261010-playwright-browser"
 OUT = Path(__file__).parent / "raw"

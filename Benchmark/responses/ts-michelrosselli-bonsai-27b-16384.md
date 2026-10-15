@@ -139,25 +139,25 @@ InternalServerError: Error code: 500 - {'error': {'message': 'XML syntax error o
 ## role_analyzer #1  ·  2026-10-10 04:44  ·  task 1942354a8f  ·  status done
 
 ````text
-The `resolve_role` function is defined in `gateway/config.py` at line 81.
+The `resolve_role` function is defined in `router/config.py` at line 81.
 ````
 
 ## role_analyzer #2  ·  2026-10-10 04:45  ·  task e1fe19a1bf  ·  status done
 
 ````text
-The `resolve_role` function is defined in `gateway/config.py` at line 81.
+The `resolve_role` function is defined in `router/config.py` at line 81.
 ````
 
 ## role_analyzer #3  ·  2026-10-10 04:48  ·  task 4e61a31e0e  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `gateway/config.py` (line 81).
+The `resolve_role` function is defined in the file `router/config.py` (line 81).
 ````
 
 ## role_analyzer #4  ·  2026-10-10 04:49  ·  task 513245ef0d  ·  status done
 
 ````text
-The `resolve_role` function is defined in the file `gateway/config.py` (line 81).
+The `resolve_role` function is defined in the file `router/config.py` (line 81).
 ````
 
 ## role_data #1  ·  2026-10-10 04:49  ·  task cda60e5c26  ·  status done

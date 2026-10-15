@@ -1,5 +1,5 @@
 """Export every stored benchmark response per model: Benchmark/responses/<model>.md.
-Joins gateway/events.jsonl* (task_start: model, prompt, ts) with gateway/tasks.db (status, summary, detail)."""
+Joins router/events.jsonl* (task_start: model, prompt, ts) with router/tasks.db (status, summary, detail)."""
 import datetime as dt
 import json
 import re
@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from gateway.config import DB_PATH, ROOT
+from router.config import DB_PATH, ROOT
 from scripts.bench_real import cases
 
 OUT = ROOT / "Benchmark" / "responses"
@@ -17,7 +17,7 @@ OUT = ROOT / "Benchmark" / "responses"
 def main():
     by_prompt = {task: cid for cid, _a, _s, task, _c in cases()}
     starts = {}
-    for p in (ROOT / "gateway" / "events.jsonl.1", ROOT / "gateway" / "events.jsonl"):
+    for p in (ROOT / "router" / "events.jsonl.1", ROOT / "router" / "events.jsonl"):
         if p.exists():
             for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
                 try:
@@ -38,8 +38,8 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     idx = []
     for model, cs in sorted(per.items()):
-        lines = [f"# {model}", "", "Every stored response, per case, oldest first. Pass/fail verification is in the model-comparison table; "
-                 "`status` here is only whether the gateway returned an answer.", ""]
+        lines = [f"# {model}", "", "Every stored response, per case, oldest first. Pass/fail verification is in Benchmark.md; "
+                 "`status` here is only whether the router returned an answer.", ""]
         n = 0
         for cid in order:
             for i, (ts, tid, t) in enumerate(sorted(cs.get(cid, []), key=lambda x: x[0]), 1):

@@ -3,8 +3,8 @@
     python -m scripts.persona_ui [--port 7878]     # then open http://127.0.0.1:7878
 
 Pick a profile type (Financial analyst, Programmer, Data scientist, ...), a persona, the MCPs it may use
-(checkboxes or multi-select) and its model. Saves only changes to gateway/persona_mcps.json and
-gateway/persona_models.json. A blank model resets a persona to its role's model. Restart the MCP client to apply.
+(checkboxes or multi-select) and its model. Saves only changes to router/persona_mcps.json and
+router/persona_models.json. A blank model resets a persona to its role's model. Restart the MCP client to apply.
 """
 import argparse
 import json
@@ -13,9 +13,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import yaml
 
-from gateway import config
+from router import config
 
-YAML = config.Path(config.__file__).parent / "personas.yaml"
+YAML = config.Path(config.__file__).parent / "agents.yaml"
 
 
 def installed_models() -> list[str]:
@@ -80,8 +80,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/state":
             self._send(200, state())
         elif self.path == "/benchmark":
-            f = config.ROOT / "Benchmark" / "persona-config.html"
-            self._send(200 if f.exists() else 404, f.read_bytes() if f.exists() else b"run python -m scripts.bench_persona", "text/html; charset=utf-8")
+            f = config.ROOT / "Benchmark" / "explorer.html"
+            self._send(200 if f.exists() else 404, f.read_bytes() if f.exists() else b"run python Benchmark/script/build_report.py", "text/html; charset=utf-8")
         elif self.path in ("/", "/index.html"):
             self._send(200, PAGE.encode(), "text/html; charset=utf-8")
         else:

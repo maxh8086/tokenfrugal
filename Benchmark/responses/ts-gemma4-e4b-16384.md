@@ -200,25 +200,25 @@ LoopError: no final answer in 8 steps
 ## role_analyzer #1  ·  2026-10-10 03:09  ·  task 75412476cd  ·  status done
 
 ````text
-The function `resolve_role` is defined in `gateway/config.py`.
+The function `resolve_role` is defined in `router/config.py`.
 ````
 
 ## role_analyzer #2  ·  2026-10-10 03:09  ·  task b294db6304  ·  status done
 
 ````text
-The function `resolve_role` is defined in the file `gateway/config.py`.
+The function `resolve_role` is defined in the file `router/config.py`.
 ````
 
 ## role_analyzer #3  ·  2026-10-10 03:11  ·  task 34ed3921f7  ·  status done
 
 ````text
-The function `resolve_role` is defined in the file `gateway/config.py`.
+The function `resolve_role` is defined in the file `router/config.py`.
 ````
 
 ## role_analyzer #4  ·  2026-10-10 03:11  ·  task 571b215237  ·  status done
 
 ````text
-The function `resolve_role` is defined in the file `gateway/config.py`.
+The function `resolve_role` is defined in the file `router/config.py`.
 ````
 
 ## role_data #1  ·  2026-10-10 03:12  ·  task 27de488c45  ·  status done

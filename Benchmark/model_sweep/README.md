@@ -24,6 +24,6 @@ Omit `--models` to sweep every model from `ollama list` (minus embed and qwen2.5
 
 ## Notes
 
-- The copy here imports `gateway.*`, so run it from the repo root with `PYTHONPATH=.` as shown above. The canonical script still lives at `scripts/model_sweep.py`; re-copy it here after changes.
+- The copy here imports `router.*`, so run it from the repo root with `PYTHONPATH=.` as shown above. The canonical script still lives at `scripts/model_sweep.py`; re-copy it here after changes.
 - The `DEFAULT_OUT` path in the script points at the original scratchpad. Pass `--out` and `--tools-out` to write into `results/`.
 - Some builder rows failed with `LoopError`, `CheckFailed` and `BadRequest`. These have not been checked against transcripts yet.
