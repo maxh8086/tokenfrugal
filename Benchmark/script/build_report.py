@@ -391,53 +391,61 @@ const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"·"};
 const tie=(x,y)=>(y.pct-x.pct)||((x.s||1e9)-(y.s||1e9));
 const mmss=t=>t?Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0"):"";
 const mark=(r,c)=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(!m)return"·";const f=+m[1]/+m[2];let s=f===1?"🟩":f>0?"🟨":"🟥";if(f===0&&r.req.includes(c))s+="⚠";return s};
-const S={q:"",size:"",days:"",top:"10",sort:{rank:["pct",-1]}};
-function bar(){
- const b=$("bar");
- b.style.cssText="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;margin:8px 0";
- b.innerHTML=`<label>Model name <input id="fq" placeholder="e.g. qwen, gemma" style="width:150px"></label>
- <label>Size <select id="fs"><option value="">any</option><option value="4">up to 4B</option><option value="8">up to 8B</option><option value="14">up to 14B</option><option value="40">up to 40B</option></select></label>
- <label>Runs from <select id="fd"><option value="">all time</option><option value="7">last 7 days</option><option value="30">last 30 days</option><option value="90">last 90 days</option></select></label>
- <label>Show <select id="ft"><option value="5">top 5</option><option value="10" selected>top 10</option><option value="20">top 20</option><option value="0">all runs</option></select></label>
- <button id="fr">Reset</button><span id="fc" style="color:var(--mut)"></span>`;
- const go=()=>{S.q=$("fq").value.trim().toLowerCase();S.size=$("fs").value;S.days=$("fd").value;S.top=$("ft").value;draw()};
- ["fq","fs","fd","ft"].forEach(i=>$(i).addEventListener(i==="fq"?"input":"change",go));
- $("fr").onclick=()=>{$("fq").value="";$("fs").value="";$("fd").value="";$("ft").value="10";go()};
+const S={sort:{},f:{}};
+const DEF={rank:"10",rb:"5",rt:"5",hb:"10",ht:"10"};
+const TOPS={rank:[5,10,20,0],rb:[3,5,10,0],rt:[3,5,10,0],hb:[5,10,20,0],ht:[5,10,20,0]};
+function bar(id){
+ const f=S.f[id]={q:"",size:"",days:"",top:DEF[id]};
+ const b=$(id+"-bar");
+ b.style.cssText="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:13px;margin:8px 0";
+ b.innerHTML=`<label>Model name <input data-f="q" placeholder="e.g. qwen, gemma" style="width:140px"></label>
+ <label>Size <select data-f="size"><option value="">any</option><option value="4">up to 4B</option><option value="8">up to 8B</option><option value="14">up to 14B</option><option value="40">up to 40B</option></select></label>
+ <label>Runs from <select data-f="days"><option value="">all time</option><option value="7">last 7 days</option><option value="30">last 30 days</option><option value="90">last 90 days</option></select></label>
+ <label>Show <select data-f="top">${TOPS[id].map(n=>`<option value="${n}"${String(n)===DEF[id]?" selected":""}>${n?"top "+n:"all"}</option>`).join("")}</select></label>
+ <button type="button">Reset</button><span data-f="c" style="color:var(--mut)"></span>`;
+ const go=()=>{b.querySelectorAll("[data-f]").forEach(e=>{if(e.dataset.f!=="c")f[e.dataset.f]=e.value.trim().toLowerCase()});draw(id)};
+ b.querySelectorAll("input").forEach(e=>e.addEventListener("input",go));
+ b.querySelectorAll("select").forEach(e=>e.addEventListener("change",go));
+ b.querySelector("button").onclick=()=>{b.querySelectorAll("input").forEach(e=>e.value="");b.querySelectorAll("select").forEach(e=>e.value=e.dataset.f==="top"?DEF[id]:"");go()};
 }
 function cutoff(n){const d=new Date();d.setDate(d.getDate()-n);return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")}
 function table(id,cols,rows,key){
  const[k,dir]=S.sort[key]||[null,0],c=cols.find(c=>c.k===k);
  if(c&&c.v)rows=[...rows].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*dir||tie(x,y)});
+ return rows;
+}
+function render(id,cols,rows,key){
+ const[k,dir]=S.sort[key]||[null,0];
  const h=cols.map(c=>`<th data-k="${c.k}"${c.v?' style="cursor:pointer"':""}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
  const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
  $(id).innerHTML=`<table><thead><tr>${h}</tr></thead><tbody>${b}</tbody></table>`;
  $(id).querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{const c=cols.find(c=>c.k===t.dataset.k);if(!c.v)return;
-  const[k0,d0]=S.sort[key]||[];S.sort[key]=[c.k,k0===c.k?-d0:(c.str?1:-1)];draw()});
- return rows;
+  const[k0,d0]=S.sort[key]||[];S.sort[key]=[c.k,k0===c.k?-d0:(c.str?1:-1)];draw(id)});
 }
-function draw(){
- let R=D.filter(r=>(!S.q||r.model.toLowerCase().includes(S.q))&&(!S.size||(r.pb!=null&&r.pb<=+S.size))&&(!S.days||!r.day||r.day>=cutoff(+S.days)));
- R.sort(tie);
- const code=s=>"<code>"+esc(s)+"</code>";
- const cols=[{k:"n",l:"#",f:(r,i)=>i+1},
-  {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
-  {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
-  {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
-  {k:"score",l:"Score",v:r=>r.score,f:r=>r.score+"/"+r.max},
-  {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
-  {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
-  {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
-  {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
-  {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
-  {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
- const total=R.length;
- let V=table("rank",cols,R,"rank");
- const top=+S.top;if(top)V=V.slice(0,top);
- $("rank").querySelectorAll("tbody tr").forEach((tr,i)=>{tr.hidden=!!top&&i>=top});
- $("fc").textContent=`Showing ${V.length} of ${total} runs (of ${D.length})`;
- // per-role boards: local models only, each model's newest date in the filtered set
- const board=(id,cs,key)=>{
-  const newest={};R.forEach(r=>{newest[r.model]=r.day>(newest[r.model]||"")?r.day:newest[r.model]||r.day});
+const code=s=>"<code>"+esc(s)+"</code>";
+function sel(id){const f=S.f[id];
+ const R=D.filter(r=>(!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size))&&(!f.days||!r.day||r.day>=cutoff(+f.days)));
+ R.sort(tie);return R}
+function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').textContent=`Showing ${shown} of ${total} ${what}`}
+function draw(id){
+ const R=sel(id),top=+S.f[id].top;
+ if(id==="rank"){
+  const cols=[{k:"n",l:"#",f:(r,i)=>i+1},
+   {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
+   {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
+   {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
+   {k:"score",l:"Score",v:r=>r.score,f:r=>r.score+"/"+r.max},
+   {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
+   {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
+   {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
+   {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
+   {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
+   {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
+  let V=table(id,cols,R,"rank");if(top)V=V.slice(0,top);
+  render(id,cols,V,"rank");note(id,V.length,R.length,"runs");
+ }else if(id==="rb"||id==="rt"){
+  const cs=id==="rb"?BC:TC,newest={};
+  R.forEach(r=>{if(r.day>(newest[r.model]||""))newest[r.model]=r.day});
   const agg={};
   R.forEach(r=>{const[a,n]=cnt(r,cs);if(!n||r.model.startsWith("claude-")||r.day!==newest[r.model])return;
    const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,g:new Set,h:new Set,r});
@@ -455,18 +463,20 @@ function draw(){
    {k:"s",l:"s/case",v:m=>m.s||1e9,f:m=>m.s?m.s.toFixed(1):""},
    {k:"sh",l:"Shared memory GB",f:m=>m.r.shared||""},
    {k:"pull",l:"Pull command",f:m=>code(m.r.pull)}];
-  const[k,d]=S.sort[key]||[],c=rc.find(c=>c.k===k);
-  const sorted=c&&c.v?[...L].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*d}):L;
-  const lim=top?Math.min(top,5):5;
-  table(id,rc,sorted.slice(0,lim),key);
- };
- board("rb",BC,"rb");board("rt",TC,"rt");
- const heat=(id,cs)=>{const hc=[{k:"model",l:"Run",f:r=>code(r.model.slice(0,44))+" <small>"+r.day+"</small>"}]
-   .concat(cs.map(c=>({k:c,l:c.replace(/_/g," "),f:r=>mark(r,c)})));
-  table(id,hc,V,"h"+id)};
- heat("hb",BC);heat("ht",TC);
+  const[k,d]=S.sort[id]||[],c=rc.find(c=>c.k===k);
+  let V=c&&c.v?[...L].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*d}):L;
+  const all=V.length;if(top)V=V.slice(0,top);
+  render(id,rc,V,id);note(id,V.length,all,"local models");
+ }else{
+  const cs=id==="hb"?BC:TC;
+  const hc=[{k:"model",l:"Run",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model.slice(0,44))+" <small>"+r.day+"</small>"},
+   {k:"pct",l:"%",v:r=>frac(r,cs),f:r=>sub(r,cs)}]
+   .concat(cs.map(c=>({k:c,l:c.replace(/_/g," "),v:r=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");return m?+m[1]/+m[2]:-1},f:r=>mark(r,c)})));
+  let V=table(id,hc,R,id);if(top)V=V.slice(0,top);
+  render(id,hc,V,id);note(id,V.length,R.length,"runs");
+ }
 }
-bar();draw();
+["rank","rb","rt","hb","ht"].forEach(id=>{bar(id);draw(id)});
 el.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
 </script>"""
 def _data():
@@ -481,13 +491,13 @@ def _data():
     return out
 
 
-DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Filter and sort below; the default view shows the top runs by pass rate (ties by speed)._
-
-<div id="bar"></div>
+DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by pass rate (ties by speed)._
 
 ### Ranking
 
 {RANK_LEGEND_MD}
+
+<div id="rank-bar"></div>
 
 <div id="rank"></div>
 
@@ -497,9 +507,13 @@ Each role is ranked only on its own cases. Only a model's newest-dated runs coun
 
 **Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
 
+<div id="rb-bar"></div>
+
 <div id="rb"></div>
 
 **Thinker** (cases: {", ".join(f"`{c}`" for c in THINKER_CASES)})
+
+<div id="rt-bar"></div>
 
 <div id="rt"></div>
 
@@ -507,9 +521,13 @@ Charts, the legend and the roles table are in [explorer.html](explorer.html).
 
 ### Builder cases (code and file edits: needs write/edit tools)
 
+<div id="hb-bar"></div>
+
 <div id="hb"></div>
 
 ### Thinker cases (read, analyse, browse: needs read/graph/browser tools)
+
+<div id="ht-bar"></div>
 
 <div id="ht"></div>
 """
