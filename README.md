@@ -96,7 +96,7 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 ## Choosing a model per persona
 
-`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see `Benchmark/Benchmark.md`). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
+`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/)). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
 
 Edit the mapping in a browser instead of the yaml:
 
@@ -108,7 +108,7 @@ Your changes are saved to `router/persona_models.json` (git-ignored, or set `TOK
 
 ## Model results
 
-Model conclusions are pending a final re-run. The current measurements, the case list and the charts are in [Benchmark/Benchmark.md](Benchmark/Benchmark.md). Filter and sort the runs in the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html).
+Model conclusions are pending a final re-run. The current measurements, the case list and the charts are in the [live benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/). Filter and sort the runs in the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html).
 
 ## Adding MCP servers
 
