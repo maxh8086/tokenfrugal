@@ -392,16 +392,21 @@ function benchTop(n) {
     .sort((a, b) => b.ran - a.ran || b.pct - a.pct || a.speed - b.speed).slice(0, n)
     .map(({ speed, ...s }) => s);
 }
-// Default post pick: among runs passing at least BENCH_MIN_PCT, the highest tokens/s (walking down the list while
-// the score stays high). If none clears the floor, fall back to the best pass rate.
-const BENCH_MIN_PCT = 90;
+// Default post pick: among complete local runs (full check count, not partial reruns), the highest composite score.
+// composite = 0.6 * pass rate + 0.4 * ln(t/s) / ln(highest t/s among the candidates), so the speed reference moves with the pool.
+const POST_PASS_WEIGHT = 0.6;
+const POST_SPEED_WEIGHT = 0.4;
 function benchLatest() {
-  const all = benchTop(Infinity).filter((s) => s.ran);
+  const all = benchTop(Infinity).filter((s) => s.ran && !s.model.startsWith('claude-') && s.tps > 0);
   const full = Math.max(0, ...all.map((s) => s.ran));
-  const runs = all.filter((s) => s.ran === full); // only complete runs (full check count), not partial reruns
-  const good = runs.filter((s) => s.pct >= BENCH_MIN_PCT).sort((a, b) => (b.tps ?? -1) - (a.tps ?? -1) || b.pct - a.pct);
-  if (good.length) return good[0];
-  return runs.sort((a, b) => b.pct - a.pct || (b.tps ?? -1) - (a.tps ?? -1))[0] || null;
+  const runs = all.filter((s) => s.ran === full);
+  if (!runs.length) return null;
+  const maxTps = Math.max(...runs.map((s) => s.tps));
+  const scored = runs.map((s) => ({
+    ...s,
+    composite: POST_PASS_WEIGHT * (s.pct / 100) + POST_SPEED_WEIGHT * (Math.log(s.tps) / Math.log(maxTps)),
+  }));
+  return scored.sort((a, b) => b.composite - a.composite || b.pct - a.pct)[0];
 }
 function benchStart(b) {
   const model = typeof b.model === 'string' ? b.model.trim() : '';
