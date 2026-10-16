@@ -12,6 +12,7 @@ Haiku baseline stays intact unless a new cloud run is added there.
 import csv
 import html
 import json
+import math
 import re
 from pathlib import Path
 
@@ -112,7 +113,7 @@ def tps(r):
     return round(t / (s * m), 1) if s and m and t else None
 
 
-rows.sort(key=lambda r: (-pct(r), -(tps(r) or 0)))
+rows.sort(key=lambda r: (-(tps(r) or 0), -pct(r)))
 for r in rows:
     r["pct"] = round(pct(r))
     r["tps"] = tps(r)
@@ -120,6 +121,19 @@ for r in rows:
     r["source"], r["pull"] = origin(r["builder_model"])
     r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
     r["params_b"] = params_b(r["params"])
+
+
+# Composite score, the same formula as the post pick in ui/server.js: 0.6 x pass rate + 0.4 x ln(t/s) / ln(highest t/s).
+# Only local runs on the full check count take part; the speed reference is the highest t/s among those runs.
+# Cloud and partial runs get no composite (None) so they never shift the reference.
+_local = [r for r in rows if not r["builder_model"].startswith("claude-") and (r["tps"] or 0) > 0]
+_full = max((num(r, "max") for r in _local), default=0)
+_cands = [r for r in _local if num(r, "max") == _full]
+_max_tps = max((r["tps"] for r in _cands), default=1)
+for r in rows:
+    r["composite"] = None
+    if r in _cands and _max_tps > 1:
+        r["composite"] = round(0.6 * r["pct"] / 100 + 0.4 * math.log(r["tps"]) / math.log(_max_tps), 3)
 
 
 def mmss(v):
@@ -136,6 +150,7 @@ RANK_LEGEND = [
     "Pass rate % = Score / max.",
     "Builder / Thinker = the same score split by role cases.",
     "t/s = tokens generated per second (primary speed metric) = tokens out / (s per case x cases).",
+    "Composite = 0.6 x pass rate + 0.4 x ln(t/s) / ln(highest t/s), over full local runs (the post pick score). Blank = partial run or cloud baseline.",
     "s per case = mean seconds per case (secondary speed metric).",
     "Run time = wall clock for the whole run.",
     "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
@@ -145,13 +160,14 @@ RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
 
 
 def md_table():
-    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | t/s | s per case | Run time | Valid cases |",
-         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|"]
+    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | t/s | Composite | s per case | Run time | Valid cases |",
+         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
+        comp = "" if r["composite"] is None else f"{r['composite']:.3f}"
         o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
                  f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
-                 f"| {'' if r['tps'] is None else r['tps']} | {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
+                 f"| {'' if r['tps'] is None else r['tps']} | {comp} | {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
 
@@ -226,7 +242,7 @@ LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 ca
 auto = f"""<!-- BEGIN:auto -->
 _{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`._
 
-### Ranking (best score first, ties by speed)
+### Ranking (highest t/s first)
 
 {RANK_LEGEND_MD}
 
@@ -309,14 +325,14 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <div class="w"><table id="t"></table></div>
 <details open><summary>Charts (linked to the filters and table)</summary><div id="ch" class="ch"></div></details>
 <script>
-const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="pct",sd=-1;
+const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="tps",sd=-1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s","Tokens per second = tokens out / (s per case x cases) (higher is faster; primary speed metric)"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; secondary)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
+const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s","Tokens per second = tokens out / (s per case x cases) (higher is faster; primary speed metric)"],["composite","Composite","60% pass rate + 40% speed, speed relative to the fastest full run (higher is better; the post pick uses the same score)"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; secondary)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
 const wrap=(svg,n)=>`<div style="${n>30?"max-height:560px;overflow-y:auto":""}">${svg}</div>`;
 const SEL={band:null,model:null};
 const BANDS=[["90-100% (excellent)",90,101,"#2e9e5b"],["75-89% (good)",75,90,"#8bc34a"],["50-74% (fair)",50,75,"#d9a021"],["Below 50% (poor)",0,50,"#d0453b"]];
@@ -398,7 +414,7 @@ function sizeChart(R){
 }
 function draw(){
  const q=$("q").value.toLowerCase(),ms=+$("ms").value,mn=+$("mn").value||0,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value;
- const R0=D.filter(r=>r.pct>=ms&&(mn<=0||+r.tps>=mn)&&+r.s<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd));
+ const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&(mn<=0||+r.tps>=mn)&&+r.s<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;return(x>y?1:x<y?-1:0)*sd});
  const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(sn(SEL.model))} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
@@ -502,8 +518,10 @@ function render(id,cols,rows,key){
 }
 const code=s=>"<code>"+esc(s)+"</code>";
 function sel(id){const f=S.f[id];
- const R=D.filter(r=>(!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size))&&(!f.days||!r.day||r.day>=cutoff(+f.days)));
+ const R=D.filter(r=>r.model.startsWith("claude-")||((!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size))&&(!f.days||!r.day||r.day>=cutoff(+f.days))));
  R.sort(tie);return R}
+// Cloud baseline rows are always kept; "Show top N" counts local rows only.
+function topN(V,n,k){let c=0;return n?V.filter(x=>k(x).startsWith("claude-")||c++<n):V}
 function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').textContent=`Showing ${shown} of ${total} ${what}`}
 function draw(id){
  const R=sel(id),top=+S.f[id].top;
@@ -517,10 +535,11 @@ function draw(id){
    {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
    {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
    {k:"tps",l:"t/s",v:r=>r.tps||-1,f:r=>r.tps??""},
+   {k:"comp",l:"Composite",v:r=>r.comp??-1,f:r=>r.comp==null?"":r.comp.toFixed(3),t:"60% pass rate + 40% speed, speed relative to the fastest full run (higher is better; the post pick uses the same score)"},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
    {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
    {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
-  let V=table(id,cols,R,"rank");if(top)V=V.slice(0,top);
+  let V=table(id,cols,R,"rank");V=topN(V,top,r=>r.model);
   render(id,cols,V,"rank");note(id,V.length,R.length,"runs");
  }else if(id==="rb"||id==="rt"){
   const cs=id==="rb"?BC:TC,newest={};
@@ -545,14 +564,14 @@ function draw(id){
    {k:"pull",l:"Pull command",f:m=>code(m.r.pull)}];
   const[k,d]=S.sort[id]||[],c=rc.find(c=>c.k===k);
   let V=c&&c.v?[...L].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*d}):L;
-  const all=V.length;if(top)V=V.slice(0,top);
+  const all=V.length;V=topN(V,top,m=>m.model);
   render(id,rc,V,id);note(id,V.length,all,"local models");
  }else{
   const cs=id==="hb"?BC:TC;
   const hc=[{k:"model",l:"Run",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model.slice(0,44))+" <small>"+r.day+"</small>"},
    {k:"pct",l:"%",v:r=>frac(r,cs),f:r=>sub(r,cs)}]
    .concat(cs.map(c=>({k:c,l:c.replace(/_/g," "),v:r=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");return m?+m[1]/+m[2]:-1},f:r=>mark(r,c)})));
-  let V=table(id,hc,R,id);if(top)V=V.slice(0,top);
+  let V=table(id,hc,R,id);V=topN(V,top,r=>r.model);
   render(id,hc,V,id);note(id,V.length,R.length,"runs");
  }
 }
@@ -564,14 +583,14 @@ def _data():
     for r in rows:
         out.append({"model": r["builder_model"], "day": r["day"], "params": r["params"], "pb": r["params_b"],
                     "score": r["score"], "max": r["max"], "pct": r["pct"], "tps": r["tps"], "s": num(r, "mean_s_per_case"),
-                    "tot": num(r, "total_s"), "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
+                    "tot": num(r, "total_s"), "comp": r["composite"], "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
                     "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
                     "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
                     "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "") for c in CASES}})
     return out
 
 
-DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by pass rate (ties by speed)._
+DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by tokens/s (ties by pass rate)._
 
 ### Ranking
 
