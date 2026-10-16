@@ -152,6 +152,8 @@
     <button type="button" role="tab" data-tab="dashboard" aria-selected="true" onclick="showTab('dashboard')">Dashboard</button>
     <button type="button" role="tab" data-tab="configuration" aria-selected="false" onclick="showTab('configuration')">Configuration</button>
     <button type="button" role="tab" data-tab="usage" aria-selected="false" onclick="showTab('usage')">Usage</button>
+    <button type="button" role="tab" data-tab="benchmark" aria-selected="false" onclick="showTab('benchmark')">Benchmark</button>
+    <button type="button" role="tab" data-tab="explorer" aria-selected="false" onclick="showTab('explorer')">Explorer</button>
   </nav>
   <section id="tab-dashboard">
   <div class="brand">
@@ -186,6 +188,41 @@
   </section>
   <section id="tab-usage" hidden>
     <div id="usage"></div>
+  </section>
+  <section id="tab-benchmark" hidden>
+    <iframe id="bidx" title="Benchmark index" scrolling="no" onload="fitFrame(this)" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px;margin-bottom:10px"></iframe>
+    <details id="brun"><summary style="font-size:1.05em;font-weight:600;padding:10px 14px;margin-bottom:10px;border:1px solid #4c8dff;border-radius:8px;background:rgba(76,141,255,.12);color:#9cc3ff;cursor:pointer">Test my model</summary>
+    <p class="note">Test one model on the real-world coding cases (same harness as the published results). Pick an installed Ollama model, or give an OpenAI-compatible endpoint URL.</p>
+    <div class="cfg-actions">
+      <label>Model <select id="bm"></select></label>
+      <label>or endpoint URL <input id="bu" size="30" placeholder="http://127.0.0.1:8282/v1"></label>
+      <label>Repeats <input id="bn" type="number" min="1" max="10" value="2" style="width:56px"></label>
+      <button type="button" id="bgo" onclick="benchGo()">Run benchmark</button>
+      <button type="button" id="bstop" onclick="benchStop()" hidden>Stop</button>
+      <span id="bst" class="meta"></span>
+    </div>
+    <pre id="blog" class="note" style="white-space:pre-wrap;max-height:260px;overflow:auto">No run yet.</pre>
+    <div id="bres" hidden>
+      <h3>Share your results</h3>
+      <p id="bsum"></p>
+      <p>Share <select id="bwhat"><option value="index">Benchmark index</option><option value="explorer">Explorer</option></select></p>
+      <p>Tag on LinkedIn <input id="tli" size="38"> Tag on X <input id="ttw" size="20"> <span class="meta">(defaults to the project author; edit or clear)</span></p>
+      <p><textarea id="btxt" rows="7" style="width:100%"></textarea></p>
+      <p><canvas id="bimg" width="1200" height="627" style="width:100%;max-width:480px;border-radius:8px;border:1px solid #8884"></canvas></p>
+      <dialog id="lidlg" style="max-width:560px;width:92%;border-radius:12px;padding:18px">
+<h3 style="margin-top:0">LinkedIn</h3>
+<div style="border:1px solid #8886;border-radius:8px;padding:10px;margin-bottom:10px"><b>1. Text</b><textarea id="litxt" readonly rows="6" style="width:100%;margin:6px 0"></textarea><button type="button" onclick="liCopyText()">Copy text</button> <span id="lim1" class="meta"></span></div>
+<div style="border:1px solid #8886;border-radius:8px;padding:10px;margin-bottom:10px"><b>2. Image</b><p><img id="liimg" style="width:100%;border-radius:6px"></p><button type="button" onclick="liCopyImg()">Copy image</button> <button type="button" onclick="dlImg()">Download</button> <span id="lim2" class="meta"></span></div>
+<p>3. <a href="https://www.linkedin.com/feed/?shareActive=true" target="_blank" rel="noopener">Post</a></p>
+<button type="button" onclick="$('lidlg').close()">Close</button></dialog>
+<div class="cfg-actions"><button type="button" onclick="shareLi()">LinkedIn</button><button type="button" onclick="shareTw()">Share on X</button><button type="button" onclick="copyShare()">Copy text</button><button type="button" onclick="copyImg()">Copy image</button><button type="button" onclick="dlImg()">Download image</button><span id="cpm" class="meta"></span></div>
+      <p class="meta">LinkedIn cannot prefill a post. Clicking Share on LinkedIn copies the text and opens the composer: press Ctrl+V for the text, then attach the downloaded image (or paste it after Copy image).</p>
+      <p class="note">LinkedIn cannot prefill text from a link: the text is copied for you, paste it into the post box that opens.</p>
+    </div>
+    </details>
+  </section>
+  <section id="tab-explorer" hidden>
+    <iframe id="expl" title="Benchmark explorer" scrolling="no" onload="fitFrame(this)" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px"></iframe>
   </section>
 </main>
 <script>
@@ -329,13 +366,119 @@ const num = (n) => Number(n || 0).toLocaleString();
 let activeTab = 'dashboard';
 function showTab(name) {
   activeTab = name;
-  for (const n of ['dashboard', 'configuration', 'usage']) {
+  for (const n of ['dashboard', 'configuration', 'usage', 'benchmark', 'explorer']) {
     $('tab-' + n).hidden = n !== name;
     const b = document.querySelector(`.tabs button[data-tab="${n}"]`);
     b.setAttribute('aria-selected', String(n === name)); b.classList.toggle('active', n === name);
   }
   if (name === 'usage') renderUsage();
   if (name === 'configuration') buildConfig();
+  if (name === 'benchmark') { benchInit(); if (!$('bidx').src) $('bidx').src = '/Benchmark/index.html'; }
+  if (name === 'explorer' && !$('expl').src) $('expl').src = '/Benchmark/explorer.html';
+}
+const BENCH_BASE = 'https://maxh8086.github.io/tokenfrugal/Benchmark/', BENCH_GH = 'https://github.com/maxh8086/tokenfrugal';
+let benchTimer = null, benchSum = null;
+function fitFrame(f) {
+  try {
+    if (f.id === 'expl') for (const a of f.contentDocument.querySelectorAll('a[href="index.html"]')) a.parentElement.hidden = true;
+    const nav = f.contentDocument.querySelector('nav');
+    if (f.id === 'bidx' && nav) for (const x of nav.querySelectorAll('a')) {
+      if (/explorer/i.test(x.textContent) && !x.dataset.tab) {
+        x.dataset.tab = 1; x.textContent = 'Explorer';
+        x.onclick = (e) => { e.preventDefault(); showTab('explorer'); scrollTo(0, 0); };
+      }
+    }
+    if (f.id === 'bidx' && !f.contentDocument.documentElement.dataset.li) { f.contentDocument.documentElement.dataset.li = 1; f.contentDocument.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href*="linkedin.com"]'); if (a) { e.preventDefault(); shareLi(); } }, true); }
+    if (f.id === 'bidx' && nav) for (const x of nav.querySelectorAll('a')) {
+      if (/raw data/i.test(x.textContent)) { x.textContent = 'Export (CSV)'; x.href = '/Benchmark/results/benchmark.csv'; x.setAttribute('download', 'benchmark.csv'); }
+    }
+    if (f.id === 'bidx' && nav) for (const x of nav.querySelectorAll('a')) {
+      if (/run or add a model/i.test(x.textContent)) {
+        x.textContent = 'Test Model'; x.href = '#'; x.removeAttribute('target');
+        x.onclick = (e) => { e.preventDefault(); const d = $('brun'); d.open = true; benchInit(); d.scrollIntoView({ behavior: 'smooth' }); };
+      }
+    }
+    const d = f.contentDocument, set = () => { f.style.height = d.documentElement.scrollHeight + 'px'; };
+    set(); new ResizeObserver(set).observe(d.body);
+  } catch (e) { /* cross-origin: keep fixed height */ }
+}
+function modelOpts(id) {
+  const sel = $(id), models = (state.services && state.services.ollama && state.services.ollama.models) || [];
+  if (sel.options.length !== models.length) sel.replaceChildren(...models.map((m) => { const o = document.createElement('option'); o.value = o.textContent = m; return o; }));
+}
+function benchInit() {
+  modelOpts('bm');
+  if (!$('tli').value && !$('tli').dataset.set) { $('tli').value = 'https://www.linkedin.com/in/vpavtekar'; $('ttw').value = '@vaibhavpavtekar'; $('tli').dataset.set = 1; }
+  benchPoll();
+}
+async function benchGo() {
+  const url = $('bu').value.trim();
+  const body = { n: Number($('bn').value) || 2 };
+  if (url) body.url = url; else body.model = $('bm').value;
+  const r = await (await fetch('/api/bench/start', { method: 'POST', body: JSON.stringify(body) })).json();
+  if (!r.ok) { $('bst').textContent = r.error; return; }
+  $('bres').hidden = true; benchPoll();
+}
+async function benchStop() { await fetch('/api/bench/stop', { method: 'POST' }); }
+async function benchPoll() {
+  clearTimeout(benchTimer);
+  const j = await (await fetch('/api/bench/status')).json();
+  $('bgo').disabled = j.running; $('bstop').hidden = !j.running;
+  $('bst').textContent = j.running ? 'running ' + j.tag + '...' : (j.code == null ? '' : j.code === 0 ? 'finished' : 'exited with code ' + j.code);
+  if (j.log.length) { const b = $('blog'); b.textContent = j.log.join('\n'); b.scrollTop = b.scrollHeight; }
+  if (j.running) benchTimer = setTimeout(benchPoll, 1500);
+  else if (j.summary) { benchSum = j.summary; benchShowShare(); }
+}
+function benchShowShare() {
+  const s = benchSum;
+  $('bres').hidden = false;
+  $('bsum').textContent = `${s.tag}: ${s.verified}/${s.ran} checks passed (${s.pct}%) across ${s.cases} cases` + (s.s_per_case != null ? `, ~${s.s_per_case}s per case` : '');
+  $('bwhat').onchange = $('tli').oninput = $('ttw').oninput = benchText; benchText(); drawImg();
+}
+function benchLink() { return BENCH_BASE + ($('bwhat').value === 'explorer' ? 'explorer.html' : ''); }
+const LI_TAG = '@vpavtekar'; // LinkedIn handle in the shared text; X share swaps in the X field
+function liHandle() { return LI_TAG; }
+function benchText() {
+  const s = benchSum, tw = liHandle();
+  $('btxt').value = `🚀💥 Boom! My (${s.model || s.tag}) model just scored ${s.verified}/${s.ran} (${s.pct}%) on the TokenFrugal Benchmark! 🧠🔥\n\n` +
+    `Try your own model using ${BENCH_GH} shared by ${tw}. Share me your results below so we can see how different hardware performs!\n` +
+    `#LocalLLM #Ollama #TokenFrugal`;
+}
+async function copyShare() { try { await navigator.clipboard.writeText($('btxt').value); $('cpm').textContent = 'copied'; } catch { $('btxt').select(); $('cpm').textContent = 'press Ctrl+C'; } }
+function drawImg() {
+  const s = benchSum, c = $('bimg'), x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 1200, 627); g.addColorStop(0, '#0f172a'); g.addColorStop(1, '#1e3a8a');
+  x.fillStyle = g; x.fillRect(0, 0, 1200, 627);
+  x.fillStyle = '#93c5fd'; x.font = '600 34px system-ui,sans-serif'; x.fillText('TokenFrugal local LLM benchmark', 70, 100);
+  x.fillStyle = '#fff'; x.font = '700 64px system-ui,sans-serif';
+  const full = s.model || s.tag; let t = full; while (x.measureText(t).width > 1060 && t.length > 4) t = t.slice(0, -2); if (t !== full) t += '…';
+  x.fillText(t, 70, 200);
+  x.fillStyle = '#4ade80'; x.font = '800 190px system-ui,sans-serif'; x.fillText(s.pct + '%', 70, 400);
+  x.fillStyle = '#e2e8f0'; x.font = '500 40px system-ui,sans-serif';
+  x.fillText(`${s.verified}/${s.ran} checks passed`, 520, 330);
+  x.fillText(`${s.cases} real-world coding cases` + (s.s_per_case != null ? ` · ~${s.s_per_case}s each` : ''), 520, 390);
+  x.fillStyle = '#94a3b8'; x.font = '500 30px system-ui,sans-serif';
+  x.fillText('Run on my own machine · github.com/maxh8086/tokenfrugal', 70, 560);
+}
+function imgBlob() { return new Promise((r) => $('bimg').toBlob(r, 'image/png')); }
+async function copyImg() {
+  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': await imgBlob() })]); $('cpm').textContent = 'image copied'; } catch { $('cpm').textContent = 'copy blocked, use Download image'; }
+}
+async function dlImg() { const a = document.createElement('a'); a.href = URL.createObjectURL(await imgBlob()); a.download = 'tokenfrugal-benchmark.png'; a.click(); }
+function shareLi() { window.open('/post.html', '_blank', 'noopener'); }
+function shareLiDialog() {
+  if (benchSum) { $('litxt').value = $('btxt').value; $('liimg').src = $('bimg').toDataURL('image/png'); }
+  else { $('litxt').value = `🚀💥 Boom! My model just took on the TokenFrugal Benchmark! 🧠🔥
+
+Try your own model using ${BENCH_GH} shared by ${liHandle()}. Share me your results below so we can see how different hardware performs!
+#LocalLLM #Ollama #TokenFrugal`; $('liimg').removeAttribute('src'); } $('lim1').textContent = $('lim2').textContent = ''; $('lidlg').showModal(); }
+async function liCopyText() { try { await navigator.clipboard.writeText($('litxt').value); $('lim1').textContent = 'copied'; } catch { $('litxt').select(); $('lim1').textContent = 'press Ctrl+C'; } }
+async function liCopyImg() { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': await imgBlob() })]); $('lim2').textContent = 'copied'; } catch { $('lim2').textContent = 'copy failed, use Download'; } }
+async function shareTw() {
+  await dlImg();
+  const li = $('tli').value.trim(), xTag = $('ttw').value.trim() || '@vaibhavpavtekar';
+  const text = $('btxt').value.replace(li, '').split(LI_TAG).join(xTag).replace(/\n{3,}/g, '\n\n').trim();
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(benchLink()), '_blank', 'noopener');
 }
 async function loadUsage() { usage = await (await fetch('/api/usage')).json(); renderSaved(); if (activeTab === 'usage') renderUsage(); }
 function renderSaved() {
@@ -568,7 +711,7 @@ function connect() {
   es.onerror = () => { $('conn').className = ''; $('conn').textContent = word('conn', 'reconnecting'); };
 }
 
-showTab('dashboard');
+if (location.hash === '#share-li') { showTab('benchmark'); let n = 0; const waitSum = setInterval(() => { if (benchSum || ++n > 8) { clearInterval(waitSum); shareLi(); } }, 250); } else showTab('dashboard');
 load().catch(() => {});
 loadUsage().catch(() => {});
 connect();

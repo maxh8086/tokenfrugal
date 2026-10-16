@@ -316,6 +316,115 @@ function cleanOverrides(input) {
   return out;
 }
 
+// ---- Benchmark runner: spawns scripts.bench_model and summarises bench/<tag>/*.json
+const REPO = path.join(__dirname, '..');
+const JOB = { running: false, tag: '', log: [], summary: null, proc: null, code: null };
+const sanitize = (s) => (String(s).replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^[._-]+|[._-]+$/g, '') || 'bench');
+function urlTag(u) {
+  const p = new URL(u);
+  return sanitize(p.port ? `${p.hostname}_${p.port}` : p.hostname);
+}
+function benchSummary(tag) {
+  const dir = path.join(REPO, 'bench', tag);
+  let files;
+  try { files = fs.readdirSync(dir).filter((f) => f.endsWith('.json')); } catch { return null; }
+  files = files.map((f) => [f, fs.statSync(path.join(dir, f)).mtimeMs]).sort((a, b) => b[1] - a[1]);
+  for (const [f] of files) {
+    let data;
+    try { data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch { continue; }
+    const rw = data && data.results && data.results.realworld;
+    if (!rw || typeof rw !== 'object') continue;
+    let verified = 0, ran = 0; const p50 = [];
+    // per-case counts are "passed/total" strings in the result files; plain numbers are accepted too
+    const frac = (v) => { const m = String(v ?? '').match(/^(\d+)\s*\/\s*(\d+)$/); return m ? [+m[1], +m[2]] : [Number(v) || 0, 0]; };
+    for (const c of Object.values(rw)) {
+      const [ok, total] = frac(c.verified);
+      verified += ok; ran += String(c.verified).includes('/') ? total : Number(c.ran) || 0;
+      if (c.s && typeof c.s.p50 === 'number') p50.push(c.s.p50);
+    }
+    const cases = Object.keys(rw).length;
+    return { tag, verified, ran, cases, pct: ran ? Math.round((100 * verified) / ran) : 0,
+      s_per_case: p50.length ? Math.round((10 * p50.reduce((a, b) => a + b, 0)) / p50.length) / 10 : null };
+  }
+  return null;
+}
+// Local runs only (Benchmark/results/benchmark.csv; the cloud baseline is excluded). Ranked by number of checks run,
+// then pass rate (score / max), then mean seconds per case (faster first). Best run per model.
+function csvRows(file) {
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return []; }
+  const split = (line) => { // quote-aware, so notes with commas do not shift the columns
+    const out = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (q) { if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ',') { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur); return out;
+  };
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const head = split(lines[0]);
+  return lines.slice(1).map((l) => { const c = split(l); return Object.fromEntries(head.map((h, i) => [h, c[i] ?? ''])); });
+}
+function benchTop(n) {
+  const dir = path.join(REPO, 'Benchmark', 'results');
+  const rows = csvRows(path.join(dir, 'benchmark.csv'));
+  const num = (r, k) => { const v = parseFloat(r[k]); return Number.isFinite(v) ? v : 0; };
+  const best = new Map();
+  for (const r of rows) {
+    const model = r.builder_model || r.tag;
+    if (!model || !num(r, 'max')) continue;
+    const pct = Math.round((100 * num(r, 'score')) / num(r, 'max'));
+    const speed = num(r, 'mean_s_per_case');
+    // Output tokens summed over every check, divided by the wall time those checks took (mean s/case x checks run).
+    const tokOut = num(r, 'tokens_out_per_run');
+    const tps = speed && num(r, 'max') && tokOut ? Math.round((10 * tokOut) / (speed * num(r, 'max'))) / 10 : null;
+    const cur = best.get(model);
+    if (!cur || pct > cur.pct || (pct === cur.pct && speed < cur.speed)) {
+      best.set(model, { model, tag: r.tag, verified: num(r, 'score'), ran: num(r, 'max'), cases: num(r, 'max'),
+        pct, speed, s_per_case: Math.round(10 * speed) / 10 || null, tps });
+    }
+  }
+  return [...best.values()]
+    .sort((a, b) => b.ran - a.ran || b.pct - a.pct || a.speed - b.speed).slice(0, n)
+    .map(({ speed, ...s }) => s);
+}
+// Default post pick: among runs passing at least BENCH_MIN_PCT, the highest tokens/s (walking down the list while
+// the score stays high). If none clears the floor, fall back to the best pass rate.
+const BENCH_MIN_PCT = 90;
+function benchLatest() {
+  const all = benchTop(Infinity).filter((s) => s.ran);
+  const full = Math.max(0, ...all.map((s) => s.ran));
+  const runs = all.filter((s) => s.ran === full); // only complete runs (full check count), not partial reruns
+  const good = runs.filter((s) => s.pct >= BENCH_MIN_PCT).sort((a, b) => (b.tps ?? -1) - (a.tps ?? -1) || b.pct - a.pct);
+  if (good.length) return good[0];
+  return runs.sort((a, b) => b.pct - a.pct || (b.tps ?? -1) - (a.tps ?? -1))[0] || null;
+}
+function benchStart(b) {
+  const model = typeof b.model === 'string' ? b.model.trim() : '';
+  const endpoint = typeof b.url === 'string' ? b.url.trim() : '';
+  if (!!model === !!endpoint) throw new Error('give exactly one of model or url');
+  if (endpoint && !/^https?:\/\/[^/\s]+/i.test(endpoint)) throw new Error('url must start with http:// or https://');
+  if (JOB.running) throw new Error('a benchmark is already running');
+  const n = Math.max(1, Math.min(10, parseInt(b.n, 10) || 2));
+  const tag = model ? sanitize(model) : urlTag(endpoint);
+  const venv = path.join(REPO, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+  const py = fs.existsSync(venv) ? venv : 'python';
+  const args = ['-m', 'scripts.bench_model', '--n', String(n), ...(model ? ['--model', model] : ['--url', endpoint])];
+  Object.assign(JOB, { running: true, tag, log: [], summary: null, code: null });
+  const { spawn } = require('node:child_process');
+  const proc = spawn(py, args, { cwd: REPO, env: { ...process.env, PYTHONPATH: REPO, PYTHONUNBUFFERED: '1' } });
+  JOB.proc = proc;
+  const push = (d) => { for (const l of String(d).split(/\r?\n/)) if (l.trim()) JOB.log.push(l); if (JOB.log.length > 400) JOB.log.splice(0, JOB.log.length - 400); };
+  proc.stdout.on('data', push); proc.stderr.on('data', push);
+  proc.on('error', (e) => { push('failed to start: ' + e.message); JOB.running = false; JOB.proc = null; });
+  proc.on('close', (code) => { JOB.code = code; JOB.running = false; JOB.proc = null; JOB.summary = benchSummary(tag); if (JOB.summary) JOB.summary.model = model || endpoint; });
+  return tag;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/api/state') {
@@ -401,6 +510,56 @@ const server = http.createServer(async (req, res) => {
     clients.add(res);
     return req.on('close', () => clients.delete(res));
   }
+  if (url.pathname === '/api/modeltest' && req.method === 'POST') {
+    let body = '';
+    for await (const chunk of req) { body += chunk; if (body.length > 16384) return res.writeHead(413).end('too large'); }
+    let b; try { b = JSON.parse(body || '{}'); } catch { return res.writeHead(400).end('bad json'); }
+    const out = (o) => { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(o)); };
+    if (!b.model || !b.prompt) return out({ ok: false, error: 'model and prompt required' });
+    const t0 = Date.now();
+    try {
+      const r = await fetch(String(roles().llm_url || '').replace(/\/$/, '') + '/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: String(b.model), messages: [{ role: 'user', content: String(b.prompt) }], temperature: 0.1, max_tokens: 800 }), signal: AbortSignal.timeout(120000) });
+      const j = await r.json();
+      const text = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      return out(text == null ? { ok: false, error: JSON.stringify(j).slice(0, 400) } : { ok: true, text, seconds: Math.round((Date.now() - t0) / 100) / 10 });
+    } catch (e) { return out({ ok: false, error: 'LLM endpoint unreachable: ' + e.message }); }
+  }
+  if (url.pathname === '/api/bench/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ running: JOB.running, tag: JOB.tag, log: JOB.log.slice(-60), summary: JOB.summary, code: JOB.code }));
+  }
+  if (url.pathname === '/api/bench/top') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ top: benchTop(3) }));
+  }
+  if (url.pathname === '/api/bench/latest') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ latest: benchLatest() }));
+  }
+  if (url.pathname === '/api/bench/stop' && req.method === 'POST') {
+    if (JOB.proc) { try { JOB.proc.kill(); } catch { /* gone */ } }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end('{"ok":true}');
+  }
+  if (url.pathname === '/api/bench/start' && req.method === 'POST') {
+    let body = '';
+    for await (const chunk of req) { body += chunk; if (body.length > 4096) return res.writeHead(413).end('too large'); }
+    let input;
+    try { input = JSON.parse(body || '{}'); } catch { return res.writeHead(400).end('bad json'); }
+    const reply = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
+    try { return reply(200, { ok: true, tag: benchStart(input || {}) }); } catch (e) { return reply(400, { ok: false, error: e.message }); }
+  }
+  if (url.pathname.startsWith('/Benchmark/')) { // local copy of the published benchmark pages (Explorer tab)
+    const root = path.join(__dirname, '..', 'Benchmark');
+    const file = path.join(root, decodeURIComponent(url.pathname.slice('/Benchmark/'.length)) || 'index.html');
+    if (!file.startsWith(root + path.sep)) return res.writeHead(403).end('forbidden');
+    try {
+      const types = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
+      res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+      return res.end(fs.readFileSync(file));
+    } catch { return res.writeHead(404).end('not found'); }
+  }
   if (url.pathname === '/logo.svg') {
     try {
       const svg = fs.readFileSync(path.join(__dirname, '..', 'assets', 'logo.svg'));
@@ -409,8 +568,12 @@ const server = http.createServer(async (req, res) => {
     } catch { return res.writeHead(404).end('not found'); }
   }
   if (url.pathname === '/') {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     return res.end(fs.readFileSync(path.join(__dirname, 'index.html')));
+  }
+  if (url.pathname === '/post.html') { // ready-to-post page: text, benchmark image, LinkedIn/X links
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    return res.end(fs.readFileSync(path.join(__dirname, 'post.html')));
   }
   res.writeHead(404).end('not found');
 });
