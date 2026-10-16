@@ -20,7 +20,7 @@ LAYOUT = [
     ("find_symbol", "find_symbol", "synaptree-mcp (maxh8086/synaptree-mcp)"),
     ("review_sqli", "review_sqli", "Filesystem MCP server (mcp/filesystem)"),
     ("debug_trace", "debug_trace", "Filesystem MCP server (mcp/filesystem)"),
-    ("summarize_readme", "summarize_readme", "Fetch MCP server (mcp/fetch)"),
+    ("summarize_readme", "summarize_readme", "Read local README and summarize (docs role, read_file)"),
     ("role_analyzer", "code_graph_search", "synaptree-mcp (maxh8086/synaptree-mcp)"),
     ("role_data", "list_project_files", "Filesystem MCP server (mcp/filesystem)"),
     ("role_docs", "read_docs_file", "Filesystem MCP server (mcp/filesystem)"),
@@ -36,7 +36,7 @@ PERSONAS = {
     "write_function": "engineering-backend-architect", "fix_bug": "engineering-backend-architect",
     "write_tests": "engineering-backend-architect", "rename_across_files": "engineering-backend-architect",
     "find_symbol": "engineering-backend-architect", "review_sqli": "testing-code-reviewer",
-    "debug_trace": "engineering-sre", "summarize_readme": "support-docs-writer",
+    "debug_trace": "engineering-sre", "summarize_readme": "engineering-technical-writer",
     "role_analyzer": "engineering-software-architect", "role_data": "gis-analyst",
     "role_docs": "engineering-technical-writer", "role_security": "security-auditor",
     "role_designer": "design-ui-designer", "role_browser": "testing-evidence-collector",
@@ -86,6 +86,33 @@ def rows(data):
     tag = data.get("tag", "")
     mean = round(sum(means) / len(means), 1) if means else ""
     return [[tag, _params(tag), f"{v_tot}/{v_n}", f"{r_tot}/{v_n}", mean] + cells]
+
+
+def status_scores(cases):
+    """(valid_cases, infra_cases, mean_s_valid) over realworld case results.
+    A case whose status is "infra" (synaptree container down, see bench_real.case_status) counts only in
+    infra_cases and is excluded from the mean. mean_s_valid is "" when no valid case has timings."""
+    valid = infra = 0
+    means = []
+    for c in cases.values():
+        if c.get("status") == "infra":
+            infra += 1
+            continue
+        valid += 1
+        if c.get("s"):
+            means.append(c["s"]["mean"])
+    mean = round(sum(means) / len(means), 1) if means else ""
+    return valid, infra, mean
+
+
+def total_seconds(cases):
+    """Wall time in whole seconds of every repeat that ran, infra repeats included (their elapsed time is real).
+    Sums the per-repeat "s" field that bench_real.run also feeds into the case timings. 0 when nothing ran."""
+    total = 0.0
+    for c in cases.values():
+        if isinstance(c, dict):  # skips a section-level {"error": ...} entry
+            total += sum(x.get("s", 0.0) for x in c.get("runs", []))
+    return round(total)
 
 
 def write(data, path):

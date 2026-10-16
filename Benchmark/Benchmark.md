@@ -45,50 +45,50 @@ _42 runs x 51 cases, generated from `results/benchmark.csv` by `script/build_rep
 
 ### Ranking (best score first, ties by speed)
 
-| # | Run tag | Params | Score | % | s/case | Hardware |
-|--:|---|---|--:|--:|--:|---|
-| 1 | `haiku-baseline` |  | 32/32 | 100 | 18.4 | cloud:api.anthropic.com |
-| 2 | `batch-hf.co-unsloth-Qwen3.5-4B-GGUF-Q6_K` | 4B | 30/32 | 94 | 22.8 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 3 | `batch-gemma4-e4b` | 4B | 28/32 | 88 | 19.5 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 4 | `full-ts-qwen3-8b-16384` | 8B | 28/32 | 88 | 72.7 | RTX 4060 8GB / 16384 ctx |
-| 5 | `full-ts-gemma4-e4b-16384` | 4B eff. (8B raw) | 27/32 | 84 | 21.5 | RTX 4060 8GB / 16384 ctx |
-| 6 | `confirmB` | 7B + 3B | 25/32 | 78 | 15.2 | RTX 4060 8GB / 16384 ctx |
-| 7 | `batch-llama3.2-3b-16k` | 3B | 24/32 | 75 | 14.2 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 8 | `confirmA` | 3B + 3B | 24/32 | 75 | 14.5 | RTX 4060 8GB / 16384 ctx |
-| 9 | `full-ts-qwen25c-7b-builder-granite-thinker` | 7B + 3B | 24/32 | 75 | 16.0 | RTX 4060 8GB / 16384 ctx |
-| 10 | `batch-qwen2.5-coder-7b` | 7B | 24/32 | 75 | 18.2 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 11 | `batch-ministral-3-8b` | 8B | 24/32 | 75 | 40.0 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 12 | `full-ts-qwen25c-7b-16384` | 7B | 23/32 | 72 | 13.9 | RTX 4060 8GB / 16384 ctx |
-| 13 | `confirmC` | ? | 23/32 | 72 | 14.7 | RTX 4060 8GB / 16384 ctx |
-| 14 | `batch-qwen2.5-coder-7b-instruct-q5_K_M` | 7B | 23/32 | 72 | 17.3 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 15 | `batch-qwen2.5-7b` | 7B | 22/32 | 69 | 16.4 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 16 | `full-defaults-yarn3b-llama32` | 3B + 3B | 22/32 | 69 | 21.4 | RTX 4060 8GB / 16384 ctx |
-| 17 | `batch-granite4-micro` |  | 21/32 | 66 | 14.4 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 18 | `full-ts-qwen2-5-7b-16384` | 7B | 21/32 | 66 | 16.6 | RTX 4060 8GB / 16384 ctx |
-| 19 | `full-ts-ministral-3-8b-16384` | 8B | 21/32 | 66 | 26.9 | RTX 4060 8GB / 16384 ctx |
-| 20 | `full-llama3-2-3b-16k` | 3B | 20/32 | 62 | 15.2 | RTX 4060 8GB / 16384 ctx |
-| 21 | `full-ts-michelrosselli-bonsai-27b-16384` | 27B | 20/32 | 62 | 57.3 | RTX 4060 8GB / 16384 ctx |
-| 22 | `full-ts-qwen3-4b-16384` | 4B | 20/32 | 62 | 76.8 | RTX 4060 8GB / 16384 ctx |
-| 23 | `batch-llama3.1-8b` | 8B | 18/32 | 56 | 41.8 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 24 | `batch-qwen2.5-coder-yarn-3b` | 3B | 17/32 | 53 | 18.0 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 25 | `batch-hf.co-empero-ai-Qwythos-9B-v2-GGUF-Q4_K_M` | 9B | 17/32 | 53 | 86.4 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 26 | `full-yarn3b-solo` | ? | 15/32 | 47 | 20.7 | RTX 4060 8GB / 16384 ctx |
-| 27 | `full-ts-llama3-1-8b-16384` | 8B | 15/32 | 47 | 28.7 | RTX 4060 8GB / 16384 ctx |
-| 28 | `batch-hf.co-bartowski-Mistral-Nemo-Instruct-2407-GGUF-Q4` |  | 12/32 | 38 | 23.3 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 29 | `batch-qwen2.5-1.5b` | 1.5B | 11/32 | 34 | 12.0 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 30 | `colcheck-llama3.2-1b` | 1B | 8/32 | 25 | 20.2 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 31 | `batch-granite3.3-2b` | 2B | 7/32 | 22 | 15.2 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 32 | `full-ts-phi4-mini-16384` | 3.8B | 2/32 | 6 | 14.0 | RTX 4060 8GB / 16384 ctx |
-| 33 | `batch-phi4-mini-latest` |  | 2/32 | 6 | 23.2 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 34 | `full-ts-qwen2-5vl-7b-16384` | 7B | 0/32 | 0 | 7.9 | RTX 4060 8GB / 16384 ctx |
-| 35 | `full-ts-gemma3-4b-16384` | 4B | 0/32 | 0 | 7.9 | RTX 4060 8GB / 16384 ctx |
-| 36 | `full-ts-starcoder2-7b-16384` | 7B | 0/32 | 0 | 8.0 | RTX 4060 8GB / 16384 ctx |
-| 37 | `batch-gemma3-4b` | 4B | 0/32 | 0 | 9.5 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 38 | `batch-starcoder2-7b` | 7B | 0/32 | 0 | 9.6 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 39 | `full-ts-granite3-3-8b-16384` | 8B | 0/32 | 0 | 41.9 | RTX 4060 8GB / 16384 ctx |
-| 40 | `batch-hf.co-lmstudio-community-DeepSeek-R1-Distill-Qwen-` |  | 0/32 | 0 | 65.7 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 41 | `batch-granite3.3-8b` | 8B | 0/32 | 0 | 97.9 | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 42 | `full-ts-deepseek-r1-8b-16384` | 8B | 0/32 | 0 | 137.1 | RTX 4060 8GB / 16384 ctx |
+| # | Run tag | Params | Score | % | s/case | total | valid | Hardware |
+|--:|---|---|--:|--:|--:|--:|--:|---|
+| 1 | `haiku-baseline` |  | 32/32 | 100 | 18.4 |  |  | cloud:api.anthropic.com |
+| 2 | `batch-hf.co-unsloth-Qwen3.5-4B-GGUF-Q6_K` | 4B | 30/32 | 94 | 22.8 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 3 | `batch-gemma4-e4b` | 4B | 28/32 | 88 | 19.5 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 4 | `full-ts-qwen3-8b-16384` | 8B | 28/32 | 88 | 72.7 |  |  | RTX 4060 8GB / 16384 ctx |
+| 5 | `full-ts-gemma4-e4b-16384` | 4B eff. (8B raw) | 27/32 | 84 | 21.5 |  |  | RTX 4060 8GB / 16384 ctx |
+| 6 | `confirmB` | 7B + 3B | 25/32 | 78 | 15.2 |  |  | RTX 4060 8GB / 16384 ctx |
+| 7 | `batch-llama3.2-3b-16k` | 3B | 24/32 | 75 | 14.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 8 | `confirmA` | 3B + 3B | 24/32 | 75 | 14.5 |  |  | RTX 4060 8GB / 16384 ctx |
+| 9 | `full-ts-qwen25c-7b-builder-granite-thinker` | 7B + 3B | 24/32 | 75 | 16.0 |  |  | RTX 4060 8GB / 16384 ctx |
+| 10 | `batch-qwen2.5-coder-7b` | 7B | 24/32 | 75 | 18.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 11 | `batch-ministral-3-8b` | 8B | 24/32 | 75 | 40.0 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 12 | `full-ts-qwen25c-7b-16384` | 7B | 23/32 | 72 | 13.9 |  |  | RTX 4060 8GB / 16384 ctx |
+| 13 | `confirmC` | ? | 23/32 | 72 | 14.7 |  |  | RTX 4060 8GB / 16384 ctx |
+| 14 | `batch-qwen2.5-coder-7b-instruct-q5_K_M` | 7B | 23/32 | 72 | 17.3 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 15 | `batch-qwen2.5-7b` | 7B | 22/32 | 69 | 16.4 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 16 | `full-defaults-yarn3b-llama32` | 3B + 3B | 22/32 | 69 | 21.4 |  |  | RTX 4060 8GB / 16384 ctx |
+| 17 | `batch-granite4-micro` |  | 21/32 | 66 | 14.4 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 18 | `full-ts-qwen2-5-7b-16384` | 7B | 21/32 | 66 | 16.6 |  |  | RTX 4060 8GB / 16384 ctx |
+| 19 | `full-ts-ministral-3-8b-16384` | 8B | 21/32 | 66 | 26.9 |  |  | RTX 4060 8GB / 16384 ctx |
+| 20 | `full-llama3-2-3b-16k` | 3B | 20/32 | 62 | 15.2 |  |  | RTX 4060 8GB / 16384 ctx |
+| 21 | `full-ts-michelrosselli-bonsai-27b-16384` | 27B | 20/32 | 62 | 57.3 |  |  | RTX 4060 8GB / 16384 ctx |
+| 22 | `full-ts-qwen3-4b-16384` | 4B | 20/32 | 62 | 76.8 |  |  | RTX 4060 8GB / 16384 ctx |
+| 23 | `batch-llama3.1-8b` | 8B | 18/32 | 56 | 41.8 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 24 | `batch-qwen2.5-coder-yarn-3b` | 3B | 17/32 | 53 | 18.0 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 25 | `batch-hf.co-empero-ai-Qwythos-9B-v2-GGUF-Q4_K_M` | 9B | 17/32 | 53 | 86.4 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 26 | `full-yarn3b-solo` | ? | 15/32 | 47 | 20.7 |  |  | RTX 4060 8GB / 16384 ctx |
+| 27 | `full-ts-llama3-1-8b-16384` | 8B | 15/32 | 47 | 28.7 |  |  | RTX 4060 8GB / 16384 ctx |
+| 28 | `batch-hf.co-bartowski-Mistral-Nemo-Instruct-2407-GGUF-Q4` |  | 12/32 | 38 | 23.3 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 29 | `batch-qwen2.5-1.5b` | 1.5B | 11/32 | 34 | 12.0 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 30 | `colcheck-llama3.2-1b` | 1B | 8/32 | 25 | 20.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 31 | `batch-granite3.3-2b` | 2B | 7/32 | 22 | 15.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 32 | `full-ts-phi4-mini-16384` | 3.8B | 2/32 | 6 | 14.0 |  |  | RTX 4060 8GB / 16384 ctx |
+| 33 | `batch-phi4-mini-latest` |  | 2/32 | 6 | 23.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 34 | `full-ts-qwen2-5vl-7b-16384` | 7B | 0/32 | 0 | 7.9 |  |  | RTX 4060 8GB / 16384 ctx |
+| 35 | `full-ts-gemma3-4b-16384` | 4B | 0/32 | 0 | 7.9 |  |  | RTX 4060 8GB / 16384 ctx |
+| 36 | `full-ts-starcoder2-7b-16384` | 7B | 0/32 | 0 | 8.0 |  |  | RTX 4060 8GB / 16384 ctx |
+| 37 | `batch-gemma3-4b` | 4B | 0/32 | 0 | 9.5 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 38 | `batch-starcoder2-7b` | 7B | 0/32 | 0 | 9.6 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 39 | `full-ts-granite3-3-8b-16384` | 8B | 0/32 | 0 | 41.9 |  |  | RTX 4060 8GB / 16384 ctx |
+| 40 | `batch-hf.co-lmstudio-community-DeepSeek-R1-Distill-Qwen-` |  | 0/32 | 0 | 65.7 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 41 | `batch-granite3.3-8b` | 8B | 0/32 | 0 | 97.9 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
+| 42 | `full-ts-deepseek-r1-8b-16384` | 8B | 0/32 | 0 | 137.1 |  |  | RTX 4060 8GB / 16384 ctx |
 
 ### Score by run
 

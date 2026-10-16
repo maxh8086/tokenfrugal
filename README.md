@@ -53,6 +53,7 @@ Then, once:
    python scripts/install_profiles.py          # mounts CC_WORKSPACE from .env, else this repo; --workspace PATH to override
    ```
    Set `CC_WORKSPACE` in `.env` to the same absolute path. Re-run it any time to refresh the profiles.
+   The committed `.mcp.json` pins no workspace, so the router mounts the git root of the folder the client launches it from. To mount a different folder (for example the parent that holds several projects), set `CC_WORKSPACE` as a real environment variable (user-level on Windows: `setx CC_WORKSPACE C:/path/to/Projects`, then restart the client). A real environment variable beats `.env`. Template for a per-user MCP override: `"env": { "CC_WORKSPACE": "/absolute/path" }` inside the `tokenfrugal` entry of a local-scope config.
 3. **Security role only (SonarQube):** open http://localhost:9100, log in as `admin` / `admin` and set a new password, then *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...` (`SONARQUBE_ORG` is only needed for SonarCloud; leave it empty for the local server). If your secrets file lives elsewhere, set `MCP_ENV_FILE=<path>` in `.env` (or the environment); the router and `docker-compose.yml` both read that path instead. Then check it with `python scripts/smoke.py security`.
 4. **Smoke tests:** `python scripts/smoke.py` runs one tiny task per role (needs Ollama and the steps above); `python -m scripts.smoke_plan` exercises the Neo4j plan store (prune, checkpoint, dependency guard) with throwaway data.
 
