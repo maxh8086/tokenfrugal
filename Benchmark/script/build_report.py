@@ -285,9 +285,9 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <p><a href="index.html">Back to the report</a></p>
 __ROLES__
 <div class="f">
-<label>Min score %<input id="ms" type="number" value="0" min="0" max="100"></label>
+<label>Min score %<input id="ms" type="number" value="50" min="0" max="100"></label>
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
-<label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
+<label>Max params (B)<input id="mp" type="number" value="14" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
 <label>From date<input id="fd" type="date"></label>
