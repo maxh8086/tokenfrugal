@@ -6,6 +6,12 @@
 
 Keywords: MCP server, Model Context Protocol, local LLM, Ollama, token saving, reduce Claude Code usage, Codex, LM Studio, vLLM, agent personas, Docker MCP router, offline coding assistant.
 
+> **A note on how this was built**
+> 
+> Coding is evolving from a primary execution skill to an orchestration skill.
+> To test this shift, I built this latest project entirely using AI coding agents. The takeaway? When AI handles the syntax, your ability to think deeply, design robust architectures, and drive creative solutions becomes your true competitive advantage.
+> Check out the results and let me know your thoughts: [linkedin.com/in/vpavtekar](https://www.linkedin.com/in/vpavtekar)
+
 ## How it works (for beginners)
 
 You talk to one big cloud model (Claude Code, Codex, ...). It hands small jobs to a free local model and gets back a short summary.
@@ -175,3 +181,7 @@ The dashboard starts with the router and opens in your browser at http://127.0.0
 - All dashboard text comes from `router/ui.yaml`; roles, models and tools come from `router/roles.json`.
 - Needs Node 18+ (no npm packages); without Node the router runs as before. `node ui/server.js` starts it by hand.
 - The router writes `router/events.jsonl` and `router/roles.json`; override with `GATEWAY_EVENTS`. Restart the router after updating so it emits events.
+
+---
+
+*They say we're just "vibe coding" now, but curating immaculate vibes for the AI takes a shocking amount of caffeine. If you like what the agents built, help keep my vibes (and local GPUs) highly caffeinated: [buymeacoffee.com/maxh8086](https://buymeacoffee.com/maxh8086)*
