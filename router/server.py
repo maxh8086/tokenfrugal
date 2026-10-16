@@ -14,11 +14,11 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import compose, events, plan, reconnect, store, ui_launcher
-from .config import check_agent, load_personas, resolve_role
+from .config import check_agent, load_agents, resolve_role
 from .loop import leaf, run, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
-CFG = load_personas()
+CFG = load_agents()
 STALE_REASON = "router stopped while task was running (no heartbeat)"
 HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
 
