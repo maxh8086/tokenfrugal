@@ -1,6 +1,8 @@
 # TokenFrugal benchmark
 
-Single report for every local-model test. Measured on an RTX 4060 Laptop 8 GB, 16384 ctx, temp 0.1, 16 real-world
+Single report for every local-model test.
+
+**Test hardware:** all local-model tests ran on an NVIDIA GeForce RTX 4060 Laptop GPU with 8 GB video memory (the Haiku baseline ran in the cloud). Settings: 16384 ctx, temp 0.1, 16 real-world
 cases x 2 runs (score out of 32). A case counts only when the output is verified, not when the model says it is done.
 
 - Raw data: [`results/benchmark.csv`](results/benchmark.csv) (source of truth, one row per run)
@@ -9,95 +11,88 @@ cases x 2 runs (score out of 32). A case counts only when the output is verified
 
 ## Conclusions
 
-| Need | Pick | Why |
-|---|---|---|
-| Highest quality, speed irrelevant | `ts-qwen3-8b-16384` | 28/32, but about 73 s per case |
-| Best code default | `ts-gemma4-e4b-16384` | 27/32 at about 21 s per case |
-| Fast and still at least 75% of best | `ts-qwen25c-7b-16384` | 23/32 at about 14 s per case |
-| Builder role (tools, 64k ctx) | `qwen2.5-coder-yarn:3b` | 2/2 on data, docs, analyzer cases in 5-9 s |
-| Thinker role | `llama3.2:3b-16k` | best thinker score per second, 2 GB |
-| Drop | starcoder2-7b, qwen2.5-vl-7b, granite3.3-8b, gemma3-4b, deepseek-r1-8b, phi4-mini | 0-2/32, no usable tool calls |
+Measured on one laptop (RTX 4060, 8 GB), 16 cases. Re-run rows (`rerun*`) are single passes (max 16); older `batch-*` rows are two passes (max 32). Compare percentages, not raw scores. Two passes of the same model differ by up to 3 cases (Qwable 15 then 12, Mistral-Nemo 13 then 11), so gaps of 1-2 cases are noise.
 
-Persona rule: smallest model that holds at least 75% of the best score for that persona's cases, then the fastest.
-
-### Default model per persona
-
-| Persona | Cases | Default | Ctx | Verified | s |
-|---|---|---|---|---|---|
-| engineering-backend-architect | write_function, fix_bug, write_tests, rename_across_files, find_symbol | `ts-gemma4-e4b-16384` | 16384 | 10/10 | 93 |
-| testing-code-reviewer | review_sqli | `llama3.2:3b-16k` | 16384 | 2/2 | 12 |
-| engineering-sre | debug_trace | `qwen2.5-coder-yarn:3b` | 65536 | 2/2 | 35 |
-| support-docs-writer | summarize_readme, role_research | `ts-qwen3-8b-16384` | 16384 | 3/4 | 137 |
-| engineering-software-architect | role_analyzer | `qwen2.5-coder-yarn:3b` | 65536 | 2/2 | 9 |
-| gis-analyst | role_data | `qwen2.5-coder-yarn:3b` | 65536 | 2/2 | 5 |
-| engineering-technical-writer | role_docs | `qwen2.5-coder-yarn:3b` | 65536 | 2/2 | 8 |
-| security-auditor | role_security | `qwen2.5-coder-yarn:3b` | 65536 | 2/2 | 64 |
-| design-ui-designer | role_designer | `llama3.2:3b-16k` | 16384 | 2/2 | 14 |
-| testing-evidence-collector | role_browser | `llama3.2:3b-16k` | 16384 | 1/2 | 8 |
-| project-management-project-shepherd | role_tracker | `llama3.2:3b-16k` | 16384 | 2/2 | 4 |
-
-All defaults together: 30/32 in about 390 s (model swap time not included).
+- **Best local result:** `Qwen3.5-9B` IQ4_XS scored 16/16 and 15/16 (about 37 s/case). `Qwen3.5-4B` Q6_K scored 30/32 at 23 s/case, so it is the faster choice with a similar score.
+- **Builder vs thinker:** the Builder and Thinker columns split each score. Mistral-Nemo is a strong thinker (12/12) but a weak builder (1/4), so it suits the thinker role only. The 9B Qwen models are strong in both roles.
+- **Not usable:** `glm4:9b` and `gemma-3-12b` scored 0/16 because they answered without calling any tool; `gemma-3-4b`, `starcoder2` and `granite3.3-8b` also scored 0.
+- **Too slow for the gain:** `Qwen2.5-Coder-32B` reaches 12/16 at 66 s/case because it spills out of 8 GB VRAM.
+- **Defaults today:** `router/agents.yaml` sets `persona_models: {}`, so every persona uses its role's model (`qwen2.5-coder-yarn:3b` builder, `llama3.2:3b-16k` thinker). These two score 17/32 and 24/32 as single models in the table. No benchmarked model has replaced them yet; that choice is yours.
 
 ## Results
 
 <!-- BEGIN:auto -->
-_42 runs x 51 cases, generated from `results/benchmark.csv` by `script/build_report.py`. Interactive filtering: open `explorer.html`._
+_32 runs x 16 cases, generated from `results/benchmark.csv` by `script/build_report.py`. Interactive filtering: open `explorer.html`._
 
 ### Ranking (best score first, ties by speed)
 
-| # | Run tag | Params | Score | % | s/case | total | valid | Hardware |
-|--:|---|---|--:|--:|--:|--:|--:|---|
-| 1 | `haiku-baseline` |  | 32/32 | 100 | 18.4 |  |  | cloud:api.anthropic.com |
-| 2 | `batch-hf.co-unsloth-Qwen3.5-4B-GGUF-Q6_K` | 4B | 30/32 | 94 | 22.8 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 3 | `batch-gemma4-e4b` | 4B | 28/32 | 88 | 19.5 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 4 | `full-ts-qwen3-8b-16384` | 8B | 28/32 | 88 | 72.7 |  |  | RTX 4060 8GB / 16384 ctx |
-| 5 | `full-ts-gemma4-e4b-16384` | 4B eff. (8B raw) | 27/32 | 84 | 21.5 |  |  | RTX 4060 8GB / 16384 ctx |
-| 6 | `confirmB` | 7B + 3B | 25/32 | 78 | 15.2 |  |  | RTX 4060 8GB / 16384 ctx |
-| 7 | `batch-llama3.2-3b-16k` | 3B | 24/32 | 75 | 14.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 8 | `confirmA` | 3B + 3B | 24/32 | 75 | 14.5 |  |  | RTX 4060 8GB / 16384 ctx |
-| 9 | `full-ts-qwen25c-7b-builder-granite-thinker` | 7B + 3B | 24/32 | 75 | 16.0 |  |  | RTX 4060 8GB / 16384 ctx |
-| 10 | `batch-qwen2.5-coder-7b` | 7B | 24/32 | 75 | 18.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 11 | `batch-ministral-3-8b` | 8B | 24/32 | 75 | 40.0 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 12 | `full-ts-qwen25c-7b-16384` | 7B | 23/32 | 72 | 13.9 |  |  | RTX 4060 8GB / 16384 ctx |
-| 13 | `confirmC` | ? | 23/32 | 72 | 14.7 |  |  | RTX 4060 8GB / 16384 ctx |
-| 14 | `batch-qwen2.5-coder-7b-instruct-q5_K_M` | 7B | 23/32 | 72 | 17.3 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 15 | `batch-qwen2.5-7b` | 7B | 22/32 | 69 | 16.4 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 16 | `full-defaults-yarn3b-llama32` | 3B + 3B | 22/32 | 69 | 21.4 |  |  | RTX 4060 8GB / 16384 ctx |
-| 17 | `batch-granite4-micro` |  | 21/32 | 66 | 14.4 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 18 | `full-ts-qwen2-5-7b-16384` | 7B | 21/32 | 66 | 16.6 |  |  | RTX 4060 8GB / 16384 ctx |
-| 19 | `full-ts-ministral-3-8b-16384` | 8B | 21/32 | 66 | 26.9 |  |  | RTX 4060 8GB / 16384 ctx |
-| 20 | `full-llama3-2-3b-16k` | 3B | 20/32 | 62 | 15.2 |  |  | RTX 4060 8GB / 16384 ctx |
-| 21 | `full-ts-michelrosselli-bonsai-27b-16384` | 27B | 20/32 | 62 | 57.3 |  |  | RTX 4060 8GB / 16384 ctx |
-| 22 | `full-ts-qwen3-4b-16384` | 4B | 20/32 | 62 | 76.8 |  |  | RTX 4060 8GB / 16384 ctx |
-| 23 | `batch-llama3.1-8b` | 8B | 18/32 | 56 | 41.8 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 24 | `batch-qwen2.5-coder-yarn-3b` | 3B | 17/32 | 53 | 18.0 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 25 | `batch-hf.co-empero-ai-Qwythos-9B-v2-GGUF-Q4_K_M` | 9B | 17/32 | 53 | 86.4 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 26 | `full-yarn3b-solo` | ? | 15/32 | 47 | 20.7 |  |  | RTX 4060 8GB / 16384 ctx |
-| 27 | `full-ts-llama3-1-8b-16384` | 8B | 15/32 | 47 | 28.7 |  |  | RTX 4060 8GB / 16384 ctx |
-| 28 | `batch-hf.co-bartowski-Mistral-Nemo-Instruct-2407-GGUF-Q4` |  | 12/32 | 38 | 23.3 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 29 | `batch-qwen2.5-1.5b` | 1.5B | 11/32 | 34 | 12.0 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 30 | `colcheck-llama3.2-1b` | 1B | 8/32 | 25 | 20.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 31 | `batch-granite3.3-2b` | 2B | 7/32 | 22 | 15.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 32 | `full-ts-phi4-mini-16384` | 3.8B | 2/32 | 6 | 14.0 |  |  | RTX 4060 8GB / 16384 ctx |
-| 33 | `batch-phi4-mini-latest` |  | 2/32 | 6 | 23.2 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 34 | `full-ts-qwen2-5vl-7b-16384` | 7B | 0/32 | 0 | 7.9 |  |  | RTX 4060 8GB / 16384 ctx |
-| 35 | `full-ts-gemma3-4b-16384` | 4B | 0/32 | 0 | 7.9 |  |  | RTX 4060 8GB / 16384 ctx |
-| 36 | `full-ts-starcoder2-7b-16384` | 7B | 0/32 | 0 | 8.0 |  |  | RTX 4060 8GB / 16384 ctx |
-| 37 | `batch-gemma3-4b` | 4B | 0/32 | 0 | 9.5 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 38 | `batch-starcoder2-7b` | 7B | 0/32 | 0 | 9.6 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 39 | `full-ts-granite3-3-8b-16384` | 8B | 0/32 | 0 | 41.9 |  |  | RTX 4060 8GB / 16384 ctx |
-| 40 | `batch-hf.co-lmstudio-community-DeepSeek-R1-Distill-Qwen-` |  | 0/32 | 0 | 65.7 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 41 | `batch-granite3.3-8b` | 8B | 0/32 | 0 | 97.9 |  |  | NVIDIA GeForce RTX 4060 Laptop GPU 8GB |
-| 42 | `full-ts-deepseek-r1-8b-16384` | 8B | 0/32 | 0 | 137.1 |  |  | RTX 4060 8GB / 16384 ctx |
+| # | Model (builder = thinker) | Origin | Pull command | Params | Score | Builder | Thinker | % | s/case | total | valid |
+|--:|---|---|---|---|--:|--:|--:|--:|--:|--:|--:|
+| 1 | `claude-haiku-5-5` | Anthropic API | `not pullable (cloud baseline)` |  | 32/32 | 8/8 | 24/24 | 100 | 18.4 |  |  |
+| 2 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | Hugging Face: unsloth/Qwen3.5-9B-GGUF | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 9B | 16/16 | 4/4 | 12/12 | 100 | 36.3 | 9:40 | 16 |
+| 3 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | Hugging Face: unsloth/Qwen3.5-4B-GGUF | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 4B | 30/32 | 8/8 | 22/24 | 94 | 22.8 |  |  |
+| 4 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | Hugging Face: unsloth/Qwen3.5-9B-GGUF | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 9B | 15/16 | 4/4 | 11/12 | 94 | 38.4 | 10:14 | 16 |
+| 5 | `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | Hugging Face: empero-ai/Qwable-9B-Claude-Fable-5-GGUF | `ollama pull hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | 9B | 15/16 | 4/4 | 11/12 | 94 | 48.4 | 12:54 | 16 |
+| 6 | `gemma4:e4b` | Ollama library | `ollama pull gemma4:e4b` | 4B | 28/32 | 8/8 | 20/24 | 88 | 19.5 |  |  |
+| 7 | `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | Hugging Face: empero-ai/Qwen3.8-9B-Distill-GGUF | `ollama pull hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | 9B | 14/16 | 3/4 | 11/12 | 88 | 27.5 | 7:19 | 16 |
+| 8 | `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | Hugging Face: empero-ai/Qwen3.8-9B-Distill-GGUF | `ollama pull hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | 9B | 14/16 | 3/4 | 11/12 | 88 | 28.2 | 7:32 | 16 |
+| 9 | `hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M` | Hugging Face: bartowski/Mistral-Nemo-Instruct-2407-GGUF | `ollama pull hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M` |  | 13/16 | 1/4 | 12/12 | 81 | 33.0 | 8:48 | 16 |
+| 10 | `llama3.2:3b-16k` | Ollama library + local Modelfile | `ollama pull llama3.2:3b && ollama create llama3.2:3b-16k -f models/thinker.Modelfile` | 3B | 24/32 | 2/8 | 22/24 | 75 | 14.2 |  |  |
+| 11 | `qwen2.5-coder:7b` | Ollama library | `ollama pull qwen2.5-coder:7b` | 7B | 24/32 | 6/8 | 18/24 | 75 | 18.2 |  |  |
+| 12 | `ministral-3:8b` | Ollama library | `ollama pull ministral-3:8b` | 8B | 24/32 | 4/8 | 20/24 | 75 | 40.0 |  |  |
+| 13 | `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | Hugging Face: empero-ai/Qwable-9B-Claude-Fable-5-GGUF | `ollama pull hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | 9B | 12/16 | 3/4 | 9/12 | 75 | 51.6 | 13:46 | 16 |
+| 14 | `hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS` | Hugging Face: bartowski/Qwen2.5-Coder-32B-Instruct-GGUF | `ollama pull hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS` | 32B | 12/16 | 3/4 | 9/12 | 75 | 66.2 | 17:39 | 16 |
+| 15 | `qwen2.5-coder:7b-instruct-q5_K_M` | Ollama library | `ollama pull qwen2.5-coder:7b-instruct-q5_K_M` | 7B | 23/32 | 5/8 | 18/24 | 72 | 17.3 |  |  |
+| 16 | `qwen2.5:7b` | Ollama library | `ollama pull qwen2.5:7b` | 7B | 22/32 | 4/8 | 18/24 | 69 | 16.4 |  |  |
+| 17 | `hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M` | Hugging Face: bartowski/Mistral-Nemo-Instruct-2407-GGUF | `ollama pull hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M` |  | 11/16 | 1/4 | 10/12 | 69 | 40.8 | 10:53 | 16 |
+| 18 | `granite4:micro` | Ollama library | `ollama pull granite4:micro` |  | 21/32 | 3/8 | 18/24 | 66 | 14.4 |  |  |
+| 19 | `llama3.1:8b` | Ollama library | `ollama pull llama3.1:8b` | 8B | 18/32 | 2/8 | 16/24 | 56 | 41.8 |  |  |
+| 20 | `qwen2.5-coder-yarn:3b` | Ollama library + local Modelfile | `ollama pull qwen2.5-coder:3b && ollama create qwen2.5-coder-yarn:3b -f models/builder.Modelfile` | 3B | 17/32 | 4/8 | 13/24 | 53 | 18.0 |  |  |
+| 21 | `hf.co/empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M` | Hugging Face: empero-ai/Qwythos-9B-v2-GGUF | `ollama pull hf.co/empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M` | 9B | 17/32 | 5/8 | 12/24 | 53 | 86.4 |  |  |
+| 22 | `hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M` | Hugging Face: bartowski/Mistral-Nemo-Instruct-2407-GGUF | `ollama pull hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M` |  | 12/32 | 0/8 | 12/24 | 38 | 23.3 |  |  |
+| 23 | `qwen2.5:1.5b` | Ollama library | `ollama pull qwen2.5:1.5b` | 1.5B | 11/32 | 0/8 | 11/24 | 34 | 12.0 |  |  |
+| 24 | `llama3.2:1b` | Ollama library | `ollama pull llama3.2:1b` | 1B | 8/32 | 0/8 | 8/24 | 25 | 20.2 |  |  |
+| 25 | `granite3.3:2b` | Ollama library | `ollama pull granite3.3:2b` | 2B | 7/32 | 0/8 | 7/24 | 22 | 15.2 |  |  |
+| 26 | `phi4-mini:latest` | Ollama library | `ollama pull phi4-mini:latest` |  | 2/32 | 0/8 | 2/24 | 6 | 23.2 |  |  |
+| 27 | `gemma3:4b` | Ollama library | `ollama pull gemma3:4b` | 4B | 0/32 | 0/8 | 0/24 | 0 | 9.5 |  |  |
+| 28 | `starcoder2:7b` | Ollama library | `ollama pull starcoder2:7b` | 7B | 0/32 | 0/8 | 0/24 | 0 | 9.6 |  |  |
+| 29 | `hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M` | Hugging Face: bartowski/google_gemma-3-12b-it-GGUF | `ollama pull hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M` | 12B | 0/16 | 0/4 | 0/12 | 0 | 10.4 | 2:47 | 16 |
+| 30 | `glm4:9b-chat-q5_K_M` | Ollama library | `ollama pull glm4:9b-chat-q5_K_M` | 9B | 0/16 | 0/4 | 0/12 | 0 | 20.5 | 5:28 | 16 |
+| 31 | `hf.co/lmstudio-community/DeepSeek-R1-Distill-Qwen-7B-GGUF:latest` | Hugging Face: lmstudio-community/DeepSeek-R1-Distill-Qwen-7B-GGUF | `ollama pull hf.co/lmstudio-community/DeepSeek-R1-Distill-Qwen-7B-GGUF:latest` |  | 0/32 | 0/8 | 0/24 | 0 | 65.7 |  |  |
+| 32 | `granite3.3:8b` | Ollama library | `ollama pull granite3.3:8b` | 8B | 0/32 | 0/8 | 0/24 | 0 | 97.9 |  |  |
+
+### Best model per role (local models, top 5 each)
+
+Each role is ranked only on its own cases, because one model is pinned to both roles in a run. Only a model's newest-dated runs count, so older results from earlier code never mix with current ones; the `Code (git)` column shows the commit that produced them. Results change as the router and harness change, so re-run a model after significant changes before trusting its place. Ties go to the model with more evidence, then the faster one. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+
+**Builder** (cases: `write_function`, `fix_bug`, `write_tests`, `rename_across_files`)
+
+| # | Model | Date | Code (git) | Role score | % | Runs | s/case | Shared memory GB | Pull command |
+|--:|---|---|---|--:|--:|--:|--:|--:|---|
+| 1 | `gemma4:e4b` | 2026-10-16 | `ab3e34f` | 8/8 | 100 | 1 | 19.5 | 0.0 | `ollama pull gemma4:e4b` |
+| 2 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 2026-10-16 | `ab3e34f` | 8/8 | 100 | 1 | 22.8 | 0.0 | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` |
+| 3 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 2026-10-16 | `6e6f19e` | 8/8 | 100 | 2 | 37.3 |  | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` |
+| 4 | `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | 2026-10-16 | `6e6f19e` | 7/8 | 88 | 2 | 50.0 |  | `ollama pull hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` |
+| 5 | `qwen2.5-coder:7b` | 2026-10-16 | `ab3e34f` | 6/8 | 75 | 1 | 18.2 | 0.0 | `ollama pull qwen2.5-coder:7b` |
+
+**Thinker** (cases: `find_symbol`, `review_sqli`, `debug_trace`, `summarize_readme`, `code_graph_search`, `list_project_files`, `read_docs_file`, `security_file_read`, `design_overview`, `browser_navigate_snapshot`, `plan_status`, `web_crawl`)
+
+| # | Model | Date | Code (git) | Role score | % | Runs | s/case | Shared memory GB | Pull command |
+|--:|---|---|---|--:|--:|--:|--:|--:|---|
+| 1 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 2026-10-16 | `6e6f19e` | 23/24 | 96 | 2 | 37.3 |  | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` |
+| 2 | `llama3.2:3b-16k` | 2026-10-15 | `ab3e34f` | 22/24 | 92 | 1 | 14.2 | 0.0 | `ollama pull llama3.2:3b && ollama create llama3.2:3b-16k -f models/thinker.Modelfile` |
+| 3 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 2026-10-16 | `ab3e34f` | 22/24 | 92 | 1 | 22.8 | 0.0 | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` |
+| 4 | `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | 2026-10-16 | `6e6f19e` | 22/24 | 92 | 2 | 27.9 |  | `ollama pull hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` |
+| 5 | `gemma4:e4b` | 2026-10-16 | `ab3e34f` | 20/24 | 83 | 1 | 19.5 | 0.0 | `ollama pull gemma4:e4b` |
 
 ### Score by run
 
 ```mermaid
 xychart-beta
     title "Verified score % by run (rank order, see table)"
-    x-axis ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42"]
+    x-axis ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"]
     y-axis "% verified" 0 --> 100
-    bar [100, 94, 88, 88, 84, 78, 75, 75, 75, 75, 75, 72, 72, 72, 69, 69, 66, 66, 66, 62, 62, 62, 56, 53, 53, 47, 47, 38, 34, 25, 22, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    bar [100, 100, 94, 94, 94, 88, 88, 88, 81, 75, 75, 75, 75, 75, 72, 69, 69, 66, 56, 53, 53, 38, 34, 25, 22, 6, 0, 0, 0, 0, 0, 0]
 ```
 
 ### Speed vs score
@@ -105,78 +100,123 @@ xychart-beta
 ```mermaid
 xychart-beta
     title "Score % as runs get slower (x: s per case)"
-    x-axis ["8", "8", "8", "10", "10", "12", "14", "14", "14", "14", "14", "15", "15", "15", "15", "16", "16", "17", "17", "18", "18", "18", "20", "20", "21", "21", "22", "23", "23", "23", "27", "29", "40", "42", "42", "57", "66", "73", "77", "86", "98", "137"]
+    x-axis ["10", "10", "10", "12", "14", "14", "15", "16", "17", "18", "18", "18", "20", "20", "20", "23", "23", "23", "28", "28", "33", "36", "38", "40", "41", "42", "48", "52", "66", "66", "86", "98"]
     y-axis "% verified" 0 --> 100
-    line [0, 0, 0, 0, 0, 34, 72, 6, 75, 66, 75, 72, 78, 62, 22, 75, 69, 66, 72, 53, 75, 100, 88, 25, 47, 69, 84, 94, 6, 38, 66, 47, 75, 56, 0, 62, 0, 88, 62, 53, 0, 0]
+    line [0, 0, 0, 34, 75, 66, 22, 69, 72, 53, 75, 100, 88, 25, 0, 94, 6, 38, 88, 88, 81, 100, 94, 75, 69, 56, 94, 75, 0, 75, 53, 0]
 ```
 
-### Per-case heatmap (🟩 all verified, 🟨 partial, 🟥 none, · not run)
+### How to read this
 
-| Run | write function | fix bug | write tests | rename across files | find symbol | review sqli | debug trace | summarize readme | code graph search | list project files | read docs file | security file read | design overview | browser navigate snapshot | plan status | web crawl | date | endpoint | temperature | max tokens | builder model | thinker model | git sha | n | ctx peak tokens | tokens in per run | tokens out per run | quant | file gb | num ctx | max ctx | vram gb | cpu offload pct | ctx used pct | ctx free tokens | ctx write function | ctx fix bug | ctx write tests | ctx rename across files | ctx find symbol | ctx review sqli | ctx debug trace | ctx summarize readme | ctx code graph search | ctx list project files | ctx read docs file | ctx security file read | ctx design overview | ctx browser navigate snapshot | ctx plan status | ctx web crawl |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `haiku-baseline` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-hf.co-unsloth-Qwen3.5-4B-GGUF-` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-gemma4-e4b` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟨 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-qwen3-8b-16384` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟨 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-gemma4-e4b-16384` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟥 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `confirmB` | 🟩 | 🟥 | 🟨 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-llama3.2-3b-16k` | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `confirmA` | 🟩 | 🟨 | 🟥 | 🟥 | 🟨 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-qwen25c-7b-builder-granite-t` | 🟩 | 🟨 | 🟨 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟥 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-qwen2.5-coder-7b` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-ministral-3-8b` | 🟩 | 🟩 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-qwen25c-7b-16384` | 🟩 | 🟨 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `confirmC` | 🟥 | 🟩 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-qwen2.5-coder-7b-instruct-q5_K` | 🟩 | 🟨 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-qwen2.5-7b` | 🟥 | 🟩 | 🟨 | 🟨 | 🟩 | 🟩 | 🟨 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-defaults-yarn3b-llama32` | 🟨 | 🟩 | 🟥 | 🟨 | 🟨 | 🟩 | 🟩 | 🟥 | 🟨 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟨 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-granite4-micro` | 🟨 | 🟨 | 🟥 | 🟨 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-qwen2-5-7b-16384` | 🟥 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟨 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-ministral-3-8b-16384` | 🟥 | 🟥 | 🟨 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-llama3-2-3b-16k` | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟨 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-michelrosselli-bonsai-27b-16` | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟨 | 🟥 | 🟩 | 🟥 | 🟥 | 🟨 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-qwen3-4b-16384` | 🟨 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | 🟨 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-llama3.1-8b` | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-qwen2.5-coder-yarn-3b` | 🟨 | 🟩 | 🟥 | 🟨 | 🟥 | 🟥 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | 🟩 | 🟨 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-hf.co-empero-ai-Qwythos-9B-v2-` | 🟨 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-yarn3b-solo` | 🟨 | 🟨 | 🟥 | 🟥 | 🟨 | 🟨 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟥 | 🟨 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-llama3-1-8b-16384` | 🟥 | 🟥 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟨 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-hf.co-bartowski-Mistral-Nemo-I` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟨 | 🟩 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-qwen2.5-1.5b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟥 | 🟩 | 🟥 | 🟩 | 🟩 | 🟥 | 🟥 | 🟨 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `colcheck-llama3.2-1b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-granite3.3-2b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟥 | 🟥 | 🟨 | 🟩 | 🟩 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-phi4-mini-16384` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-phi4-mini-latest` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-qwen2-5vl-7b-16384` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-gemma3-4b-16384` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-starcoder2-7b-16384` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-gemma3-4b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-starcoder2-7b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-granite3-3-8b-16384` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-hf.co-lmstudio-community-DeepS` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `batch-granite3.3-8b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
-| `full-ts-deepseek-r1-8b-16384` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+- Each **run** is one local model setup, scored on the same 16 cases. `score` is passes out of `max`.
+- **Builder** (`qwen2.5-coder-yarn:3b`) writes code and edits files. **Thinker** (`llama3.2:3b-16k`) reads, analyses and browses.
+- A task uses **one** model at a time. Models never run together or talk to each other.
+- The role table shows which tools each role is allowed to call. A case needs the tools of its role.
+- 🟩 all checks passed, 🟨 some passed, 🟥 none passed, `·` not run.
+- ⚠ on a case that needs a specific tool means that run scored 0 on it, so the tool was likely missing or not called.
+
+### Roles and models (from `router/agents.yaml`)
+
+| Role | Model class | Tools the role may call |
+|---|---|---|
+| `builder` | builder (`qwen2.5-coder-yarn:3b`) | `read_file`, `write_file`, `edit_file`, `search_files`, `search_graph`, `get_code_snippet` |
+| `data` | builder (`qwen2.5-coder-yarn:3b`) | `read_file`, `list_directory` |
+| `analyzer` | thinker (`llama3.2:3b-16k`) | `read_file`, `search_graph`, `get_code_snippet`, `trace_path`, `git_diff`, `ast-grep` |
+| `security` | thinker (`llama3.2:3b-16k`) | `read_file`, `search_files`, `ast-grep`, `search_sonar_issues_in_projects`, `search_security_hotspots`, `show_rule` |
+| `reviewer` | thinker (`llama3.2:3b-16k`) | `read_file`, `git_diff`, `get_code_snippet`, `trace_path`, `ast-grep` |
+| `debugger` | thinker (`llama3.2:3b-16k`) | `read_file`, `search_graph`, `trace_path`, `git_log`, `sequentialthinking`, `execute_code` |
+| `docs` | thinker (`llama3.2:3b-16k`) | `read_file`, `list_directory`, `git_log`, `fetch` |
+| `designer` | thinker (`llama3.2:3b-16k`) | `high_level_overview`, `penpot_api_info`, `execute_code`, `export_shape` |
+| `browser` | thinker (`llama3.2:3b-16k`) | `navigate_page`, `take_snapshot`, `take_screenshot`, `list_console_messages`, `list_network_requests`, `lighthouse_audit` |
+| `tracker` | thinker (`llama3.2:3b-16k`) | `plan_next`, `plan_claim`, `plan_status`, `plan_blockers`, `plan_done`, `plan_note` |
+| `github-read` | thinker (`llama3.2:3b-16k`) | `list_pull_requests`, `pull_request_read`, `issue_read`, `list_issues`, `get_file_contents` |
+| `github-actions-read` | thinker (`llama3.2:3b-16k`) | `actions_list`, `actions_get`, `get_job_logs` |
+| `devops` | builder (`qwen2.5-coder-yarn:3b`) | `read_file`, `write_file`, `edit_file`, `git_diff`, `git_log`, `execute_code` |
+| `finance` | thinker (`llama3.2:3b-16k`) | `read_file`, `list_directory`, `fetch`, `web_search`, `crawl_markdown` |
+| `research` | thinker (`llama3.2:3b-16k`) | `web_search`, `crawl_markdown`, `crawl_links` |
+
+### Builder cases (code and file edits: needs write/edit tools)
+
+| Run | write function | fix bug | write tests | rename across files |
+|---|---|---|---|---|
+| `claude-haiku-5-5` | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGU` | 🟩 | 🟩 | 🟩 | 🟩 |
+| `gemma4:e4b` | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K` | 🟩 | 🟩 | 🟥 | 🟩 |
+| `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K` | 🟩 | 🟩 | 🟥 | 🟩 |
+| `hf.co/bartowski/Mistral-Nemo-Instruct-2407-G` | 🟥 | 🟩 | 🟥 | 🟥 |
+| `llama3.2:3b-16k` | 🟥 | 🟥 | 🟥 | 🟩 |
+| `qwen2.5-coder:7b` | 🟩 | 🟩 | 🟩 | 🟥 |
+| `ministral-3:8b` | 🟩 | 🟩 | 🟥 | 🟥 |
+| `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGU` | 🟥 | 🟩 | 🟩 | 🟩 |
+| `hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-G` | 🟩 | 🟩 | 🟥 | 🟩 |
+| `qwen2.5-coder:7b-instruct-q5_K_M` | 🟩 | 🟨 | 🟩 | 🟥 |
+| `qwen2.5:7b` | 🟥 | 🟩 | 🟨 | 🟨 |
+| `hf.co/bartowski/Mistral-Nemo-Instruct-2407-G` | 🟥 | 🟩 | 🟥 | 🟥 |
+| `granite4:micro` | 🟨 | 🟨 | 🟥 | 🟨 |
+| `llama3.1:8b` | 🟥 | 🟥 | 🟥 | 🟩 |
+| `qwen2.5-coder-yarn:3b` | 🟨 | 🟩 | 🟥 | 🟨 |
+| `hf.co/empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M` | 🟨 | 🟩 | 🟥 | 🟩 |
+| `hf.co/bartowski/Mistral-Nemo-Instruct-2407-G` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `qwen2.5:1.5b` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `llama3.2:1b` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `granite3.3:2b` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `phi4-mini:latest` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `gemma3:4b` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `starcoder2:7b` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `glm4:9b-chat-q5_K_M` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `hf.co/lmstudio-community/DeepSeek-R1-Distill` | 🟥 | 🟥 | 🟥 | 🟥 |
+| `granite3.3:8b` | 🟥 | 🟥 | 🟥 | 🟥 |
+
+### Thinker cases (read, analyse, browse: needs read/graph/browser tools)
+
+| Run | find symbol | review sqli | debug trace | summarize readme | code graph search | list project files | read docs file | security file read | design overview | browser navigate snapshot | plan status | web crawl |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `claude-haiku-5-5` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟩 |
+| `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGU` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥⚠ | 🟩 | 🟩 |
+| `gemma4:e4b` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟨 | 🟩 |
+| `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `hf.co/bartowski/Mistral-Nemo-Instruct-2407-G` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `llama3.2:3b-16k` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 |
+| `qwen2.5-coder:7b` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥⚠ | 🟩 | 🟥 |
+| `ministral-3:8b` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥⚠ | 🟩 | 🟩 |
+| `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGU` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥⚠ | 🟥⚠ | 🟩 |
+| `hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-G` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥⚠ | 🟥⚠ | 🟩 |
+| `qwen2.5-coder:7b-instruct-q5_K_M` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥⚠ | 🟩 | 🟥 |
+| `qwen2.5:7b` | 🟩 | 🟩 | 🟨 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟩 | 🟥 |
+| `hf.co/bartowski/Mistral-Nemo-Instruct-2407-G` | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟥⚠ | 🟩 |
+| `granite4:micro` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥⚠ | 🟩 | 🟩 |
+| `llama3.1:8b` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥⚠ | 🟩 | 🟥 |
+| `qwen2.5-coder-yarn:3b` | 🟥 | 🟥 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥⚠ | 🟩 | 🟨 |
+| `hf.co/empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M` | 🟩 | 🟩 | 🟩 | 🟥 | 🟩 | 🟩 | 🟩 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
+| `hf.co/bartowski/Mistral-Nemo-Instruct-2407-G` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟩 | 🟩 | 🟨 | 🟨 | 🟩 |
+| `qwen2.5:1.5b` | 🟩 | 🟥 | 🟩 | 🟥 | 🟩 | 🟩 | 🟥 | 🟥 | 🟨 | 🟥⚠ | 🟩 | 🟥 |
+| `llama3.2:1b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟩 | 🟥 | 🟩 | 🟥⚠ | 🟩 | 🟥 |
+| `granite3.3:2b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟥 | 🟥 | 🟨 | 🟩 | 🟩 | 🟥 |
+| `phi4-mini:latest` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟩 | 🟥⚠ | 🟥⚠ | 🟥 |
+| `gemma3:4b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
+| `starcoder2:7b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
+| `hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
+| `glm4:9b-chat-q5_K_M` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
+| `hf.co/lmstudio-community/DeepSeek-R1-Distill` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
+| `granite3.3:8b` | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥 | 🟥⚠ | 🟥⚠ | 🟥⚠ | 🟥 |
 <!-- END:auto -->
 
 ## Observations
 
-_Maintained by a cloud reviewer from the CSV; see the prompt in `script/README.md`. Last review: 2026-10-15 (21 legacy runs plus the `haiku-baseline` row)._
+Only facts that can be read from `results/benchmark.csv` are stated here.
 
-- `haiku-baseline` (Claude Haiku via the Anthropic endpoint) verified 32/32 at 18.4 s/case with a peak prompt of 4,810 tokens, so no case needs more than a 16k window. It is the quality ceiling for this suite; local rows are measured against it.
-- The top two local runs differ 5x in speed for one verified case; unless quality is critical, gemma4-e4b or qwen2.5-coder-7b is the better trade.
-- Bigger is not better: bonsai-27b (20/32, 57 s) and qwen3-4b (20/32, 70+ s) match a 3B model at several times the cost.
-- Six models score 0-2/32 because they lack tool calling; do not spend more benchmark time on them.
-- Local rows from before 2026-10-15 used a summarizer that rewrote short answers through the model; that is fixed, so those scores may be understated. Re-run a model before dropping it on a borderline score.
-- Hardware: all local rows are one machine; add rows from other GPUs before generalising.
-
-_Review 2026-10-16 (batch of the remaining models; labels: VERIFIED = read from `results/raw/*.json`, HYPOTHESIS = not tested)._
-
-- **Six runs are withheld from the CSV.** `results/benchmark.pending.csv` holds Qwen2.5-Coder-32B IQ (10/32), Qwen3.5-9B IQ4_XS (12/32), Qwable-9B (10/32), Qwen3.8-9B Distill (12/32), glm4:9b q5_K_M (0/32) and gemma-3-12b Q4_K_M (0/32). Their scores are not final and are not ranked above. VERIFIED: in each raw JSON the same eight cases (write_function, fix_bug, write_tests, rename_across_files, find_symbol, review_sqli, debug_trace, role_analyzer) fail with `MCPError: Connection closed`, after 2.5-17 s. Mistral-Nemo shows the same eight. HYPOTHESIS: a harness or Docker-gateway cause (Docker restart around 07:35, per-run profile rewrite, overlap with the previous model's container shutdown). The identical indices across unrelated models point away from the models, but nothing has been tested. Raw JSONs are kept; these rows need a re-run after the gateway is checked.
-- **Other failures stay model results.** VERIFIED: glm4:9b fails its other eight cases with `LoopError: you answered without calling any tool`; gemma-3-12b fails them with `BadRequestError 400`; Qwen3.8-9B passes most of them. Timeouts at 150 s (Qwen3.5-9B x2, Qwable x4, Qwen3.8-9B x2) are `suspect_timeout`, not `infra_error`, because no fault was logged.
-- **Watchdog and outage.** The 3600 s section watchdog ended qwen3:4b, qwen3:8b, deepseek-r1:8b and Minitron-8B; those are real results. Five models first failed preflight (`docker daemon`, Docker down about 06:43-07:35) and were re-run.
-- **Correction.** n_ctx_train=40960 belongs to a Qwen3 8B load, not Qwen3.5-9B. The ministral-3-8b summarize_readme 500 is `unclassified_500`; its cause has not been captured.
-- **Write cases** (the first six above and rename_across_files) can fail for mount reasons; see the Filesystem MCP caveat in the skill notes.
-- Not verified: the cause of "Connection closed", the 400 text for gemma-3-12b, and whether any pending row would change rank after a clean re-run.
+- The CSV holds 21 runs. Each run is scored out of 32 (16 cases x 2 runs).
+- Each case cell shows `passed/checks`. The heatmap colours are read from those cells. A `⚠` marks a case that needs a specific tool and scored 0 in that run.
+- Speed (`mean_s_per_case`, `total_s`) and the context columns are recorded per run. They are not compared across hardware here.
+- These observations will be replaced after the final re-run.
 
 ## Haiku baseline and testing your own model
 

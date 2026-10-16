@@ -11,6 +11,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import statistics
 import subprocess
 import sys
@@ -92,6 +93,7 @@ def failure_mode(r):
 
 async def bench_roles(n):
     res = {}
+    role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
     cfg = load_personas()
     missing = set(cfg["roles"]) - set(ROLE_TASKS)
     # assert not missing, f"bench does not cover roles: {sorted(missing)}"
@@ -101,9 +103,16 @@ async def bench_roles(n):
         assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
         runs = []
         for i in range(n):
-            dt, r = await timed(server.dispatch_task(agent, task))
-            runs.append({"s": round(dt, 1), "ok": ok(r), "out": r[:140]})
-            print(f"  roles/{role} #{i + 1} {dt:5.1f}s {'ok' if ok(r) else failure_mode(r)}", flush=True)
+            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), role_timeout))
+            if "TimeoutError" in r or r.startswith("EXC TimeoutError"):
+                r = f"FAILED TimeoutError after {role_timeout:g}s"
+            # a reply shorter than 20 chars (after dropping the leading "[tid] ") is a failure, not a success
+            body = re.sub(r"^\[[^\]]*\]\s*", "", r).strip()
+            role_ok = ok(r) and len(body) >= 20
+            if ok(r) and not role_ok:
+                r = f"FAILED reply too short ({len(body)} chars)"
+            runs.append({"s": round(dt, 1), "ok": role_ok, "out": r[:140]})
+            print(f"  roles/{role} #{i + 1} {dt:5.1f}s {'ok' if role_ok else failure_mode(r)}", flush=True)
         warm = [x["s"] for x in runs[1:] if x["ok"]]
         res[role] = {"cold_s": runs[0]["s"], "warm": stats(warm), "success": f"{sum(x['ok'] for x in runs)}/{n}",
                      "failures": sorted({failure_mode(x["out"]) for x in runs if not x["ok"]}), "runs": runs}

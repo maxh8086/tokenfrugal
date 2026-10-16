@@ -4,7 +4,7 @@
     python Benchmark/script/run_benchmark.py --from-json bench/<stamp>-<tag>.json
 
 Step 1 runs scripts.bench (16 real-world cases, output verified), step 2 flattens the JSON into
-one CSV row with a hardware id. The CSV is the source of truth; run build_report.py afterwards,
+one CSV row. The CSV is the source of truth; run build_report.py afterwards,
 then have a cloud model review the CSV and update Observations in Benchmark.md (see README.md).
 """
 import argparse
@@ -41,10 +41,10 @@ a = ap.parse_args()
 
 LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
-EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case", "hardware"]
+EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case"]
 META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "n",
-        "ctx_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
-        "quant", "file_gb", "num_ctx", "max_ctx", "vram_gb", "cpu_offload_pct", "ctx_used_pct", "ctx_free_tokens",
+        "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
+        "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_pct", "context_used_used_pct", "context_used_free_tokens", "peak_model_ram_gb",
         "valid_cases", "infra_cases", "mean_s_valid", "total_s"]
 
 
@@ -190,21 +190,27 @@ done = [real[cid] for cid, _, _ in bench_csv.LAYOUT if cid in real]
 temp = "omitted (rejected by model)" if meta.get("temperature_omitted") else meta.get("temperature", "")
 stamp = data.get("stamp", "")
 date = datetime.strptime(stamp, "%Y%m%d-%H%M%S").isoformat(timespec="seconds") if stamp else ""
-rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4], "hardware": hw,
+def _peak_ram(d):
+    m = ((d.get("hardware") or {}).get("ollama_ram_mib") or {}).get("max")
+    return round(m / 1024, 1) if m else ""
+
+
+rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4],
        **dict(zip(labels, row[5:])),
        "date": date, "endpoint": endpoint, "temperature": temp, "max_tokens": meta.get("max_tokens", ""),
        "builder_model": meta.get("builder", ""), "thinker_model": meta.get("thinker", ""),
        "git_sha": meta.get("git_sha", ""), "n": data.get("n", ""),
-       "ctx_peak_tokens": max([c.get("peak", 0) for c in done] or [0]),
+       "context_used_peak_tokens": max([c.get("peak", 0) for c in done] or [0]),
        "tokens_in_per_run": sum(c.get("input", 0) for c in done),
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
-       **{f"ctx_{k}": v for k, v in peaks.items()}}
+       "peak_model_ram_gb": _peak_ram(data),
+       **{f"context_used_{k}": v for k, v in peaks.items()}}
 # valid_cases / infra_cases / mean_s_valid: see bench_csv.status_scores (infra cases excluded from validity and mean)
 rec["valid_cases"], rec["infra_cases"], rec["mean_s_valid"] = bench_csv.status_scores(real)
 rec["total_s"] = bench_csv.total_seconds(real)  # elapsed time of all repeats, timeouts and infra included
-mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["ctx_peak_tokens"])
+mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["context_used_peak_tokens"])
 rec.update(mi)
-cols = EXTRA + labels + META + [f"ctx_{k}" for k in labels]
+cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels]
 dst = Path(a.csv)
 old = list(csv.DictReader(dst.open(encoding="utf-8"))) if dst.exists() else []
 with dst.open("w", newline="", encoding="utf-8") as f:  # rewrite so legacy rows get the new columns blank
@@ -212,4 +218,4 @@ with dst.open("w", newline="", encoding="utf-8") as f:  # rewrite so legacy rows
     w.writeheader()
     w.writerows(old)
     w.writerow(rec)
-print(f"appended {rec['tag']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['ctx_peak_tokens']} tokens on {hw} -> {dst}")
+print(f"appended {rec['tag']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")

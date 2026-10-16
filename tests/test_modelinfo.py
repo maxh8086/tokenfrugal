@@ -55,33 +55,29 @@ class ModelInfo(unittest.TestCase):
         fake = router({"/api/show": SHOW, "/api/ps": PS})
         with mock.patch("urllib.request.urlopen", side_effect=fake):
             got = modelinfo.info("qwen2.5-coder-yarn:3b", "http://localhost:11434/v1", 4096)
-        self.assertEqual(got["quant"], "Q4_K_M")
-        self.assertEqual(got["max_ctx"], 32768)
-        self.assertEqual(got["file_gb"], 4.0)
-        self.assertEqual(got["vram_gb"], 3.0)
-        self.assertEqual(got["cpu_offload_pct"], 25.0)
-        self.assertEqual(got["num_ctx"], 16384)  # /api/ps context_length wins over parameters
-        self.assertEqual(got["ctx_used_pct"], 25.0)
-        self.assertEqual(got["ctx_free_tokens"], 12288)
+        self.assertEqual(got["compression_level"], "Q4_K_M")
+        self.assertEqual(got["model_max_context_tokens"], 32768)
+        self.assertEqual(got["model_file_size_gb"], 4.0)
+        self.assertEqual(got["gpu_memory_used_gb"], 3.0)
+        self.assertEqual(got["shared_system_memory_gb"], 1.0)
+        self.assertEqual(got["context_window_tokens"], 16384)  # /api/ps context_length wins over parameters
 
     def test_num_ctx_from_parameters_when_not_loaded_and_tags_fallback(self):
         fake = router({"/api/show": SHOW, "/api/ps": {"models": []}, "/api/tags": TAGS})
         with mock.patch("urllib.request.urlopen", side_effect=fake):
             got = modelinfo.info("qwen2.5-coder-yarn:3b", "http://h:1234/v1/")
-        self.assertEqual(got["num_ctx"], 8192)
-        self.assertEqual(got["file_gb"], 2.0)
-        self.assertEqual(got["vram_gb"], "")
-        self.assertEqual(got["cpu_offload_pct"], "")
-        self.assertEqual(got["ctx_used_pct"], "")  # no peak given
-        self.assertEqual(got["ctx_free_tokens"], "")
+        self.assertEqual(got["context_window_tokens"], 8192)
+        self.assertEqual(got["model_file_size_gb"], 2.0)
+        self.assertEqual(got["gpu_memory_used_gb"], "")
+        self.assertEqual(got["shared_system_memory_gb"], "")
 
     def test_latest_tag_matches_and_host_is_normalised(self):
         ps_entry = {"models": [{"name": "llama3.2:3b-16k:latest", "size": GB, "size_vram": GB}]}
         fake = router({"/api/show": SHOW, "/api/ps": ps_entry})
         with mock.patch("urllib.request.urlopen", side_effect=fake) as m:
             got = modelinfo.info("llama3.2:3b-16k", "http://host.docker.internal:11434/")
-        self.assertEqual(got["file_gb"], 1.0)
-        self.assertEqual(got["cpu_offload_pct"], 0.0)
+        self.assertEqual(got["model_file_size_gb"], 1.0)
+        self.assertEqual(got["shared_system_memory_gb"], 0.0)
         urls = [c.args[0].full_url for c in m.call_args_list]
         self.assertEqual(urls[0], "http://host.docker.internal:11434/api/show")
         self.assertEqual(m.call_args_list[0].kwargs["timeout"], 5)

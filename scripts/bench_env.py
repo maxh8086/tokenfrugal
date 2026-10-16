@@ -85,6 +85,20 @@ def _spread(xs):
     return {"min": round(min(xs), 1), "avg": round(sum(xs) / len(xs), 1), "max": round(max(xs), 1)}
 
 
+def ollama_ram_mib():
+    """Resident memory (MiB) of all Ollama processes only, not the whole system. None without psutil."""
+    if psutil is None:
+        return None
+    total = 0
+    try:
+        for p in psutil.process_iter(["name", "memory_info"]):
+            if "ollama" in (p.info["name"] or "").lower():
+                total += p.info["memory_info"].rss
+    except Exception:  # a process vanishing mid-scan must never break sampling
+        return None
+    return round(total / 2**20, 1)
+
+
 class HardwareSampler:
     """Samples GPU, CPU, RAM and the Ollama PROCESSOR split on a background thread."""
 
@@ -103,6 +117,7 @@ class HardwareSampler:
             s["ram_pct"] = psutil.virtual_memory().percent
         else:
             s["cpu_pct"] = s["ram_pct"] = None
+        s["ollama_ram_mib"] = ollama_ram_mib()
         s["ollama"] = parse_ollama_ps(self._run(["ollama", "ps"]))
         self.samples.append(s)
         return s
@@ -125,7 +140,7 @@ class HardwareSampler:
 
     def summary(self):
         out = {"samples": len(self.samples), "psutil": psutil is not None}
-        for key in ("cpu_pct", "ram_pct", "gpu_util_pct", "vram_used_mib", "gpu_temp_c", "gpu_power_w"):
+        for key in ("cpu_pct", "ram_pct", "gpu_util_pct", "vram_used_mib", "gpu_temp_c", "gpu_power_w", "ollama_ram_mib"):
             out[key] = _spread([s[key] for s in self.samples if s.get(key) is not None])
         totals = [s["vram_total_mib"] for s in self.samples if s.get("vram_total_mib") is not None]
         out["vram_total_mib"] = totals[-1] if totals else None
