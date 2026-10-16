@@ -5,21 +5,11 @@ models:
   builder: qwen2.5-coder-yarn:3b
   thinker: llama3.2:3b-16k
 # Per-persona model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
-# Defaults = smallest adequate, then fastest measured solo model per persona (Benchmark/Benchmark.md). Edit here, or override
+# Empty by default: every persona uses its role's model. Add entries here, or override
 # without touching this file via `python -m scripts.persona_ui` (writes router/persona_models.json).
-# Personas not listed use their role's model. Tags come from models/trial/*.Modelfile.
-persona_models:
-  engineering-backend-architect: ts-gemma4-e4b-16384
-  testing-code-reviewer: thinker
-  engineering-sre: builder
-  support-docs-writer: ts-qwen3-8b-16384
-  engineering-software-architect: builder
-  gis-analyst: builder
-  engineering-technical-writer: builder
-  security-auditor: builder
-  design-ui-designer: thinker
-  testing-evidence-collector: thinker
-  project-management-project-shepherd: thinker
+persona_models: {}
+# Slugs accepted even with no model mapping (benchmark cases dispatch to these).
+known_agents: [engineering-backend-architect, design-ui-designer, gis-analyst, support-docs-writer]
 roles:
   builder:  {model: builder, profile: build,      max_steps: 12, native: [synaptree], tools: [read_file, write_file, edit_file, search_files, search_graph, get_code_snippet]}
   data:     {model: builder, profile: build-data, max_steps: 12, tools: [read_file, list_directory]}  # no SQL MCP wired yet

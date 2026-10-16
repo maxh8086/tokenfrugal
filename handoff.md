@@ -5,6 +5,45 @@ Last updated: 2026-10-12
 This file holds the working handoff notes. Part A covers the text-tool fix, dashboard STATUS chip and client names. Parts C onward cover persona routing, agent skills and the configuration tab.
 
 ---
+## Benchmark check hardening: PLAN (2026-10-16, not started)
+
+Source: audit of `scripts/bench_real.py` / `scripts/bench.py` plus an independent Opus review. No code changed yet. Both reviewers agree the 4 write cases (`write_function`, `fix_bug`, `write_tests`, `rename_across_files`) are genuine and the other 12 realworld cases are keyword checks. Failures are not hidden: a case that did not run skips its check and is marked unverified.
+
+### Problems confirmed
+- Keyword checks match words copied from the task text (`hard-coded`, `error`, `plan`, `injection`); small models echo the prompt.
+- Checks run on the whole reply including the `[tid]` prefix (10 hex chars). `role_tracker` accepts `"0"`, so it passes about 48% of the time whatever the model says.
+- `role_tracker`, `role_designer`, `role_docs` are near-meaningless; `role_security` passes on "no hard-coded secrets found"; `debug_trace` passes on "empty" alone; `write_tests` only counts `def test_` (comments match, tests never import `stack`).
+- Infra detection only inspects the container when `not ran` (bench_real.py ~234-237). A dropped gateway shows as `tool_error` events while the model still writes a "done" reply, so even the 8 synaptree cases get `valid`. `CONN_MARKERS` (line 33) is unused.
+- Infra repeats stay in the denominators (`verified`, `ran`, token averages divide by n, ~251-255).
+- `roles` section judges by `ok()` alone and has no timeout (bench.py ~104).
+- A timeout cancels the coroutine but Ollama keeps running the request; the next case can start on a busy GPU.
+- `s_files` seeds only missing files, so leftovers can satisfy `role_data` (low impact).
+- NOT a problem: `ok()` looking at the first 60 chars (FAILED always sits near char 13).
+
+### Planned fixes
+1. Strip the `[tid]` prefix before any check.
+2. Real checks for tracker, designer, docs: call `plan` before and after the dispatch and require those numbers in the reply; designer must show the design tool call in the task trail.
+3. `role_security`: require the secret values `AKIAFAKEFAKEFAKE1234` and `hunter2`; drop "hard-coded"; no negation parsing.
+4. `debug_trace`: require "zerodivision" plus ("empty" or "len").
+5. Tool-call verification from the per-task trail (`store.append_trail`, read by tid), not `events.jsonl` (rotates at 2 MB, shared by all router processes).
+6. Infra detection driven by `tool_error` text in the trail (`CONN_MARKERS`, "Connection closed"), for gateway cases and synaptree cases.
+7. Divide `verified`/`ran`/token averages by non-infra repeats only.
+8. `write_tests`: require the tests to import `stack` and count real `def test_` lines (not comments).
+9. Optional: `bench_roles` content check plus timeout; tighten `summarize_readme` (sentence count, token cap, several facts) and add a long-input summary case; clean scratch dir between cases.
+- REJECTED: making `ok()` scan the whole reply (legit answers can contain "FAILED (failures=1)"). If touched, use `re.match(r"\[[0-9a-f]{10}\] FAILED \(", r)` plus the existing EXC / "plan task" checks.
+
+### How to execute
+- Route per CLAUDE.md: Haiku writes the spec, tokenfrugal builds, Haiku fallback if it fails; run the offline suite after each change.
+- After the checks change, pass/fail counts for the weak cases need a re-run; timeout and status results stay valid.
+- Do not hand-edit the generated block of `Benchmark/Benchmark.md`; run `python Benchmark/script/build_report.py` after CSV changes.
+- Commit only when asked, no Co-Authored-By or "generated with" lines.
+
+### Pending alongside
+- Scratchpad (re-run files): `C:/Users/vaibh/AppData/Local/Temp/claude/C--Users-vaibh-Downloads-Projects-tokenfrugal/e52244d1-0042-4a76-8ab5-3dea859f4dca/scratchpad` holds `rerun.sh`, `rerun.out`, `rerun.csv` and one `<tag>.log` per model.
+- Background re-run (7 models): wait for `ALL_DONE` in the scratchpad `rerun.out`, check container logs for "Connection closed" before counting a row, then merge vetted rows into `Benchmark/results/benchmark.csv`, drop them from `benchmark.pending.csv`, rebuild, update Observations.
+- Final report must disclose: Haiku fallback and direct edits (builder mount broken, task f838e7a06d); PRISM deletions done directly; PRISM leftovers in `router/events.jsonl` and PRISM models still in Ollama; flaky live Haiku test `test_haiku_calls_every_router_tool`; old runs lacking status.
+
+---
 ## Concurrent docker runs: DONE (2026-10-15)
 
 Backend stops are decided by per-backend lease files in `router/leases/` (`<service>.<pid>.<uuid>`), so a router stops a backend only when no other live router still uses it; stale leases of dead pids are pruned. `MCP_KEEP_ALIVE=1` / `keep_alive` still skips the stop. Docker-backed tests may now run concurrently.
@@ -139,7 +178,7 @@ Request: make `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` (and related parameters: O
 - Dashboard (port 7777, `ui/index.html`, `ui/server.js`, text in `router/ui.yaml`): status, usage and tokens-saved views only. No settings tab. Git history (`-S "onfiguration"`, `-S "BIND_ALLOWED"`) shows no config tab was ever committed.
 - Persona editor (port 7878, `scripts/persona_ui.py`): one section, "Toolkit and model per persona". No global parameters.
 - synaptree-mcp UI (port 8787, linked from the dashboard's "Open UI"): has LLM settings. `get_llm_settings` returned provider `local`, base_url `http://localhost:11434/v1`, model `llama3.2:3b-16k`, guardrails (confirm_tokens 50000, max_input_tokens 100000, daily_token_budget 500000, max_calls_per_minute 6, timeout_s 120), `api_key_set: false`, `local_ready: false`. Most likely the tab the user remembers. It has no bind-path or tool-to-model fields.
-- `tokenfrugal/.env` lines 9-10 hold both `MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS` and `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` set to `C:\Users\vaibh\Downloads\Projects`. The gateway must restart to read them. Until it does, `ts-fs-rw` and `ast-grep` keep refusing their mounts (see `Benchmark/model_sweep/RESULTS.md`, lines 92-93).
+- `tokenfrugal/.env` lines 9-10 hold both `MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS` and `MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS` set to `C:\Users\vaibh\Downloads\Projects`. The gateway must restart to read them. Until it does, `ts-fs-rw` and `ast-grep` keep refusing their mounts.
 
 ### Open decisions (waiting on user)
 
