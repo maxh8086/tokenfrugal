@@ -1,7 +1,7 @@
 """Run the TokenFrugal benchmark against one model or endpoint.
 
 Usage:
-    # Ollama model tag: used for every role (persona overrides disabled)
+    # Ollama model tag: used for every role (agent overrides disabled)
     python scripts/bench_model.py --model qwen3:8b
 
     # OpenAI-compatible endpoint (e.g. a llama.cpp or vLLM server)
@@ -93,7 +93,7 @@ def main(argv=None) -> int:
         target = "ollama (default LLM URL)"
         env["TOKENFRUGAL_MODEL_BUILDER"] = args.model
         env["TOKENFRUGAL_MODEL_THINKER"] = args.model
-        env["TOKENFRUGAL_PERSONA_MODELS"] = "0"
+        env["TOKENFRUGAL_AGENT_MODELS"] = "0"
         model_override = args.model
 
     out_rel = f"bench/{tag}"

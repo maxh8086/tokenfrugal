@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -117,10 +118,40 @@ TOOL_TIMEOUT = float(os.getenv("TOKENFRUGAL_TOOL_TIMEOUT", "60"))   # one MCP to
 TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task; keep below the MCP client's tool timeout
 
 
-PERSONA_MODELS_FILE = Path(os.getenv("TOKENFRUGAL_PERSONA_MODELS_FILE", Path(__file__).parent / "persona_models.json"))
+# The pre-rename persona_* names (env vars, override files, agents.yaml keys) are read as a fallback until this date.
+# tests/test_legacy_persona_config.py fails after it, which is the reminder to delete the fallback; CHANGELOG.md records it.
+LEGACY_REMOVE_AFTER = date(2027, 3, 31)
+_LEGACY_SEEN: set[str] = set()
 
 
-PERSONA_MCPS_FILE = Path(os.getenv("TOKENFRUGAL_PERSONA_MCPS_FILE", Path(__file__).parent / "persona_mcps.json"))
+def _legacy_notice(name: str) -> None:
+    """Warn on stderr once per process when a deprecated persona_* name is actually used."""
+    if name in _LEGACY_SEEN:
+        return
+    _LEGACY_SEEN.add(name)
+    print(f"tokenfrugal: '{name}' is a deprecated persona_* name; rename it to the agent_* name. "
+          f"The fallback is removed after {LEGACY_REMOVE_AFTER.isoformat()}.", file=sys.stderr)
+
+
+def _agent_file(env_name: str, legacy_env: str, name: str, legacy_name: str) -> Path:
+    """Agent override file path. The agent_* env var and filename win. The pre-rename persona_* env var and file are a fallback until 2027-03-31 (LEGACY_REMOVE_AFTER); a deprecation warning is printed once when one is used."""
+    if os.getenv(env_name):
+        return Path(os.environ[env_name])
+    if os.getenv(legacy_env):
+        _legacy_notice(legacy_env)
+        return Path(os.environ[legacy_env])
+    new = Path(__file__).parent / name
+    legacy = Path(__file__).parent / legacy_name
+    if new.exists() or not legacy.exists():
+        return new
+    _legacy_notice(legacy_name)
+    return legacy
+
+
+AGENT_MODELS_FILE = _agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE", "agent_models.json", "persona_models.json")
+
+
+AGENT_MCPS_FILE = _agent_file("TOKENFRUGAL_AGENT_MCPS_FILE", "TOKENFRUGAL_PERSONA_MCPS_FILE", "agent_mcps.json", "persona_mcps.json")
 
 
 def load_catalog() -> dict:
@@ -135,31 +166,40 @@ def default_mcps(role: dict, catalog: dict) -> list[str]:
     return [n for n, m in catalog["mcps"].items() if set(m["tools"]) & set(role["tools"])]
 
 
-def load_personas() -> dict:
+def load_agents() -> dict:
     cfg = yaml.safe_load((Path(__file__).parent / "agents.yaml").read_text(encoding="utf-8"))
-    pm = dict(cfg.get("persona_models") or {})
-    try:  # user overrides (written by scripts/persona_ui.py) win over the yaml defaults
-        pm.update(json.loads(PERSONA_MODELS_FILE.read_text(encoding="utf-8")))
+    # agent_models is the key; persona_models is still read from agents.yaml until LEGACY_REMOVE_AFTER.
+    if not cfg.get("agent_models") and cfg.get("persona_models"):
+        _legacy_notice("persona_models")
+    pm = dict(cfg.get("agent_models") or cfg.get("persona_models") or {})
+    try:  # user overrides (written by scripts/agent_ui.py) win over the yaml defaults
+        pm.update(json.loads(AGENT_MODELS_FILE.read_text(encoding="utf-8")))
     except (OSError, ValueError):
         pass
-    # Benchmarks pin one model for every persona with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_PERSONA_MODELS=0 disables the mapping.
-    disabled = os.getenv("TOKENFRUGAL_PERSONA_MODELS") == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
+    # Benchmarks pin one model for every agent with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_AGENT_MODELS=0 disables the mapping
+    # (TOKENFRUGAL_PERSONA_MODELS=0 is still honoured until LEGACY_REMOVE_AFTER).
+    if not os.getenv("TOKENFRUGAL_AGENT_MODELS") and os.getenv("TOKENFRUGAL_PERSONA_MODELS"):
+        _legacy_notice("TOKENFRUGAL_PERSONA_MODELS")
+    disabled = (os.getenv("TOKENFRUGAL_AGENT_MODELS") or os.getenv("TOKENFRUGAL_PERSONA_MODELS")) == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
     cfg["known_agents"] = sorted(set(pm) | set(cfg.get("known_agents") or []))  # slugs stay valid when the model mapping is off
     if disabled:
         pm = {}
-    cfg["persona_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
+    cfg["agent_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
     cfg["mcp_catalog"] = load_catalog()["mcps"]
-    try:  # user MCP selection per persona (written by scripts/persona_ui.py); off whenever the model mapping is off
-        mc = json.loads(PERSONA_MCPS_FILE.read_text(encoding="utf-8"))
+    try:  # user MCP selection per agent (written by scripts/agent_ui.py); off whenever the model mapping is off
+        mc = json.loads(AGENT_MCPS_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         mc = {}
-    cfg["persona_mcps"] = {} if disabled else {k: v for k, v in mc.items() if isinstance(v, list)}
+    cfg["agent_mcps"] = {} if disabled else {k: v for k, v in mc.items() if isinstance(v, list)}
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
-    cfg["persona_skills"] = dict(cfg.get("persona_skills") or {})
+    # agent_skills is the key; persona_skills is still read from agents.yaml until LEGACY_REMOVE_AFTER.
+    if not cfg.get("agent_skills") and cfg.get("persona_skills"):
+        _legacy_notice("persona_skills")
+    cfg["agent_skills"] = dict(cfg.get("agent_skills") or cfg.get("persona_skills") or {})
     # Role -> model tag from the dashboard Configuration tab; wins over the logical model in agents.yaml.
     cfg["role_models"] = {k: v for k, v in (_overrides.get("role_models") or {}).items() if isinstance(v, str) and v.strip()}
-    # Role -> MCP names from the dashboard Configuration tab; a persona_mcps entry for one agent still wins.
+    # Role -> MCP names from the dashboard Configuration tab; an agent_mcps entry for one agent still wins.
     cfg["role_mcps"] = {k: [n for n in v if isinstance(n, str)] for k, v in (_overrides.get("role_mcps") or {}).items() if isinstance(v, list)}
     return cfg
 
@@ -173,8 +213,8 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     r["role"] = role
     r["model"] = cfg.get("role_models", {}).get(role) or cfg["models"][r["model"]]
     own = list(r.get("skills") or [])
-    r["skills"] = own + [s for s in cfg.get("persona_skills", {}).get(agent, []) if s not in own]
-    chosen = cfg.get("persona_mcps", {}).get(agent) or cfg.get("role_mcps", {}).get(role) or []
+    r["skills"] = own + [s for s in cfg.get("agent_skills", {}).get(agent, []) if s not in own]
+    chosen = cfg.get("agent_mcps", {}).get(agent) or cfg.get("role_mcps", {}).get(role) or []
     sel = [n for n in chosen if n in cfg.get("mcp_catalog", {})]
     if sel:  # user-chosen toolkit: open the distinct profiles/natives/backends and allow the union of tools
         ms = [cfg["mcp_catalog"][n] for n in sel]
@@ -185,7 +225,7 @@ def resolve_role(agent: str, cfg: dict) -> dict:
         r["tools"] = uniq(t for m in ms for t in m["tools"])
         r["params"] = {m["profile"]: m["params"] for m in ms if m.get("profile") and m.get("params")}
         r["mcps"] = sel
-    pm = cfg.get("persona_models", {}).get(agent)
+    pm = cfg.get("agent_models", {}).get(agent)
     if pm:  # a logical name (builder/thinker) or a concrete model tag
         r["model"] = cfg["models"].get(pm, pm)
     return r
@@ -193,7 +233,7 @@ def resolve_role(agent: str, cfg: dict) -> dict:
 
 def check_agent(slug: str, cfg: dict) -> str:
     """Return '' when slug is a known agent, else a short error."""
-    known = set(cfg.get("overrides") or {}) | set(cfg.get("persona_models") or {}) | set(cfg.get("known_agents") or []) | set(cfg.get("persona_skills") or {})
+    known = set(cfg.get("overrides") or {}) | set(cfg.get("agent_models") or {}) | set(cfg.get("known_agents") or []) | set(cfg.get("agent_skills") or {})
     for slugs in (cfg.get("members") or {}).values():
         known |= set(slugs)
     if slug in known:
