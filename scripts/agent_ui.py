@@ -1,10 +1,10 @@
-"""Local editor for the per-persona toolkit (MCPs) and model.
+"""Local editor for the per-agent toolkit (MCPs) and model.
 
-    python -m scripts.persona_ui [--port 7878]     # then open http://127.0.0.1:7878
+    python -m scripts.agent_ui [--port 7878]     # then open http://127.0.0.1:7878
 
-Pick a profile type (Financial analyst, Programmer, Data scientist, ...), a persona, the MCPs it may use
-(checkboxes or multi-select) and its model. Saves only changes to router/persona_mcps.json and
-router/persona_models.json. A blank model resets a persona to its role's model. Restart the MCP client to apply.
+Pick a profile type (Financial analyst, Programmer, Data scientist, ...), an agent, the MCPs it may use
+(checkboxes or multi-select) and its model. Saves only changes to router/agent_mcps.json and
+router/agent_models.json. A blank model resets an agent to its role's model. Restart the MCP client to apply.
 """
 import argparse
 import json
@@ -42,32 +42,34 @@ def _read(path) -> dict:
 def state() -> dict:
     base = yaml.safe_load(YAML.read_text(encoding="utf-8"))
     cat = config.load_catalog()
-    defaults = base.get("persona_models") or {}
-    user, umcp = _read(config.PERSONA_MODELS_FILE), _read(config.PERSONA_MCPS_FILE)
-    slugs = {p for t in cat["profile_types"].values() for p in t["personas"]} | set(defaults) | set(user) | set(umcp)
+    # agent_models / agents are the keys; persona_models / personas are read as a fallback for one release.
+    defaults = base.get("agent_models") or base.get("persona_models") or {}
+    types = {k: {**t, "agents": t.get("agents") or t.get("personas") or []} for k, t in cat["profile_types"].items()}
+    user, umcp = _read(config.AGENT_MODELS_FILE), _read(config.AGENT_MCPS_FILE)
+    slugs = {p for t in types.values() for p in t["agents"]} | set(defaults) | set(user) | set(umcp)
     rows = {}
     for slug in sorted(slugs):
-        role = config.resolve_role(slug, base)  # role default (no persona mapping applied to base)
+        role = config.resolve_role(slug, base)  # role default (no agent mapping applied to base)
         rows[slug] = {"role": role["role"], "role_model": role["model"], "default": defaults.get(slug, ""),
                       "override": user.get(slug), "mcp_default": config.default_mcps(role, cat), "mcps": umcp.get(slug)}
-    return {"rows": rows, "types": cat["profile_types"], "mcps": cat["mcps"], "logical": base["models"],
-            "installed": installed_models(), "file": str(config.PERSONA_MODELS_FILE), "mcp_file": str(config.PERSONA_MCPS_FILE)}
+    return {"rows": rows, "types": types, "mcps": cat["mcps"], "logical": base["models"],
+            "installed": installed_models(), "file": str(config.AGENT_MODELS_FILE), "mcp_file": str(config.AGENT_MCPS_FILE)}
 
 
 def save(body: dict) -> dict:
     """Store only what differs from the defaults: models vs the yaml ('' = role model), MCPs vs the role's toolkit."""
     base = yaml.safe_load(YAML.read_text(encoding="utf-8"))
     cat = config.load_catalog()
-    pdef = base.get("persona_models") or {}
+    pdef = base.get("agent_models") or base.get("persona_models") or {}
     models = {str(k).strip(): str(v or "").strip() for k, v in (body.get("models") or {}).items() if str(k).strip()}
     diff = {k: v for k, v in models.items() if v != pdef.get(k, "")}
-    config.PERSONA_MODELS_FILE.write_text(json.dumps(diff, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    config.AGENT_MODELS_FILE.write_text(json.dumps(diff, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     mdiff = {}
     for k, v in (body.get("mcps") or {}).items():
         v = [n for n in v if n in cat["mcps"]]
         if v != config.default_mcps(config.resolve_role(k, base), cat):
             mdiff[k] = v
-    config.PERSONA_MCPS_FILE.write_text(json.dumps(mdiff, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    config.AGENT_MCPS_FILE.write_text(json.dumps(mdiff, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"models": diff, "mcps": mdiff}
 
 
@@ -171,7 +173,7 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
-PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Persona toolkit</title>
+PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Agent toolkit</title>
 <style>:root{color-scheme:light dark}body{font:14px system-ui;margin:16px;max-width:1000px}select,input,button{font:inherit}
 label{display:block;margin:2px 0}.d{opacity:.6}.w{color:#b60}#msg{margin-left:8px}.box{border:1px solid #8886;padding:8px 10px;margin:8px 0}
 details{border:1px solid #8886;border-radius:4px;padding:4px 8px;display:inline-block;min-width:380px;vertical-align:top}summary{cursor:pointer}
@@ -179,20 +181,20 @@ details{border:1px solid #8886;border-radius:4px;padding:4px 8px;display:inline-
 .tabs{display:flex;gap:4px;border-bottom:1px solid #8886;margin-bottom:12px}.tabs button{border:0;border-bottom:3px solid transparent;background:none;padding:6px 14px;cursor:pointer}
 .tabs button.on{border-color:#2a7;font-weight:600}pre{background:#8881;padding:8px;max-height:220px;overflow:auto;font-size:12px;white-space:pre-wrap}
 textarea{width:100%;box-sizing:border-box;font:inherit}.sh button{margin-right:6px}</style>
-<div class=tabs><button id=tp class=on>Personas</button><button id=tb>Benchmark</button></div>
+<div class=tabs><button id=tp class=on>Agents</button><button id=tb>Benchmark</button></div>
 <div id=pv>
-<h2>Toolkit and model per persona</h2>
+<h2>Toolkit and model per agent</h2>
 <div class=box><b>Review the benchmark first.</b> Before choosing MCPs and a model, check which tool works best with which model:
 <a href="/benchmark" target=_blank>benchmark results (local)</a> |
 <a href="https://github.com/maxh8086/tokenfrugal/tree/main/Benchmark" target=_blank rel=noopener>Benchmark/ in the repo</a>.
 <label><input type=checkbox id=ack> I reviewed the benchmark results</label></div>
-<p>Profile type <select id=t></select> Persona <select id=p></select></p>
+<p>Profile type <select id=t></select> Agent <select id=p></select></p>
 <p id=info class=d></p>
 <p>MCPs (tick any number) <span class=d>- "proposed" = the benchmarked default</span><br>
 <details id=dd><summary id=sm></summary><div id=cb></div></details></p>
 <p id=warn class=w></p>
-<p>Model (one per persona) <select id=m></select> <span class=d>proposed: <span id=md></span></span></p>
-<p><button id=save disabled>Save</button> <button id=reset>Reset persona to proposed</button><span id=msg></span></p>
+<p>Model (one per agent) <select id=m></select> <span class=d>proposed: <span id=md></span></span></p>
+<p><button id=save disabled>Save</button> <button id=reset>Reset agent to proposed</button><span id=msg></span></p>
 <p class=d>Saved to <code id=f></code> and <code id=g></code>; restart the MCP client to apply.</p>
 </div>
 <div id=bv hidden>
@@ -229,7 +231,7 @@ const all=[...new Set([...Object.keys(S.logical),...S.installed,pm,c].filter(Boo
 $("m").innerHTML='<option value="">(role model)</option>'+all.map(m=>`<option value="${m}"${m===c?" selected":""}>${m}${m===pm?" (proposed)":""}</option>`).join("");
 $("m").onchange=e=>{md[p]=e.target.value};$("md").textContent=pm||r.role_model}
 function pickType(){const t=S.types[$("t").value];
-$("p").innerHTML=t.personas.map(x=>`<option${x===t.default?" selected":""}>${x}</option>`).join("");draw()}
+$("p").innerHTML=t.agents.map(x=>`<option${x===t.default?" selected":""}>${x}</option>`).join("");draw()}
 async function load(){S=await (await fetch("/api/state")).json();$("f").textContent=S.file;$("g").textContent=S.mcp_file;
 for(const [k,r] of Object.entries(S.rows)){mc[k]=[...(r.mcps??r.mcp_default)];md[k]=r.override??r.default}
 $("t").innerHTML=Object.entries(S.types).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join("");
@@ -277,7 +279,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--port", type=int, default=7878)
     a = ap.parse_args()
-    print(f"Persona toolkit editor: http://127.0.0.1:{a.port}  (Ctrl+C to stop)")
+    print(f"Agent toolkit editor: http://127.0.0.1:{a.port}  (Ctrl+C to stop)")
     ThreadingHTTPServer(("127.0.0.1", a.port), Handler).serve_forever()
 
 

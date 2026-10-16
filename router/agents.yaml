@@ -4,10 +4,10 @@
 models:
   builder: qwen2.5-coder-yarn:3b
   thinker: llama3.2:3b-16k
-# Per-persona model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
-# Empty by default: every persona uses its role's model. Add entries here, or override
-# without touching this file via `python -m scripts.persona_ui` (writes router/persona_models.json).
-persona_models: {}
+# Per-agent model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
+# Empty by default: every agent uses its role's model. Add entries here, or override
+# without touching this file via `python -m scripts.persona_ui` (writes router/agent_models.json).
+agent_models: {}
 # Slugs accepted even with no model mapping (benchmark cases dispatch to these).
 known_agents: [engineering-backend-architect, design-ui-designer, gis-analyst, support-docs-writer]
 roles:
@@ -26,7 +26,7 @@ roles:
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code]}
   finance:  {model: thinker, profile: docs,       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown]}
   research: {model: thinker,                       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links]}
-persona_skills:
+agent_skills:
   project-management-project-shepherd: [planning]
   testing-code-reviewer: [code-review]
   engineering-sre: [sre-triage]
