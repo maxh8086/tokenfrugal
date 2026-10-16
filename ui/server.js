@@ -200,7 +200,7 @@ function usage(now = Date.now() / 1000) {
   out.roles = group(scopes.month, (x) => x.role || '?').map((a) => ({ ...a, role: a.key })).sort((a, b) => b.saved - a.saved);
   // Local tasks this period, one row per task id, same columns as Claude's subagent table (input/output are estimates when the backend sends no usage).
   out.localTasks = list.filter((x) => x.ts >= scopes.month).sort((a, b) => b.ts - a.ts).slice(0, 200)
-    .map((x) => ({ task: x.task || x.id, persona: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output,
+    .map((x) => ({ task: x.task || x.id, agent: x.agent || '?', model: x.model || '?', first: x.ts, calls: x.calls, input: x.input, cached: 0, output: x.output, total: x.input + x.output,
       e2e: x.e2e, tps: x.secs > 0 ? Math.round((x.output / x.secs) * 10) / 10 : 0 }));
   out.claude = claudeUsage(scopes);
   return out;

@@ -42,9 +42,9 @@ def _read(path) -> dict:
 def state() -> dict:
     base = yaml.safe_load(YAML.read_text(encoding="utf-8"))
     cat = config.load_catalog()
-    # agent_models / agents are the keys; persona_models / personas are read as a fallback for one release.
-    defaults = base.get("agent_models") or base.get("persona_models") or {}
-    types = {k: {**t, "agents": t.get("agents") or t.get("personas") or []} for k, t in cat["profile_types"].items()}
+    # agent_models / agents are the keys; agent_models / agents are read as a fallback for one release.
+    defaults = base.get("agent_models") or base.get("agent_models") or {}
+    types = {k: {**t, "agents": t.get("agents") or t.get("agents") or []} for k, t in cat["profile_types"].items()}
     user, umcp = _read(config.AGENT_MODELS_FILE), _read(config.AGENT_MCPS_FILE)
     slugs = {p for t in types.values() for p in t["agents"]} | set(defaults) | set(user) | set(umcp)
     rows = {}
@@ -60,7 +60,7 @@ def save(body: dict) -> dict:
     """Store only what differs from the defaults: models vs the yaml ('' = role model), MCPs vs the role's toolkit."""
     base = yaml.safe_load(YAML.read_text(encoding="utf-8"))
     cat = config.load_catalog()
-    pdef = base.get("agent_models") or base.get("persona_models") or {}
+    pdef = base.get("agent_models") or base.get("agent_models") or {}
     models = {str(k).strip(): str(v or "").strip() for k, v in (body.get("models") or {}).items() if str(k).strip()}
     diff = {k: v for k, v in models.items() if v != pdef.get(k, "")}
     config.AGENT_MODELS_FILE.write_text(json.dumps(diff, indent=2, sort_keys=True) + "\n", encoding="utf-8")

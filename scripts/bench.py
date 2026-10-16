@@ -25,7 +25,7 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
-from router.config import LLM_API_KEY, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_agents, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 REALWORLD_CASES = 16
@@ -94,7 +94,7 @@ def failure_mode(r):
 async def bench_roles(n):
     res = {}
     role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
-    cfg = load_personas()
+    cfg = load_agents()
     missing = set(cfg["roles"]) - set(ROLE_TASKS)
     # assert not missing, f"bench does not cover roles: {sorted(missing)}"
     if missing:  # report uncovered roles instead of aborting the whole section
@@ -141,7 +141,7 @@ def bench_output(n, lengths=(128, 512, 1024, 2048, 4096)):
     """Direct completions per model: tokens/s and whether the length cap is honoured."""
     from openai import OpenAI
     c = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=180, max_retries=0)
-    cfg = load_personas()["models"]
+    cfg = load_agents()["models"]
     res = {}
     for name, model in cfg.items():
         res[name] = {}

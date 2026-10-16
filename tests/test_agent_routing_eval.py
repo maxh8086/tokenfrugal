@@ -5,15 +5,15 @@ import os
 import tempfile
 import unittest
 
-from scripts import persona_routing_eval as pre
+from scripts import agent_routing_eval as pre
 
-PERSONAS_YAML = """\
-persona_models:
+AGENTS_YAML = """\
+agent_models:
   engineering-backend-architect: builder
   design-ui-designer: builder
 overrides:
   testing-api-tester: builder
-persona_skills:
+agent_skills:
   product-manager: planning
 divisions:
   engineering: [engineering-backend-architect]
@@ -35,11 +35,11 @@ def write_jsonl(rows, blank_lines=False):
     return write_tmp("\n".join(lines) + "\n", ".jsonl")
 
 
-class LoadPersonaSlugsTests(unittest.TestCase):
+class LoadAgentSlugsTests(unittest.TestCase):
     def test_union_of_slug_sections_sorted_and_excludes_divisions(self):
-        path = write_tmp(PERSONAS_YAML, ".yaml")
+        path = write_tmp(AGENTS_YAML, ".yaml")
         self.addCleanup(os.remove, path)
-        slugs = pre.load_persona_slugs(path)
+        slugs = pre.load_agent_slugs(path)
         self.assertEqual(slugs, sorted(slugs))
         self.assertEqual(
             slugs,
@@ -50,7 +50,7 @@ class LoadPersonaSlugsTests(unittest.TestCase):
     def test_missing_sections_yield_empty_list(self):
         path = write_tmp("roles: {}\n", ".yaml")
         self.addCleanup(os.remove, path)
-        self.assertEqual(pre.load_persona_slugs(path), [])
+        self.assertEqual(pre.load_agent_slugs(path), [])
 
 
 class KeywordRouteTests(unittest.TestCase):
@@ -81,7 +81,7 @@ class KeywordRouteTests(unittest.TestCase):
 
 
 class ValidateLabelsTests(unittest.TestCase):
-    def test_reports_index_and_persona_for_unknown_slugs(self):
+    def test_reports_index_and_agent_for_unknown_slugs(self):
         rows = [{"persona": "a-b"}, {"persona": "bogus"}, {"persona": "c-d"}]
         self.assertEqual(pre.validate_labels(rows, ["a-b", "c-d"]), [(1, "bogus")])
 
@@ -90,22 +90,22 @@ class ValidateLabelsTests(unittest.TestCase):
 
 
 class ScorePredictionsTests(unittest.TestCase):
-    def test_accuracy_and_per_persona_counts(self):
+    def test_accuracy_and_per_agent_counts(self):
         result = pre.score_predictions(["a-x", "a-x", "b-y"], ["a-x", "b-y", "b-y"])
         self.assertEqual(result["correct"], 2)
         self.assertEqual(result["total"], 3)
         self.assertAlmostEqual(result["accuracy"], 2 / 3)
-        self.assertEqual(result["per_persona"]["a-x"], {"correct": 1, "total": 2})
-        self.assertEqual(result["per_persona"]["b-y"], {"correct": 1, "total": 1})
+        self.assertEqual(result["per_agent"]["a-x"], {"correct": 1, "total": 2})
+        self.assertEqual(result["per_agent"]["b-y"], {"correct": 1, "total": 1})
 
     def test_none_prediction_is_wrong(self):
         result = pre.score_predictions(["a-x"], [None])
         self.assertEqual(result["correct"], 0)
-        self.assertEqual(result["per_persona"]["a-x"], {"correct": 0, "total": 1})
+        self.assertEqual(result["per_agent"]["a-x"], {"correct": 0, "total": 1})
 
     def test_empty_labels_gives_zero_accuracy(self):
         result = pre.score_predictions([], [])
-        self.assertEqual(result, {"accuracy": 0.0, "correct": 0, "total": 0, "per_persona": {}})
+        self.assertEqual(result, {"accuracy": 0.0, "correct": 0, "total": 0, "per_agent": {}})
 
 
 class LoadJsonlTests(unittest.TestCase):
@@ -120,8 +120,8 @@ class LoadJsonlTests(unittest.TestCase):
 
 class MainTests(unittest.TestCase):
     def setUp(self):
-        self.personas = write_tmp(PERSONAS_YAML, ".yaml")
-        self.addCleanup(os.remove, self.personas)
+        self.agents = write_tmp(AGENTS_YAML, ".yaml")
+        self.addCleanup(os.remove, self.agents)
 
     def run_main(self, argv):
         out = io.StringIO()
@@ -138,7 +138,7 @@ class MainTests(unittest.TestCase):
         self.addCleanup(os.remove, labels)
         self.addCleanup(os.remove, preds)
 
-        code, out = self.run_main(["--personas", self.personas, "--labels", labels, "--predictions", preds])
+        code, out = self.run_main(["--agents", self.agents, "--labels", labels, "--predictions", preds])
 
         self.assertEqual(code, 0)
         self.assertIn("keyword baseline accuracy: 0.500 (1/2)", out)
@@ -148,24 +148,24 @@ class MainTests(unittest.TestCase):
         labels = write_jsonl([{"task": "testing the api tester", "persona": "testing-api-tester"}])
         self.addCleanup(os.remove, labels)
 
-        code, out = self.run_main(["--personas", self.personas, "--labels", labels])
+        code, out = self.run_main(["--agents", self.agents, "--labels", labels])
 
         self.assertEqual(code, 0)
         self.assertIn("keyword baseline accuracy: 1.000 (1/1)", out)
         self.assertNotIn("predictions accuracy", out)
 
-    def test_exit_two_on_unknown_persona(self):
+    def test_exit_two_on_unknown_agent(self):
         labels = write_jsonl([
             {"task": "x", "persona": "product-manager"},
-            {"task": "y", "persona": "not-a-persona"},
+            {"task": "y", "persona": "not-an-agent"},
         ])
         self.addCleanup(os.remove, labels)
 
-        code, out = self.run_main(["--personas", self.personas, "--labels", labels])
+        code, out = self.run_main(["--agents", self.agents, "--labels", labels])
 
         self.assertEqual(code, 2)
         self.assertIn("bad row 1", out)
-        self.assertIn("not-a-persona", out)
+        self.assertIn("not-an-agent", out)
         self.assertNotIn("keyword baseline", out)
 
 
