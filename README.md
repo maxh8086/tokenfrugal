@@ -6,6 +6,12 @@
 
 Keywords: MCP server, Model Context Protocol, local LLM, Ollama, token saving, reduce Claude Code usage, Codex, LM Studio, vLLM, agent personas, Docker MCP router, offline coding assistant.
 
+> **A note on how this was built**
+> 
+> Coding is evolving from a primary execution skill to an orchestration skill.
+> To test this shift, I built this latest project entirely using AI coding agents. The takeaway? When AI handles the syntax, your ability to think deeply, design robust architectures, and drive creative solutions becomes your true competitive advantage.
+> Check out the results and let me know your thoughts: [linkedin.com/in/vpavtekar](https://www.linkedin.com/in/vpavtekar)
+
 ## How it works (for beginners)
 
 You talk to one big cloud model (Claude Code, Codex, ...). It hands small jobs to a free local model and gets back a short summary.
@@ -96,7 +102,7 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 ## Choosing a model per persona
 
-`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Defaults are the best measured model per persona (see the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/)). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
+`persona_models` in `router/agents.yaml` maps a persona slug to the local model it runs on. Models for each persona can be compared in the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/). A value is `builder`, `thinker` or any Ollama tag; personas not listed use their role's model.
 
 Edit the mapping in a browser instead of the yaml:
 
@@ -108,7 +114,9 @@ Your changes are saved to `router/persona_models.json` (git-ignored, or set `TOK
 
 ## Model results
 
-Model conclusions are pending a final re-run. The current measurements, the case list and the charts are in the [live benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/). Filter and sort the runs in the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html).
+<!-- Maintainer note: keep this README to information that stays true over time. Do not put benchmark results, rankings or "best model" claims here; link to the HTML pages instead. -->
+
+Results change as models and code change, so they are not listed here. See the [live benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) for rankings and the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html) to filter and sort runs.
 
 ## Adding MCP servers
 
@@ -173,3 +181,9 @@ The dashboard starts with the router and opens in your browser at http://127.0.0
 - All dashboard text comes from `router/ui.yaml`; roles, models and tools come from `router/roles.json`.
 - Needs Node 18+ (no npm packages); without Node the router runs as before. `node ui/server.js` starts it by hand.
 - The router writes `router/events.jsonl` and `router/roles.json`; override with `GATEWAY_EVENTS`. Restart the router after updating so it emits events.
+
+---
+
+*They say we're just "vibe coding" now, but curating immaculate vibes for the AI takes a shocking amount of caffeine. If you like what the agents built, help keep my vibes (and local GPUs) highly caffeinated: [buymeacoffee.com/maxh8086](https://buymeacoffee.com/maxh8086)*
+
+<p align="center"><a href="https://buymeacoffee.com/maxh8086"><img src="assets/buymeacoffee-qr.png" alt="Buy me a coffee QR code" width="180"></a></p>
