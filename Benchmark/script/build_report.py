@@ -292,6 +292,7 @@ th{cursor:pointer;position:sticky;top:0;background:var(--bg)}.bar{display:inline
 details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}details ul{margin:8px 0 8px 18px;padding:0}
 </style>
 <h1>Benchmark explorer</h1>
+<p><a href="index.html">Back to the full report</a></p>
 __ROLES__
 <div class="f">
 <label>Min score %<input id="ms" type="number" value="0" min="0" max="100"></label>
@@ -327,4 +328,37 @@ document.querySelectorAll("input,select").forEach(e=>e.oninput=draw);draw();
         .replace("__CASES__", json.dumps(CASES))
         .replace("__REQ__", json.dumps(list(REQUIRED_TOOL_CASES))),
     encoding="utf-8")
-print(f"updated {p.name} and explorer.html ({len(rows)} runs, {len(CASES)} cases)")
+PAGE = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TokenFrugal benchmark</title>
+<style>
+:root{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b;--code:#f4f4f4}
+@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036;--code:#22262b}}
+body{font:15px/1.55 system-ui;margin:0;background:var(--bg);color:var(--fg)}
+nav{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+nav a{color:var(--acc);font-weight:600;text-decoration:none}
+main{max-width:1100px;margin:0 auto;padding:8px 16px 48px}
+a{color:var(--acc)}h1,h2,h3{line-height:1.25}h2{border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;font-size:13px}
+th,td{padding:5px 8px;border:1px solid var(--line);text-align:left}th{background:var(--code)}
+code{background:var(--code);padding:1px 4px;border-radius:3px}pre{background:var(--code);padding:10px;overflow-x:auto}pre code{padding:0}
+.mermaid{overflow-x:auto;text-align:center}
+</style>
+<nav><a href="index.html">Report</a><a href="explorer.html">Interactive explorer</a>
+<a href="__GH__/results/benchmark.csv">Raw data (CSV)</a><a href="__GH__/script/README.md">Run your own</a></nav>
+<main id="md">Loading report...</main>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+const GH="__GH__",SRC=__MD__;
+const el=document.getElementById("md");
+el.innerHTML=marked.parse(SRC);
+el.querySelectorAll("pre code.language-mermaid").forEach(c=>{const d=document.createElement("div");d.className="mermaid";d.textContent=c.textContent;c.parentElement.replaceWith(d)});
+el.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
+mermaid.initialize({startOnLoad:false,theme:matchMedia("(prefers-color-scheme:dark)").matches?"dark":"default"});
+mermaid.run({querySelector:".mermaid"});
+</script>"""
+(B / "index.html").write_text(
+    PAGE.replace("__GH__", "https://github.com/maxh8086/tokenfrugal/blob/main/Benchmark")
+        .replace("__MD__", json.dumps(p.read_text(encoding="utf-8")).replace("</", "<\\/")),
+    encoding="utf-8")
+print(f"updated {p.name} explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
