@@ -16,4 +16,5 @@ All notable changes to this project. Versions follow `pyproject.toml` and `route
   On or after 2027-03-31 the fallback is removed. `tests/test_legacy_persona_config.py` then fails, which marks the fallback for deletion.
 
 ### Notes
-- Recorded benchmark CSVs under `Benchmark/results/` keep their original `persona:` keys. They are historical results and were not rewritten.
+- Tracked benchmark CSVs under `Benchmark/results/raw/` had their `persona:` keys renamed to `agent:`. Only that key changed; no values or other columns were edited.
+- Tracked benchmark JSON files under `Benchmark/results/raw/` were not changed. Seven of them contain the word "persona" once, inside model-output prose in an `"error"` string, and are kept as recorded.
