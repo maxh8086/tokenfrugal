@@ -1,18 +1,18 @@
 import unittest
 
-from router.config import load_personas, resolve_role
+from router.config import load_agents, resolve_role
 
 
-class PersonaSkillsTest(unittest.TestCase):
+class AgentSkillsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cfg = load_personas()
+        cls.cfg = load_agents()
 
     def test_tracker_role_has_planning_skill(self):
         r = resolve_role("project-management-project-shepherd", self.cfg)
         self.assertIn("planning", r["skills"])
 
-    def test_persona_skill_mapping_applies_to_agent(self):
+    def test_agent_skill_mapping_applies_to_agent(self):
         r = resolve_role("project-management-project-shepherd", self.cfg)
         self.assertIn("planning", r["skills"])
 

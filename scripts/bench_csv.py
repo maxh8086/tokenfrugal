@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-# (bench_real case id, layout column, tool server, layout persona shown in the header)
+# (bench_real case id, layout column, tool server, layout agent shown in the header)
 LAYOUT = [
     ("write_function", "write_function", "Filesystem MCP server (mcp/filesystem)"),
     ("fix_bug", "fix_bug", "Filesystem MCP server (mcp/filesystem)"),
@@ -31,8 +31,8 @@ LAYOUT = [
     ("role_research", "web_crawl", "Crawl4AI MCP server (unclecode/crawl4ai)"),
 ]
 
-# Persona comes from the agent each case dispatches to (bench_real.cases()).
-PERSONAS = {
+# Agent comes from the agent each case dispatches to (bench_real.cases()).
+AGENTS = {
     "write_function": "engineering-backend-architect", "fix_bug": "engineering-backend-architect",
     "write_tests": "engineering-backend-architect", "rename_across_files": "engineering-backend-architect",
     "find_symbol": "engineering-backend-architect", "review_sqli": "testing-code-reviewer",
@@ -59,7 +59,7 @@ def _split(cell):
 def header():
     cols = ["Model / run tag", "Params", "Verified", "Ran", "Mean s/case"]
     for cid, label, server in LAYOUT:
-        cols.append(f"{label}\n{server}\npersona: {PERSONAS[cid]}")
+        cols.append(f"{label}\n{server}\nagent: {AGENTS[cid]}")
     return cols
 
 

@@ -8,12 +8,12 @@ from types import SimpleNamespace
 os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from router import store  # noqa: E402
-from router.config import load_personas, resolve_role  # noqa: E402
+from router.config import load_agents, resolve_role  # noqa: E402
 from router.loop import arg_error, coerce_args, parse_text_calls, slop_check  # noqa: E402
 from router.mcp_client import Router, to_openai_tools  # noqa: E402
 from router.summarize import hard_trim, tokens  # noqa: E402
 
-CFG = load_personas()
+CFG = load_agents()
 
 
 class Roles(unittest.TestCase):
