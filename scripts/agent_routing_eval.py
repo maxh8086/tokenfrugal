@@ -35,7 +35,7 @@ def keyword_route(task: str, slugs: List[str]) -> Optional[str]:
 def validate_labels(rows: List[Dict[str, str]], slugs: List[str]) -> List[Tuple[int, str]]:
     """Return (index, agent) for every row whose agent is not a known slug."""
     known = set(slugs)
-    return [(i, row["persona"]) for i, row in enumerate(rows) if row["persona"] not in known]
+    return [(i, row["agent"]) for i, row in enumerate(rows) if row["agent"] not in known]
 
 
 def score_predictions(labels: List[str], predictions: List[Optional[str]]) -> Dict:
@@ -71,8 +71,8 @@ def _fmt(result: Dict) -> str:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Evaluate keyword agent routing.")
     parser.add_argument("--agents", default="router/agents.yaml", help="agents YAML path")
-    parser.add_argument("--labels", required=True, help="labels JSONL with 'task' and 'persona'")
-    parser.add_argument("--predictions", help="predictions JSONL with 'persona'")
+    parser.add_argument("--labels", required=True, help="labels JSONL with 'task' and 'agent'")
+    parser.add_argument("--predictions", help="predictions JSONL with 'agent'")
     args = parser.parse_args(argv)
 
     rows = load_jsonl(args.labels)
@@ -84,13 +84,13 @@ def main(argv=None) -> int:
             print(f"bad row {index}: unknown agent {agent!r}")
         return 2
 
-    labels = [row["persona"] for row in rows]
+    labels = [row["agent"] for row in rows]
     keyword_preds = [keyword_route(row["task"], slugs) for row in rows]
     print(f"keyword baseline accuracy: {_fmt(score_predictions(labels, keyword_preds))}")
 
     if args.predictions:
         pred_rows = load_jsonl(args.predictions)
-        preds = [row.get("persona") for row in pred_rows]
+        preds = [row.get("agent") for row in pred_rows]
         print(f"predictions accuracy: {_fmt(score_predictions(labels, preds))}")
 
     return 0

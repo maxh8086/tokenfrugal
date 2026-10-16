@@ -82,11 +82,11 @@ class KeywordRouteTests(unittest.TestCase):
 
 class ValidateLabelsTests(unittest.TestCase):
     def test_reports_index_and_agent_for_unknown_slugs(self):
-        rows = [{"persona": "a-b"}, {"persona": "bogus"}, {"persona": "c-d"}]
+        rows = [{"agent": "a-b"}, {"agent": "bogus"}, {"agent": "c-d"}]
         self.assertEqual(pre.validate_labels(rows, ["a-b", "c-d"]), [(1, "bogus")])
 
     def test_all_known_returns_empty(self):
-        self.assertEqual(pre.validate_labels([{"persona": "a-b"}], ["a-b"]), [])
+        self.assertEqual(pre.validate_labels([{"agent": "a-b"}], ["a-b"]), [])
 
 
 class ScorePredictionsTests(unittest.TestCase):
@@ -110,11 +110,11 @@ class ScorePredictionsTests(unittest.TestCase):
 
 class LoadJsonlTests(unittest.TestCase):
     def test_skips_blank_lines(self):
-        path = write_jsonl([{"task": "t1", "persona": "a-b"}, {"task": "t2", "persona": "c-d"}], blank_lines=True)
+        path = write_jsonl([{"task": "t1", "agent": "a-b"}, {"task": "t2", "agent": "c-d"}], blank_lines=True)
         self.addCleanup(os.remove, path)
         self.assertEqual(
             pre.load_jsonl(path),
-            [{"task": "t1", "persona": "a-b"}, {"task": "t2", "persona": "c-d"}],
+            [{"task": "t1", "agent": "a-b"}, {"task": "t2", "agent": "c-d"}],
         )
 
 
@@ -131,10 +131,10 @@ class MainTests(unittest.TestCase):
 
     def test_exit_zero_prints_baseline_and_predictions(self):
         labels = write_jsonl([
-            {"task": "design the ui designer mockup", "persona": "design-ui-designer"},
-            {"task": "write a poem", "persona": "product-manager"},
+            {"task": "design the ui designer mockup", "agent": "design-ui-designer"},
+            {"task": "write a poem", "agent": "product-manager"},
         ])
-        preds = write_jsonl([{"persona": "design-ui-designer"}, {"persona": None}])
+        preds = write_jsonl([{"agent": "design-ui-designer"}, {"agent": None}])
         self.addCleanup(os.remove, labels)
         self.addCleanup(os.remove, preds)
 
@@ -145,7 +145,7 @@ class MainTests(unittest.TestCase):
         self.assertIn("predictions accuracy: 0.500 (1/2)", out)
 
     def test_exit_zero_without_predictions(self):
-        labels = write_jsonl([{"task": "testing the api tester", "persona": "testing-api-tester"}])
+        labels = write_jsonl([{"task": "testing the api tester", "agent": "testing-api-tester"}])
         self.addCleanup(os.remove, labels)
 
         code, out = self.run_main(["--agents", self.agents, "--labels", labels])
@@ -156,8 +156,8 @@ class MainTests(unittest.TestCase):
 
     def test_exit_two_on_unknown_agent(self):
         labels = write_jsonl([
-            {"task": "x", "persona": "product-manager"},
-            {"task": "y", "persona": "not-an-agent"},
+            {"task": "x", "agent": "product-manager"},
+            {"task": "y", "agent": "not-an-agent"},
         ])
         self.addCleanup(os.remove, labels)
 
