@@ -6,6 +6,8 @@ Live part: needs ANTHROPIC_API_KEY (Haiku via the Messages API; model from HAIKU
   Role tools (--roles / HAIKU_TEST_ROLES=1, needs Docker): each role's profile is opened through the Docker MCP
   gateway; every allowlisted tool must be listed and Haiku must call it correctly when offered the role's tools.
 
+The live unit tests only run with HAIKU_LIVE=1 (retries up to 3x per tool: Haiku sampling is nondeterministic).
+
 Run as a script:  .venv/Scripts/python.exe tests/test_haiku_toolcalls.py [--roles] [--tool NAME]
 Exit 0 = all PASS, 1 = any FAIL, 2 = live prerequisites missing (nothing was verified).
 """
@@ -67,6 +69,17 @@ def anthropic_tool(name: str, desc: str, schema: dict) -> dict:
             "input_schema": schema or {"type": "object", "properties": {}}}
 
 
+def with_retries(pick, prompt: str, tools: list, want: str, tries: int = 3) -> tuple:
+    """Sampling is nondeterministic and the CLI cannot force tool_choice, so Haiku sometimes answers in text.
+    Retry until it calls the wanted tool; a wrong tool or schema-invalid args still fail after the last try."""
+    got, args = "", {}
+    for _ in range(tries):
+        got, args = pick(prompt, tools)
+        if got == want:
+            break
+    return got, args
+
+
 def cli_haiku_pick(prompt: str, tools: list) -> tuple:
     """Haiku through `claude -p` and the repo .mcp.json (real router, no API key).
 
@@ -74,6 +87,8 @@ def cli_haiku_pick(prompt: str, tools: list) -> tuple:
     Haiku chose and shaped the call, and nothing is dispatched. Returns (router tool name, input) or ('', {}).
     """
     import subprocess
+    prompt = ("Call the matching tokenfrugal MCP tool right now with the arguments the request implies. "
+              "Do not reply in text and do not search for tools. Request: " + prompt)
     cmd = [shutil.which("claude") or "claude", "-p", prompt, "--model", os.getenv("HAIKU_CLI_MODEL", "haiku"),
            "--output-format", "stream-json", "--verbose", "--mcp-config", str(ROOT / ".mcp.json"),
            "--strict-mcp-config", "--no-session-persistence", "--permission-mode", "default"]
@@ -123,7 +138,7 @@ def check_router_tools(only: str = "") -> list:
         if only and name != only:
             continue
         try:
-            got, args = (cli_haiku_pick if use_cli() else haiku_pick)(prompt, spec)
+            got, args = with_retries(cli_haiku_pick if use_cli() else haiku_pick, prompt, spec, name)
             if got != name:
                 rows.append((name, "FAIL", "Haiku called %r" % (got or "no tool (wrote text)")))
                 continue
@@ -161,8 +176,8 @@ async def _role_rows(only: str) -> list:
                 rows.append((label, "FAIL", "allowlisted but not exposed by the gateway"))
                 continue
             try:
-                got, args = haiku_pick("Call the tool %s once with minimal plausible arguments. "
-                                       "Do not answer in text." % t, spec)
+                got, args = with_retries(haiku_pick, "Call the tool %s once with minimal plausible arguments. "
+                                         "Do not answer in text." % t, spec, t)
                 if got != t:
                     rows.append((label, "FAIL", "Haiku called %r" % (got or "no tool")))
                     continue
@@ -196,7 +211,11 @@ class RouterToolSurfaceTests(unittest.TestCase):
 
 
 class HaikuLiveTests(unittest.TestCase):
+    """Live model calls: opt-in (HAIKU_LIVE=1) so the default offline suite stays deterministic and free."""
+
     def setUp(self):
+        if os.getenv("HAIKU_LIVE") != "1":
+            self.skipTest("set HAIKU_LIVE=1 to run the live Haiku tool-call checks")
         why = live_blocker()
         if why:
             self.skipTest(why)

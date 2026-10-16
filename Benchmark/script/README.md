@@ -12,8 +12,8 @@ Flow: **run → CSV → report → cloud review → Observations in `Benchmark.m
 Prerequisites: the repo `.env`, Ollama (or an OpenAI-compatible endpoint) with the model pulled, Docker MCP
 profiles installed (`python scripts/doctor.py` lists what is missing). Run from the repo root.
 
-- `results/benchmark.csv` is the only source of truth; never edit the generated block in `Benchmark.md` by hand.
-- Cloud endpoint: add `--endpoint https://api.anthropic.com/v1 --api-key-env ANTHROPIC_API_KEY` (export the key in your own shell; it is never printed). The hardware column becomes `cloud:<host>`.
+- `results/benchmark.csv` holds the local runs and `results/cloud.csv` holds the cloud (`claude-*`) runs, both with the same header. `build_report.py` merges the two; never edit the generated block in `Benchmark.md` by hand.
+- Cloud endpoint: add `--endpoint https://api.anthropic.com/v1 --api-key-env ANTHROPIC_API_KEY` (export the key in your own shell; it is never printed). The hardware column becomes `cloud:<host>`. Append cloud rows to `results/cloud.csv`, not `benchmark.csv`.
 - Context mismatch: a cloud model has ~200k context against 16k local. Compare scores and `context_used_peak_tokens` (the window a run needed), not seconds.
 - A preflight (Docker, MCP profiles, Neo4j, endpoint, models) runs first and stops with a fix command on any failure.
 - Mount: cases use `/workspace/<project>/bench/scratch`, so profiles must mount the parent of the repo; the script forces `CC_WORKSPACE` to it and the preflight verifies each profile (fix: `python scripts/install_profiles.py --workspace <parent>`).

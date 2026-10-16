@@ -4,6 +4,10 @@
 
 Only the text between <!-- BEGIN:auto --> and <!-- END:auto --> in Benchmark.md is replaced; the
 hand-written sections (conclusions, observations) are never touched.
+
+Inputs: results/benchmark.csv plus results/cloud.csv (if present), merged into one list of runs.
+Cloud rows (builder_model starting with `claude-`) live in cloud.csv, with the same header, so the
+Haiku baseline stays intact unless a new cloud run is added there.
 """
 import csv
 import html
@@ -31,7 +35,11 @@ REQUIRED_TOOL_CASES = {
     "browser_navigate_snapshot": "navigate_page",       # role_browser
 }
 
-rows = list(csv.DictReader((B / "results" / "benchmark.csv").open(encoding="utf-8")))
+rows = []
+for _name in ("benchmark.csv", "cloud.csv"):
+    _path = B / "results" / _name
+    if _path.exists():
+        rows += list(csv.DictReader(_path.open(encoding="utf-8")))
 missing = [c for c in CASES if c not in rows[0]]
 if missing:
     raise SystemExit(f"benchmark.csv is missing case columns: {missing}")
@@ -100,6 +108,7 @@ def sub_md(r, cases):
 rows.sort(key=lambda r: (-pct(r), num(r, "mean_s_per_case")))
 for r in rows:
     r["pct"] = round(pct(r))
+    r["day"] = (r.get("date") or "")[:10]
     r["source"], r["pull"] = origin(r["builder_model"])
     r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
     r["params_b"] = params_b(r["params"])
@@ -114,13 +123,25 @@ def mmss(v):
     return f"{t // 60}:{t % 60:02d}"
 
 
+RANK_LEGEND = [
+    f"Score = verified checks passed out of total checks across {len(CASES)} cases.",
+    "Pass rate % = Score / max.",
+    "Builder / Thinker = the same score split by role cases.",
+    "s per case = mean seconds per case.",
+    "Run time = wall clock for the whole run.",
+    "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
+    "Date = when the run happened; newer = made with newer code.",
+]
+RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
+
+
 def md_table():
-    o = ["| # | Model (builder = thinker) | Origin | Pull command | Params | Score | Builder | Thinker | % | s/case | total | valid |",
-         "|--:|---|---|---|---|--:|--:|--:|--:|--:|--:|--:|"]
+    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | s per case | Run time | Valid cases |",
+         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
-        o.append(f"| {i} | {m} | {r['source']} | `{r['pull']}` | {r['params']} | {r['score']}/{r['max']} "
-                 f"| {r['builder_score']} | {r['thinker_score']} | {r['pct']} "
+        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
+                 f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
                  f"| {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
@@ -158,21 +179,6 @@ def role_rank(cases, top=5):
     return "\n".join(o)
 
 
-def bar_chart():
-    xs = ", ".join(f'"{i}"' for i in range(1, len(rows) + 1))
-    ys = ", ".join(str(r["pct"]) for r in rows)
-    return ("```mermaid\nxychart-beta\n    title \"Verified score % by run (rank order, see table)\"\n"
-            f"    x-axis [{xs}]\n    y-axis \"% verified\" 0 --> 100\n    bar [{ys}]\n```")
-
-
-def speed_chart():
-    pts = sorted((r for r in rows if num(r, "mean_s_per_case")), key=lambda r: num(r, "mean_s_per_case"))
-    xs = ", ".join(f'"{num(r, "mean_s_per_case"):.0f}"' for r in pts)
-    ys = ", ".join(str(r["pct"]) for r in pts)
-    return ("```mermaid\nxychart-beta\n    title \"Score % as runs get slower (x: s per case)\"\n"
-            f"    x-axis [{xs}]\n    y-axis \"% verified\" 0 --> 100\n    line [{ys}]\n```")
-
-
 def cell_md(r, c):
     f = case_frac(r, c)
     if f is None:
@@ -191,19 +197,12 @@ def heatmap(cases):
     return "\n".join(o)
 
 
-def role_table():
+def role_cfg():
     """Role -> model class -> allowed tools, read from router/agents.yaml so it cannot drift."""
-    cfg = yaml.safe_load(AGENTS.read_text(encoding="utf-8"))
-    o = ["| Role | Model class | Tools the role may call |", "|---|---|---|"]
-    for name, r in cfg["roles"].items():
-        cls = r.get("model")
-        tag = cfg["models"].get(cls, "?")
-        tools = ", ".join(f"`{t}`" for t in (r.get("tools") or []))
-        o.append(f"| `{name}` | {cls} (`{tag}`) | {tools} |")
-    return "\n".join(o), cfg
+    return yaml.safe_load(AGENTS.read_text(encoding="utf-8"))
 
 
-ROLE_MD, _CFG = role_table()
+_CFG = role_cfg()
 
 LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 cases. `score` is passes out of `max`.
 - **Builder** (`qwen2.5-coder-yarn:3b`) writes code and edits files. **Thinker** (`llama3.2:3b-16k`) reads, analyses and browses.
@@ -213,9 +212,11 @@ LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 ca
 - ⚠ on a case that needs a specific tool means that run scored 0 on it, so the tool was likely missing or not called."""
 
 auto = f"""<!-- BEGIN:auto -->
-_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` by `script/build_report.py`. Interactive filtering: open `explorer.html`._
+_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`._
 
 ### Ranking (best score first, ties by speed)
+
+{RANK_LEGEND_MD}
 
 {md_table()}
 
@@ -231,21 +232,7 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 
 {role_rank(THINKER_CASES)}
 
-### Score by run
-
-{bar_chart()}
-
-### Speed vs score
-
-{speed_chart()}
-
-### How to read this
-
-{LEGEND_MD}
-
-### Roles and models (from `router/agents.yaml`)
-
-{ROLE_MD}
+Charts, filters, the legend and the roles table are in [explorer.html](explorer.html).
 
 ### Builder cases (code and file edits: needs write/edit tools)
 
@@ -257,12 +244,7 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 <!-- END:auto -->"""
 
 p = B / "Benchmark.md"
-text = p.read_text(encoding="utf-8") if p.exists() else "# TokenFrugal benchmark\n\n## Observations\n\n_pending cloud review_\n\n"
-if "<!-- BEGIN:auto -->" in text:
-    text = re.sub(r"<!-- BEGIN:auto -->.*?<!-- END:auto -->", lambda m: auto, text, flags=re.S)
-else:
-    text = text.rstrip() + "\n\n" + auto + "\n"
-p.write_text(text, encoding="utf-8")
+# Benchmark.md holds stable text only; results are rendered into index.html (not written to the md).
 
 
 def roles_html():
@@ -272,18 +254,23 @@ def roles_html():
         tag = _CFG["models"].get(cls, "?")
         tools = ", ".join(html.escape(t) for t in (r.get("tools") or []))
         body.append(f"<tr><td><code>{html.escape(name)}</code></td><td>{html.escape(cls)} (<code>{html.escape(tag)}</code>)</td><td>{tools}</td></tr>")
-    legend = "<ul>" + "".join(f"<li>{html.escape(l.lstrip('- ').replace('**', ''))}</li>" for l in LEGEND_MD.splitlines()) + "</ul>"
-    return (f"<details open><summary>How to read this, and roles and models</summary>{legend}"
+    return (f"<details open><summary>Roles and models</summary>"
             f"<div class=\"w\"><table class=\"roles\">{''.join(body)}</table></div>"
             f"<p class=\"mut\">Column groups: builder cases = {html.escape(', '.join(BUILDER_CASES))}. "
             f"Thinker cases = {html.escape(', '.join(THINKER_CASES))}.</p></details>")
 
 
+def legend_html():
+    items = RANK_LEGEND + [l.lstrip('- ').replace('**', '') for l in LEGEND_MD.splitlines()]
+    return ("<details open><summary>How to read this</summary><ul>"
+            + "".join(f"<li>{html.escape(l)}</li>" for l in items) + "</ul></details>")
+
+
 HTML = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Benchmark explorer</title>
 <style>
-:root{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b}
-@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036}}
+:root{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b;--cloud:#7a5af8}
+@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036;--cloud:#a890ff}}
 body{font:14px system-ui;margin:16px;background:var(--bg);color:var(--fg)}h1{font-size:18px}
 .f{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}label{display:flex;flex-direction:column;font-size:12px;color:var(--mut)}
 input,select{font:inherit;padding:4px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
@@ -291,40 +278,143 @@ table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;border-bottom:1p
 th{cursor:pointer;position:sticky;top:0;background:var(--bg)}.bar{display:inline-block;height:10px;background:var(--acc);margin-right:6px}
 .w{overflow-x:auto}.g{color:var(--acc)}.r{color:#d0453b}.y{color:#d9a021}.mut{color:var(--mut)}
 details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}details ul{margin:8px 0 8px 18px;padding:0}
+.cb{margin:16px 0}.cb h3{font-size:15px;margin:4px 0}.cb p{font-size:12px;margin:6px 0}
+.row{display:flex;flex-wrap:wrap;gap:24px}.row>.cb{flex:1 1 320px;min-width:0}.pw{display:flex;flex-wrap:wrap;align-items:center;gap:16px}.pw svg{flex:0 0 220px;width:220px}.pl{font-size:12px;font-weight:600;fill:#fff;pointer-events:none}.lg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:4px 0}.li{display:inline-flex;align-items:center;gap:5px}.li[data-sk]{cursor:pointer}.li i{width:11px;height:11px;border-radius:2px;display:inline-block}.chip{display:inline-block;margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:10px;font-size:12px;cursor:pointer}.ch svg{width:100%;height:auto;display:block}.ax{font-size:11px;fill:var(--mut)}.lb{font-size:10px;fill:var(--fg)}
 </style>
 <h1>Benchmark explorer</h1>
-<p><a href="index.html">Back to the full report</a></p>
+<p><a href="index.html">Back to the report</a></p>
 __ROLES__
 <div class="f">
-<label>Min score %<input id="ms" type="number" value="0" min="0" max="100"></label>
+<label>Min score %<input id="ms" type="number" value="50" min="0" max="100"></label>
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
-<label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
+<label>Max params (B)<input id="mp" type="number" value="14" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
+<label>From date<input id="fd" type="date"></label>
 </div>
-<div id="n"></div><div class="w"><table id="t"></table></div>
+<div id="n"></div>
+<div id="ch" class="ch"></div>
+<div class="w"><table id="t"></table></div>
 <script>
 const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="pct",sd=-1;
 const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["builder_model","Model"],["source","Origin"],["pull","Pull command"],["params","Params"],["pct","%"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["mean_s_per_case","s/case"],["total_s","total s"],...C.map(c=>[c,c])];
+const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
+const wrap=(svg,n)=>`<div style="${n>30?"max-height:560px;overflow-y:auto":""}">${svg}</div>`;
+const SEL={band:null,model:null};
+const BANDS=[["90-100% (excellent)",90,101,"#2e9e5b"],["75-89% (good)",75,90,"#8bc34a"],["50-74% (fair)",50,75,"#d9a021"],["Below 50% (poor)",0,50,"#d0453b"]];
+const bandOf=r=>BANDS.findIndex(b=>r.pct>=b[1]&&r.pct<b[2]);
+const dim=(k,v)=>SEL[k]!=null&&SEL[k]!==v?";opacity:.3":"";
+const sub=(r,k)=>{const m=/^(\d+)\/(\d+)$/.exec(r[k]||"");return m&&+m[2]?100*m[1]/m[2]:null};
+const box=(h,body,foot)=>`<div class="cb"><h3>${h}</h3>${body}<p class="mut">${foot}</p></div>`;
+const none="<p class=\"mut\">No runs match.</p>";
+const grid=(L,PW,T,H,AX)=>[0,25,50,75,100].map(v=>`<line x1="${L+PW*v/100}" x2="${L+PW*v/100}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${L+PW*v/100}" y="${H-AX+14}" text-anchor="middle" class="ax">${v}%</text>`).join("");
+const titles=(L,PW,T,H,AX,xt,yt)=>`<text x="${L+PW/2}" y="${H-6}" text-anchor="middle" class="ax">${xt}</text><text transform="translate(10 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">${yt}</text>`;
+function legend(items){return`<div class="lg">`+items.map(i=>`<span class="li"${i.k?` data-sk="${i.k}" data-sv="${esc(i.v)}"`:""} style="${i.k&&SEL[i.k]!=null&&SEL[i.k]!==i.v?"opacity:.4":""}"><i style="background:${i.c}"></i>${esc(i.t)}</span>`).join("")+`</div>`}
+function pie(R){
+ if(!R.length)return none;
+ const cnt=BANDS.map((b,i)=>R.filter(r=>bandOf(r)===i).length),tot=R.length,cx=110,cy=110,rad=90;
+ let a0=-Math.PI/2,g="";
+ cnt.forEach((n,i)=>{if(!n)return;const a1=a0+2*Math.PI*n/tot,mid=(a0+a1)/2,sel=SEL.band===i,ox=sel?8*Math.cos(mid):0,oy=sel?8*Math.sin(mid):0;
+  const t=`${BANDS[i][0]}: ${n} run${n>1?"s":""} (${Math.round(100*n/tot)}%). Click to filter.`;
+  const d=n===tot?`<circle cx="${cx}" cy="${cy}" r="${rad}"`:`<path d="M${cx+ox} ${cy+oy}L${cx+ox+rad*Math.cos(a0)} ${cy+oy+rad*Math.sin(a0)}A${rad} ${rad} 0 ${a1-a0>Math.PI?1:0} 1 ${cx+ox+rad*Math.cos(a1)} ${cy+oy+rad*Math.sin(a1)}Z"`;
+  g+=`${d} data-sk="band" data-sv="${i}" style="fill:${BANDS[i][3]};stroke:var(--bg);stroke-width:2;cursor:pointer${dim("band",i)}"><title>${esc(t)}</title>${n===tot?"</circle>":"</path>"}`;
+  if(n/tot>.06)g+=`<text x="${cx+ox+.6*rad*Math.cos(mid)}" y="${cy+oy+.6*rad*Math.sin(mid)+4}" text-anchor="middle" class="pl">${n}</text>`;a0=a1});
+ return`<div class="pw"><svg viewBox="0 0 220 220" role="img" aria-label="Runs by score band">${g}</svg>`
+  +legend(BANDS.map((b,i)=>({k:"band",v:i,c:b[3],t:`${b[0]}: ${cnt[i]}`})))+`</div>`}
+function passChart(R){
+ const S=[...R].sort((a,b)=>b.pct-a.pct);
+ if(!S.length)return none;
+ const L=230,W=680,RH=20,T=6,AX=40,PW=W-L-50,H=T+S.length*RH+AX;
+ let g=grid(L,PW,T,H,AX);
+ S.forEach((r,i)=>{const y=T+i*RH,m=r.builder_model;
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><text x="${L-6}" y="${y+14}" text-anchor="end" class="lb">${esc(short(m,34))}</text>`
+   +`<rect x="${L}" y="${y+3}" width="${PW*r.pct/100}" height="${RH-6}" style="fill:${BANDS[bandOf(r)][3]}"><title>${esc(m+" | "+r.pct+"% | click to filter")}</title></rect>`
+   +`<text x="${L+PW*r.pct/100+4}" y="${y+14}" class="lb">${r.pct}%</text></g>`});
+ g+=titles(L,PW,T,H,AX,"Pass rate % (higher is better)","Run (model)");
+ return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pass rate by run">${g}</svg>`,S.length);
+}
+function roleChart(R){
+ const S=[...R].sort((a,b)=>b.pct-a.pct).slice(0,12);
+ if(!S.length)return none;
+ const L=230,W=680,RH=30,T=6,AX=40,PW=W-L-50,H=T+S.length*RH+AX;
+ let g=grid(L,PW,T,H,AX);
+ S.forEach((r,i)=>{const y=T+i*RH,m=r.builder_model;
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><text x="${L-6}" y="${y+17}" text-anchor="end" class="lb">${esc(short(m,34))}</text>`;
+  [["builder_score","#3b82f6","Builder"],["thinker_score","#f97316","Thinker"]].forEach(([k,c,n],j)=>{const v=sub(r,k);
+   if(v!=null)g+=`<rect x="${L}" y="${y+2+j*12}" width="${PW*v/100}" height="10" style="fill:${c}"><title>${esc(m+" | "+n+" "+r[k]+" ("+Math.round(v)+"%)")}</title></rect><text x="${L+PW*v/100+4}" y="${y+11+j*12}" class="lb">${Math.round(v)}%</text>`});
+  g+="</g>"});
+ g+=titles(L,PW,T,H,AX,"Role pass rate % (share of that role's checks passed)","Run (model)");
+ return legend([{c:"#3b82f6",t:"Builder (code, file edits)"},{c:"#f97316",t:"Thinker (read, analyse, browse)"}])+wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Builder vs thinker">${g}</svg>`,S.length);
+}
+function caseChart(R){
+ if(!R.length)return none;
+ const A=C.map(c=>{const v=R.map(r=>frac(r,c)).filter(x=>x!=null&&isFinite(x));return[c,v.length?100*v.reduce((x,y)=>x+y)/v.length:0]}).sort((x,y)=>x[1]-y[1]);
+ const L=190,W=680,RH=20,T=6,AX=40,PW=W-L-50,H=T+A.length*RH+AX,cur=$("cs").value;
+ let g=grid(L,PW,T,H,AX);
+ A.forEach(([c,v],i)=>{const y=T+i*RH,col=v>=75?"#2e9e5b":v>=40?"#d9a021":"#d0453b";
+  g+=`<g data-sk="case" data-sv="${esc(c)}" style="cursor:pointer;${cur&&cur!==c?"opacity:.3":""}"><text x="${L-6}" y="${y+14}" text-anchor="end" class="lb">${esc(c)}${REQ.includes(c)?" ⚠":""}</text><rect x="${L}" y="${y+3}" width="${PW*v/100}" height="${RH-6}" style="fill:${col}"><title>${esc(c+": "+Math.round(v)+"% average pass. Click to require this case.")}</title></rect><text x="${L+PW*v/100+4}" y="${y+14}" class="lb">${Math.round(v)}%</text></g>`});
+ g+=titles(L,PW,T,H,AX,"Average pass rate % across the runs shown","Benchmark case");
+ return legend([{c:"#2e9e5b",t:"75%+ easy"},{c:"#d9a021",t:"40-74% mixed"},{c:"#d0453b",t:"under 40% hard"}])+wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pass rate per case">${g}</svg>`,A.length);
+}
+function scatter(P,xf,xt,xmax,rf,leg,label){
+ const W=680,H=360,L=52,RT=20,T=14,AX=44;
+ const X=v=>L+(W-L-RT)*v/xmax,Y=v=>T+(H-T-AX)*(1-v/100);let g="";
+ [0,25,50,75,100].forEach(v=>{g+=`<line x1="${L}" x2="${W-RT}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" class="ax">${v}</text>`});
+ for(let k=0;k<=5;k++){const v=xmax*k/5;g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${X(v)}" y="${H-AX+14}" text-anchor="middle" class="ax">${+v.toFixed(1)}</text>`}
+ g+=`<text x="${(L+W-RT)/2}" y="${H-6}" text-anchor="middle" class="ax">${xt}</text><text transform="translate(14 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">Pass rate %, higher = better</text>`;
+ P.forEach(r=>{const m=r.builder_model,x=X(xf(r)),y=Y(r.pct),rad=rf(r),f=leg(r);
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><circle cx="${x}" cy="${y}" r="${rad}" style="fill:${f};fill-opacity:.8"><title>${esc(m+" | score "+r.score+"/"+r.max+" ("+r.pct+"%) | "+r.mean_s_per_case+" s/case | params "+(r.params||"unknown")+" | click to filter")}</title></circle><text x="${x+rad+3}" y="${y+3}" class="lb">${esc(short(m,28))}</text></g>`});
+ return wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">${g}</svg>`,P.length);
+}
+function speedChart(R){
+ const P=R.filter(r=>+r.mean_s_per_case>0);
+ if(!P.length)return"<p class=\"mut\">No runs with seconds per case match.</p>";
+ const xmax=Math.max(10,Math.ceil(Math.max(...P.map(r=>+r.mean_s_per_case))/10)*10);
+ return legend([{c:"var(--acc)",t:"Local model"},{c:"var(--cloud)",t:"Cloud baseline"}])+scatter(P,r=>+r.mean_s_per_case,"Seconds per case, lower = faster",xmax,r=>{const p=r.params_b;return p==null||isNaN(p)?5:Math.min(12,2+Math.sqrt(p)*2.2)},r=>r.builder_model.startsWith("claude-")?"var(--cloud)":"var(--acc)","Speed vs pass rate");
+}
+function sizeChart(R){
+ const P=R.filter(r=>r.params_b!=null&&!isNaN(r.params_b));
+ if(!P.length)return none;
+ const xmax=Math.max(4,Math.ceil(Math.max(...P.map(r=>r.params_b))/4)*4);
+ return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Size vs pass rate");
+}
 function draw(){
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value;
- const R=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(r.params_b==null||r.params_b<=mp)&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1));
+ const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value;
+ const R0=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd));
+ const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;return(x>y?1:x<y?-1:0)*sd});
- $("n").textContent=R.length+" of "+D.length+" runs match";
- $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}">${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
+ const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(SEL.model)} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
+ $("n").innerHTML=R.length+" of "+D.length+" runs match"+chips+(SEL.band!=null||SEL.model!=null?`<span class="chip" data-sk="clear">Clear chart selections</span>`:"");
+ $("ch").innerHTML=`<p class="mut">Click a pie slice, bar, dot or case to filter the table and every chart; click again to undo. The filter fields above update every chart too.</p>`
+  +`<div class="row">`+box("Runs by score band",pie(R1),"Pie: share of runs per pass-rate band, after the filters above. Click a slice or legend entry to show only those runs.")
+  +box("Pass rate per benchmark case",caseChart(R),"Average over the runs shown; hard cases at the top. ⚠ = needs a specific tool. Click a case to keep only runs that fully pass it.")+`</div>`
+  +box("Model comparison: pass rate by run",passChart(R),"One horizontal bar per run, colored by score band. Click a bar to focus that model.")
+  +box("Builder vs thinker by run",roleChart(R),"Top 12 runs by pass rate. Blue = builder cases, orange = thinker cases. Click to focus a model.")
+  +box("Speed vs pass rate",speedChart(R),"Top-left corner = best (fast and accurate). Dot size = parameters. Click a dot to focus a model.")
+  +box("Model size vs pass rate",sizeChart(R),"Does a bigger model score higher? Local runs with a known size only. Click a dot to focus a model.");
+ $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""}>${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
   R.map(r=>"<tr>"+cols.map(([k])=>{
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
    if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
+   if(k=="params_b")return`<td>${r.params_b==null?"·":r.params_b}</td>`;
    return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
  document.querySelectorAll("th").forEach(h=>h.onclick=()=>{sd=sk==h.dataset.k?-sd:-1;sk=h.dataset.k;draw()});
 }
+const pick=e=>{const t=e.target.closest("[data-sk]");if(!t)return;const k=t.dataset.sk,v=t.dataset.sv;
+ if(k==="clear"){SEL.band=SEL.model=null}
+ else if(k==="case")$("cs").value=$("cs").value===v?"":v;
+ else if(k==="band")SEL.band=SEL.band===+v?null:+v;
+ else SEL.model=SEL.model===v?null:v;
+ draw()};
+$("ch").addEventListener("click",pick);$("n").addEventListener("click",pick);
 document.querySelectorAll("input,select").forEach(e=>e.oninput=draw);draw();
 </script>"""
 (B / "explorer.html").write_text(
-    HTML.replace("__ROLES__", roles_html())
+    HTML.replace("__ROLES__", legend_html() + roles_html())
         .replace("__DATA__", json.dumps(rows))
         .replace("__CASES__", json.dumps(CASES))
         .replace("__REQ__", json.dumps(list(REQUIRED_TOOL_CASES))),
@@ -345,21 +435,170 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}pre{background:var
 .mermaid{overflow-x:auto;text-align:center}
 </style>
 <nav><a href="index.html">Report</a><a href="explorer.html">Interactive explorer</a>
-<a href="__GH__/results/benchmark.csv">Raw data (CSV)</a><a href="__GH__/script/README.md">Run your own</a></nav>
-<main id="md">Loading report...</main>
+<a href="__GH__/results/benchmark.csv">Raw data (CSV)</a><a href="__GH__/script/README.md">Run or add a model</a></nav>
+<main><div id="res">Loading report...</div><div id="md"></div></main>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
 <script>
-const GH="__GH__",SRC=__MD__;
-const el=document.getElementById("md");
-el.innerHTML=marked.parse(SRC);
-el.querySelectorAll("pre code.language-mermaid").forEach(c=>{const d=document.createElement("div");d.className="mermaid";d.textContent=c.textContent;c.parentElement.replaceWith(d)});
+const GH="__GH__",SRC=__MD__,RES=__RES__,D=__DATA__,BC=__BC__,TC=__TC__;
+const el=document.getElementById("res"),doc=document.getElementById("md");
+el.innerHTML="<h1>TokenFrugal benchmark results</h1>"+marked.parse(RES);
+doc.innerHTML="<h2>About this benchmark</h2>"+marked.parse(SRC.replace(/^# .*\n/,""));
+doc.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html|index\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cnt=(r,cs)=>{let a=0,n=0;cs.forEach(c=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(m){a+=+m[1];n+=+m[2]}});return[a,n]};
+const frac=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a/n:-1};
+const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"·"};
+const tie=(x,y)=>(y.pct-x.pct)||((x.s||1e9)-(y.s||1e9));
+const mmss=t=>t?Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0"):"";
+const mark=(r,c)=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(!m)return"·";const f=+m[1]/+m[2];let s=f===1?"🟩":f>0?"🟨":"🟥";if(f===0&&r.req.includes(c))s+="⚠";return s};
+const S={sort:{},f:{}};
+const DEF={rank:"10",rb:"5",rt:"5",hb:"10",ht:"10"};
+const TOPS={rank:[5,10,20,0],rb:[3,5,10,0],rt:[3,5,10,0],hb:[5,10,20,0],ht:[5,10,20,0]};
+function bar(id){
+ const f=S.f[id]={q:"",size:"",days:"",top:DEF[id]};
+ const b=$(id+"-bar");
+ b.style.cssText="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:13px;margin:8px 0";
+ b.innerHTML=`<label>Model name <input data-f="q" placeholder="e.g. qwen, gemma" style="width:140px"></label>
+ <label>Size <select data-f="size"><option value="">any</option><option value="4">up to 4B</option><option value="8">up to 8B</option><option value="14">up to 14B</option><option value="40">up to 40B</option></select></label>
+ <label>Runs from <select data-f="days"><option value="">all time</option><option value="7">last 7 days</option><option value="30">last 30 days</option><option value="90">last 90 days</option></select></label>
+ <label>Show <select data-f="top">${TOPS[id].map(n=>`<option value="${n}"${String(n)===DEF[id]?" selected":""}>${n?"top "+n:"all"}</option>`).join("")}</select></label>
+ <button type="button">Reset</button><span data-f="c" style="color:var(--mut)"></span>`;
+ const go=()=>{b.querySelectorAll("[data-f]").forEach(e=>{if(e.dataset.f!=="c")f[e.dataset.f]=e.value.trim().toLowerCase()});draw(id)};
+ b.querySelectorAll("input").forEach(e=>e.addEventListener("input",go));
+ b.querySelectorAll("select").forEach(e=>e.addEventListener("change",go));
+ b.querySelector("button").onclick=()=>{b.querySelectorAll("input").forEach(e=>e.value="");b.querySelectorAll("select").forEach(e=>e.value=e.dataset.f==="top"?DEF[id]:"");go()};
+}
+function cutoff(n){const d=new Date();d.setDate(d.getDate()-n);return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")}
+function table(id,cols,rows,key){
+ const[k,dir]=S.sort[key]||[null,0],c=cols.find(c=>c.k===k);
+ if(c&&c.v)rows=[...rows].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*dir||tie(x,y)});
+ return rows;
+}
+function render(id,cols,rows,key){
+ const[k,dir]=S.sort[key]||[null,0];
+ const h=cols.map(c=>`<th data-k="${c.k}"${c.v?' style="cursor:pointer"':""}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
+ const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
+ $(id).innerHTML=`<table><thead><tr>${h}</tr></thead><tbody>${b}</tbody></table>`;
+ $(id).querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{const c=cols.find(c=>c.k===t.dataset.k);if(!c.v)return;
+  const[k0,d0]=S.sort[key]||[];S.sort[key]=[c.k,k0===c.k?-d0:(c.str?1:-1)];draw(id)});
+}
+const code=s=>"<code>"+esc(s)+"</code>";
+function sel(id){const f=S.f[id];
+ const R=D.filter(r=>(!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size))&&(!f.days||!r.day||r.day>=cutoff(+f.days)));
+ R.sort(tie);return R}
+function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').textContent=`Showing ${shown} of ${total} ${what}`}
+function draw(id){
+ const R=sel(id),top=+S.f[id].top;
+ if(id==="rank"){
+  const cols=[{k:"n",l:"#",f:(r,i)=>i+1},
+   {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
+   {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
+   {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
+   {k:"score",l:"Score",v:r=>r.score,f:r=>r.score+"/"+r.max},
+   {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
+   {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
+   {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
+   {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
+   {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
+   {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
+  let V=table(id,cols,R,"rank");if(top)V=V.slice(0,top);
+  render(id,cols,V,"rank");note(id,V.length,R.length,"runs");
+ }else if(id==="rb"||id==="rt"){
+  const cs=id==="rb"?BC:TC,newest={};
+  R.forEach(r=>{if(r.day>(newest[r.model]||""))newest[r.model]=r.day});
+  const agg={};
+  R.forEach(r=>{const[a,n]=cnt(r,cs);if(!n||r.model.startsWith("claude-")||r.day!==newest[r.model])return;
+   const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,g:new Set,h:new Set,r});
+   m.a+=a;m.n+=n;m.runs++;m.g.add(r.git);m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
+  const L=Object.values(agg).map(m=>({...m,pct:Math.round(100*m.a/m.n),s:m.ss.length?m.ss.reduce((x,y)=>x+y)/m.ss.length:0}));
+  L.sort((x,y)=>(y.a/y.n-x.a/x.n)||(y.n-x.n)||((x.s||1e9)-(y.s||1e9)));
+  const rc=[{k:"n",l:"#",f:(m,i)=>i+1},
+   {k:"model",l:"Model",str:1,v:m=>m.model.toLowerCase(),f:m=>code(m.model)},
+   {k:"day",l:"Date",str:1,v:m=>m.day,f:m=>m.day},
+   {k:"g",l:"Code (git)",f:m=>[...m.g].filter(Boolean).map(code).join(", ")},
+   {k:"h",l:"Harness",f:m=>[...m.h].filter(Boolean).join(", ")||"-"},
+   {k:"a",l:"Role score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
+   {k:"pct",l:"%",v:m=>m.pct,f:m=>m.pct},
+   {k:"runs",l:"Runs",v:m=>m.runs,f:m=>m.runs},
+   {k:"s",l:"s/case",v:m=>m.s||1e9,f:m=>m.s?m.s.toFixed(1):""},
+   {k:"sh",l:"Shared memory GB",f:m=>m.r.shared||""},
+   {k:"pull",l:"Pull command",f:m=>code(m.r.pull)}];
+  const[k,d]=S.sort[id]||[],c=rc.find(c=>c.k===k);
+  let V=c&&c.v?[...L].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*d}):L;
+  const all=V.length;if(top)V=V.slice(0,top);
+  render(id,rc,V,id);note(id,V.length,all,"local models");
+ }else{
+  const cs=id==="hb"?BC:TC;
+  const hc=[{k:"model",l:"Run",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model.slice(0,44))+" <small>"+r.day+"</small>"},
+   {k:"pct",l:"%",v:r=>frac(r,cs),f:r=>sub(r,cs)}]
+   .concat(cs.map(c=>({k:c,l:c.replace(/_/g," "),v:r=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");return m?+m[1]/+m[2]:-1},f:r=>mark(r,c)})));
+  let V=table(id,hc,R,id);if(top)V=V.slice(0,top);
+  render(id,hc,V,id);note(id,V.length,R.length,"runs");
+ }
+}
+["rank","rb","rt","hb","ht"].forEach(id=>{bar(id);draw(id)});
 el.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
-mermaid.initialize({startOnLoad:false,theme:matchMedia("(prefers-color-scheme:dark)").matches?"dark":"default"});
-mermaid.run({querySelector:".mermaid"});
 </script>"""
+def _data():
+    out = []
+    for r in rows:
+        out.append({"model": r["builder_model"], "day": r["day"], "params": r["params"], "pb": r["params_b"],
+                    "score": r["score"], "max": r["max"], "pct": r["pct"], "s": num(r, "mean_s_per_case"),
+                    "tot": num(r, "total_s"), "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
+                    "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
+                    "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
+                    "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "") for c in CASES}})
+    return out
+
+
+DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by pass rate (ties by speed)._
+
+### Ranking
+
+{RANK_LEGEND_MD}
+
+<div id="rank-bar"></div>
+
+<div id="rank"></div>
+
+### Best model per role (local models, top 5 each)
+
+Each role is ranked only on its own cases. Only a model's newest-dated runs count (within the filtered set), so older results from earlier code never mix with current ones; `Code (git)` shows the commit that produced them. Ties go to more evidence, then the faster model. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+
+**Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
+
+<div id="rb-bar"></div>
+
+<div id="rb"></div>
+
+**Thinker** (cases: {", ".join(f"`{c}`" for c in THINKER_CASES)})
+
+<div id="rt-bar"></div>
+
+<div id="rt"></div>
+
+Charts, the legend and the roles table are in [explorer.html](explorer.html).
+
+### Builder cases (code and file edits: needs write/edit tools)
+
+<div id="hb-bar"></div>
+
+<div id="hb"></div>
+
+### Thinker cases (read, analyse, browse: needs read/graph/browser tools)
+
+<div id="ht-bar"></div>
+
+<div id="ht"></div>
+"""
 (B / "index.html").write_text(
     PAGE.replace("__GH__", "https://github.com/maxh8086/tokenfrugal/blob/main/Benchmark")
-        .replace("__MD__", json.dumps(p.read_text(encoding="utf-8")).replace("</", "<\\/")),
+        .replace("__MD__", json.dumps(p.read_text(encoding="utf-8")).replace("</", "<\\/"))
+        .replace("__RES__", json.dumps(DYN).replace("</", "<\\/"))
+        .replace("__DATA__", json.dumps(_data()).replace("</", "<\\/"))
+        .replace("__BC__", json.dumps(BUILDER_CASES))
+        .replace("__TC__", json.dumps(THINKER_CASES)),
     encoding="utf-8")
-print(f"updated {p.name} explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
+print(f"updated explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
