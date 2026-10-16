@@ -168,6 +168,91 @@ class MainTests(unittest.TestCase):
         self.assertIn("not-an-agent", out)
         self.assertNotIn("keyword baseline", out)
 
+    def test_allow_unknown_excludes_and_reports_bad_rows(self):
+        labels = write_jsonl([
+            {"task": "design the ui designer mockup", "agent": "design-ui-designer"},
+            {"task": "y", "agent": "not-an-agent"},
+            {"task": "testing the api tester", "agent": "testing-api-tester"},
+        ])
+        preds = write_jsonl([
+            {"agent": "design-ui-designer"},
+            {"agent": "not-an-agent"},
+            {"agent": "testing-api-tester"},
+        ])
+        self.addCleanup(os.remove, labels)
+        self.addCleanup(os.remove, preds)
+
+        code, out = self.run_main([
+            "--agents", self.agents, "--labels", labels, "--predictions", preds, "--allow-unknown",
+        ])
+
+        self.assertEqual(code, 0)
+        self.assertIn("excluded 1 row(s)", out)
+        self.assertIn("bad row 1: unknown agent 'not-an-agent'", out)
+        # Two rows left: keyword baseline and predictions both 2/2 after the drop.
+        self.assertIn("keyword baseline accuracy: 1.000 (2/2)", out)
+        self.assertIn("predictions accuracy: 1.000 (2/2)", out)
+
+
+FIXTURE_SLUGS = ["alpha-builder", "beta-thinker"]
+
+
+class ValidateLabelsSchemaTests(unittest.TestCase):
+    def test_valid_rows_pass(self):
+        rows = [{"task": "t", "agent": "alpha-builder"}, {"task": "u", "agent": "beta-thinker"}]
+        self.assertEqual(pre.validate_labels(rows, FIXTURE_SLUGS), [])
+
+    def test_unknown_slug_is_reported_with_index(self):
+        rows = [
+            {"task": "t", "agent": "alpha-builder"},
+            {"task": "u", "agent": "alpha-buidler"},  # typo
+        ]
+        self.assertEqual(pre.validate_labels(rows, FIXTURE_SLUGS), [(1, "alpha-buidler")])
+
+
+class CliUnknownSlugTests(unittest.TestCase):
+    def setUp(self):
+        self.agents = write_tmp(
+            "agent_models:\n  alpha-builder: builder\noverrides:\n  beta-thinker: thinker\n",
+            ".yaml",
+        )
+        self.addCleanup(os.remove, self.agents)
+
+    def run_main(self, argv):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = pre.main(argv)
+        return code, out.getvalue()
+
+    def test_cli_exits_nonzero_on_unknown_slug_and_lists_each(self):
+        labels = write_jsonl([
+            {"task": "a", "agent": "alpha-builder"},
+            {"task": "b", "agent": "gamma-ghost"},
+            {"task": "c", "agent": "delta-ghost"},
+        ])
+        self.addCleanup(os.remove, labels)
+
+        code, out = self.run_main(["--agents", self.agents, "--labels", labels])
+
+        self.assertNotEqual(code, 0)
+        self.assertIn("bad row 1: unknown agent 'gamma-ghost'", out)
+        self.assertIn("bad row 2: unknown agent 'delta-ghost'", out)
+        self.assertNotIn("keyword baseline", out)
+
+    def test_allow_unknown_excludes_rows_and_states_count(self):
+        labels = write_jsonl([
+            {"task": "alpha builder work", "agent": "alpha-builder"},
+            {"task": "b", "agent": "gamma-ghost"},
+        ])
+        self.addCleanup(os.remove, labels)
+
+        code, out = self.run_main(["--agents", self.agents, "--labels", labels, "--allow-unknown"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("excluded 1 row(s) with unknown agent from scoring", out)
+        self.assertIn("gamma-ghost", out)
+        self.assertIn("keyword baseline accuracy: 1.000 (1/1)", out)
+
 
 if __name__ == "__main__":
     unittest.main()

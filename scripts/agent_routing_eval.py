@@ -1,4 +1,23 @@
-"""Evaluate keyword-based agent routing against labelled tasks."""
+"""Evaluate keyword-based agent routing against labelled tasks.
+
+Label file (``--labels``): JSONL, one object per non-blank line. Fields read by
+this script, taken from ``validate_labels``, ``main`` and ``keyword_route``:
+
+- ``task`` (str, required): the task text. Only read by ``keyword_route``.
+- ``agent`` (str, required): the expected slug. Must be a known slug, i.e. a
+  key of ``agent_models``, ``overrides`` or ``agent_skills`` in the agents
+  YAML (``--agents``, default ``router/agents.yaml``). Any other field is ignored.
+
+Predictions file (``--predictions``, optional): JSONL, one object per line, in the
+same order as the labels. Only ``agent`` (str or missing/null) is read. Missing
+or null means a miss. Missing lines past the end also count as misses.
+
+Unknown label slugs are an error. The CLI prints ``bad row <index>: unknown agent
+<slug>`` for each one (index is the 0-based position among non-blank label lines)
+and exits 2 before scoring. Pass ``--allow-unknown`` to drop those rows from
+scoring instead; the output then states how many rows were excluded and lists them.
+Predictions are dropped at the same positions so the two stay aligned.
+"""
 
 import argparse
 import json
@@ -73,23 +92,38 @@ def main(argv=None) -> int:
     parser.add_argument("--agents", default="router/agents.yaml", help="agents YAML path")
     parser.add_argument("--labels", required=True, help="labels JSONL with 'task' and 'agent'")
     parser.add_argument("--predictions", help="predictions JSONL with 'agent'")
+    parser.add_argument(
+        "--allow-unknown",
+        action="store_true",
+        help="exclude rows whose agent is not a known slug (reported) instead of failing",
+    )
     args = parser.parse_args(argv)
 
     rows = load_jsonl(args.labels)
     slugs = load_agent_slugs(args.agents)
+    pred_rows = load_jsonl(args.predictions) if args.predictions else None
 
     bad = validate_labels(rows, slugs)
-    if bad:
+    if bad and not args.allow_unknown:
         for index, agent in bad:
             print(f"bad row {index}: unknown agent {agent!r}")
         return 2
+
+    dropped = {index for index, _ in bad}
+    keep = [i for i in range(len(rows)) if i not in dropped]
+    if bad:
+        print(f"excluded {len(bad)} row(s) with unknown agent from scoring:")
+        for index, agent in bad:
+            print(f"  bad row {index}: unknown agent {agent!r}")
+        rows = [rows[i] for i in keep]
+        if pred_rows is not None:
+            pred_rows = [pred_rows[i] if i < len(pred_rows) else {} for i in keep]
 
     labels = [row["agent"] for row in rows]
     keyword_preds = [keyword_route(row["task"], slugs) for row in rows]
     print(f"keyword baseline accuracy: {_fmt(score_predictions(labels, keyword_preds))}")
 
-    if args.predictions:
-        pred_rows = load_jsonl(args.predictions)
+    if pred_rows is not None:
         preds = [row.get("agent") for row in pred_rows]
         print(f"predictions accuracy: {_fmt(score_predictions(labels, preds))}")
 
