@@ -182,7 +182,8 @@ async function download() {
 }
 async function shareX() {
   await download();
-  const text = $('txt').value.split(LI_TAG).join(X_TAG).replace(/\n{3,}/g, '\n\n').trim();
+  // never post a local address: drop any localhost / 127.0.0.1 link from the text
+  const text = $('txt').value.split(LI_TAG).join(X_TAG).replace(/https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\S*/gi, '').replace(/\n{3,}/g, '\n\n').trim();
   const url = BENCH_BASE + (S && S.target === 'explorer' ? 'explorer.html' : '');
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url), '_blank', 'noopener');
 }

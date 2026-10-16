@@ -132,13 +132,20 @@
   .cfg-mcp-box > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 4px 0; }
   .cfg-mcp-list { display: grid; gap: 4px; margin-top: 6px; }
   .cfg-mcp-row { border: 1px solid var(--line, #ccc); border-radius: 6px; padding: 6px 10px; }
-  .cfg-mcp-row > summary { cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .cfg-mcp-row > summary { cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; list-style: none; }
+  .cfg-mcp-row > summary::-webkit-details-marker { display: none; }
+  .cfg-mcp-row > summary::before { content: ">"; color: var(--muted); font-family: ui-monospace, monospace; font-weight: 700; font-size: 12px; width: 10px; display: inline-block; text-align: center; transition: transform .15s; }
+  .cfg-mcp-row[open] > summary::before { transform: rotate(90deg); }
   .cfg-mcp-row small { display: block; margin: 4px 0 0 24px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
   .cfg-mode { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 2px 24px; font-size: 13px; }
   .cfg-mode label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
   .cfg-tool-list { display: grid; gap: 6px; margin: 8px 0 2px 24px; }
   .cfg-tool { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; }
   .cfg-tool-name { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+  /* MCP server list: fixed columns so every Restart button lines up */
+  #cfg-mcp-servers { display: grid; gap: 6px; }
+  .cfg-srv-line { display: grid; grid-template-columns: minmax(160px, 240px) 96px 1fr; align-items: center; gap: 12px; font-size: 12px; }
+  .cfg-srv-line button { padding: 1px 8px; font-size: 11px; line-height: 1.4; justify-self: start; }
   .cfg-tool .cfg-mode { margin: 0; }
   .cfg-note { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
   .cfg-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
@@ -172,6 +179,7 @@
     <p class="note">Saved to <code>router/config_overrides.json</code>. The router reads it at start, so restart it to apply (MCP servers can be restarted below without that). Blank fields use the value from <code>.env</code>.</p>
     <h3>Global settings</h3>
     <div class="cfg-grid" id="cfg-global"></div>
+    <div class="cfg-actions"><button type="button" class="cfg-save-btn" onclick="saveConfig()">Save changes</button><span class="meta cfg-status-line"></span></div>
     <h3>MCP servers</h3>
     <p class="note">Restart recreates a server's backend containers and reconnects to it. The router keeps running. A server used by a running task is skipped.</p>
     <div class="cfg-actions"><button type="button" id="mcp-all" onclick="restartMcp('all')">Reconnect all</button><span id="mcp-all-status" class="meta"></span></div>
@@ -181,7 +189,7 @@
     <p class="cfg-note">Expand an agent to change its model and MCP servers. Expand an MCP server to see its tools and set each one to Auto, Ask or Disable. The checkbox sets which MCP servers the agent may use. The Auto / Ask / Disable settings are saved, but the router does not enforce them yet.</p>
     <div id="cfg-roles"></div>
     <div class="cfg-actions">
-      <button type="button" id="cfg-save" onclick="saveConfig()">Save</button>
+      <button type="button" class="cfg-save-btn" onclick="saveConfig()">Save</button>
       <button type="button" onclick="buildConfig()">Reload from file</button>
       <span id="cfg-status" class="meta"></span>
     </div>
@@ -191,7 +199,7 @@
   </section>
   <section id="tab-benchmark" hidden>
     <iframe id="bidx" title="Benchmark index" scrolling="no" onload="fitFrame(this)" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px;margin-bottom:10px"></iframe>
-    <details id="brun"><summary style="font-size:1.05em;font-weight:600;padding:10px 14px;margin-bottom:10px;border:1px solid #4c8dff;border-radius:8px;background:rgba(76,141,255,.12);color:#9cc3ff;cursor:pointer">Test my model</summary>
+    <details id="brun"><summary style="font-size:1.05em;font-weight:600;padding:10px 14px;margin-bottom:10px;border:1px solid #4c8dff;border-radius:8px;background:rgba(76,141,255,.12);color:#9cc3ff;cursor:pointer">Test Model</summary>
     <p class="note">Test one model on the real-world coding cases (same harness as the published results). Pick an installed Ollama model, or give an OpenAI-compatible endpoint URL.</p>
     <div class="cfg-actions">
       <label>Model <select id="bm"></select></label>
@@ -398,8 +406,12 @@ function fitFrame(f) {
         x.onclick = (e) => { e.preventDefault(); const d = $('brun'); d.open = true; benchInit(); d.scrollIntoView({ behavior: 'smooth' }); };
       }
     }
-    const d = f.contentDocument, set = () => { f.style.height = d.documentElement.scrollHeight + 'px'; };
-    set(); new ResizeObserver(set).observe(d.body);
+    // Collapse first: scrollHeight never drops below the frame's own height, so a shrinking page would keep its old height
+    // Keep the host scroll: collapsing the frame shortens the page, which clamps scrollY to 0 before the frame grows back
+    const d = f.contentDocument, set = () => { const y = scrollY; f.style.height = '0px'; f.style.height = d.documentElement.scrollHeight + 'px'; scrollTo(0, y); };
+    set(); const ro = new ResizeObserver(set); ro.observe(d.body); ro.observe(d.documentElement);
+    // Chart clicks re-render the page; re-fit once that has painted
+    d.addEventListener('click', () => setTimeout(set, 30), true);
   } catch (e) { /* cross-origin: keep fixed height */ }
 }
 function modelOpts(id) {
@@ -477,7 +489,8 @@ async function liCopyImg() { try { await navigator.clipboard.write([new Clipboar
 async function shareTw() {
   await dlImg();
   const li = $('tli').value.trim(), xTag = $('ttw').value.trim() || '@vaibhavpavtekar';
-  const text = $('btxt').value.replace(li, '').split(LI_TAG).join(xTag).replace(/\n{3,}/g, '\n\n').trim();
+  // never post a local address: drop any localhost / 127.0.0.1 link from the text
+  const text = $('btxt').value.replace(li, '').split(LI_TAG).join(xTag).replace(/https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\S*/gi, '').replace(/\n{3,}/g, '\n\n').trim();
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(benchLink()), '_blank', 'noopener');
 }
 async function loadUsage() { usage = await (await fetch('/api/usage')).json(); renderSaved(); if (activeTab === 'usage') renderUsage(); }
@@ -493,38 +506,54 @@ function renderSaved() {
   }
   $('saved').replaceChildren(...kids);
 }
+// Shows the first 5 rows; the rest stay hidden until the toggle is pressed
+const USAGE_TOP = 5;
 function table(cols, rows) {
   const t = el('table'), h = el('tr');
   cols.forEach(([label, num]) => h.append(el('th', num ? 'n' : '', label))); t.append(h);
   if (!rows.length) { const r = el('tr'), c = el('td', '', T('usage').none); c.colSpan = cols.length; r.append(c); t.append(r); }
-  rows.forEach((cells) => { const r = el('tr'); cells.forEach((v, i) => r.append(el('td', cols[i][1] ? 'n' : '', String(v)))); t.append(r); });
-  return t;
+  rows.forEach((cells, i) => { const r = el('tr'); cells.forEach((v, j) => r.append(el('td', cols[j][1] ? 'n' : '', String(v)))); if (i >= USAGE_TOP) r.hidden = true; t.append(r); });
+  if (rows.length <= USAGE_TOP) return t;
+  const X = T('usage'), wrap = el('div'), btn = el('button', 'usage-more', (X.show_all || 'Show all') + ` (${rows.length})`);
+  btn.onclick = () => {
+    const open = btn.dataset.open !== '1';
+    [...t.rows].slice(1 + USAGE_TOP).forEach((r) => { r.hidden = !open; });
+    btn.dataset.open = open ? '1' : '';
+    btn.textContent = open ? (X.show_less || 'Show less') : (X.show_all || 'Show all') + ` (${rows.length})`;
+  };
+  wrap.append(t, btn); return wrap;
+}
+// Collapsible usage section, same <details> pattern as the Test Model panel (open by default)
+function sec(title, ...nodes) {
+  const d = el('details', 'usage-sec'); d.open = true;
+  const s = el('summary', '', title); s.style.cssText = 'font-size:1.05em;font-weight:600;margin:12px 0 6px;cursor:pointer';
+  d.append(s, ...nodes); return d;
 }
 function renderUsage() {
   const u = usage, X = T('usage'); if (!u) return;
   const day = (ts) => new Date(ts * 1000).toLocaleDateString();
   $('usage').replaceChildren(el('h2', '', X.title),
     el('p', 'note', fill(X.period, { a: day(u.periodStart), b: day(u.periodEnd) }) + '. ' + X.scope_note),
-    el('h3', '', X.sessions),
-    table([[X.session], [X.started], [X.last], [X.tasks, 1], [X.saved, 1], [X.local_models]],
-      u.sessions.map((r) => [`#${r.pid} (${r.live ? X.live : X.ended})`, ago(r.first), ago(r.last), r.tasks, num(r.saved),
-        r.models.map((m) => `${m.model} ×${m.tasks}${m.failed ? ` (${m.failed} ${X.failed})` : ''}`).join(', ') || '-'])),
-    el('h3', '', X.days),
-    table([[X.day], [X.tasks, 1], [X.saved, 1]], u.days.map((r) => [r.day, r.tasks, num(r.saved)])),
-    el('h3', '', X.roles),
-    table([[X.role], [X.tasks, 1], [X.saved, 1]], u.roles.map((r) => [r.role, r.tasks, num(r.saved)])),
+    sec(X.sessions,
+      table([[X.session], [X.started], [X.last], [X.tasks, 1], [X.saved, 1], [X.local_models]],
+        u.sessions.map((r) => [`#${r.pid} (${r.live ? X.live : X.ended})`, ago(r.first), ago(r.last), r.tasks, num(r.saved),
+          r.models.map((m) => `${m.model} ×${m.tasks}${m.failed ? ` (${m.failed} ${X.failed})` : ''}`).join(', ') || '-']))),
+    sec(X.days,
+      table([[X.day], [X.tasks, 1], [X.saved, 1]], u.days.map((r) => [r.day, r.tasks, num(r.saved)]))),
+    sec(X.roles,
+      table([[X.role], [X.tasks, 1], [X.saved, 1]], u.roles.map((r) => [r.role, r.tasks, num(r.saved)]))),
     ...(X.claude_models && u.claude ? [
-      el('h3', '', X.claude_models),
-      table([[X.model], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
-        u.claude.models.map((r) => [r.model, r.calls, num(r.input), num(r.cacheRead + r.cacheWrite), num(r.output), num(r.total)])),
-      el('h3', '', fill(X.claude_window, { h: u.windowHours })),
-      table([[X.model], [X.calls, 1], [X.total, 1]], u.claude.modelsWindow.map((r) => [r.model, r.calls, num(r.total)])),
-      el('h3', '', X.claude_tasks),
-      table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
-        u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)])),
-      el('h3', '', X.local_tasks),
-      table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1], [X.e2e, 1], [X.tps, 1]],
-        u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total), r.e2e ? r.e2e.toFixed(1) + 's' : '-', r.tps ? r.tps.toFixed(1) : '-']))] : []));
+      sec(X.claude_models,
+        table([[X.model], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+          u.claude.models.map((r) => [r.model, r.calls, num(r.input), num(r.cacheRead + r.cacheWrite), num(r.output), num(r.total)]))),
+      sec(fill(X.claude_window, { h: u.windowHours }),
+        table([[X.model], [X.calls, 1], [X.total, 1]], u.claude.modelsWindow.map((r) => [r.model, r.calls, num(r.total)]))),
+      sec(X.claude_tasks,
+        table([[X.task], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1]],
+          u.claude.subagents.map((r) => [r.task || r.agent, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total)]))),
+      sec(X.local_tasks,
+        table([[X.task], [X.persona], [X.model], [X.started], [X.calls, 1], [X.input, 1], [X.cache, 1], [X.output, 1], [X.total, 1], [X.e2e, 1], [X.tps, 1]],
+          u.localTasks.map((r) => [r.task, r.persona, r.model, ago(r.first), r.calls, num(r.input), num(r.cached), num(r.output), num(r.total), r.e2e ? r.e2e.toFixed(1) + 's' : '-', r.tps ? r.tps.toFixed(1) : '-'])))] : []));
 }
 const CFG_GLOBAL = [
   ['workspace', 'CC_WORKSPACE', 'Local repo base path', 'text'],
@@ -539,7 +568,7 @@ const CFG_MCP_MODES = ['allow', 'ask', 'disable'];
 const CFG_MODE_LABEL = { allow: 'Auto', ask: 'Ask', disable: 'Disable' };
 let cfgRoleInputs = [];
 let cfgBuilt = false; // true once the role list was built from loaded roles
-const cfgStatus = (msg) => { $('cfg-status').textContent = msg; };
+const cfgStatus = (msg) => { $('cfg-status').textContent = msg; document.querySelectorAll('.cfg-status-line').forEach((s) => { s.textContent = msg; }); };
 
 async function buildConfig() {
   let saved = {};
@@ -561,7 +590,7 @@ async function buildConfig() {
   const srv = $('cfg-mcp-servers');
   srv.replaceChildren();
   for (const name of Object.keys(catalog)) {
-    const line = el('div', 'cfg-tool');
+    const line = el('div', 'cfg-srv-line');
     const btn = el('button', '', 'Restart'); btn.type = 'button'; btn.onclick = () => restartMcp(name);
     const st = el('span', 'meta'); st.id = 'mcp-status-' + name;
     line.append(el('span', 'cfg-tool-name', name), btn, st);
@@ -680,8 +709,8 @@ async function saveConfig() {
       }
     }
   }
-  const btn = $('cfg-save');
-  btn.disabled = true; cfgStatus('Saving...');
+  const btns = document.querySelectorAll('.cfg-save-btn');
+  btns.forEach((b) => { b.disabled = true; }); cfgStatus('Saving...');
   try {
     const res = await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!res.ok) { cfgStatus('Save failed (' + res.status + '): ' + (await res.text())); return; }
@@ -689,7 +718,7 @@ async function saveConfig() {
   } catch (e) {
     cfgStatus('Save failed: ' + e.message);
   } finally {
-    btn.disabled = false;
+    btns.forEach((b) => { b.disabled = false; });
   }
 }
 

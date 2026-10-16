@@ -150,7 +150,7 @@ RANK_LEGEND = [
     "Pass rate % = Score / max.",
     "Builder / Thinker = the same score split by role cases.",
     "t/s = tokens generated per second (primary speed metric) = tokens out / (s per case x cases).",
-    "Composite = 0.6 x pass rate + 0.4 x ln(t/s) / ln(highest t/s), over full local runs (the post pick score). Blank = partial run or cloud baseline.",
+    "Rank = 100 x (0.6 x pass rate + 0.4 x ln(t/s) / ln(highest t/s)), over full local runs (the post pick score). Blank = partial run or cloud baseline.",
     "s per case = mean seconds per case (secondary speed metric).",
     "Run time = wall clock for the whole run.",
     "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
@@ -160,11 +160,11 @@ RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
 
 
 def md_table():
-    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | t/s | Composite | s per case | Run time | Valid cases |",
+    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | t/s | Rank | s per case | Run time | Valid cases |",
          "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
-        comp = "" if r["composite"] is None else f"{r['composite']:.3f}"
+        comp = "" if r["composite"] is None else f"{r['composite'] * 100:.1f}"
         o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
                  f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
                  f"| {'' if r['tps'] is None else r['tps']} | {comp} | {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
@@ -304,7 +304,7 @@ body{font:14px system-ui;margin:16px;background:var(--bg);color:var(--fg)}h1{fon
 input,select{font:inherit;padding:4px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
 table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{cursor:pointer;position:sticky;top:0;background:var(--bg)}.bar{display:inline-block;height:10px;background:var(--acc);margin-right:6px}
-.w{overflow-x:auto}.g{color:var(--acc)}.r{color:#d0453b}.y{color:#d9a021}.mut{color:var(--mut)}
+html,body{overflow-anchor:none}.w{overflow-x:auto}.g{color:var(--acc)}.r{color:#d0453b}.y{color:#d9a021}.mut{color:var(--mut)}
 details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}details ul{margin:8px 0 8px 18px;padding:0}
 .cb{margin:16px 0}.cb h3{font-size:15px;margin:4px 0}.cb p{font-size:12px;margin:6px 0}
 .row{display:flex;flex-wrap:wrap;gap:24px}.row>.cb{flex:1 1 320px;min-width:0}.pw{display:flex;flex-wrap:wrap;align-items:center;gap:16px}.pw svg{flex:0 0 220px;width:220px}.pl{font-size:12px;font-weight:600;fill:#fff;pointer-events:none}.lg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:4px 0}.li{display:inline-flex;align-items:center;gap:5px}.li[data-sk]{cursor:pointer}.li i{width:11px;height:11px;border-radius:2px;display:inline-block}.chip{display:inline-block;margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:10px;font-size:12px;cursor:pointer}.ch svg{width:100%;height:auto;display:block}.ax{font-size:11px;fill:var(--mut)}.lb{font-size:10px;fill:var(--fg)}
@@ -313,26 +313,27 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <p><a href="index.html">Back to the report</a></p>
 <details><summary>Role definitions and legend</summary>__ROLES__</details>
 <div class="f">
-<label>Min score %<input id="ms" type="number" value="50" min="0" max="100"></label>
+<label>Min score %<input id="ms" type="number" placeholder="any" min="0" max="100"></label>
 <label>Min t/s<input id="mn" type="number" placeholder="any"></label>
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
-<label>Max params (B)<input id="mp" type="number" value="14" placeholder="any"></label>
+<label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
 <label>From date<input id="fd" type="date"></label>
+<label>Show<select id="lim"><option value="10" selected>Top 10 by Rank</option><option value="25">Top 25</option><option value="50">Top 50</option><option value="">All runs</option></select></label>
 </div>
 <div id="n"></div>
 <div class="w"><table id="t"></table></div>
 <details open><summary>Charts (linked to the filters and table)</summary><div id="ch" class="ch"></div></details>
 <script>
-const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="tps",sd=-1;
+const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="composite",sd=-1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s","Tokens per second = tokens out / (s per case x cases) (higher is faster; primary speed metric)"],["composite","Composite","60% pass rate + 40% speed, speed relative to the fastest full run (higher is better; the post pick uses the same score)"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; secondary)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
+const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s","Tokens per second = tokens out / (s per case x cases) (higher is faster; primary speed metric)"],["composite","Rank","Rank = 100 x (60% pass rate + 40% speed, speed relative to the fastest full run); higher is better, and the post pick uses the same score"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; secondary)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
 const wrap=(svg,n)=>`<div style="${n>30?"max-height:560px;overflow-y:auto":""}">${svg}</div>`;
 const SEL={band:null,model:null};
 const BANDS=[["90-100% (excellent)",90,101,"#2e9e5b"],["75-89% (good)",75,90,"#8bc34a"],["50-74% (fair)",50,75,"#d9a021"],["Below 50% (poor)",0,50,"#d0453b"]];
@@ -390,46 +391,56 @@ function caseChart(R){
  g+=titles(L,PW,T,H,AX,"Average pass rate % across the runs shown","Benchmark case");
  return legend([{c:"#2e9e5b",t:"75%+ easy"},{c:"#d9a021",t:"40-74% mixed"},{c:"#d0453b",t:"under 40% hard"}])+wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pass rate per case">${g}</svg>`,A.length);
 }
-function scatter(P,xf,xt,xmax,rf,leg,label){
+function scatter(P,xf,xt,xmax,rf,leg,label,yf=r=>r.pct,yt="Pass rate %, higher = better"){
  const W=680,H=360,L=52,RT=20,T=14,AX=44;
  const X=v=>L+(W-L-RT)*v/xmax,Y=v=>T+(H-T-AX)*(1-v/100);let g="";
  [0,25,50,75,100].forEach(v=>{g+=`<line x1="${L}" x2="${W-RT}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" class="ax">${v}</text>`});
  for(let k=0;k<=5;k++){const v=xmax*k/5;g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${X(v)}" y="${H-AX+14}" text-anchor="middle" class="ax">${+v.toFixed(1)}</text>`}
- g+=`<text x="${(L+W-RT)/2}" y="${H-6}" text-anchor="middle" class="ax">${xt}</text><text transform="translate(14 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">Pass rate %, higher = better</text>`;
- P.forEach(r=>{const m=r.builder_model,x=X(xf(r)),y=Y(r.pct),rad=rf(r),f=leg(r);
+ g+=`<text x="${(L+W-RT)/2}" y="${H-6}" text-anchor="middle" class="ax">${xt}</text><text transform="translate(14 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">${yt}</text>`;
+ P.forEach(r=>{const m=r.builder_model,x=X(xf(r)),y=Y(yf(r)),rad=rf(r),f=leg(r);
   g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><circle cx="${x}" cy="${y}" r="${rad}" style="fill:${f};fill-opacity:.8"><title>${esc(sn(m)+" ("+m+") | score "+r.score+"/"+r.max+" ("+r.pct+"%) | "+(r.tps==null?"t/s n/a":r.tps+" t/s")+" | "+r.mean_s_per_case+" s/case | params "+(r.params||"unknown")+" | click to filter")}</title></circle></g>`});
  return wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">${g}</svg>`,P.length);
 }
 function speedChart(R){
  const P=R.filter(r=>+r.tps>0);
  if(!P.length)return"<p class=\"mut\">No runs with t/s match.</p>";
- const xmax=Math.max(10,Math.ceil(Math.max(...P.map(r=>+r.tps))/10)*10);
+ const xmax=Math.max(10,Math.ceil(Math.max(...D.filter(r=>+r.tps>0).map(r=>+r.tps))/10)*10);
  return legend([{c:"var(--acc)",t:"Local model"},{c:"var(--cloud)",t:"Cloud baseline"}])+scatter(P,r=>+r.tps,"Tokens per second, higher = faster",xmax,r=>{const p=r.params_b;return p==null||isNaN(p)?5:Math.min(12,2+Math.sqrt(p)*2.2)},r=>r.builder_model.startsWith("claude-")?"var(--cloud)":"var(--acc)","Speed vs pass rate");
 }
+const sizeNone=what=>`<p class="mut">${SEL.model!=null?`<b>${esc(SEL.model)}</b> has no parameter count, so it cannot be placed on this chart. `:""}No ${what} match the current filters. Cloud runs have no parameter count, so they never plot here.${SEL.model!=null||SEL.band!=null?` <span class="chip" data-sk="clear">Clear chart selections</span>`:""}</p>`;
 function sizeChart(R){
  const P=R.filter(r=>r.params_b!=null&&!isNaN(r.params_b));
- if(!P.length)return none;
- const xmax=Math.max(4,Math.ceil(Math.max(...P.map(r=>r.params_b))/4)*4);
+ if(!P.length)return sizeNone("local runs with a known size");
+ const xmax=Math.max(4,Math.ceil(Math.max(...D.filter(r=>r.params_b!=null&&!isNaN(r.params_b)).map(r=>r.params_b))/4)*4);
  return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Size vs pass rate");
 }
+function sizeRankChart(R){
+ const P=R.filter(r=>r.params_b!=null&&!isNaN(r.params_b)&&r.composite!=null);
+ if(!P.length)return sizeNone("local runs with a known size and a rank");
+ const xmax=Math.max(4,Math.ceil(Math.max(...D.filter(r=>r.params_b!=null&&!isNaN(r.params_b)).map(r=>r.params_b))/4)*4);
+ return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Size vs rank",r=>r.composite*100,"Rank, higher = better");
+}
 function draw(){
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mn=+$("mn").value||0,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value;
- const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&(mn<=0||+r.tps>=mn)&&+r.s<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
- const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
- R.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;return(x>y?1:x<y?-1:0)*sd});
+ const q=$("q").value.toLowerCase(),ms=+$("ms").value,mn=+$("mn").value||0,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
+ const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&(mn<=0||+r.tps>=mn)&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
+ const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R2=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
+ R2.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;let c=(x>y?1:x<y?-1:0)*sd;if(c==0&&sk=="composite")c=(b.pct-a.pct);return c});
+ const R=R2.filter((r,i)=>i<lim||r.builder_model.startsWith("claude-"));
  const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(sn(SEL.model))} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
- $("n").innerHTML=R.length+" of "+D.length+" runs match"+chips+(SEL.band!=null||SEL.model!=null?`<span class="chip" data-sk="clear">Clear chart selections</span>`:"");
+ $("n").innerHTML=R2.length+" of "+D.length+" runs match"+(R.length<R2.length?` (showing top ${R.length} by ${sk=="composite"?"Rank":sk})`:"")+chips+(SEL.band!=null||SEL.model!=null?`<span class="chip" data-sk="clear">Clear chart selections</span>`:"");
  $("ch").innerHTML=`<p class="mut">Click a pie slice, bar, dot or case to filter the table and every chart; click again to undo. The filter fields above update every chart too.</p>`
   +`<div class="row">`+box("Runs by score band",pie(R1),"Pie: share of runs per pass-rate band, after the filters above. Click a slice or legend entry to show only those runs.")+`</div>`
   +box("Model comparison: pass rate by run",passChart(R),"One horizontal bar per run, colored by score band. Click a bar to focus that model.")
   +box("Builder vs thinker by run",roleChart(R),"Top 12 runs by pass rate. Blue = builder cases, orange = thinker cases. Click to focus a model.")
   +box("Speed vs pass rate",speedChart(R),"Top-left corner = best (fast and accurate). Dot size = parameters. Click a dot to focus a model.")
-  +box("Model size vs pass rate",sizeChart(R),"Does a bigger model score higher? Local runs with a known size only. Click a dot to focus a model.");
+  +box("Model size vs pass rate",sizeChart(R),"Does a bigger model score higher? Local runs with a known size only. Click a dot to focus a model.")
+  +box("Model size vs rank",sizeRankChart(R),"Rank (60% pass rate, 40% speed) against parameter count. Local runs with a known size and a rank only. Click a dot to focus a model.");
  $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""}>${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
   R.map(r=>"<tr>"+cols.map(([k])=>{
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
    if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
    if(k=="params_b")return`<td>${r.params_b==null?"·":r.params_b}</td>`;
+   if(k=="composite")return`<td>${r.composite==null?"":(r.composite*100).toFixed(1)}</td>`;
    if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
  document.querySelectorAll("th").forEach(h=>h.onclick=()=>{sd=sk==h.dataset.k?-sd:-1;sk=h.dataset.k;draw()});
 }
@@ -438,7 +449,9 @@ const pick=e=>{const t=e.target.closest("[data-sk]");if(!t)return;const k=t.data
  else if(k==="case")$("cs").value=$("cs").value===v?"":v;
  else if(k==="band")SEL.band=SEL.band===+v?null:+v;
  else SEL.model=SEL.model===v?null:v;
- draw()};
+ draw();toTop();requestAnimationFrame(toTop)};
+// Inside the dashboard the explorer is an auto-sized iframe (scrolling="no"), so scroll the host page to the frame's top instead
+const toTop=()=>{const f=window.frameElement;if(!f){window.scrollTo(0,0);return}const p=window.parent;p.scrollTo(0,Math.max(0,p.scrollY+f.getBoundingClientRect().top-8))};
 $("ch").addEventListener("click",pick);$("n").addEventListener("click",pick);
 document.querySelectorAll("input,select").forEach(e=>e.oninput=draw);draw();
 </script>"""
@@ -519,7 +532,7 @@ function render(id,cols,rows,key){
 const code=s=>"<code>"+esc(s)+"</code>";
 function sel(id){const f=S.f[id];
  const R=D.filter(r=>r.model.startsWith("claude-")||((!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size))&&(!f.days||!r.day||r.day>=cutoff(+f.days))));
- R.sort(tie);return R}
+ R.sort(id==="rank"?(x,y)=>((y.comp??-1)-(x.comp??-1))||tie(x,y):tie);return R}
 // Cloud baseline rows are always kept; "Show top N" counts local rows only.
 function topN(V,n,k){let c=0;return n?V.filter(x=>k(x).startsWith("claude-")||c++<n):V}
 function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').textContent=`Showing ${shown} of ${total} ${what}`}
@@ -535,7 +548,7 @@ function draw(id){
    {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
    {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
    {k:"tps",l:"t/s",v:r=>r.tps||-1,f:r=>r.tps??""},
-   {k:"comp",l:"Composite",v:r=>r.comp??-1,f:r=>r.comp==null?"":r.comp.toFixed(3),t:"60% pass rate + 40% speed, speed relative to the fastest full run (higher is better; the post pick uses the same score)"},
+   {k:"comp",l:"Rank",v:r=>r.comp??-1,f:r=>r.comp==null?"":(r.comp*100).toFixed(1),t:"Rank = 100 x (60% pass rate + 40% speed, speed relative to the fastest full run); higher is better, and the post pick uses the same score"},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
    {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
    {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
@@ -590,7 +603,7 @@ def _data():
     return out
 
 
-DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by tokens/s (ties by pass rate)._
+DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by rank (ties by pass rate)._
 
 ### Ranking
 
