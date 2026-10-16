@@ -6,10 +6,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from router.config import load_personas, resolve_role
+from router.config import load_agents, resolve_role
 from router.loop import leaf, run
 
-CFG = load_personas()
+CFG = load_agents()
 TASKS = {
     "builder": ("engineering-backend-architect", "Read /workspace/README.md and name the first heading."),
     "analyzer": ("engineering-software-architect", "Use search_graph to find function resolve_role and say which file defines it."),

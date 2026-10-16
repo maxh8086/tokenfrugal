@@ -6,7 +6,7 @@ models:
   thinker: llama3.2:3b-16k
 # Per-agent model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
 # Empty by default: every agent uses its role's model. Add entries here, or override
-# without touching this file via `python -m scripts.persona_ui` (writes router/agent_models.json).
+# without touching this file via `python -m scripts.agent_ui` (writes router/agent_models.json).
 agent_models: {}
 # Slugs accepted even with no model mapping (benchmark cases dispatch to these).
 known_agents: [engineering-backend-architect, design-ui-designer, gis-analyst, support-docs-writer]
@@ -150,4 +150,4 @@ members:
   spatial-computing:
     [macos-spatial-metal-engineer, terminal-integration-specialist, visionos-spatial-engineer, xr-cockpit-interaction-specialist, xr-immersive-developer, xr-interface-architect]
   specialized:
-    [accounts-payable-agent, agentic-identity-trust, agents-orchestrator, automation-governance-architect, business-strategist, change-management-consultant, chief-financial-officer, corporate-training-designer, customer-service, customer-success-manager, data-consolidation-agent, data-privacy-officer, esg-sustainability-officer, government-digital-presales-consultant, grant-writer, healthcare-aging-parent-care-companion, healthcare-customer-service, healthcare-marketing-compliance, hospitality-guest-services, hr-onboarding, identity-graph-operator, language-translator, legal-billing-time-tracking, legal-client-intake, legal-document-review, loan-officer-assistant, lsp-index-engineer, ma-integration-manager, medical-billing-coding-specialist, operations-manager, organizational-psychologist, personal-growth-mentor, real-estate-buyer-seller, recruitment-specialist, report-distribution-agent, resume-tailor, retail-customer-returns, sales-data-extraction-agent, sales-outreach, study-abroad-advisor, supply-chain-strategist, zk-steward]
+    [accounts-payable-agent, agentic-identity-trust, agents-orchestrator, automation-governance-architect, business-strategist, change-management-consultant, chief-financial-officer, corporate-training-designer, customer-service, customer-success-manager, data-consolidation-agent, data-privacy-officer, esg-sustainability-officer, government-digital-presales-consultant, grant-writer, healthcare-aging-parent-care-companion, healthcare-customer-service, healthcare-marketing-compliance, hospitality-guest-services, hr-onboarding, identity-graph-operator, language-translator, legal-billing-time-tracking, legal-client-intake, legal-document-review, loan-officer-assistant, lsp-index-engineer, ma-integration-manager, medical-billing-coding-specialist, operations-manager, organizational-psychologist, agentl-growth-mentor, real-estate-buyer-seller, recruitment-specialist, report-distribution-agent, resume-tailor, retail-customer-returns, sales-data-extraction-agent, sales-outreach, study-abroad-advisor, supply-chain-strategist, zk-steward]

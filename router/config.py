@@ -118,17 +118,17 @@ TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task
 
 
 def _agent_file(env_name: str, legacy_env: str, name: str, legacy_name: str) -> Path:
-    """Agent override file: the new env var / filename win; the pre-rename persona names are read as a fallback for one release."""
+    """Agent override file: the new env var / filename win; the pre-rename agent names are read as a fallback for one release."""
     if os.getenv(env_name) or os.getenv(legacy_env):
         return Path(os.getenv(env_name) or os.getenv(legacy_env))
     new = Path(__file__).parent / name
     return new if new.exists() or not (Path(__file__).parent / legacy_name).exists() else Path(__file__).parent / legacy_name
 
 
-AGENT_MODELS_FILE = _agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE", "agent_models.json", "persona_models.json")
+AGENT_MODELS_FILE = _agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_AGENT_MODELS_FILE", "agent_models.json", "agent_models.json")
 
 
-AGENT_MCPS_FILE = _agent_file("TOKENFRUGAL_AGENT_MCPS_FILE", "TOKENFRUGAL_PERSONA_MCPS_FILE", "agent_mcps.json", "persona_mcps.json")
+AGENT_MCPS_FILE = _agent_file("TOKENFRUGAL_AGENT_MCPS_FILE", "TOKENFRUGAL_AGENT_MCPS_FILE", "agent_mcps.json", "agent_mcps.json")
 
 
 def load_catalog() -> dict:
@@ -145,29 +145,29 @@ def default_mcps(role: dict, catalog: dict) -> list[str]:
 
 def load_agents() -> dict:
     cfg = yaml.safe_load((Path(__file__).parent / "agents.yaml").read_text(encoding="utf-8"))
-    # agent_models is the key; persona_models is still read from agents.yaml for one release.
-    pm = dict(cfg.get("agent_models") or cfg.get("persona_models") or {})
-    try:  # user overrides (written by scripts/persona_ui.py) win over the yaml defaults
+    # agent_models is the key; agent_models is still read from agents.yaml for one release.
+    pm = dict(cfg.get("agent_models") or cfg.get("agent_models") or {})
+    try:  # user overrides (written by scripts/agent_ui.py) win over the yaml defaults
         pm.update(json.loads(AGENT_MODELS_FILE.read_text(encoding="utf-8")))
     except (OSError, ValueError):
         pass
     # Benchmarks pin one model for every agent with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_AGENT_MODELS=0 disables the mapping
-    # (TOKENFRUGAL_PERSONA_MODELS=0 is still honoured).
-    disabled = (os.getenv("TOKENFRUGAL_AGENT_MODELS") or os.getenv("TOKENFRUGAL_PERSONA_MODELS")) == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
+    # (TOKENFRUGAL_AGENT_MODELS=0 is still honoured).
+    disabled = (os.getenv("TOKENFRUGAL_AGENT_MODELS") or os.getenv("TOKENFRUGAL_AGENT_MODELS")) == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
     cfg["known_agents"] = sorted(set(pm) | set(cfg.get("known_agents") or []))  # slugs stay valid when the model mapping is off
     if disabled:
         pm = {}
     cfg["agent_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
     cfg["mcp_catalog"] = load_catalog()["mcps"]
-    try:  # user MCP selection per agent (written by scripts/persona_ui.py); off whenever the model mapping is off
+    try:  # user MCP selection per agent (written by scripts/agent_ui.py); off whenever the model mapping is off
         mc = json.loads(AGENT_MCPS_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         mc = {}
     cfg["agent_mcps"] = {} if disabled else {k: v for k, v in mc.items() if isinstance(v, list)}
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
-    # agent_skills is the key; persona_skills is still read from agents.yaml for one release.
-    cfg["agent_skills"] = dict(cfg.get("agent_skills") or cfg.get("persona_skills") or {})
+    # agent_skills is the key; agent_skills is still read from agents.yaml for one release.
+    cfg["agent_skills"] = dict(cfg.get("agent_skills") or cfg.get("agent_skills") or {})
     # Role -> model tag from the dashboard Configuration tab; wins over the logical model in agents.yaml.
     cfg["role_models"] = {k: v for k, v in (_overrides.get("role_models") or {}).items() if isinstance(v, str) and v.strip()}
     # Role -> MCP names from the dashboard Configuration tab; an agent_mcps entry for one agent still wins.

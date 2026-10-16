@@ -4,8 +4,8 @@ from router.config import check_agent
 
 CFG = {
     "overrides": {"engineering-code-reviewer": "thinker"},
-    "persona_models": {"engineering-test-writer": "builder"},
-    "persona_skills": {},
+    "agent_models": {"engineering-test-writer": "builder"},
+    "agent_skills": {},
     "members": {"engineering": ["engineering-backend-architect"]},
 }
 
@@ -17,7 +17,7 @@ class CheckAgentTests(unittest.TestCase):
     def test_known_member_slug_is_accepted(self):
         self.assertEqual(check_agent("engineering-backend-architect", CFG), "")
 
-    def test_known_persona_model_slug_is_accepted(self):
+    def test_known_agent_model_slug_is_accepted(self):
         self.assertEqual(check_agent("engineering-test-writer", CFG), "")
 
     def test_unknown_slug_returns_error(self):

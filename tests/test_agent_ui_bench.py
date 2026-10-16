@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from scripts import persona_ui
+from scripts import agent_ui
 
 
 class BenchSummaryTest(unittest.TestCase):
@@ -16,34 +16,34 @@ class BenchSummaryTest(unittest.TestCase):
                 "a": {"verified": 2, "ran": 2, "s": {"p50": 4.0}},
                 "b": {"verified": 1, "ran": 2, "s": {"p50": 6.0}}}}}
             (root / "bench" / "m" / "r.json").write_text(json.dumps(data))
-            with mock.patch.object(persona_ui.config, "ROOT", root):
-                s = persona_ui.bench_summary("m")
+            with mock.patch.object(agent_ui.config, "ROOT", root):
+                s = agent_ui.bench_summary("m")
                 self.assertEqual((s["verified"], s["ran"], s["cases"], s["pct"]), (3, 4, 2, 75))
                 self.assertEqual(s["s_per_case"], 5.0)
-                self.assertIsNone(persona_ui.bench_summary("missing"))
+                self.assertIsNone(agent_ui.bench_summary("missing"))
 
 
 class BenchStartTest(unittest.TestCase):
     def setUp(self):
-        persona_ui.JOB.update(running=False, log=[], summary=None)
+        agent_ui.JOB.update(running=False, log=[], summary=None)
 
     def test_needs_exactly_one_target(self):
         with self.assertRaises(ValueError):
-            persona_ui.bench_start({})
+            agent_ui.bench_start({})
         with self.assertRaises(ValueError):
-            persona_ui.bench_start({"model": "x", "url": "http://a"})
+            agent_ui.bench_start({"model": "x", "url": "http://a"})
 
     def test_url_scheme_checked(self):
         with self.assertRaises(ValueError):
-            persona_ui.bench_start({"url": "ftp://a"})
+            agent_ui.bench_start({"url": "ftp://a"})
 
     def test_rejects_concurrent_and_clamps_n(self):
-        with mock.patch.object(persona_ui.threading, "Thread") as th:
-            persona_ui.bench_start({"model": "llama3.2:3b", "n": 99})
+        with mock.patch.object(agent_ui.threading, "Thread") as th:
+            agent_ui.bench_start({"model": "llama3.2:3b", "n": 99})
             cmd = th.call_args.kwargs["args"][0]
             self.assertEqual(cmd[cmd.index("--n") + 1], "10")
             with self.assertRaises(ValueError):
-                persona_ui.bench_start({"model": "y"})
+                agent_ui.bench_start({"model": "y"})
 
 
 if __name__ == "__main__":
