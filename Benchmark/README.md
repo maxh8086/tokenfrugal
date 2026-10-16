@@ -1,7 +1,49 @@
 # Benchmark
 
+All local-model tests ran on one machine: **NVIDIA GeForce RTX 4060 Laptop GPU, 8 GB video memory**. The Haiku baseline ran in the cloud.
+
 - [Benchmark.md](Benchmark.md): the single report (conclusions, persona defaults, tables, charts, observations)
-- [explorer.html](explorer.html): open in a browser to filter and sort runs by score, speed, size, case, hardware
+- [explorer.html](explorer.html): open in a browser to filter and sort runs by score, speed, size, case
 - [results/benchmark.csv](results/benchmark.csv): source of truth, one row per run
 - [script/](script/README.md): run a new model, rebuild the report, cloud-review prompt
-- `responses/`, `rounds/`, `model_sweep/`: raw archives from earlier rounds (reference only)
+
+## How to read the results
+
+Each row in `results/benchmark.csv` is one run of one model setup on the same 16 cases.
+
+| Column | Meaning |
+| --- | --- |
+| `tag` | Run name, usually the model tag |
+| `params` | Model size, for example `3B` |
+| `score`, `max` | Passes out of total checks (`score` / `max`) |
+| `ran` | Number of cases attempted |
+| `mean_s_per_case` | Average seconds per case (lower is faster) |
+| `total_s` | Whole run time in seconds |
+| `compression_level` | How compressed the model file is (`Q4_K_M`: smaller and faster, slightly less accurate) |
+| `model_file_size_gb` | Size of the model file on disk, in GB |
+| `gpu_memory_used_gb` | GPU memory the loaded model is using, in GB (usage, not capacity; GPU capacity is stated at the top of `Benchmark.md`) |
+| `shared_system_memory_gb` | Part of the loaded model that did not fit on the GPU and sits in shared / system memory, in GB (0 = fully on GPU; higher is slower) |
+| `peak_model_ram_gb` | Highest system RAM the Ollama processes used during the run (this model only, not the whole machine). Empty for older runs |
+| `context_window_tokens` | Context window this run used: how many tokens of text the model can hold at once. Not RAM |
+| `model_max_context_tokens` | Largest context window the model supports. Not RAM |
+| `valid_cases` | Cases that finished and counted |
+| `infra_cases` | Cases lost to infrastructure problems (not the model's fault); above 0 is flagged `⚠infra` |
+| `mean_s_valid` | Average seconds over valid cases only |
+| 16 case columns | One per task, shown as `passed/checks`. See the list below |
+| `context_used_<case>` columns | Most context tokens that case used. Not scored |
+| `context_used_peak_tokens` | Most context tokens used by any case in the run |
+
+### The two roles
+
+TokenFrugal uses two local models, one per role. A task goes to one of them, never both.
+
+- **Builder** (`qwen2.5-coder-yarn:3b`): writes code and edits files. Needs write and edit tools.
+  Cases: `write_function`, `fix_bug`, `write_tests`, `rename_across_files`.
+- **Thinker** (`llama3.2:3b-16k`): reads, analyses and browses. Needs read, graph and browser tools.
+  Cases: `find_symbol`, `review_sqli`, `debug_trace`, `summarize_readme`, `code_graph_search`, `list_project_files`, `read_docs_file`, `security_file_read`, `design_overview`, `browser_navigate_snapshot`, `plan_status`, `web_crawl`.
+
+The role table in `Benchmark.md` maps each role to its model class and allowed tools (read from `router/agents.yaml`). A case marked `⚠` scored 0 on a case that needs a specific tool, so the tool was likely missing or not called.
+
+### Model origin and scores in the report
+
+Each row shows where the model comes from and the exact command to get it: `Ollama library` (`ollama pull name:tag`), `Hugging Face: org/repo` (`ollama pull hf.co/org/repo:QUANT`), or a local Modelfile build (`ollama pull` the base, then `ollama create`). The origin is derived from `builder_model` when the report is built, so the CSV has no extra column. `Builder` and `Thinker` are the subtotals over each role's cases; one model is pinned to both roles in a run, so the two subtotals show which role it suits.

@@ -21,10 +21,11 @@ def load(override=None):
 
 
 class PersonaModelTests(unittest.TestCase):
-    def test_yaml_default_is_a_tag(self):
+    def test_yaml_default_is_empty_so_role_model_applies(self):
         cfg = load()
-        self.assertEqual(resolve_role("engineering-backend-architect", cfg)["model"], "ts-gemma4-e4b-16384")
-        self.assertEqual(resolve_role("engineering-sre", cfg)["model"], cfg["models"]["builder"])
+        self.assertEqual(cfg["persona_models"], {})
+        self.assertEqual(resolve_role("engineering-backend-architect", cfg)["model"], cfg["models"]["builder"])
+        self.assertEqual(resolve_role("gis-analyst", cfg)["model"], cfg["models"]["builder"])
 
     def test_logical_name_resolves_to_role_model(self):
         cfg = load()
@@ -49,7 +50,7 @@ class PersonaModelTests(unittest.TestCase):
             f = Path(d) / "pm.json"
             f.write_text("{not json", encoding="utf-8")
             with mock.patch.object(config, "PERSONA_MODELS_FILE", f):
-                self.assertEqual(resolve_role("engineering-sre", load_personas())["model"], "qwen2.5-coder-yarn:3b")
+                self.assertEqual(resolve_role("gis-analyst", load_personas())["model"], "qwen2.5-coder-yarn:3b")
 
     def test_model_env_pins_everything(self):
         with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {**CLEAN, "TOKENFRUGAL_MODEL_BUILDER": "pin:1b"}), \
@@ -70,14 +71,14 @@ class EditorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, CLEAN), \
              mock.patch.object(config, "PERSONA_MCPS_FILE", Path(d) / "pc.json"), \
              mock.patch.object(config, "PERSONA_MODELS_FILE", Path(d) / "pm.json"):
-            diff = persona_ui.save({"models": {"engineering-backend-architect": "ts-gemma4-e4b-16384", "finance-analyst": "other:3b", "engineering-technical-writer": ""}})["models"]
-            self.assertEqual(diff, {"finance-analyst": "other:3b", "engineering-technical-writer": ""})
+            diff = persona_ui.save({"models": {"engineering-backend-architect": "other:7b", "finance-analyst": "other:3b", "engineering-technical-writer": ""}})["models"]
+            self.assertEqual(diff, {"engineering-backend-architect": "other:7b", "finance-analyst": "other:3b"})
             cfg = load_personas()
             self.assertEqual(resolve_role("finance-analyst", cfg)["model"], "other:3b")
             self.assertEqual(resolve_role("engineering-technical-writer", cfg)["model"], cfg["models"]["thinker"])
             rows = persona_ui.state()["rows"]
             self.assertEqual(rows["finance-analyst"]["override"], "other:3b")
-            self.assertEqual(rows["engineering-backend-architect"]["default"], "ts-gemma4-e4b-16384")
+            self.assertEqual(rows["engineering-backend-architect"]["override"], "other:7b")
 
 
 if __name__ == "__main__":

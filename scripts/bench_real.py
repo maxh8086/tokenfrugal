@@ -4,11 +4,12 @@ import asyncio
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 
-from router import loop, server
+from router import loop, server, store
 from router.config import ROOT, SYNAPTREE_PROJECT
 
 SCRATCH = ROOT / "bench" / "scratch"
@@ -24,13 +25,16 @@ WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
 # A case is infra only when every repeat is infra; the infra repeats never count in valid_cases or mean_s_valid.
 SYNAPTREE_CONTAINER = "synaptree-synaptree-1"
 SYNAPTREE_CASES = {"write_function", "fix_bug", "write_tests", "rename_across_files",
-                   "find_symbol", "review_sqli", "debug_trace", "role_analyzer"}  # cases 1-7 and 9
+                   "find_symbol", "review_sqli", "debug_trace", "role_analyzer",  # cases 1-7 and 9
+                   "role_browser"}  # also the browser case, which needs the synaptree UI container
 CASE_TIMEOUT = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # seconds; per-repeat watchdog, a hit is scored as a failure (status timeout)
 LOG_TAIL_LINES = 60
 LOG_CAP_BYTES = 4096
 INFRA_ERROR = "synaptree container not running"
 TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")
 CONN_MARKERS = ("Connection closed",)
+# tool a case must have called (per the step trail) before its reply can count as verified; None = no requirement
+REQUIRED_TOOLS = {"role_tracker": "plan_status", "role_designer": "high_level_overview", "role_browser": "navigate_page"}
 
 
 def _py(code):
@@ -42,13 +46,74 @@ def _seed(name, text):
     (SCRATCH / name).write_text(text, encoding="utf-8")
 
 
+def _clean_scratch():
+    """Delete every file and subdirectory directly under SCRATCH; SCRATCH itself is kept.
+    Directory symlinks are unlinked, never followed, so nothing outside SCRATCH is removed."""
+    for p in SCRATCH.iterdir():
+        if p.is_dir() and not p.is_symlink():
+            shutil.rmtree(p)
+        else:
+            p.unlink()
+
+
 def _has(*words):
     return lambda a: (any(w in a.lower() for w in words), a[:100].replace("\n", " "))
 
 
+def strip_tid(r):
+    return re.sub(r"^\[[0-9a-f]{10}\]\s*", "", r)
+
+
+def tid_of(r):
+    """The 10-hex task id from a leading "[xxxxxxxxxx]" reply prefix, or None."""
+    m = re.match(r"\[([0-9a-f]{10})\]", r)
+    return m.group(1) if m else None
+
+
+def trail_of(r):
+    """Step trail of the task that produced reply r; [] when there is no task id, no row, or the store fails."""
+    tid = tid_of(r)
+    if not tid:
+        return []
+    try:
+        row = store.get(tid)
+    except Exception:  # noqa: BLE001
+        return []
+    return (row or {}).get("trail") or []
+
+
+def trail_tools(trail):
+    """Names of the tools called, in order, from the trail's tool events."""
+    return [e.get("name") for e in trail if e.get("kind") == "tool"]
+
+
+def trail_conn_error(trail):
+    """True when a tool_error event in the trail carries a connection failure (see CONN_MARKERS)."""
+    return any(e.get("kind") == "tool_error" and any(m in e.get("error", "") for m in CONN_MARKERS) for e in trail)
+
+
+def _all_has(*words):
+    return lambda a: (all(w in a.lower() for w in words), a[:100].replace("\n", " "))
+
+
+def _tracker_ok(a):
+    low = a.lower()
+    return (any(c.isdigit() for c in low) and any(w in low for w in ("task", "status", "plan")),
+            a[:100].replace("\n", " "))
+
+
+def _debug_ok(a):
+    low = a.lower()
+    return (("zerodivision" in low or "division by zero" in low) and ("empty" in low or "len" in low),
+            a[:100].replace("\n", " "))
+
+
 def _readme_ok(a):
     low = a.lower()
-    return ("mcp" in low and any(w in low for w in ("local", "ollama", "router", "llm")), a[:100].replace("\n", " "))
+    sentences = [s for s in re.split(r"[.!?](?=\s|$)", a) if s.strip()]
+    good = ("mcp" in low and any(w in low for w in ("local", "ollama", "router", "llm"))
+            and len(sentences) <= 6 and len(a) <= 1200)
+    return (good, a[:100].replace("\n", " "))
 
 
 def _none():
@@ -91,6 +156,8 @@ def classify(ran, error, uses_synaptree, container_bad):
     """Status of one repeat (rules in the module comment above)."""
     if uses_synaptree and container_bad:
         return "infra"
+    if not ran and "unknown agent" in error:
+        return "infra"  # router rejected the slug: harness/config fault, not the model
     if not ran and any(m in error for m in TIMEOUT_MARKERS):
         return "timeout"
     return "valid"
@@ -136,8 +203,10 @@ def cases():
             return False, "no test file written"
         p = subprocess.run([sys.executable, "-m", "unittest", "test_stack", "-q"], cwd=SCRATCH,
                            capture_output=True, text=True, timeout=60)
-        n = f.read_text(encoding="utf-8").count("def test_")
-        return p.returncode == 0 and n >= 3, f"rc={p.returncode} tests={n} {p.stderr[-100:]}"
+        text = f.read_text(encoding="utf-8")
+        n = len(re.findall(r"^\s*def test_", text, re.M))
+        present = "import stack" in text or "from stack import" in text
+        return p.returncode == 0 and n >= 3 and present, f"rc={p.returncode} tests={n} {p.stderr[-100:]}"
 
     def s_rename():
         _seed("a_mod.py", "def old_name(x):\n    return x + 1\n")
@@ -159,9 +228,8 @@ def cases():
         _seed("secret.py", "API_KEY = 'AKIAFAKEFAKEFAKE1234'" + chr(10) + "PASSWORD = 'hunter2'" + chr(10))
 
     def s_files():
-        for n in ("calc.py", "stack.py"):
-            if not (SCRATCH / n).exists():
-                _seed(n, "x = 1" + chr(10))
+        _seed("calc.py", "x = 1" + chr(10))
+        _seed("stack.py", "x = 1" + chr(10))
 
     return [
         ("write_function", "engineering-backend-architect", s_write,
@@ -181,7 +249,7 @@ def cases():
          _has("sql injection", "sqli", "injection")),
         ("debug_trace", "engineering-sre", s_debug,
          f"{WS}/bug.py crashes. Read it and name the exception and root cause.",
-         _has("zerodivision", "division by zero", "empty")),
+         _debug_ok),
         ("summarize_readme", "engineering-technical-writer", _none,
          f"Read /workspace/{SYNAPTREE_PROJECT}/README.md and summarize what the project does in 3 sentences.",
          _readme_ok),
@@ -192,15 +260,16 @@ def cases():
         ("role_data", "gis-analyst", s_files,
          f"List the files in {WS} with list_directory and name them.", _has("calc.py", "stack.py")),
         ("role_docs", "engineering-technical-writer", s_tests,
-         f"Read {WS}/stack.py and describe its public methods in two sentences.", _has("push")),
+         f"Read {WS}/stack.py and describe its public methods in two sentences.", _all_has("push", "pop")),
         ("role_security", "security-auditor", s_secret,
-         f"Read {WS}/secret.py and list any hard-coded secrets.", _has("api_key", "password", "hard-coded", "hardcoded")),
+         f"Read {WS}/secret.py and list any hard-coded secrets.", _all_has("akiafakefakefake1234", "hunter2")),
         ("role_designer", "design-ui-designer", _none,
-         "Call high_level_overview and report what it returns, or the exact error.", _has("penpot", "design", "file", "error")),
+         "Call high_level_overview and report what it returns, or the exact error.", _has("penpot", "design", "file", "error")),  # tool call enforced by REQUIRED_TOOLS
         ("role_browser", "testing-evidence-collector", _none,
-         "Navigate to https://example.com, take a snapshot and report the page heading.", _has("example domain", "documentation examples")),
+         "Navigate to http://host.docker.internal:8787/ui/ with navigate_page, take a snapshot and report the page title.",
+         _all_has("synaptree", "trace")),
         ("role_tracker", "project-management-project-shepherd", _none,
-         "Call plan_status and report the numbers.", _has("task", "plan", "done", "open", "0")),
+         "Call plan_status and report the numbers.", _tracker_ok),
         ("role_research", "support-docs-writer", _none,
          "Use crawl_markdown on https://example.com and report the page heading.", _has("example domain", "documentation examples")),
     ]
@@ -216,6 +285,7 @@ async def run(n, timed, ok, failure_mode, stats):
         uses = cid in SYNAPTREE_CASES
         runs = []
         for i in range(n):
+            _clean_scratch()  # no leftovers from the previous repeat or case; the seed below runs after this
             start = _now()
             pre = container_state() if uses else None
             if pre is not None and not pre.get("Running"):
@@ -230,28 +300,38 @@ async def run(n, timed, ok, failure_mode, stats):
             dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), CASE_TIMEOUT))
             end = _now()
             ran = ok(r)
-            good, note = (False, failure_mode(r)) if not ran else check(r)
-            state, container_bad = None, False
-            if not ran:  # capture the container after every failed repeat; a synaptree case is infra if it went down or restarted
+            good, note = (False, failure_mode(r)) if not ran else check(strip_tid(r))
+            trail = trail_of(r)
+            tools = trail_tools(trail)
+            req = REQUIRED_TOOLS.get(cid)
+            if good and req and trail and req not in tools:  # reply passed the check but the required tool was never called
+                good, note = False, f"tool {req} not called"
+            state = None
+            container_bad = uses and trail_conn_error(trail)  # a connection error in the trail is infra even when the reply is an answer
+            if not ran or container_bad:  # capture the container after a failed repeat; a synaptree case is infra if it went down or restarted
                 state = container_state()
-                container_bad = uses and (not state.get("Running") or state.get("StartedAt") != pre.get("StartedAt"))
+                container_bad = container_bad or (uses and (not state.get("Running") or state.get("StartedAt") != pre.get("StartedAt")))
             status = classify(ran, r, uses, container_bad)
             m = re.match(r"\[([^\]]+)\]", r)
             u = loop.DONE.get(m.group(1), {}) if m else {}
             rec = {"run": i + 1, "start": start, "end": end, "s": round(dt, 1), "ok": ran, "verified": bool(good),
                    "status": status, "dispatched": True, "error": r, "note": str(note)[:140],
-                   "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0)}
-            if not ran:
+                   "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0),
+                   "trail_tools": tools}
+            if state is not None:
                 rec["container_state"] = state
                 rec["container_logs"] = container_logs(start)
             runs.append(rec)
             print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s {status} ran={ran} verified={bool(good)} {'' if good else note}"[:200],
                   flush=True)
-        live_s = [x["s"] for x in runs if x["status"] != "infra"]
-        res[cid] = {"verified": f"{sum(x['verified'] for x in runs)}/{n}", "ran": f"{sum(x['ok'] for x in runs)}/{n}",
+        live = [x for x in runs if x["status"] != "infra"]
+        nl = len(live)
+        live_s = [x["s"] for x in live]
+        res[cid] = {"verified": f"{sum(x['verified'] for x in live)}/{nl}", "ran": f"{sum(x['ok'] for x in live)}/{nl}",
                     "status": case_status([x["status"] for x in runs]),
                     "infra_runs": sum(x["status"] == "infra" for x in runs),
                     "s": stats(live_s) or None, "peak": max(x["peak"] for x in runs),
-                    "input": round(sum(x["input"] for x in runs) / n), "output": round(sum(x["output"] for x in runs) / n),
+                    "input": round(sum(x["input"] for x in live) / max(nl, 1)),
+                    "output": round(sum(x["output"] for x in live) / max(nl, 1)),
                     "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3], "runs": runs}
     return res
