@@ -108,7 +108,7 @@ Your changes are saved to `router/persona_models.json` (git-ignored, or set `TOK
 
 ## Model results
 
-Model conclusions are pending a final re-run. The current measurements, the case list and the charts are in [Benchmark/Benchmark.md](Benchmark/Benchmark.md).
+Model conclusions are pending a final re-run. The current measurements, the case list and the charts are in [Benchmark/Benchmark.md](Benchmark/Benchmark.md). Filter and sort the runs in the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html).
 
 ## Adding MCP servers
 
