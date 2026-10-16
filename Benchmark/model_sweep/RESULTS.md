@@ -14,10 +14,6 @@ Cases per model: 2 (builder, analyzer). **Verified** = cases that passed the che
 | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-16384:latest | 12B | 1/2 | 1/2 | 24.8 | 0/1 LoopError (34s) | 1/1 PASS (16s) |
 | ts-hf-co-bartowski-google_gemma-3-12b-it-gguf-16384:latest | 12B | 0/2 | 0/2 | 5.2 | 0/1 BadRequestError (5s) | 0/1 BadRequestError (6s) |
 | hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M | 12B | 0/2 | 0/2 | 5.2 | 0/1 BadRequestError (5s) | 0/1 BadRequestError (6s) |
-| prism-bonsai-8b-q1:latest | 8B | 1/2 | 2/2 | 11.3 | 0/1 CheckFailed (14s) | 1/1 PASS (9s) |
-| prism-bonsai-1.7b-q1:latest | 1.7B | 1/2 | 2/2 | 7.9 | 0/1 CheckFailed (9s) | 1/1 PASS (7s) |
-| prism-bonsai-4b-q1:latest | 4B | 1/2 | 2/2 | 9.5 | 0/1 CheckFailed (11s) | 1/1 PASS (8s) |
-| hf.co/prism-ml/Ternary-Bonsai-2-27B-gguf:PTQ1_0 | 27B | 0/2 | 0/2 | 5.3 | 0/1 BadRequestError (5s) | 0/1 BadRequestError (6s) |
 | ts-deepseek-r1-distill-qwen-7b-65536:latest | 7B | 0/2 | 0/2 | 213.3 | 0/1 TimeoutError (244s) | 0/1 LoopError (183s) |
 | ts-deepseek-r1-distill-qwen-7b-49152:latest | 7B | 0/2 | 0/2 | 244.1 | 0/1 TimeoutError (244s) | 0/1 TimeoutError (244s) |
 | ts-deepseek-r1-distill-qwen-7b-32768:latest | 7B | 0/2 | 0/2 | 244.0 | 0/1 TimeoutError (244s) | 0/1 TimeoutError (244s) |
