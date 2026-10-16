@@ -4,6 +4,10 @@
 
 Only the text between <!-- BEGIN:auto --> and <!-- END:auto --> in Benchmark.md is replaced; the
 hand-written sections (conclusions, observations) are never touched.
+
+Inputs: results/benchmark.csv plus results/cloud.csv (if present), merged into one list of runs.
+Cloud rows (builder_model starting with `claude-`) live in cloud.csv, with the same header, so the
+Haiku baseline stays intact unless a new cloud run is added there.
 """
 import csv
 import html
@@ -31,7 +35,11 @@ REQUIRED_TOOL_CASES = {
     "browser_navigate_snapshot": "navigate_page",       # role_browser
 }
 
-rows = list(csv.DictReader((B / "results" / "benchmark.csv").open(encoding="utf-8")))
+rows = []
+for _name in ("benchmark.csv", "cloud.csv"):
+    _path = B / "results" / _name
+    if _path.exists():
+        rows += list(csv.DictReader(_path.open(encoding="utf-8")))
 missing = [c for c in CASES if c not in rows[0]]
 if missing:
     raise SystemExit(f"benchmark.csv is missing case columns: {missing}")
@@ -100,6 +108,7 @@ def sub_md(r, cases):
 rows.sort(key=lambda r: (-pct(r), num(r, "mean_s_per_case")))
 for r in rows:
     r["pct"] = round(pct(r))
+    r["day"] = (r.get("date") or "")[:10]
     r["source"], r["pull"] = origin(r["builder_model"])
     r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
     r["params_b"] = params_b(r["params"])
@@ -114,13 +123,25 @@ def mmss(v):
     return f"{t // 60}:{t % 60:02d}"
 
 
+RANK_LEGEND = [
+    f"Score = verified checks passed out of total checks across {len(CASES)} cases.",
+    "Pass rate % = Score / max.",
+    "Builder / Thinker = the same score split by role cases.",
+    "s per case = mean seconds per case.",
+    "Run time = wall clock for the whole run.",
+    "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
+    "Date = when the run happened; newer = made with newer code.",
+]
+RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
+
+
 def md_table():
-    o = ["| # | Model (builder = thinker) | Origin | Pull command | Params | Score | Builder | Thinker | % | s/case | total | valid |",
-         "|--:|---|---|---|---|--:|--:|--:|--:|--:|--:|--:|"]
+    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | s per case | Run time | Valid cases |",
+         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
-        o.append(f"| {i} | {m} | {r['source']} | `{r['pull']}` | {r['params']} | {r['score']}/{r['max']} "
-                 f"| {r['builder_score']} | {r['thinker_score']} | {r['pct']} "
+        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
+                 f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
                  f"| {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
@@ -158,21 +179,6 @@ def role_rank(cases, top=5):
     return "\n".join(o)
 
 
-def bar_chart():
-    xs = ", ".join(f'"{i}"' for i in range(1, len(rows) + 1))
-    ys = ", ".join(str(r["pct"]) for r in rows)
-    return ("```mermaid\nxychart-beta\n    title \"Verified score % by run (rank order, see table)\"\n"
-            f"    x-axis [{xs}]\n    y-axis \"% verified\" 0 --> 100\n    bar [{ys}]\n```")
-
-
-def speed_chart():
-    pts = sorted((r for r in rows if num(r, "mean_s_per_case")), key=lambda r: num(r, "mean_s_per_case"))
-    xs = ", ".join(f'"{num(r, "mean_s_per_case"):.0f}"' for r in pts)
-    ys = ", ".join(str(r["pct"]) for r in pts)
-    return ("```mermaid\nxychart-beta\n    title \"Score % as runs get slower (x: s per case)\"\n"
-            f"    x-axis [{xs}]\n    y-axis \"% verified\" 0 --> 100\n    line [{ys}]\n```")
-
-
 def cell_md(r, c):
     f = case_frac(r, c)
     if f is None:
@@ -191,19 +197,12 @@ def heatmap(cases):
     return "\n".join(o)
 
 
-def role_table():
+def role_cfg():
     """Role -> model class -> allowed tools, read from router/agents.yaml so it cannot drift."""
-    cfg = yaml.safe_load(AGENTS.read_text(encoding="utf-8"))
-    o = ["| Role | Model class | Tools the role may call |", "|---|---|---|"]
-    for name, r in cfg["roles"].items():
-        cls = r.get("model")
-        tag = cfg["models"].get(cls, "?")
-        tools = ", ".join(f"`{t}`" for t in (r.get("tools") or []))
-        o.append(f"| `{name}` | {cls} (`{tag}`) | {tools} |")
-    return "\n".join(o), cfg
+    return yaml.safe_load(AGENTS.read_text(encoding="utf-8"))
 
 
-ROLE_MD, _CFG = role_table()
+_CFG = role_cfg()
 
 LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 cases. `score` is passes out of `max`.
 - **Builder** (`qwen2.5-coder-yarn:3b`) writes code and edits files. **Thinker** (`llama3.2:3b-16k`) reads, analyses and browses.
@@ -213,9 +212,11 @@ LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 ca
 - ⚠ on a case that needs a specific tool means that run scored 0 on it, so the tool was likely missing or not called."""
 
 auto = f"""<!-- BEGIN:auto -->
-_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` by `script/build_report.py`. Interactive filtering: open `explorer.html`._
+_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`._
 
 ### Ranking (best score first, ties by speed)
+
+{RANK_LEGEND_MD}
 
 {md_table()}
 
@@ -231,21 +232,7 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 
 {role_rank(THINKER_CASES)}
 
-### Score by run
-
-{bar_chart()}
-
-### Speed vs score
-
-{speed_chart()}
-
-### How to read this
-
-{LEGEND_MD}
-
-### Roles and models (from `router/agents.yaml`)
-
-{ROLE_MD}
+Charts, filters, the legend and the roles table are in [explorer.html](explorer.html).
 
 ### Builder cases (code and file edits: needs write/edit tools)
 
@@ -257,12 +244,7 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 <!-- END:auto -->"""
 
 p = B / "Benchmark.md"
-text = p.read_text(encoding="utf-8") if p.exists() else "# TokenFrugal benchmark\n\n## Observations\n\n_pending cloud review_\n\n"
-if "<!-- BEGIN:auto -->" in text:
-    text = re.sub(r"<!-- BEGIN:auto -->.*?<!-- END:auto -->", lambda m: auto, text, flags=re.S)
-else:
-    text = text.rstrip() + "\n\n" + auto + "\n"
-p.write_text(text, encoding="utf-8")
+# Benchmark.md holds stable text only; results are rendered into index.html (not written to the md).
 
 
 def roles_html():
@@ -272,18 +254,23 @@ def roles_html():
         tag = _CFG["models"].get(cls, "?")
         tools = ", ".join(html.escape(t) for t in (r.get("tools") or []))
         body.append(f"<tr><td><code>{html.escape(name)}</code></td><td>{html.escape(cls)} (<code>{html.escape(tag)}</code>)</td><td>{tools}</td></tr>")
-    legend = "<ul>" + "".join(f"<li>{html.escape(l.lstrip('- ').replace('**', ''))}</li>" for l in LEGEND_MD.splitlines()) + "</ul>"
-    return (f"<details open><summary>How to read this, and roles and models</summary>{legend}"
+    return (f"<details open><summary>Roles and models</summary>"
             f"<div class=\"w\"><table class=\"roles\">{''.join(body)}</table></div>"
             f"<p class=\"mut\">Column groups: builder cases = {html.escape(', '.join(BUILDER_CASES))}. "
             f"Thinker cases = {html.escape(', '.join(THINKER_CASES))}.</p></details>")
 
 
+def legend_html():
+    items = RANK_LEGEND + [l.lstrip('- ').replace('**', '') for l in LEGEND_MD.splitlines()]
+    return ("<details open><summary>How to read this</summary><ul>"
+            + "".join(f"<li>{html.escape(l)}</li>" for l in items) + "</ul></details>")
+
+
 HTML = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Benchmark explorer</title>
 <style>
-:root{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b}
-@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036}}
+:root{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b;--cloud:#7a5af8}
+@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036;--cloud:#a890ff}}
 body{font:14px system-ui;margin:16px;background:var(--bg);color:var(--fg)}h1{font-size:18px}
 .f{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}label{display:flex;flex-direction:column;font-size:12px;color:var(--mut)}
 input,select{font:inherit;padding:4px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px}
@@ -291,9 +278,11 @@ table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;border-bottom:1p
 th{cursor:pointer;position:sticky;top:0;background:var(--bg)}.bar{display:inline-block;height:10px;background:var(--acc);margin-right:6px}
 .w{overflow-x:auto}.g{color:var(--acc)}.r{color:#d0453b}.y{color:#d9a021}.mut{color:var(--mut)}
 details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}details ul{margin:8px 0 8px 18px;padding:0}
+.cb{margin:16px 0}.cb h3{font-size:15px;margin:4px 0}.cb p{font-size:12px;margin:6px 0}
+.ch svg{width:100%;height:auto;display:block}.ax{font-size:11px;fill:var(--mut)}.lb{font-size:10px;fill:var(--fg)}
 </style>
 <h1>Benchmark explorer</h1>
-<p><a href="index.html">Back to the full report</a></p>
+<p><a href="index.html">Back to the report</a></p>
 __ROLES__
 <div class="f">
 <label>Min score %<input id="ms" type="number" value="0" min="0" max="100"></label>
@@ -301,20 +290,59 @@ __ROLES__
 <label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
+<label>From date<input id="fd" type="date"></label>
 </div>
-<div id="n"></div><div class="w"><table id="t"></table></div>
+<div id="n"></div>
+<div id="ch" class="ch"></div>
+<div class="w"><table id="t"></table></div>
 <script>
 const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="pct",sd=-1;
 const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["builder_model","Model"],["source","Origin"],["pull","Pull command"],["params","Params"],["pct","%"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["mean_s_per_case","s/case"],["total_s","total s"],...C.map(c=>[c,c])];
+const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params","Params"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
+const wrap=(svg,n)=>`<div style="${n>30?"max-height:560px;overflow-y:auto":""}">${svg}</div>`;
+function passChart(R){
+ const S=[...R].sort((a,b)=>b.pct-a.pct);
+ if(!S.length)return"<p class=\"mut\">No runs match.</p>";
+ const L=230,W=680,RH=20,T=6,AX=40,PW=W-L-50,H=T+S.length*RH+AX;
+ const X=v=>L+PW*v/100;
+ let g="";
+ [0,25,50,75,100].forEach(v=>{g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${X(v)}" y="${H-AX+14}" text-anchor="middle" class="ax">${v}%</text>`});
+ S.forEach((r,i)=>{const y=T+i*RH;
+  g+=`<text x="${L-6}" y="${y+14}" text-anchor="end" class="lb"><title>${esc(r.builder_model)}</title>${esc(short(r.builder_model,34))}</text>`
+   +`<rect x="${L}" y="${y+3}" width="${PW*r.pct/100}" height="${RH-6}" style="fill:var(--acc)"><title>${esc(r.builder_model+" | "+r.pct+"%")}</title></rect>`
+   +`<text x="${X(r.pct)+4}" y="${y+14}" class="lb">${r.pct}%</text>`});
+ g+=`<text x="${L+PW/2}" y="${H-6}" text-anchor="middle" class="ax">Pass rate % (higher is better)</text>`;
+ return wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pass rate by run">${g}</svg>`,S.length);
+}
+function speedChart(R){
+ const P=R.filter(r=>+r.mean_s_per_case>0);
+ if(!P.length)return"<p class=\"mut\">No runs with seconds per case match.</p>";
+ const W=680,H=380,L=52,RT=20,T=14,AX=44;
+ const xmax=Math.max(10,Math.ceil(Math.max(...P.map(r=>+r.mean_s_per_case))/10)*10);
+ const X=v=>L+(W-L-RT)*v/xmax, Y=v=>T+(H-T-AX)*(1-v/100);
+ let g="";
+ [0,25,50,75,100].forEach(v=>{g+=`<line x1="${L}" x2="${W-RT}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" class="ax">${v}</text>`});
+ for(let k=0;k<=5;k++){const v=xmax*k/5;g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${X(v)}" y="${H-AX+14}" text-anchor="middle" class="ax">${Math.round(v)}</text>`}
+ g+=`<text x="${(L+W-RT)/2}" y="${H-6}" text-anchor="middle" class="ax">Seconds per case, lower = faster</text>`;
+ g+=`<text transform="translate(14 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">Pass rate %, higher = better</text>`;
+ P.forEach(r=>{const cl=r.builder_model.startsWith("claude-"),p=r.params_b,rad=p==null||isNaN(p)?5:Math.min(12,2+Math.sqrt(p)*2.2),x=X(+r.mean_s_per_case),y=Y(r.pct);
+  const t=`${r.builder_model} | score ${r.score}/${r.max} (${r.pct}%) | ${r.mean_s_per_case} s/case | params ${r.params||"unknown"}`;
+  g+=`<circle cx="${x}" cy="${y}" r="${rad}" style="fill:${cl?"var(--cloud)":"var(--acc)"};fill-opacity:.8"><title>${esc(t)}</title></circle>`
+   +`<text x="${x+rad+3}" y="${y+3}" class="lb">${esc(short(r.builder_model,28))}</text>`});
+ return wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Speed vs pass rate">${g}</svg>`,P.length);
+}
 function draw(){
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value;
- const R=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(r.params_b==null||r.params_b<=mp)&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1));
+ const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value;
+ const R=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(r.params_b==null||r.params_b<=mp)&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd));
  R.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;return(x>y?1:x<y?-1:0)*sd});
  $("n").textContent=R.length+" of "+D.length+" runs match";
- $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}">${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
+ $("ch").innerHTML=`<div class="cb"><h3>Pass rate by run</h3>${passChart(R)}</div>`
+  +`<div class="cb"><h3>Speed vs pass rate</h3>${speedChart(R)}<p class="mut">Top-left corner = best (fast and accurate). Green = local, violet = cloud. Dot size = parameters.</p></div>`;
+ $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""}>${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
   R.map(r=>"<tr>"+cols.map(([k])=>{
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
    if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
@@ -324,7 +352,7 @@ function draw(){
 document.querySelectorAll("input,select").forEach(e=>e.oninput=draw);draw();
 </script>"""
 (B / "explorer.html").write_text(
-    HTML.replace("__ROLES__", roles_html())
+    HTML.replace("__ROLES__", legend_html() + roles_html())
         .replace("__DATA__", json.dumps(rows))
         .replace("__CASES__", json.dumps(CASES))
         .replace("__REQ__", json.dumps(list(REQUIRED_TOOL_CASES))),
@@ -345,14 +373,31 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}pre{background:var
 .mermaid{overflow-x:auto;text-align:center}
 </style>
 <nav><a href="index.html">Report</a><a href="explorer.html">Interactive explorer</a>
-<a href="__GH__/results/benchmark.csv">Raw data (CSV)</a><a href="__GH__/script/README.md">Run your own</a></nav>
-<main id="md">Loading report...</main>
+<a href="__GH__/results/benchmark.csv">Raw data (CSV)</a><a href="__GH__/script/README.md">Run or add a model</a></nav>
+<main><div id="res">Loading report...</div><div id="md"></div></main>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
 <script>
-const GH="__GH__",SRC=__MD__;
-const el=document.getElementById("md");
-el.innerHTML=marked.parse(SRC);
+const GH="__GH__",SRC=__MD__,RES=__RES__;
+const el=document.getElementById("res"),doc=document.getElementById("md");
+el.innerHTML="<h1>TokenFrugal benchmark results</h1>"+marked.parse(RES);
+doc.innerHTML="<h2>About this benchmark</h2>"+marked.parse(SRC.replace(/^# .*\n/,""));
+doc.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html|index\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
+function dateFilter(){
+ const t=[...el.querySelectorAll("table")].find(t=>[...t.querySelectorAll("th")].some(h=>h.textContent.trim()==="Date"));
+ if(!t)return;
+ const di=[...t.querySelectorAll("th")].findIndex(h=>h.textContent.trim()==="Date");
+ const s=document.createElement("select");
+ [["","all time"],["7","last 7 days"],["30","last 30 days"],["90","last 90 days"]].forEach(([v,l])=>s.add(new Option(l,v)));
+ const lab=document.createElement("label");
+ lab.style.cssText="display:inline-flex;gap:8px;align-items:center;font-size:13px;margin:8px 0";
+ lab.append("Show runs from: ",s);
+ t.parentElement.insertBefore(lab,t);
+ const cutoff=n=>{const d=new Date();d.setDate(d.getDate()-n);return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
+ s.onchange=()=>{const n=+s.value,cut=n?cutoff(n):"";
+  t.querySelectorAll("tbody tr").forEach(tr=>{const c=tr.cells[di],v=c?c.textContent.trim().slice(0,10):"";tr.hidden=!!(cut&&v&&v<cut)})};
+}
+try{dateFilter()}catch(e){}
 el.querySelectorAll("pre code.language-mermaid").forEach(c=>{const d=document.createElement("div");d.className="mermaid";d.textContent=c.textContent;c.parentElement.replaceWith(d)});
 el.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
 mermaid.initialize({startOnLoad:false,theme:matchMedia("(prefers-color-scheme:dark)").matches?"dark":"default"});
@@ -360,6 +405,7 @@ mermaid.run({querySelector:".mermaid"});
 </script>"""
 (B / "index.html").write_text(
     PAGE.replace("__GH__", "https://github.com/maxh8086/tokenfrugal/blob/main/Benchmark")
-        .replace("__MD__", json.dumps(p.read_text(encoding="utf-8")).replace("</", "<\\/")),
+        .replace("__MD__", json.dumps(p.read_text(encoding="utf-8")).replace("</", "<\\/"))
+        .replace("__RES__", json.dumps(re.sub(r"<!--.*?-->", "", auto, flags=re.S)).replace("</", "<\\/")),
     encoding="utf-8")
-print(f"updated {p.name} explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
+print(f"updated explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
