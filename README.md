@@ -185,3 +185,5 @@ The dashboard starts with the router and opens in your browser at http://127.0.0
 ---
 
 *They say we're just "vibe coding" now, but curating immaculate vibes for the AI takes a shocking amount of caffeine. If you like what the agents built, help keep my vibes (and local GPUs) highly caffeinated: [buymeacoffee.com/maxh8086](https://buymeacoffee.com/maxh8086)*
+
+<p align="center"><a href="https://buymeacoffee.com/maxh8086"><img src="assets/buymeacoffee-qr.png" alt="Buy me a coffee QR code" width="180"></a></p>
