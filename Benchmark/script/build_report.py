@@ -283,7 +283,7 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 </style>
 <h1>Benchmark explorer</h1>
 <p><a href="index.html">Back to the report</a></p>
-__ROLES__
+<details><summary>Role definitions and legend</summary>__ROLES__</details>
 <div class="f">
 <label>Min score %<input id="ms" type="number" value="50" min="0" max="100"></label>
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
@@ -293,13 +293,14 @@ __ROLES__
 <label>From date<input id="fd" type="date"></label>
 </div>
 <div id="n"></div>
-<div id="ch" class="ch"></div>
 <div class="w"><table id="t"></table></div>
+<details open><summary>Charts (linked to the filters and table)</summary><div id="ch" class="ch"></div></details>
 <script>
 const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="pct",sd=-1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
+const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
 const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
@@ -331,7 +332,7 @@ function passChart(R){
  const L=230,W=680,RH=20,T=6,AX=40,PW=W-L-50,H=T+S.length*RH+AX;
  let g=grid(L,PW,T,H,AX);
  S.forEach((r,i)=>{const y=T+i*RH,m=r.builder_model;
-  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><text x="${L-6}" y="${y+14}" text-anchor="end" class="lb">${esc(short(m,34))}</text>`
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><text x="${L-6}" y="${y+14}" text-anchor="end" class="lb">${esc(short(sn(m),34))}</text>`
    +`<rect x="${L}" y="${y+3}" width="${PW*r.pct/100}" height="${RH-6}" style="fill:${BANDS[bandOf(r)][3]}"><title>${esc(m+" | "+r.pct+"% | click to filter")}</title></rect>`
    +`<text x="${L+PW*r.pct/100+4}" y="${y+14}" class="lb">${r.pct}%</text></g>`});
  g+=titles(L,PW,T,H,AX,"Pass rate % (higher is better)","Run (model)");
@@ -343,7 +344,7 @@ function roleChart(R){
  const L=230,W=680,RH=30,T=6,AX=40,PW=W-L-50,H=T+S.length*RH+AX;
  let g=grid(L,PW,T,H,AX);
  S.forEach((r,i)=>{const y=T+i*RH,m=r.builder_model;
-  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><text x="${L-6}" y="${y+17}" text-anchor="end" class="lb">${esc(short(m,34))}</text>`;
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><text x="${L-6}" y="${y+17}" text-anchor="end" class="lb">${esc(short(sn(m),34))}</text>`;
   [["builder_score","#3b82f6","Builder"],["thinker_score","#f97316","Thinker"]].forEach(([k,c,n],j)=>{const v=sub(r,k);
    if(v!=null)g+=`<rect x="${L}" y="${y+2+j*12}" width="${PW*v/100}" height="10" style="fill:${c}"><title>${esc(m+" | "+n+" "+r[k]+" ("+Math.round(v)+"%)")}</title></rect><text x="${L+PW*v/100+4}" y="${y+11+j*12}" class="lb">${Math.round(v)}%</text>`});
   g+="</g>"});
@@ -367,7 +368,7 @@ function scatter(P,xf,xt,xmax,rf,leg,label){
  for(let k=0;k<=5;k++){const v=xmax*k/5;g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${X(v)}" y="${H-AX+14}" text-anchor="middle" class="ax">${+v.toFixed(1)}</text>`}
  g+=`<text x="${(L+W-RT)/2}" y="${H-6}" text-anchor="middle" class="ax">${xt}</text><text transform="translate(14 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">Pass rate %, higher = better</text>`;
  P.forEach(r=>{const m=r.builder_model,x=X(xf(r)),y=Y(r.pct),rad=rf(r),f=leg(r);
-  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><circle cx="${x}" cy="${y}" r="${rad}" style="fill:${f};fill-opacity:.8"><title>${esc(m+" | score "+r.score+"/"+r.max+" ("+r.pct+"%) | "+r.mean_s_per_case+" s/case | params "+(r.params||"unknown")+" | click to filter")}</title></circle><text x="${x+rad+3}" y="${y+3}" class="lb">${esc(short(m,28))}</text></g>`});
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><circle cx="${x}" cy="${y}" r="${rad}" style="fill:${f};fill-opacity:.8"><title>${esc(sn(m)+" ("+m+") | score "+r.score+"/"+r.max+" ("+r.pct+"%) | "+r.mean_s_per_case+" s/case | params "+(r.params||"unknown")+" | click to filter")}</title></circle></g>`});
  return wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">${g}</svg>`,P.length);
 }
 function speedChart(R){
@@ -387,11 +388,10 @@ function draw(){
  const R0=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;return(x>y?1:x<y?-1:0)*sd});
- const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(SEL.model)} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
+ const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(sn(SEL.model))} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
  $("n").innerHTML=R.length+" of "+D.length+" runs match"+chips+(SEL.band!=null||SEL.model!=null?`<span class="chip" data-sk="clear">Clear chart selections</span>`:"");
  $("ch").innerHTML=`<p class="mut">Click a pie slice, bar, dot or case to filter the table and every chart; click again to undo. The filter fields above update every chart too.</p>`
-  +`<div class="row">`+box("Runs by score band",pie(R1),"Pie: share of runs per pass-rate band, after the filters above. Click a slice or legend entry to show only those runs.")
-  +box("Pass rate per benchmark case",caseChart(R),"Average over the runs shown; hard cases at the top. ⚠ = needs a specific tool. Click a case to keep only runs that fully pass it.")+`</div>`
+  +`<div class="row">`+box("Runs by score band",pie(R1),"Pie: share of runs per pass-rate band, after the filters above. Click a slice or legend entry to show only those runs.")+`</div>`
   +box("Model comparison: pass rate by run",passChart(R),"One horizontal bar per run, colored by score band. Click a bar to focus that model.")
   +box("Builder vs thinker by run",roleChart(R),"Top 12 runs by pass rate. Blue = builder cases, orange = thinker cases. Click to focus a model.")
   +box("Speed vs pass rate",speedChart(R),"Top-left corner = best (fast and accurate). Dot size = parameters. Click a dot to focus a model.")
@@ -401,7 +401,7 @@ function draw(){
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
    if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
    if(k=="params_b")return`<td>${r.params_b==null?"·":r.params_b}</td>`;
-   return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
+   if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
  document.querySelectorAll("th").forEach(h=>h.onclick=()=>{sd=sk==h.dataset.k?-sd:-1;sk=h.dataset.k;draw()});
 }
 const pick=e=>{const t=e.target.closest("[data-sk]");if(!t)return;const k=t.dataset.sk,v=t.dataset.sv;
