@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import bench_csv  # noqa: E402
 import hardware  # noqa: E402
+import modelinfo  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument("builder", nargs="?")
@@ -42,7 +43,8 @@ LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
 EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case", "hardware"]
 META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "n",
-        "ctx_peak_tokens", "tokens_in_per_run", "tokens_out_per_run"]
+        "ctx_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
+        "quant", "file_gb", "num_ctx", "max_ctx", "vram_gb", "cpu_offload_pct", "ctx_used_pct", "ctx_free_tokens"]
 
 
 def run_cmd(cmd):
@@ -158,6 +160,8 @@ rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "
        "tokens_in_per_run": sum(c.get("input", 0) for c in done),
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
        **{f"ctx_{k}": v for k, v in peaks.items()}}
+mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["ctx_peak_tokens"])
+rec.update(mi)
 cols = EXTRA + labels + META + [f"ctx_{k}" for k in labels]
 dst = Path(a.csv)
 old = list(csv.DictReader(dst.open(encoding="utf-8"))) if dst.exists() else []
