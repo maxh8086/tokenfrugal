@@ -10,7 +10,7 @@ import urllib.request
 
 TIMEOUT = 5
 DEFAULT_HOST = "http://localhost:11434"
-KEYS = ("quant", "file_gb", "num_ctx", "max_ctx", "vram_gb", "cpu_offload_pct", "ctx_used_pct", "ctx_free_tokens")
+KEYS = ("compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_gb")
 
 
 def _call(url, body=None):
@@ -43,15 +43,15 @@ def info(model: str, endpoint: str, peak_tokens: int = 0) -> dict:
     try:
         host = _host(endpoint)
         show = _call(host + "/api/show", {"model": model})
-        out["quant"] = (show.get("details") or {}).get("quantization_level") or ""
+        out["compression_level"] = (show.get("details") or {}).get("quantization_level") or ""
         for key, val in (show.get("model_info") or {}).items():
             if key.endswith(".context_length") and isinstance(val, int) and not isinstance(val, bool):
-                out["max_ctx"] = val
+                out["model_max_context_tokens"] = val
                 break
         for line in (show.get("parameters") or "").splitlines():
             parts = line.split()
             if len(parts) >= 2 and parts[0] == "num_ctx":
-                out["num_ctx"] = int(parts[1])
+                out["context_window_tokens"] = int(parts[1])
                 break
 
         ps = _call(host + "/api/ps")
@@ -59,20 +59,17 @@ def info(model: str, endpoint: str, peak_tokens: int = 0) -> dict:
         if entry is not None:
             size = entry.get("size") or 0
             size_vram = entry.get("size_vram") or 0
-            out["file_gb"] = _gb(size)
-            out["vram_gb"] = _gb(size_vram)
-            out["cpu_offload_pct"] = round(100 * (size - size_vram) / size, 1) if size else ""
+            out["model_file_size_gb"] = _gb(size)
+            out["gpu_memory_used_gb"] = _gb(size_vram)
+            out["shared_system_memory_gb"] = _gb(max(size - size_vram, 0)) if size else ""
             if entry.get("context_length"):
-                out["num_ctx"] = int(entry["context_length"])
+                out["context_window_tokens"] = int(entry["context_length"])
         else:
             tags = _call(host + "/api/tags")
             tag = next((m for m in tags.get("models") or [] if _matches(m, model)), None)
             if tag is not None and tag.get("size"):
-                out["file_gb"] = _gb(tag["size"])
+                out["model_file_size_gb"] = _gb(tag["size"])
 
-        if peak_tokens and out["num_ctx"]:
-            out["ctx_used_pct"] = round(100 * peak_tokens / out["num_ctx"], 1)
-            out["ctx_free_tokens"] = out["num_ctx"] - peak_tokens
     except Exception:  # noqa: BLE001
         return {k: "" for k in KEYS}
     return out

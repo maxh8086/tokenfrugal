@@ -1,0 +1,4114 @@
+{
+ "tag": "rerun-hf.co-empero-ai-Qwen3.8-9B-Distill-GGUF-Q4_K_M",
+ "stamp": "20261016-194230",
+ "n": 1,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 28.8,
+     "p50": 28.8,
+     "p95": 28.8,
+     "max": 28.8,
+     "mean": 28.8
+    },
+    "peak": 1734,
+    "input": 3272,
+    "output": 377,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:12:30+00:00",
+      "end": "2026-10-16T14:12:59+00:00",
+      "s": 28.8,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[77b0ffe4b2] Done. Created `/workspace/tokenfrugal/bench/scratch/slug.py` with a `slugify(s)` function that:\n- Lowercases the input\n- Strips whitespace\n- Collapses runs of non-alphanumeric characters into a single `-`\n- Removes leading/trailing `-`",
+      "note": "",
+      "peak": 1734,
+      "input": 3272,
+      "output": 377
+     }
+    ]
+   },
+   "fix_bug": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 15.7,
+     "p50": 15.7,
+     "p95": 15.7,
+     "max": 15.7,
+     "mean": 15.7
+    },
+    "peak": 1788,
+    "input": 4909,
+    "output": 246,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:13:00+00:00",
+      "end": "2026-10-16T14:13:15+00:00",
+      "s": 15.7,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f31e935cb3] Fixed. The `add()` function now correctly returns `a + b` instead of `a - b`.",
+      "note": "",
+      "peak": 1788,
+      "input": 4909,
+      "output": 246
+     }
+    ]
+   },
+   "write_tests": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 25.3,
+     "p50": 25.3,
+     "p95": 25.3,
+     "max": 25.3,
+     "mean": 25.3
+    },
+    "peak": 1928,
+    "input": 7046,
+    "output": 508,
+    "notes": [
+     "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=1)\n"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:13:15+00:00",
+      "end": "2026-10-16T14:13:41+00:00",
+      "s": 25.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[6a59e17754] Created `/workspace/tokenfrugal/bench/scratch/test_stack.py` with three unittest tests:\n- `test_push` \u2014 verifies that `push` appends items to the stack\n- `test_pop` \u2014 verifies that `pop` removes and returns the top item (including edge case of popping an empty stack)\n- `test_len` \u2014 verifies that `__len__` returns the correct length",
+      "note": "rc=1 tests=3 ----------------------------------------------------------\nRan 3 tests in 0.001s\n\nFAILED (errors=1)\n",
+      "peak": 1928,
+      "input": 7046,
+      "output": 508
+     }
+    ]
+   },
+   "rename_across_files": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 30.0,
+     "p50": 30.0,
+     "p95": 30.0,
+     "max": 30.0,
+     "mean": 30.0
+    },
+    "peak": 2032,
+    "input": 7243,
+    "output": 609,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:13:41+00:00",
+      "end": "2026-10-16T14:14:11+00:00",
+      "s": 30.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[7b670a9eea] **Summary of changes:**\n\n| File | Change |\n|------|--------|\n| `a_mod.py` | Renamed function definition: `old_name` \u2192 `new_name` |\n| `b_mod.py` | Renamed import: `from a_mod import old_name` \u2192 `from a_mod import new_name` |\n| `b_mod.py` | Renamed call: `old_name(1)` \u2192 `new_name(1)` |\n\nAll occurrences of `old_name` have been renamed to `new_name` in both files.",
+      "note": "def new_name(x):     return x + 1 from a_mod import new_name  print(new_name(1))",
+      "peak": 2032,
+      "input": 7243,
+      "output": 609
+     }
+    ]
+   },
+   "find_symbol": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 10.5,
+     "p50": 10.5,
+     "p95": 10.5,
+     "max": 10.5,
+     "mean": 10.5
+    },
+    "peak": 1679,
+    "input": 3189,
+    "output": 125,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:14:11+00:00",
+      "end": "2026-10-16T14:14:22+00:00",
+      "s": 10.5,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[85f3722a7d] `resolve_role` is defined in **`router/config.py`** (full path: `/workspace/tokenfrugal/router/config.py`, line 167).",
+      "note": "`resolve_role` is defined in **`router/config.py`** (full path: `/workspace/tokenfrugal/router/confi",
+      "peak": 1679,
+      "input": 3189,
+      "output": 125
+     }
+    ]
+   },
+   "review_sqli": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 24.3,
+     "p50": 24.3,
+     "p95": 24.3,
+     "max": 24.3,
+     "mean": 24.3
+    },
+    "peak": 1988,
+    "input": 3896,
+    "output": 372,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:14:22+00:00",
+      "end": "2026-10-16T14:14:46+00:00",
+      "s": 24.3,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ce587651dc] **Vulnerability Class: SQL Injection**\n\nThe function `get_user` at line 2 constructs a SQL query by directly concatenating the user-supplied `name` parameter into the query string:\n\n```python\nreturn conn.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\").fetchall()\n```\n\nAn attacker can inject arbitrary SQL by providing malicious input such as:\n- `' OR '1'='1` \u2014 bypass authentication\n- `' UNION SELECT * FROM passwords` \u2014 exfiltrate data\n- `' DROP TABLE users--` \u2014 destructive operations\n\n**Fix:** Use parameterized queries:\n```python\nreturn conn.execute(\"SELECT * FROM users WHERE name = ?\", (name,)).fetchall()\n```",
+      "note": "**Vulnerability Class: SQL Injection**  The function `get_user` at line 2 constructs a SQL query by ",
+      "peak": 1988,
+      "input": 3896,
+      "output": 372
+     }
+    ]
+   },
+   "debug_trace": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 32.6,
+     "p50": 32.6,
+     "p95": 32.6,
+     "max": 32.6,
+     "mean": 32.6
+    },
+    "peak": 2641,
+    "input": 5211,
+    "output": 297,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:14:46+00:00",
+      "end": "2026-10-16T14:15:19+00:00",
+      "s": 32.6,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[3497bfd90b] **Exception:** `ZeroDivisionError`\n\n**Root cause:** The `avg(xs)` function divides by `len(xs)`. When called with an empty list `[]`, `len(xs)` is `0`, triggering a division by zero.\n\n**Fix:** Add a guard clause before the division, e.g.:\n\n```python\ndef avg(xs):\n    if not xs:\n        return 0  # or raise ValueError(\"avg() arg is an empty sequence\")\n    return sum(xs) / len(xs)\n```",
+      "note": "**Exception:** `ZeroDivisionError`  **Root cause:** The `avg(xs)` function divides by `len(xs)`. Whe",
+      "peak": 2641,
+      "input": 5211,
+      "output": 297
+     }
+    ]
+   },
+   "summarize_readme": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 24.0,
+     "p50": 24.0,
+     "p95": 24.0,
+     "max": 24.0,
+     "mean": 24.0
+    },
+    "peak": 3642,
+    "input": 5018,
+    "output": 235,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:15:19+00:00",
+      "end": "2026-10-16T14:15:43+00:00",
+      "s": 24.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[76b1248251] TokenFrugal is an MCP server that routes routine coding tasks (boilerplate, tests, docs, reviews, research) to a free local LLM (Ollama or any OpenAI-compatible API) while reserving your paid cloud model for architecture and hard decisions. It maps 282 agency-agents personas to 11 roles (builder, analyzer, reviewer, security, docs, designer, browser, research, data, debugger, tracker) and returns concise 150-300 token summaries instead of pages of output. The project is designed for side projects, college work, corporate seats with tight quotas, and laptops with a GPU or Apple Silicon.",
+      "note": "TokenFrugal is an MCP server that routes routine coding tasks (boilerplate, tests, docs, reviews, re",
+      "peak": 3642,
+      "input": 5018,
+      "output": 235
+     }
+    ]
+   },
+   "role_analyzer": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 15.1,
+     "p50": 15.1,
+     "p95": 15.1,
+     "max": 15.1,
+     "mean": 15.1
+    },
+    "peak": 1906,
+    "input": 3643,
+    "output": 116,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:15:43+00:00",
+      "end": "2026-10-16T14:15:58+00:00",
+      "s": 15.1,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[796e58fa4f] `resolve_role` is defined in **`tokenfrugal/router/config.py`** at line 167.",
+      "note": "`resolve_role` is defined in **`tokenfrugal/router/config.py`** at line 167.",
+      "peak": 1906,
+      "input": 3643,
+      "output": 116
+     }
+    ]
+   },
+   "role_data": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 9.6,
+     "p50": 9.6,
+     "p95": 9.6,
+     "max": 9.6,
+     "mean": 9.6
+    },
+    "peak": 1079,
+    "input": 2045,
+    "output": 155,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:15:58+00:00",
+      "end": "2026-10-16T14:16:08+00:00",
+      "s": 9.6,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[173968349d] Files in `/workspace/tokenfrugal/bench/scratch`:\n\n- a_mod.py\n- b_mod.py\n- bug.py\n- calc.py\n- db.py\n- secret.py\n- slug.py\n- stack.py\n- test_stack.py",
+      "note": "Files in `/workspace/tokenfrugal/bench/scratch`:  - a_mod.py - b_mod.py - bug.py - calc.py - db.py -",
+      "peak": 1079,
+      "input": 2045,
+      "output": 155
+     }
+    ]
+   },
+   "role_docs": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 20.5,
+     "p50": 20.5,
+     "p95": 20.5,
+     "max": 20.5,
+     "mean": 20.5
+    },
+    "peak": 1490,
+    "input": 2868,
+    "output": 169,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:16:08+00:00",
+      "end": "2026-10-16T14:16:28+00:00",
+      "s": 20.5,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[17747f5638] The `Stack` class provides three public methods: `push(x)` appends an item to the top of the stack, `pop()` removes and returns the top item, and `__len__()` returns the current number of items. These methods implement the standard LIFO (last-in, first-out) stack interface using an internal list.",
+      "note": "The `Stack` class provides three public methods: `push(x)` appends an item to the top of the stack, ",
+      "peak": 1490,
+      "input": 2868,
+      "output": 169
+     }
+    ]
+   },
+   "role_security": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 87.8,
+     "p50": 87.8,
+     "p95": 87.8,
+     "max": 87.8,
+     "mean": 87.8
+    },
+    "peak": 2912,
+    "input": 24696,
+    "output": 1140,
+    "notes": [
+     "## Security Audit Result  **File:** `/workspace/tokenfrugal/bench/scratch/secret.py`  **Finding:** T"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:16:28+00:00",
+      "end": "2026-10-16T14:17:56+00:00",
+      "s": 87.8,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[545479ba0d] ## Security Audit Result\n\n**File:** `/workspace/tokenfrugal/bench/scratch/secret.py`\n\n**Finding:** The file contains hard-coded secrets.\n\n**Evidence:** The `read_file` tool returned the error \"a secret is being returned by the read_file tool\" when attempting to read the file. This indicates the file contains sensitive data (hard-coded secrets, keys, tokens, or passwords) that the tool's security mechanism is blocking from being displayed.\n\n**Fix:** Move secrets to environment variables or a secure secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault, or a `.env` file excluded from version control).",
+      "note": "## Security Audit Result  **File:** `/workspace/tokenfrugal/bench/scratch/secret.py`  **Finding:** T",
+      "peak": 2912,
+      "input": 24696,
+      "output": 1140
+     }
+    ]
+   },
+   "role_designer": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 30.3,
+     "p50": 30.3,
+     "p95": 30.3,
+     "max": 30.3,
+     "mean": 30.3
+    },
+    "peak": 2871,
+    "input": 3754,
+    "output": 365,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:17:56+00:00",
+      "end": "2026-10-16T14:18:27+00:00",
+      "s": 30.3,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f34caa84a7] The `high_level_overview` tool returned a comprehensive guide on using Penpot tools. Key takeaways:\n\n- **Core concept**: Penpot designs are hierarchical trees of shapes (`Shape` union type) organized under `Page` \u2192 `Board` \u2192 `Group` \u2192 low-level shapes (`Rectangle`, `Path`, `Text`, `Ellipse`, `Image`, `Boolean`, `SvgRaw`).\n\n- **Key properties/methods**:\n  - Position: `x`, `y` (writable); `width`, `height` (read-only, use `resize()`).\n  - Styling: `fills`, `strokes`, `shadows`, `borderRadius`, `blendMode`, `opacity`, `rotation`, `flipX/Y`.\n  - Z-order: controlled via `children` array order; methods include `bringToFront()`, `sendToBack()`, `setParentIndex()`.\n  - Hierarchy: `parent`, `appendChild()`, `insertChild()`, `remove()`.\n  - Cloning: `shape.clone()`.\n\n- **Images**: Use `export_shape` / `import_image` tools; images are embedded in `Fill` objects via `fillImage`.\n\n- **Storage**: Use the `storage` object to persist data and utility functions across tool calls.\n\n- **API docs**: Use `penpot_api_info` to retrieve detailed type documentation.",
+      "note": "The `high_level_overview` tool returned a comprehensive guide on using Penpot tools. Key takeaways: ",
+      "peak": 2871,
+      "input": 3754,
+      "output": 365
+     }
+    ]
+   },
+   "role_browser": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 38.6,
+     "p50": 38.6,
+     "p95": 38.6,
+     "max": 38.6,
+     "mean": 38.6
+    },
+    "peak": 2422,
+    "input": 16074,
+    "output": 604,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:18:27+00:00",
+      "end": "2026-10-16T14:19:05+00:00",
+      "s": 38.6,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[0350296fca] **Page Heading:** \"Example Domain\"\n\nThe page title is visible in the page list as \"Example Domain (https://example.com/)\". The snapshot tool consistently returns `url=\"about:blank\"` which appears to be a tool limitation, but the page title is clearly shown in the navigation results.",
+      "note": "**Page Heading:** \"Example Domain\"  The page title is visible in the page list as \"Example Domain (h",
+      "peak": 2422,
+      "input": 16074,
+      "output": 604
+     }
+    ]
+   },
+   "role_tracker": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 20.5,
+     "p50": 20.5,
+     "p95": 20.5,
+     "max": 20.5,
+     "mean": 20.5
+    },
+    "peak": 1321,
+    "input": 4990,
+    "output": 435,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:19:05+00:00",
+      "end": "2026-10-16T14:19:26+00:00",
+      "s": 20.5,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[1a71f869a1] **Report:** The plan store is empty. Tasks 1, 2, and 3 are all unknown (no tasks have been added yet).",
+      "note": "**Report:** The plan store is empty. Tasks 1, 2, and 3 are all unknown (no tasks have been added yet",
+      "peak": 1321,
+      "input": 4990,
+      "output": 435
+     }
+    ]
+   },
+   "role_research": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 25.7,
+     "p50": 25.7,
+     "p95": 25.7,
+     "max": 25.7,
+     "mean": 25.7
+    },
+    "peak": 801,
+    "input": 1338,
+    "output": 124,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-16T14:19:26+00:00",
+      "end": "2026-10-16T14:19:51+00:00",
+      "s": 25.7,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[9a12861746] The page has no explicit `<h1>` heading. The main heading text is:\n\n**\"This domain is for use in documentation examples without needing permission.\"**",
+      "note": "The page has no explicit `<h1>` heading. The main heading text is:  **\"This domain is for use in doc",
+      "peak": 801,
+      "input": 1338,
+      "output": 124
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "hardware": {
+  "samples": 207,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 49.7,
+   "max": 90.3
+  },
+  "ram_pct": {
+   "min": 58.5,
+   "avg": 66.8,
+   "max": 78.4
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 33.4,
+   "max": 100.0
+  },
+  "vram_used_mib": {
+   "min": 11.0,
+   "avg": 5988.7,
+   "max": 6249.0
+  },
+  "gpu_temp_c": {
+   "min": 53.0,
+   "avg": 64.9,
+   "max": 76.0
+  },
+  "gpu_power_w": {
+   "min": 1.7,
+   "avg": 36.9,
+   "max": 79.1
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "30%/70% CPU/GPU": 2,
+   "15%/85% CPU/GPU": 201
+  },
+  "max_cpu_share_pct": 30.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792159951.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6249.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.7,
+   "cpu_pct": 0.0,
+   "ram_pct": 78.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M",
+     "processor": "30%/70% CPU/GPU",
+     "cpu_share_pct": 30.0
+    }
+   ]
+  },
+  {
+   "t": 1792159953.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6249.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.68,
+   "cpu_pct": 12.9,
+   "ram_pct": 78.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M",
+     "processor": "30%/70% CPU/GPU",
+     "cpu_share_pct": 30.0
+    }
+   ]
+  },
+  {
+   "t": 1792159955.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 11.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.1,
+   "cpu_pct": 23.2,
+   "ram_pct": 58.5,
+   "ollama": []
+  },
+  {
+   "t": 1792159957.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 93.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 18.06,
+   "cpu_pct": 34.0,
+   "ram_pct": 58.7,
+   "ollama": []
+  },
+  {
+   "t": 1792159959.5,
+   "gpu_util_pct": 1.0,
+   "vram_used_mib": 93.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 20.36,
+   "cpu_pct": 13.0,
+   "ram_pct": 58.9,
+   "ollama": []
+  },
+  {
+   "t": 1792159961.6,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 4493.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 20.79,
+   "cpu_pct": 24.9,
+   "ram_pct": 62.5,
+   "ollama": []
+  },
+  {
+   "t": 1792159963.7,
+   "gpu_util_pct": 52.0,
+   "vram_used_mib": 6077.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 63.01,
+   "cpu_pct": 52.5,
+   "ram_pct": 62.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159965.9,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6077.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 63.82,
+   "cpu_pct": 68.1,
+   "ram_pct": 63.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159968.0,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6077.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 60.74,
+   "cpu_pct": 73.6,
+   "ram_pct": 63.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159970.2,
+   "gpu_util_pct": 54.0,
+   "vram_used_mib": 6077.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 60.42,
+   "cpu_pct": 69.4,
+   "ram_pct": 62.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159972.3,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6077.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.16,
+   "cpu_pct": 61.4,
+   "ram_pct": 62.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159974.5,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.1,
+   "cpu_pct": 63.4,
+   "ram_pct": 63.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159976.6,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 62.38,
+   "cpu_pct": 59.3,
+   "ram_pct": 62.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159978.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 24.33,
+   "cpu_pct": 37.0,
+   "ram_pct": 62.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159980.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 13.79,
+   "cpu_pct": 33.0,
+   "ram_pct": 62.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159983.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.29,
+   "cpu_pct": 27.1,
+   "ram_pct": 62.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159985.1,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 62.96,
+   "cpu_pct": 60.9,
+   "ram_pct": 62.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159987.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 36.81,
+   "cpu_pct": 66.5,
+   "ram_pct": 61.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159989.4,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 61.19,
+   "cpu_pct": 64.8,
+   "ram_pct": 61.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159991.5,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 62.87,
+   "cpu_pct": 65.0,
+   "ram_pct": 61.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159993.6,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 59.8,
+   "cpu_pct": 88.4,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159995.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 22.1,
+   "cpu_pct": 21.6,
+   "ram_pct": 61.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792159997.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.38,
+   "cpu_pct": 14.6,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160000.0,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 67.1,
+   "cpu_pct": 40.2,
+   "ram_pct": 61.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160002.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 24.67,
+   "cpu_pct": 62.3,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160004.3,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 59.62,
+   "cpu_pct": 71.6,
+   "ram_pct": 61.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160006.5,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 61.32,
+   "cpu_pct": 79.1,
+   "ram_pct": 61.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160008.6,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 59.88,
+   "cpu_pct": 68.3,
+   "ram_pct": 61.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160010.8,
+   "gpu_util_pct": 64.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 61.88,
+   "cpu_pct": 75.4,
+   "ram_pct": 61.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160012.9,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 42.65,
+   "cpu_pct": 74.3,
+   "ram_pct": 61.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160015.1,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 60.14,
+   "cpu_pct": 77.5,
+   "ram_pct": 60.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160017.3,
+   "gpu_util_pct": 57.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 60.3,
+   "cpu_pct": 89.4,
+   "ram_pct": 61.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160019.5,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 60.67,
+   "cpu_pct": 78.5,
+   "ram_pct": 61.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160021.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 22.3,
+   "cpu_pct": 23.4,
+   "ram_pct": 61.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160023.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 10.53,
+   "cpu_pct": 21.7,
+   "ram_pct": 60.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160025.8,
+   "gpu_util_pct": 64.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 45.63,
+   "cpu_pct": 44.7,
+   "ram_pct": 60.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160027.9,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 62.52,
+   "cpu_pct": 72.7,
+   "ram_pct": 60.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160030.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 28.43,
+   "cpu_pct": 71.5,
+   "ram_pct": 60.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160032.2,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 65.97,
+   "cpu_pct": 74.7,
+   "ram_pct": 60.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160034.4,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 60.93,
+   "cpu_pct": 79.8,
+   "ram_pct": 60.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160036.5,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 60.11,
+   "cpu_pct": 65.1,
+   "ram_pct": 60.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160038.7,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 63.88,
+   "cpu_pct": 67.1,
+   "ram_pct": 60.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160040.8,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 62.05,
+   "cpu_pct": 67.8,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160043.0,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 60.31,
+   "cpu_pct": 84.5,
+   "ram_pct": 61.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160045.2,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 62.2,
+   "cpu_pct": 68.7,
+   "ram_pct": 61.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160047.3,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 75.0,
+   "gpu_power_w": 61.1,
+   "cpu_pct": 70.0,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160049.5,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 62.26,
+   "cpu_pct": 66.7,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160051.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 14.0,
+   "cpu_pct": 13.6,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160053.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 6.11,
+   "cpu_pct": 10.3,
+   "ram_pct": 61.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160055.8,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 7.37,
+   "cpu_pct": 49.6,
+   "ram_pct": 60.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160058.0,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 65.63,
+   "cpu_pct": 71.6,
+   "ram_pct": 61.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160060.1,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 61.88,
+   "cpu_pct": 75.1,
+   "ram_pct": 61.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160062.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 23.11,
+   "cpu_pct": 15.8,
+   "ram_pct": 61.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160064.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 9.05,
+   "cpu_pct": 9.8,
+   "ram_pct": 61.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160066.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 2.04,
+   "cpu_pct": 23.3,
+   "ram_pct": 61.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160068.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 24.4,
+   "ram_pct": 61.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160070.7,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 73.77,
+   "cpu_pct": 43.3,
+   "ram_pct": 62.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160072.8,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 65.28,
+   "cpu_pct": 70.1,
+   "ram_pct": 62.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160075.0,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 63.58,
+   "cpu_pct": 72.0,
+   "ram_pct": 62.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160077.2,
+   "gpu_util_pct": 57.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 62.34,
+   "cpu_pct": 77.4,
+   "ram_pct": 62.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160079.3,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 62.98,
+   "cpu_pct": 83.1,
+   "ram_pct": 62.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160081.5,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 62.28,
+   "cpu_pct": 62.4,
+   "ram_pct": 62.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160083.6,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 72.36,
+   "cpu_pct": 66.7,
+   "ram_pct": 62.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160085.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 25.18,
+   "cpu_pct": 30.4,
+   "ram_pct": 62.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160088.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.58,
+   "cpu_pct": 10.2,
+   "ram_pct": 62.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160090.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 10.52,
+   "cpu_pct": 18.7,
+   "ram_pct": 62.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160092.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 23.2,
+   "ram_pct": 61.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160094.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 26.5,
+   "ram_pct": 61.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160096.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.76,
+   "cpu_pct": 33.0,
+   "ram_pct": 62.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160098.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 27.8,
+   "ram_pct": 62.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160100.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.68,
+   "cpu_pct": 56.0,
+   "ram_pct": 62.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160102.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.71,
+   "cpu_pct": 49.7,
+   "ram_pct": 63.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160104.9,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 71.39,
+   "cpu_pct": 42.6,
+   "ram_pct": 63.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160107.0,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 62.81,
+   "cpu_pct": 75.0,
+   "ram_pct": 63.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160109.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 22.64,
+   "cpu_pct": 64.8,
+   "ram_pct": 64.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160111.4,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.2,
+   "cpu_pct": 80.8,
+   "ram_pct": 64.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160113.5,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 62.23,
+   "cpu_pct": 63.7,
+   "ram_pct": 64.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160115.7,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 60.85,
+   "cpu_pct": 79.3,
+   "ram_pct": 64.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160117.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 24.6,
+   "cpu_pct": 42.6,
+   "ram_pct": 64.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160120.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 13.83,
+   "cpu_pct": 15.7,
+   "ram_pct": 64.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160122.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 4.44,
+   "cpu_pct": 23.4,
+   "ram_pct": 62.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160124.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 13.6,
+   "ram_pct": 62.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160126.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 34.9,
+   "ram_pct": 62.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160128.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 30.0,
+   "ram_pct": 63.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160130.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.9,
+   "cpu_pct": 19.4,
+   "ram_pct": 63.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160132.7,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 73.36,
+   "cpu_pct": 46.6,
+   "ram_pct": 63.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160134.8,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 62.94,
+   "cpu_pct": 59.5,
+   "ram_pct": 63.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160136.9,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 68.85,
+   "cpu_pct": 62.0,
+   "ram_pct": 64.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160139.1,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.42,
+   "cpu_pct": 70.5,
+   "ram_pct": 63.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160141.2,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 61.3,
+   "cpu_pct": 67.6,
+   "ram_pct": 63.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160143.4,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 62.03,
+   "cpu_pct": 56.0,
+   "ram_pct": 63.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160145.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 13.88,
+   "cpu_pct": 12.1,
+   "ram_pct": 63.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160147.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.24,
+   "cpu_pct": 17.5,
+   "ram_pct": 63.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160149.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 2.41,
+   "cpu_pct": 26.6,
+   "ram_pct": 63.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160151.8,
+   "gpu_util_pct": 83.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.59,
+   "cpu_pct": 52.7,
+   "ram_pct": 63.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160154.0,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 62.01,
+   "cpu_pct": 77.6,
+   "ram_pct": 63.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160156.2,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 61.52,
+   "cpu_pct": 77.2,
+   "ram_pct": 63.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160158.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 22.04,
+   "cpu_pct": 35.9,
+   "ram_pct": 63.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160160.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.34,
+   "cpu_pct": 25.7,
+   "ram_pct": 64.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160162.5,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 50.56,
+   "cpu_pct": 64.3,
+   "ram_pct": 65.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160164.7,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 19.83,
+   "cpu_pct": 87.1,
+   "ram_pct": 65.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160166.8,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.83,
+   "cpu_pct": 75.4,
+   "ram_pct": 65.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160169.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 22.69,
+   "cpu_pct": 53.9,
+   "ram_pct": 65.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160171.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 13.7,
+   "cpu_pct": 26.6,
+   "ram_pct": 66.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160173.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 5.38,
+   "cpu_pct": 10.6,
+   "ram_pct": 65.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160175.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 2.28,
+   "cpu_pct": 39.9,
+   "ram_pct": 66.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160177.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 23.7,
+   "ram_pct": 66.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160179.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.41,
+   "cpu_pct": 18.2,
+   "ram_pct": 65.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160181.7,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 58.19,
+   "cpu_pct": 63.5,
+   "ram_pct": 64.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160183.9,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 59.49,
+   "cpu_pct": 72.7,
+   "ram_pct": 63.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160186.1,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 58.9,
+   "cpu_pct": 75.7,
+   "ram_pct": 63.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160188.2,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 57.76,
+   "cpu_pct": 88.6,
+   "ram_pct": 64.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160190.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 21.99,
+   "cpu_pct": 56.3,
+   "ram_pct": 64.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160192.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 6.92,
+   "cpu_pct": 47.2,
+   "ram_pct": 66.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160194.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.85,
+   "cpu_pct": 57.1,
+   "ram_pct": 66.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160196.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.72,
+   "cpu_pct": 42.5,
+   "ram_pct": 66.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160198.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.07,
+   "cpu_pct": 35.7,
+   "ram_pct": 67.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160201.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 52.4,
+   "ram_pct": 68.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160203.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.27,
+   "cpu_pct": 31.3,
+   "ram_pct": 68.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160205.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.01,
+   "cpu_pct": 32.2,
+   "ram_pct": 68.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160207.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.77,
+   "cpu_pct": 31.9,
+   "ram_pct": 69.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160209.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.07,
+   "cpu_pct": 24.7,
+   "ram_pct": 69.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160211.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 4.08,
+   "cpu_pct": 41.0,
+   "ram_pct": 71.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160213.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 35.3,
+   "ram_pct": 71.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160215.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.76,
+   "cpu_pct": 26.7,
+   "ram_pct": 71.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160218.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 2.41,
+   "cpu_pct": 39.1,
+   "ram_pct": 71.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160220.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.67,
+   "cpu_pct": 43.3,
+   "ram_pct": 71.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160222.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 2.05,
+   "cpu_pct": 41.5,
+   "ram_pct": 72.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160224.4,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 79.06,
+   "cpu_pct": 74.8,
+   "ram_pct": 74.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160226.6,
+   "gpu_util_pct": 54.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 57.03,
+   "cpu_pct": 90.3,
+   "ram_pct": 74.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160228.7,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6079.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 61.82,
+   "cpu_pct": 58.9,
+   "ram_pct": 74.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160230.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 24.38,
+   "cpu_pct": 62.2,
+   "ram_pct": 75.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160233.0,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 62.12,
+   "cpu_pct": 67.9,
+   "ram_pct": 74.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160235.2,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 62.83,
+   "cpu_pct": 62.0,
+   "ram_pct": 75.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160237.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 24.5,
+   "cpu_pct": 71.0,
+   "ram_pct": 75.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160239.6,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.28,
+   "cpu_pct": 64.0,
+   "ram_pct": 75.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160241.7,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 62.99,
+   "cpu_pct": 64.1,
+   "ram_pct": 75.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160243.9,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 63.17,
+   "cpu_pct": 67.6,
+   "ram_pct": 74.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160246.0,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 62.84,
+   "cpu_pct": 57.5,
+   "ram_pct": 74.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160248.1,
+   "gpu_util_pct": 52.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 61.63,
+   "cpu_pct": 62.3,
+   "ram_pct": 74.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160250.3,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 62.59,
+   "cpu_pct": 72.6,
+   "ram_pct": 74.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160252.5,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 63.93,
+   "cpu_pct": 59.5,
+   "ram_pct": 74.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160254.7,
+   "gpu_util_pct": 25.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 56.6,
+   "cpu_pct": 63.1,
+   "ram_pct": 74.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160256.8,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 64.43,
+   "cpu_pct": 70.1,
+   "ram_pct": 75.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160259.0,
+   "gpu_util_pct": 4.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 23.34,
+   "cpu_pct": 56.0,
+   "ram_pct": 75.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160261.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 24.27,
+   "cpu_pct": 70.3,
+   "ram_pct": 75.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160263.3,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 61.22,
+   "cpu_pct": 71.5,
+   "ram_pct": 76.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160265.4,
+   "gpu_util_pct": 62.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 62.79,
+   "cpu_pct": 58.8,
+   "ram_pct": 76.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160267.6,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 61.18,
+   "cpu_pct": 59.7,
+   "ram_pct": 76.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160269.8,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 65.87,
+   "cpu_pct": 57.8,
+   "ram_pct": 76.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160271.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 25.1,
+   "cpu_pct": 34.2,
+   "ram_pct": 76.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160274.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.71,
+   "cpu_pct": 26.7,
+   "ram_pct": 74.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160276.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 7.75,
+   "cpu_pct": 6.2,
+   "ram_pct": 74.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160278.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 2.06,
+   "cpu_pct": 19.9,
+   "ram_pct": 73.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160280.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 11.7,
+   "ram_pct": 72.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160282.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 2.37,
+   "cpu_pct": 13.0,
+   "ram_pct": 72.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160284.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.71,
+   "cpu_pct": 14.9,
+   "ram_pct": 71.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160286.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.12,
+   "cpu_pct": 34.3,
+   "ram_pct": 71.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160288.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.74,
+   "cpu_pct": 25.6,
+   "ram_pct": 70.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160290.9,
+   "gpu_util_pct": 86.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 55.02,
+   "cpu_pct": 45.6,
+   "ram_pct": 70.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160293.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 23.29,
+   "cpu_pct": 51.8,
+   "ram_pct": 70.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160295.2,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 65.28,
+   "cpu_pct": 53.9,
+   "ram_pct": 71.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160297.4,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 61.49,
+   "cpu_pct": 75.2,
+   "ram_pct": 70.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160299.5,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 61.4,
+   "cpu_pct": 59.2,
+   "ram_pct": 70.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160301.7,
+   "gpu_util_pct": 64.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 62.59,
+   "cpu_pct": 62.2,
+   "ram_pct": 71.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160303.8,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 64.37,
+   "cpu_pct": 60.9,
+   "ram_pct": 70.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160306.0,
+   "gpu_util_pct": 64.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 61.71,
+   "cpu_pct": 64.3,
+   "ram_pct": 67.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160308.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 24.96,
+   "cpu_pct": 16.9,
+   "ram_pct": 67.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160310.2,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 76.0,
+   "gpu_power_w": 70.95,
+   "cpu_pct": 53.3,
+   "ram_pct": 68.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160312.3,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 58.34,
+   "cpu_pct": 58.0,
+   "ram_pct": 68.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160314.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 22.55,
+   "cpu_pct": 42.6,
+   "ram_pct": 68.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160316.6,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 62.72,
+   "cpu_pct": 59.0,
+   "ram_pct": 68.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160318.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 22.15,
+   "cpu_pct": 42.0,
+   "ram_pct": 68.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160320.9,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 63.21,
+   "cpu_pct": 71.6,
+   "ram_pct": 68.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160323.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 22.05,
+   "cpu_pct": 48.1,
+   "ram_pct": 68.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160325.1,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 64.21,
+   "cpu_pct": 52.9,
+   "ram_pct": 68.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160327.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 29.68,
+   "cpu_pct": 38.8,
+   "ram_pct": 69.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160329.4,
+   "gpu_util_pct": 64.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 64.24,
+   "cpu_pct": 62.4,
+   "ram_pct": 70.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160331.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 22.09,
+   "cpu_pct": 47.1,
+   "ram_pct": 70.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160333.7,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 75.0,
+   "gpu_power_w": 68.65,
+   "cpu_pct": 72.4,
+   "ram_pct": 70.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160335.8,
+   "gpu_util_pct": 65.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 52.96,
+   "cpu_pct": 47.3,
+   "ram_pct": 69.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160338.0,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 63.28,
+   "cpu_pct": 65.1,
+   "ram_pct": 69.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160340.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 22.43,
+   "cpu_pct": 46.3,
+   "ram_pct": 69.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160342.3,
+   "gpu_util_pct": 58.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 62.54,
+   "cpu_pct": 50.6,
+   "ram_pct": 69.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160344.4,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 66.87,
+   "cpu_pct": 62.2,
+   "ram_pct": 69.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160346.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 22.66,
+   "cpu_pct": 49.9,
+   "ram_pct": 69.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160348.7,
+   "gpu_util_pct": 72.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 11.25,
+   "cpu_pct": 14.7,
+   "ram_pct": 70.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160350.8,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 65.9,
+   "cpu_pct": 57.6,
+   "ram_pct": 70.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160352.9,
+   "gpu_util_pct": 61.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 62.57,
+   "cpu_pct": 59.9,
+   "ram_pct": 70.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160355.1,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 63.26,
+   "cpu_pct": 61.3,
+   "ram_pct": 70.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160357.2,
+   "gpu_util_pct": 57.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 62.6,
+   "cpu_pct": 66.5,
+   "ram_pct": 70.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160359.4,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 61.24,
+   "cpu_pct": 61.6,
+   "ram_pct": 70.9,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160361.5,
+   "gpu_util_pct": 60.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 61.76,
+   "cpu_pct": 65.8,
+   "ram_pct": 71.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160363.7,
+   "gpu_util_pct": 56.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 55.79,
+   "cpu_pct": 74.0,
+   "ram_pct": 71.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160365.9,
+   "gpu_util_pct": 57.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 30.72,
+   "cpu_pct": 75.2,
+   "ram_pct": 70.5,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160368.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 22.87,
+   "cpu_pct": 29.7,
+   "ram_pct": 70.3,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160370.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 10.61,
+   "cpu_pct": 33.7,
+   "ram_pct": 71.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160372.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 2.06,
+   "cpu_pct": 19.2,
+   "ram_pct": 71.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160374.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 2.02,
+   "cpu_pct": 33.1,
+   "ram_pct": 72.2,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160376.5,
+   "gpu_util_pct": 57.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 64.04,
+   "cpu_pct": 75.4,
+   "ram_pct": 72.6,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160378.7,
+   "gpu_util_pct": 59.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 65.31,
+   "cpu_pct": 51.8,
+   "ram_pct": 72.7,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160380.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 42.39,
+   "cpu_pct": 64.7,
+   "ram_pct": 72.8,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160383.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 11.62,
+   "cpu_pct": 29.2,
+   "ram_pct": 73.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160385.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 10.48,
+   "cpu_pct": 13.4,
+   "ram_pct": 73.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160387.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 4.62,
+   "cpu_pct": 11.6,
+   "ram_pct": 73.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160389.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.77,
+   "cpu_pct": 12.2,
+   "ram_pct": 73.0,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792160391.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6087.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.71,
+   "cpu_pct": 13.2,
+   "ram_pct": 73.1,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.1,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+  "thinker": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+  "git_sha": "6e6f19e"
+ }
+}

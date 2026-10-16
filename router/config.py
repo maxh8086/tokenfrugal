@@ -144,7 +144,7 @@ def load_personas() -> dict:
         pass
     # Benchmarks pin one model for every persona with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_PERSONA_MODELS=0 disables the mapping.
     disabled = os.getenv("TOKENFRUGAL_PERSONA_MODELS") == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
-    cfg["known_agents"] = sorted(pm)  # slugs stay valid when the model mapping is off
+    cfg["known_agents"] = sorted(set(pm) | set(cfg.get("known_agents") or []))  # slugs stay valid when the model mapping is off
     if disabled:
         pm = {}
     cfg["persona_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
