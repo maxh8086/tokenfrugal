@@ -105,9 +105,17 @@ def sub_md(r, cases):
     return f"{a}/{n}" if n else "·"
 
 
-rows.sort(key=lambda r: (-pct(r), num(r, "mean_s_per_case")))
+def tps(r):
+    """Tokens per second, the primary speed metric: tokens_out_per_run / (mean_s_per_case x max).
+    None when the row lacks the inputs (legacy rows), so it shows blank rather than zero."""
+    s, m, t = num(r, "mean_s_per_case"), num(r, "max"), num(r, "tokens_out_per_run")
+    return round(t / (s * m), 1) if s and m and t else None
+
+
+rows.sort(key=lambda r: (-pct(r), -(tps(r) or 0)))
 for r in rows:
     r["pct"] = round(pct(r))
+    r["tps"] = tps(r)
     r["day"] = (r.get("date") or "")[:10]
     r["source"], r["pull"] = origin(r["builder_model"])
     r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
@@ -127,7 +135,8 @@ RANK_LEGEND = [
     f"Score = verified checks passed out of total checks across {len(CASES)} cases.",
     "Pass rate % = Score / max.",
     "Builder / Thinker = the same score split by role cases.",
-    "s per case = mean seconds per case.",
+    "t/s = tokens generated per second (primary speed metric) = tokens out / (s per case x cases).",
+    "s per case = mean seconds per case (secondary speed metric).",
     "Run time = wall clock for the whole run.",
     "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
     "Date = when the run happened; newer = made with newer code.",
@@ -136,13 +145,13 @@ RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
 
 
 def md_table():
-    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | s per case | Run time | Valid cases |",
-         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|"]
+    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | t/s | s per case | Run time | Valid cases |",
+         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
         o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
                  f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
-                 f"| {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
+                 f"| {'' if r['tps'] is None else r['tps']} | {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
 
@@ -167,11 +176,14 @@ def role_rank(cases, top=5):
         m["h"].add(r.get("harness_version") or "")
         if num(r, "mean_s_per_case"):
             m["s"].append(num(r, "mean_s_per_case"))
+        if r["tps"] is not None:
+            m.setdefault("t", []).append(r["tps"])
     ranked = sorted(agg.items(), key=lambda kv: (-kv[1]["a"] / kv[1]["n"], -kv[1]["n"],
-                                                  sum(kv[1]["s"]) / max(len(kv[1]["s"]), 1)))
-    o = ["| # | Model | Date | Code (git) | Harness | Role score | % | Runs | s/case | Shared memory GB | Pull command |",
-         "|--:|---|---|---|---|--:|--:|--:|--:|--:|---|"]
+                                                  -sum(kv[1].get("t", [0])) / max(len(kv[1].get("t", [])), 1)))
+    o = ["| # | Model | Date | Code (git) | Harness | Role score | % | Runs | t/s | s/case | Shared memory GB | Pull command |",
+         "|--:|---|---|---|---|--:|--:|--:|--:|--:|--:|---|"]
     for i, (name, m) in enumerate(ranked[:top], 1):
+        tps_avg = f"{sum(m['t']) / len(m['t']):.1f}" if m.get("t") else ""
         spc = f"{sum(m['s']) / len(m['s']):.1f}" if m["s"] else ""
         sha = ", ".join(f"`{g}`" for g in sorted(m["g"]) if g)
         o.append(f"| {i} | `{name}` | {m['d']} | {sha} | {', '.join(sorted(h for h in m['h'] if h)) or '-'} | {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {m['runs']} | {spc} "
@@ -286,6 +298,7 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <details><summary>Role definitions and legend</summary>__ROLES__</details>
 <div class="f">
 <label>Min score %<input id="ms" type="number" value="50" min="0" max="100"></label>
+<label>Min t/s<input id="mn" type="number" placeholder="any"></label>
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
 <label>Max params (B)<input id="mp" type="number" value="14" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
@@ -303,7 +316,7 @@ const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
+const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s","Tokens per second = tokens out / (s per case x cases) (higher is faster; primary speed metric)"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; secondary)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
 const wrap=(svg,n)=>`<div style="${n>30?"max-height:560px;overflow-y:auto":""}">${svg}</div>`;
 const SEL={band:null,model:null};
 const BANDS=[["90-100% (excellent)",90,101,"#2e9e5b"],["75-89% (good)",75,90,"#8bc34a"],["50-74% (fair)",50,75,"#d9a021"],["Below 50% (poor)",0,50,"#d0453b"]];
@@ -368,14 +381,14 @@ function scatter(P,xf,xt,xmax,rf,leg,label){
  for(let k=0;k<=5;k++){const v=xmax*k/5;g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H-AX}" style="stroke:var(--line)"/><text x="${X(v)}" y="${H-AX+14}" text-anchor="middle" class="ax">${+v.toFixed(1)}</text>`}
  g+=`<text x="${(L+W-RT)/2}" y="${H-6}" text-anchor="middle" class="ax">${xt}</text><text transform="translate(14 ${(T+H-AX)/2}) rotate(-90)" text-anchor="middle" class="ax">Pass rate %, higher = better</text>`;
  P.forEach(r=>{const m=r.builder_model,x=X(xf(r)),y=Y(r.pct),rad=rf(r),f=leg(r);
-  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><circle cx="${x}" cy="${y}" r="${rad}" style="fill:${f};fill-opacity:.8"><title>${esc(sn(m)+" ("+m+") | score "+r.score+"/"+r.max+" ("+r.pct+"%) | "+r.mean_s_per_case+" s/case | params "+(r.params||"unknown")+" | click to filter")}</title></circle></g>`});
+  g+=`<g data-sk="model" data-sv="${esc(m)}" style="cursor:pointer${dim("model",m)}"><circle cx="${x}" cy="${y}" r="${rad}" style="fill:${f};fill-opacity:.8"><title>${esc(sn(m)+" ("+m+") | score "+r.score+"/"+r.max+" ("+r.pct+"%) | "+(r.tps==null?"t/s n/a":r.tps+" t/s")+" | "+r.mean_s_per_case+" s/case | params "+(r.params||"unknown")+" | click to filter")}</title></circle></g>`});
  return wrap(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">${g}</svg>`,P.length);
 }
 function speedChart(R){
- const P=R.filter(r=>+r.mean_s_per_case>0);
- if(!P.length)return"<p class=\"mut\">No runs with seconds per case match.</p>";
- const xmax=Math.max(10,Math.ceil(Math.max(...P.map(r=>+r.mean_s_per_case))/10)*10);
- return legend([{c:"var(--acc)",t:"Local model"},{c:"var(--cloud)",t:"Cloud baseline"}])+scatter(P,r=>+r.mean_s_per_case,"Seconds per case, lower = faster",xmax,r=>{const p=r.params_b;return p==null||isNaN(p)?5:Math.min(12,2+Math.sqrt(p)*2.2)},r=>r.builder_model.startsWith("claude-")?"var(--cloud)":"var(--acc)","Speed vs pass rate");
+ const P=R.filter(r=>+r.tps>0);
+ if(!P.length)return"<p class=\"mut\">No runs with t/s match.</p>";
+ const xmax=Math.max(10,Math.ceil(Math.max(...P.map(r=>+r.tps))/10)*10);
+ return legend([{c:"var(--acc)",t:"Local model"},{c:"var(--cloud)",t:"Cloud baseline"}])+scatter(P,r=>+r.tps,"Tokens per second, higher = faster",xmax,r=>{const p=r.params_b;return p==null||isNaN(p)?5:Math.min(12,2+Math.sqrt(p)*2.2)},r=>r.builder_model.startsWith("claude-")?"var(--cloud)":"var(--acc)","Speed vs pass rate");
 }
 function sizeChart(R){
  const P=R.filter(r=>r.params_b!=null&&!isNaN(r.params_b));
@@ -384,8 +397,8 @@ function sizeChart(R){
  return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Size vs pass rate");
 }
 function draw(){
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value;
- const R0=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd));
+ const q=$("q").value.toLowerCase(),ms=+$("ms").value,mn=+$("mn").value||0,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value;
+ const R0=D.filter(r=>r.pct>=ms&&(mn<=0||+r.tps>=mn)&&+r.s<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;return(x>y?1:x<y?-1:0)*sd});
  const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(sn(SEL.model))} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
@@ -445,6 +458,9 @@ const el=document.getElementById("res"),doc=document.getElementById("md");
 el.innerHTML="<h1>TokenFrugal benchmark results</h1>"+marked.parse(RES);
 doc.innerHTML="<h2>About this benchmark</h2>"+marked.parse(SRC.replace(/^# .*\n/,""));
 doc.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html|index\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
+{const loc=/^(localhost|127\.|\[::1\]|)$/.test(location.hostname),u=loc?"https://maxh8086.github.io/tokenfrugal/Benchmark/":location.href.split("#")[0],t="🚀💥 Boom! My model just took on the TokenFrugal Benchmark! 🧠🔥\n\nTry your own model using https://github.com/maxh8086/tokenfrugal shared by @vpavtekar. Share me your results below so we can see how different hardware performs!\n#LocalLLM #Ollama #TokenFrugal",e=encodeURIComponent,
+x="https://twitter.com/intent/tweet?text="+e(t)+"&url="+e(u),l="https://www.linkedin.com/sharing/share-offsite/?url="+e(u);
+doc.insertAdjacentHTML("beforeend","<h2>Share with friends</h2><p><a id=lnk href=\""+l+"\" target=_blank rel=noopener>Share on LinkedIn</a> | <a href=\""+x+"\" target=_blank rel=noopener>Share on X</a> | <a href=\"https://github.com/maxh8086/tokenfrugal\" target=_blank rel=noopener>GitHub repo</a></p>");const k=doc.querySelector("#lnk");if(k)k.onclick=ev=>{ev.preventDefault();window.open("/post.html","_blank","noopener")}}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cnt=(r,cs)=>{let a=0,n=0;cs.forEach(c=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(m){a+=+m[1];n+=+m[2]}});return[a,n]};
@@ -500,6 +516,7 @@ function draw(id){
    {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
    {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
    {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
+   {k:"tps",l:"t/s",v:r=>r.tps||-1,f:r=>r.tps??""},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
    {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
    {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
@@ -513,7 +530,7 @@ function draw(id){
    const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,g:new Set,h:new Set,r});
    m.a+=a;m.n+=n;m.runs++;m.g.add(r.git);m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
   const L=Object.values(agg).map(m=>({...m,pct:Math.round(100*m.a/m.n),s:m.ss.length?m.ss.reduce((x,y)=>x+y)/m.ss.length:0}));
-  L.sort((x,y)=>(y.a/y.n-x.a/x.n)||(y.n-x.n)||((x.s||1e9)-(y.s||1e9)));
+  L.sort((x,y)=>(y.a/y.n-x.a/x.n)||(y.n-x.n)||((y.tps||0)-(x.tps||0))||((x.s||1e9)-(y.s||1e9)));
   const rc=[{k:"n",l:"#",f:(m,i)=>i+1},
    {k:"model",l:"Model",str:1,v:m=>m.model.toLowerCase(),f:m=>code(m.model)},
    {k:"day",l:"Date",str:1,v:m=>m.day,f:m=>m.day},
@@ -522,6 +539,7 @@ function draw(id){
    {k:"a",l:"Role score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
    {k:"pct",l:"%",v:m=>m.pct,f:m=>m.pct},
    {k:"runs",l:"Runs",v:m=>m.runs,f:m=>m.runs},
+   {k:"tps",l:"t/s",v:m=>m.tps||-1,f:m=>m.tps==null?"":m.tps.toFixed(1)},
    {k:"s",l:"s/case",v:m=>m.s||1e9,f:m=>m.s?m.s.toFixed(1):""},
    {k:"sh",l:"Shared memory GB",f:m=>m.r.shared||""},
    {k:"pull",l:"Pull command",f:m=>code(m.r.pull)}];
@@ -545,7 +563,7 @@ def _data():
     out = []
     for r in rows:
         out.append({"model": r["builder_model"], "day": r["day"], "params": r["params"], "pb": r["params_b"],
-                    "score": r["score"], "max": r["max"], "pct": r["pct"], "s": num(r, "mean_s_per_case"),
+                    "score": r["score"], "max": r["max"], "pct": r["pct"], "tps": r["tps"], "s": num(r, "mean_s_per_case"),
                     "tot": num(r, "total_s"), "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
                     "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
                     "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
