@@ -16,6 +16,8 @@ Each row in `results/benchmark.csv` is one run of one model setup on the same 16
 | `tag` | Run name, usually the model tag |
 | `params` | Model size, for example `3B` |
 | `score`, `max` | Passes out of total checks (`score` / `max`) |
+| `git_sha` | Commit the run was made from |
+| `harness_version` | Version of the cases, scoring and harness (`HARNESS_VERSION` in `run_benchmark.py`). Bump it when they change; rows with different values are not comparable. Empty on older rows |
 | `ran` | Number of cases attempted |
 | `mean_s_per_case` | Average seconds per case (lower is faster) |
 | `total_s` | Whole run time in seconds |

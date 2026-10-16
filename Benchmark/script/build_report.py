@@ -138,21 +138,22 @@ def role_rank(cases, top=5):
         a, n = subtotal(r, cases)
         if not n or r["builder_model"].startswith("claude-") or (r.get("date") or "")[:10] != newest[r["builder_model"]]:
             continue
-        m = agg.setdefault(r["builder_model"], {"a": 0, "n": 0, "runs": 0, "s": [], "r": r, "d": newest[r["builder_model"]], "g": set()})
+        m = agg.setdefault(r["builder_model"], {"a": 0, "n": 0, "runs": 0, "s": [], "r": r, "d": newest[r["builder_model"]], "g": set(), "h": set()})
         m["a"] += a
         m["n"] += n
         m["runs"] += 1
         m["g"].add((r.get("git_sha") or "")[:7])
+        m["h"].add(r.get("harness_version") or "")
         if num(r, "mean_s_per_case"):
             m["s"].append(num(r, "mean_s_per_case"))
     ranked = sorted(agg.items(), key=lambda kv: (-kv[1]["a"] / kv[1]["n"], -kv[1]["n"],
                                                   sum(kv[1]["s"]) / max(len(kv[1]["s"]), 1)))
-    o = ["| # | Model | Date | Code (git) | Role score | % | Runs | s/case | Shared memory GB | Pull command |",
-         "|--:|---|---|---|--:|--:|--:|--:|--:|---|"]
+    o = ["| # | Model | Date | Code (git) | Harness | Role score | % | Runs | s/case | Shared memory GB | Pull command |",
+         "|--:|---|---|---|---|--:|--:|--:|--:|--:|---|"]
     for i, (name, m) in enumerate(ranked[:top], 1):
         spc = f"{sum(m['s']) / len(m['s']):.1f}" if m["s"] else ""
         sha = ", ".join(f"`{g}`" for g in sorted(m["g"]) if g)
-        o.append(f"| {i} | `{name}` | {m['d']} | {sha} | {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {m['runs']} | {spc} "
+        o.append(f"| {i} | `{name}` | {m['d']} | {sha} | {', '.join(sorted(h for h in m['h'] if h)) or '-'} | {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {m['runs']} | {spc} "
                  f"| {m['r'].get('shared_system_memory_gb') or ''} | `{m['r']['pull']}` |")
     return "\n".join(o)
 

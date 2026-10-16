@@ -67,23 +67,23 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 
 **Builder** (cases: `write_function`, `fix_bug`, `write_tests`, `rename_across_files`)
 
-| # | Model | Date | Code (git) | Role score | % | Runs | s/case | Shared memory GB | Pull command |
-|--:|---|---|---|--:|--:|--:|--:|--:|---|
-| 1 | `gemma4:e4b` | 2026-10-16 | `ab3e34f` | 8/8 | 100 | 1 | 19.5 | 0.0 | `ollama pull gemma4:e4b` |
-| 2 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 2026-10-16 | `ab3e34f` | 8/8 | 100 | 1 | 22.8 | 0.0 | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` |
-| 3 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 2026-10-16 | `6e6f19e` | 8/8 | 100 | 2 | 37.3 |  | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` |
-| 4 | `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | 2026-10-16 | `6e6f19e` | 7/8 | 88 | 2 | 50.0 |  | `ollama pull hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` |
-| 5 | `qwen2.5-coder:7b` | 2026-10-16 | `ab3e34f` | 6/8 | 75 | 1 | 18.2 | 0.0 | `ollama pull qwen2.5-coder:7b` |
+| # | Model | Date | Code (git) | Harness | Role score | % | Runs | s/case | Shared memory GB | Pull command |
+|--:|---|---|---|---|--:|--:|--:|--:|--:|---|
+| 1 | `gemma4:e4b` | 2026-10-16 | `ab3e34f` | - | 8/8 | 100 | 1 | 19.5 | 0.0 | `ollama pull gemma4:e4b` |
+| 2 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 2026-10-16 | `ab3e34f` | - | 8/8 | 100 | 1 | 22.8 | 0.0 | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` |
+| 3 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 2026-10-16 | `6e6f19e` | - | 8/8 | 100 | 2 | 37.3 |  | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` |
+| 4 | `hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` | 2026-10-16 | `6e6f19e` | - | 7/8 | 88 | 2 | 50.0 |  | `ollama pull hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M` |
+| 5 | `qwen2.5-coder:7b` | 2026-10-16 | `ab3e34f` | - | 6/8 | 75 | 1 | 18.2 | 0.0 | `ollama pull qwen2.5-coder:7b` |
 
 **Thinker** (cases: `find_symbol`, `review_sqli`, `debug_trace`, `summarize_readme`, `code_graph_search`, `list_project_files`, `read_docs_file`, `security_file_read`, `design_overview`, `browser_navigate_snapshot`, `plan_status`, `web_crawl`)
 
-| # | Model | Date | Code (git) | Role score | % | Runs | s/case | Shared memory GB | Pull command |
-|--:|---|---|---|--:|--:|--:|--:|--:|---|
-| 1 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 2026-10-16 | `6e6f19e` | 23/24 | 96 | 2 | 37.3 |  | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` |
-| 2 | `llama3.2:3b-16k` | 2026-10-15 | `ab3e34f` | 22/24 | 92 | 1 | 14.2 | 0.0 | `ollama pull llama3.2:3b && ollama create llama3.2:3b-16k -f models/thinker.Modelfile` |
-| 3 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 2026-10-16 | `ab3e34f` | 22/24 | 92 | 1 | 22.8 | 0.0 | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` |
-| 4 | `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | 2026-10-16 | `6e6f19e` | 22/24 | 92 | 2 | 27.9 |  | `ollama pull hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` |
-| 5 | `gemma4:e4b` | 2026-10-16 | `ab3e34f` | 20/24 | 83 | 1 | 19.5 | 0.0 | `ollama pull gemma4:e4b` |
+| # | Model | Date | Code (git) | Harness | Role score | % | Runs | s/case | Shared memory GB | Pull command |
+|--:|---|---|---|---|--:|--:|--:|--:|--:|---|
+| 1 | `hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` | 2026-10-16 | `6e6f19e` | - | 23/24 | 96 | 2 | 37.3 |  | `ollama pull hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS` |
+| 2 | `llama3.2:3b-16k` | 2026-10-15 | `ab3e34f` | - | 22/24 | 92 | 1 | 14.2 | 0.0 | `ollama pull llama3.2:3b && ollama create llama3.2:3b-16k -f models/thinker.Modelfile` |
+| 3 | `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` | 2026-10-16 | `ab3e34f` | - | 22/24 | 92 | 1 | 22.8 | 0.0 | `ollama pull hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K` |
+| 4 | `hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` | 2026-10-16 | `6e6f19e` | - | 22/24 | 92 | 2 | 27.9 |  | `ollama pull hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M` |
+| 5 | `gemma4:e4b` | 2026-10-16 | `ab3e34f` | - | 20/24 | 83 | 1 | 19.5 | 0.0 | `ollama pull gemma4:e4b` |
 
 ### Score by run
 
