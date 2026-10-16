@@ -39,10 +39,12 @@ ap.add_argument("--api-key-env", help="name of the env var holding the endpoint 
 ap.add_argument("--from-json", help="skip the run and import an existing bench JSON")
 a = ap.parse_args()
 
+# Bump when cases, scoring or router/harness behaviour change; rows with different values are not comparable.
+HARNESS_VERSION = "1"
 LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
 EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case"]
-META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "n",
+META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "n",
         "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
         "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_pct", "context_used_used_pct", "context_used_free_tokens", "peak_model_ram_gb",
         "valid_cases", "infra_cases", "mean_s_valid", "total_s"]
@@ -199,7 +201,7 @@ rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "
        **dict(zip(labels, row[5:])),
        "date": date, "endpoint": endpoint, "temperature": temp, "max_tokens": meta.get("max_tokens", ""),
        "builder_model": meta.get("builder", ""), "thinker_model": meta.get("thinker", ""),
-       "git_sha": meta.get("git_sha", ""), "n": data.get("n", ""),
+       "git_sha": meta.get("git_sha", ""), "harness_version": HARNESS_VERSION, "n": data.get("n", ""),
        "context_used_peak_tokens": max([c.get("peak", 0) for c in done] or [0]),
        "tokens_in_per_run": sum(c.get("input", 0) for c in done),
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
