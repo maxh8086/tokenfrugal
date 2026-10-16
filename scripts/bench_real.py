@@ -1,15 +1,36 @@
 """Real-world benchmark cases: each task is verified by running the produced code or inspecting files,
 not by trusting the model's "done" report. Used by scripts/bench.py (section `realworld`)."""
+import asyncio
+import json
 import os
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 
 from router import loop, server
 from router.config import ROOT, SYNAPTREE_PROJECT
 
 SCRATCH = ROOT / "bench" / "scratch"
 WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
+
+# Per-repeat status and infrastructure gate.
+#   infra   the synaptree container (native MCP server of the builder/reviewer/debugger/analyzer roles) was not
+#           running before the repeat, or was down or restarted around a failed repeat. Not dispatched when down.
+#   timeout TimeoutError / APITimeoutError / the per-case watchdog (CASE_TIMEOUT).
+#   valid   everything else: the repeat ran (verified or not), or failed with a model/loop error such as
+#           LoopError or CheckFailed, while the infrastructure was healthy.
+#   partial a case whose repeats mix timeouts with other non-infra outcomes (infra repeats are ignored).
+# A case is infra only when every repeat is infra; the infra repeats never count in valid_cases or mean_s_valid.
+SYNAPTREE_CONTAINER = "synaptree-synaptree-1"
+SYNAPTREE_CASES = {"write_function", "fix_bug", "write_tests", "rename_across_files",
+                   "find_symbol", "review_sqli", "debug_trace", "role_analyzer"}  # cases 1-7 and 9
+CASE_TIMEOUT = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # seconds; per-repeat watchdog, a hit is scored as a failure (status timeout)
+LOG_TAIL_LINES = 60
+LOG_CAP_BYTES = 4096
+INFRA_ERROR = "synaptree container not running"
+TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")
+CONN_MARKERS = ("Connection closed",)
 
 
 def _py(code):
@@ -25,8 +46,67 @@ def _has(*words):
     return lambda a: (any(w in a.lower() for w in words), a[:100].replace("\n", " "))
 
 
+def _readme_ok(a):
+    low = a.lower()
+    return ("mcp" in low and any(w in low for w in ("local", "ollama", "router", "llm")), a[:100].replace("\n", " "))
+
+
 def _none():
     return None
+
+
+def _now():
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _docker(args):
+    try:
+        p = subprocess.run(["docker", *args], capture_output=True, text=True, timeout=60)
+        return p.returncode, p.stdout + p.stderr
+    except Exception as e:  # noqa: BLE001
+        return 1, str(e)
+
+
+def container_state():
+    """Running, ExitCode, OOMKilled, StartedAt, FinishedAt of the synaptree container.
+    Running is False (with the inspect error) when the container is missing."""
+    rc, out = _docker(["inspect", "-f", "{{json .State}}", SYNAPTREE_CONTAINER])
+    try:
+        st = json.loads(out) if rc == 0 else None
+    except ValueError:
+        st = None
+    if not st:
+        return {"Running": False, "error": out.strip()[:300]}
+    return {k: st.get(k) for k in ("Running", "ExitCode", "OOMKilled", "StartedAt", "FinishedAt")}
+
+
+def container_logs(since):
+    """Last LOG_TAIL_LINES lines of the synaptree container logs since `since`, capped to LOG_CAP_BYTES."""
+    _, out = _docker(["logs", "--since", since, SYNAPTREE_CONTAINER])
+    tail = "\n".join(out.splitlines()[-LOG_TAIL_LINES:])
+    return tail.encode("utf-8")[-LOG_CAP_BYTES:].decode("utf-8", "replace")
+
+
+def classify(ran, error, uses_synaptree, container_bad):
+    """Status of one repeat (rules in the module comment above)."""
+    if uses_synaptree and container_bad:
+        return "infra"
+    if not ran and any(m in error for m in TIMEOUT_MARKERS):
+        return "timeout"
+    return "valid"
+
+
+def case_status(statuses):
+    """Status of a case from its repeats: infra repeats are dropped; all infra -> infra; all valid -> valid;
+    all timeout -> timeout; any other mix of non-infra outcomes -> partial."""
+    live = [s for s in statuses if s != "infra"]
+    if not live:
+        return "infra"
+    if all(s == "valid" for s in live):
+        return "valid"
+    if all(s == "timeout" for s in live):
+        return "timeout"
+    return "partial"
 
 
 def cases():
@@ -102,9 +182,9 @@ def cases():
         ("debug_trace", "engineering-sre", s_debug,
          f"{WS}/bug.py crashes. Read it and name the exception and root cause.",
          _has("zerodivision", "division by zero", "empty")),
-        ("summarize_readme", "support-docs-writer", _none,
+        ("summarize_readme", "engineering-technical-writer", _none,
          f"Read /workspace/{SYNAPTREE_PROJECT}/README.md and summarize what the project does in 3 sentences.",
-         _has("mcp", "local")),
+         _readme_ok),
         # one verified case per remaining role: analyzer, data, docs, security, designer, browser, tracker, research
         ("role_analyzer", "engineering-software-architect", _none,
          "Use search_graph to find where resolve_role is defined and give its file path.",
@@ -133,18 +213,45 @@ async def run(n, timed, ok, failure_mode, stats):
     for cid, agent, setup, task, check in cases():
         if pick and cid not in pick:
             continue
+        uses = cid in SYNAPTREE_CASES
         runs = []
         for i in range(n):
+            start = _now()
+            pre = container_state() if uses else None
+            if pre is not None and not pre.get("Running"):
+                # infra gate: the case is not dispatched at all while the synaptree container is down
+                runs.append({"run": i + 1, "start": start, "end": _now(), "s": 0.0, "ok": False, "verified": False,
+                             "status": "infra", "dispatched": False, "error": INFRA_ERROR, "note": INFRA_ERROR,
+                             "peak": 0, "input": 0, "output": 0,
+                             "container_state": pre, "container_logs": container_logs(start)})
+                print(f"  realworld/{cid} #{i + 1} infra: {INFRA_ERROR}", flush=True)
+                continue
             setup()
-            dt, r = await timed(server.dispatch_task(agent, task))
-            good, note = (False, failure_mode(r)) if not ok(r) else check(r)
+            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), CASE_TIMEOUT))
+            end = _now()
+            ran = ok(r)
+            good, note = (False, failure_mode(r)) if not ran else check(r)
+            state, container_bad = None, False
+            if not ran:  # capture the container after every failed repeat; a synaptree case is infra if it went down or restarted
+                state = container_state()
+                container_bad = uses and (not state.get("Running") or state.get("StartedAt") != pre.get("StartedAt"))
+            status = classify(ran, r, uses, container_bad)
             m = re.match(r"\[([^\]]+)\]", r)
             u = loop.DONE.get(m.group(1), {}) if m else {}
-            runs.append({"s": round(dt, 1), "ok": ok(r), "verified": bool(good), "note": str(note)[:140],
-                         "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0)})
-            print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s ran={ok(r)} verified={bool(good)} {'' if good else note}"[:200],
+            rec = {"run": i + 1, "start": start, "end": end, "s": round(dt, 1), "ok": ran, "verified": bool(good),
+                   "status": status, "dispatched": True, "error": r, "note": str(note)[:140],
+                   "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0)}
+            if not ran:
+                rec["container_state"] = state
+                rec["container_logs"] = container_logs(start)
+            runs.append(rec)
+            print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s {status} ran={ran} verified={bool(good)} {'' if good else note}"[:200],
                   flush=True)
+        live_s = [x["s"] for x in runs if x["status"] != "infra"]
         res[cid] = {"verified": f"{sum(x['verified'] for x in runs)}/{n}", "ran": f"{sum(x['ok'] for x in runs)}/{n}",
-                    "s": stats([x["s"] for x in runs]), "peak": max(x["peak"] for x in runs),
-                    "input": round(sum(x["input"] for x in runs) / n), "output": round(sum(x["output"] for x in runs) / n), "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3]}
+                    "status": case_status([x["status"] for x in runs]),
+                    "infra_runs": sum(x["status"] == "infra" for x in runs),
+                    "s": stats(live_s) or None, "peak": max(x["peak"] for x in runs),
+                    "input": round(sum(x["input"] for x in runs) / n), "output": round(sum(x["output"] for x in runs) / n),
+                    "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3], "runs": runs}
     return res

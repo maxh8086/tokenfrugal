@@ -26,7 +26,7 @@ const $=i=>document.getElementById(i);
 C.forEach(c=>$("cs").add(new Option(c,c)));
 [...new Set(D.map(r=>r.hardware))].forEach(h=>$("hw").add(new Option(h,h)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["tag","Run"],["params","Params"],["pct","%"],["score","Score"],["mean_s_per_case","s/case"],["hardware","Hardware"],...C.map(c=>[c,c])];
+const cols=[["tag","Run"],["params","Params"],["pct","%"],["score","Score"],["mean_s_per_case","s/case"],["total_s","total s"],["hardware","Hardware"],...C.map(c=>[c,c])];
 function draw(){
  const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,hw=$("hw").value;
  const R=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(r.params_b==null||r.params_b<=mp)&&r.tag.toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!hw||r.hardware==hw));

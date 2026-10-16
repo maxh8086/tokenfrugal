@@ -50,7 +50,7 @@ CASE_PERSONA = {
     "find_symbol": "engineering-backend-architect",
     "review_sqli": "testing-code-reviewer",
     "debug_trace": "engineering-sre",
-    "summarize_readme": "support-docs-writer",
+    "summarize_readme": "engineering-technical-writer",
     "role_research": "support-docs-writer",
     "role_analyzer": "engineering-software-architect",
     "role_data": "gis-analyst",
