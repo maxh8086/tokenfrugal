@@ -44,6 +44,15 @@ TokenFrugal uses two local models, one per role. A task goes to one of them, nev
 
 The role table in `Benchmark.md` maps each role to its model class and allowed tools (read from `router/agents.yaml`). A case marked `⚠` scored 0 on a case that needs a specific tool, so the tool was likely missing or not called.
 
+### Best model per role
+
+`Benchmark.md` has a "Best model per role" section: the top 5 local models for the Builder role and the top 5 for the Thinker role, each ranked only on that role's cases.
+
+- Only a model's newest-dated runs count, so results from older router or harness code never mix with current ones. The `Code (git)` column shows the commit that produced each row. Rows with different commits were not run on identical code, so treat cross-commit gaps as indicative and re-run after significant changes.
+- Runs of the same model on that date are merged (passes and checks added up). Ties go to the model with more evidence, then the faster one.
+- `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower.
+- The Haiku cloud baseline is left out because it cannot be pulled.
+
 ### Model origin and scores in the report
 
 Each row shows where the model comes from and the exact command to get it: `Ollama library` (`ollama pull name:tag`), `Hugging Face: org/repo` (`ollama pull hf.co/org/repo:QUANT`), or a local Modelfile build (`ollama pull` the base, then `ollama create`). The origin is derived from `builder_model` when the report is built, so the CSV has no extra column. `Builder` and `Thinker` are the subtotals over each role's cases; one model is pinned to both roles in a run, so the two subtotals show which role it suits.
