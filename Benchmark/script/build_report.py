@@ -11,7 +11,8 @@ import re
 from pathlib import Path
 
 B = Path(__file__).resolve().parent.parent
-META = ("tag", "params", "score", "max", "ran", "mean_s_per_case", "hardware")
+META = ("tag", "params", "score", "max", "ran", "mean_s_per_case", "hardware", "valid_cases", "infra_cases", "mean_s_valid",
+        "total_s")
 rows = list(csv.DictReader((B / "results" / "benchmark.csv").open(encoding="utf-8")))
 CASES = [k for k in rows[0] if k not in META]
 
@@ -46,11 +47,22 @@ for r in rows:
     r["params_b"] = params_b(r["params"])
 
 
+def mmss(v):
+    """total_s seconds as m:ss; '' when blank (legacy rows written before total_s existed)."""
+    try:
+        t = int(float(v))
+    except (ValueError, TypeError):
+        return ""
+    return f"{t // 60}:{t % 60:02d}"
+
+
 def md_table():
-    o = ["| # | Run tag | Params | Score | % | s/case | Hardware |", "|--:|---|---|--:|--:|--:|---|"]
+    o = ["| # | Run tag | Params | Score | % | s/case | total | valid | Hardware |",
+         "|--:|---|---|--:|--:|--:|--:|--:|---|"]
     for i, r in enumerate(rows, 1):
-        o.append(f"| {i} | `{r['tag']}` | {r['params']} | {r['score']}/{r['max']} | {r['pct']} "
-                 f"| {r['mean_s_per_case']} | {r['hardware']} |")
+        tag = f"`{r['tag']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
+        o.append(f"| {i} | {tag} | {r['params']} | {r['score']}/{r['max']} | {r['pct']} "
+                 f"| {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} | {r['hardware']} |")
     return "\n".join(o)
 
 
@@ -137,7 +149,7 @@ const $=i=>document.getElementById(i);
 C.forEach(c=>$("cs").add(new Option(c,c)));
 [...new Set(D.map(r=>r.hardware))].forEach(h=>$("hw").add(new Option(h,h)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["tag","Run"],["params","Params"],["pct","%"],["score","Score"],["mean_s_per_case","s/case"],["hardware","Hardware"],...C.map(c=>[c,c])];
+const cols=[["tag","Run"],["params","Params"],["pct","%"],["score","Score"],["mean_s_per_case","s/case"],["total_s","total s"],["hardware","Hardware"],...C.map(c=>[c,c])];
 function draw(){
  const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,hw=$("hw").value;
  const R=D.filter(r=>r.pct>=ms&&+r.mean_s_per_case<=mt&&(r.params_b==null||r.params_b<=mp)&&r.tag.toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!hw||r.hardware==hw));
