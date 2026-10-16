@@ -27,7 +27,20 @@ from scripts import bench_csv, bench_env, bench_real  # noqa: E402
 from router.config import LLM_API_KEY, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_personas, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
-SECTION_TIMEOUT = float(os.getenv("BENCH_SECTION_TIMEOUT", "3600"))  # seconds; one section with no result for 1 h is skipped
+REALWORLD_CASES = 16
+SECTION_MARGIN = 600  # seconds
+
+
+def section_timeout(n):
+    """Hang safety net only, not a per-case limit (a case timeout is a scored failure in bench_real).
+    BENCH_SECTION_TIMEOUT wins when set; otherwise every realworld case at its full CASE_TIMEOUT for n repeats,
+    plus SECTION_MARGIN."""
+    env = os.getenv("BENCH_SECTION_TIMEOUT")
+    if env:
+        return float(env)
+    return REALWORLD_CASES * n * bench_real.CASE_TIMEOUT + SECTION_MARGIN
+
+
 SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
 
 # One short, checkable task per role: (agent slug, task).
@@ -295,12 +308,13 @@ async def main():
         print(f"== {s}", flush=True)
         t = time.perf_counter()
         try:
-            # A section with no result for SECTION_TIMEOUT seconds is recorded as failed and the run moves on.
+            # Hang safety net: a section that exceeds section_timeout(n) is recorded as failed and the run moves on.
             # bench_output is blocking, so it runs in a thread; a timed-out thread is left to finish on its own.
+            limit = section_timeout(a.n)
             run = asyncio.to_thread(bench_output, a.n) if s == "output" else fns[s](a.n)
-            data["results"][s] = await asyncio.wait_for(run, SECTION_TIMEOUT)
+            data["results"][s] = await asyncio.wait_for(run, limit)
         except asyncio.TimeoutError:
-            data["results"][s] = {"error": f"no result after {SECTION_TIMEOUT}s (section watchdog)"}
+            data["results"][s] = {"error": f"no result after {limit:g}s (section watchdog)"}
         except Exception as e:  # noqa: BLE001
             data["results"][s] = {"error": f"{type(e).__name__}: {e}"}
         print(f"== {s} done in {time.perf_counter() - t:.0f}s", flush=True)

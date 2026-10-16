@@ -44,7 +44,8 @@ PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "doc
 EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case", "hardware"]
 META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "n",
         "ctx_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
-        "quant", "file_gb", "num_ctx", "max_ctx", "vram_gb", "cpu_offload_pct", "ctx_used_pct", "ctx_free_tokens"]
+        "quant", "file_gb", "num_ctx", "max_ctx", "vram_gb", "cpu_offload_pct", "ctx_used_pct", "ctx_free_tokens",
+        "valid_cases", "infra_cases", "mean_s_valid", "total_s"]
 
 
 def run_cmd(cmd):
@@ -53,6 +54,24 @@ def run_cmd(cmd):
         return r.returncode, r.stdout + r.stderr
     except Exception as e:  # noqa: BLE001
         return 1, str(e)
+
+
+def synaptree_state():
+    """(running, StartedAt) of the synaptree MCP container; (False, "") when it is missing."""
+    rc, out = run_cmd(["docker", "inspect", "-f", "{{.State.Running}} {{.State.StartedAt}}", "synaptree-synaptree-1"])
+    if rc != 0:
+        return False, ""
+    running, _, started = out.strip().partition(" ")
+    return running == "true", started
+
+
+def run_verdict(before, after, returncode):
+    """None when the run may be appended to the CSV, else the reason it must not be."""
+    if not after[0] or after[1] != before[1]:
+        return "synaptree container changed during the run"
+    if returncode != 0:
+        return f"bench exited with code {returncode}"
+    return None
 
 
 def mount_ok(shown: str, workspace: str) -> bool:
@@ -91,6 +110,15 @@ def preflight(endpoint, key, models):
     except OSError:
         up = False
     check("neo4j plan store 127.0.0.1:7697", up, "scripts/mcp_up.ps1")
+    s_up, s_started = synaptree_state()
+    check("synaptree container synaptree-synaptree-1 running" + (f" (started {s_started})" if s_up else ""), s_up,
+          "docker start synaptree-synaptree-1 (or start the synaptree plugin)")
+    try:
+        socket.create_connection(("127.0.0.1", 17687), 3).close()
+        s_neo = True
+    except OSError:
+        s_neo = False
+    check("synaptree neo4j 127.0.0.1:17687", s_neo, "start the synaptree compose project (its Neo4j)")
     ids = []
     try:
         rq = urllib.request.Request(endpoint.rstrip("/") + "/models", headers={"Authorization": f"Bearer {key or 'x'}", "x-api-key": key or "x",
@@ -125,8 +153,19 @@ else:
         env["TOKENFRUGAL_LLM_API_KEY"] = key
     endpoint = a.endpoint or os.environ.get("TOKENFRUGAL_LLM_URL") or "http://localhost:11434/v1"
     preflight(endpoint, env.get("TOKENFRUGAL_LLM_API_KEY") or os.environ.get("TOKENFRUGAL_LLM_API_KEY"), [a.builder, thinker])
-    subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
-                   cwd=ROOT, env=env, check=True)
+    before = synaptree_state()
+    proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
+                          cwd=ROOT, env=env, check=False)
+    after = synaptree_state()
+    verdict = run_verdict(before, after, proc.returncode)
+    if verdict:
+        if not after[0] or after[1] != before[1]:
+            print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
+                  f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
+                  "analyzer: cases 1-7 and 9) are unreliable.")
+            sys.exit(f"not appended to CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
+                     f"--from-json once the synaptree container is stable.")
+        sys.exit(f"bench exited with code {proc.returncode}; not appended to CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
     hits = sorted(raw.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
     if not hits:
         sys.exit(f"bench wrote no result file for tag {tag}")
@@ -160,6 +199,9 @@ rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "
        "tokens_in_per_run": sum(c.get("input", 0) for c in done),
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
        **{f"ctx_{k}": v for k, v in peaks.items()}}
+# valid_cases / infra_cases / mean_s_valid: see bench_csv.status_scores (infra cases excluded from validity and mean)
+rec["valid_cases"], rec["infra_cases"], rec["mean_s_valid"] = bench_csv.status_scores(real)
+rec["total_s"] = bench_csv.total_seconds(real)  # elapsed time of all repeats, timeouts and infra included
 mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["ctx_peak_tokens"])
 rec.update(mi)
 cols = EXTRA + labels + META + [f"ctx_{k}" for k in labels]

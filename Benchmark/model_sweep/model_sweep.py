@@ -1,6 +1,6 @@
 """Model sweep: one builder/analyzer task per local model through the gateway.
 
-Usage: python -m scripts.model_sweep [--models a,b] [--roles builder,analyzer] [--out PATH]
+Usage: python Benchmark/model_sweep/model_sweep.py [--models a,b] [--roles builder,analyzer] [--out PATH]
 
 The model for a role is pinned with TOKENFRUGAL_MODEL_<TIER>, where TIER is the
 role's model tier (builder or thinker) from personas.yaml. Setting it changes every
@@ -18,7 +18,7 @@ from router.config import load_personas, resolve_role
 from router.loop import leaf, run
 
 CFG = load_personas()
-DEFAULT_OUT = Path(r"C:\Users\vaibh\AppData\Local\Temp\claude\C--Users-vaibh-Downloads-Projects-tokenfrugal\1471e18d-f8ff-4197-ab1e-e98cf205d815\scratchpad\model_sweep.csv")
+DEFAULT_OUT = Path(__file__).resolve().parent / "results" / "model_sweep.csv"
 EXCLUDE = ("embed", "qwen2.5vl", "qwen2-5vl")
 TIMEOUT = 240
 HEADER = ["model", "role", "result", "seconds", "error"]
