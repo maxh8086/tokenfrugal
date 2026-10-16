@@ -378,34 +378,147 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}pre{background:var
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
 <script>
-const GH="__GH__",SRC=__MD__,RES=__RES__;
+const GH="__GH__",SRC=__MD__,RES=__RES__,D=__DATA__,BC=__BC__,TC=__TC__;
 const el=document.getElementById("res"),doc=document.getElementById("md");
 el.innerHTML="<h1>TokenFrugal benchmark results</h1>"+marked.parse(RES);
 doc.innerHTML="<h2>About this benchmark</h2>"+marked.parse(SRC.replace(/^# .*\n/,""));
 doc.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html|index\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
-function dateFilter(){
- const t=[...el.querySelectorAll("table")].find(t=>[...t.querySelectorAll("th")].some(h=>h.textContent.trim()==="Date"));
- if(!t)return;
- const di=[...t.querySelectorAll("th")].findIndex(h=>h.textContent.trim()==="Date");
- const s=document.createElement("select");
- [["","all time"],["7","last 7 days"],["30","last 30 days"],["90","last 90 days"]].forEach(([v,l])=>s.add(new Option(l,v)));
- const lab=document.createElement("label");
- lab.style.cssText="display:inline-flex;gap:8px;align-items:center;font-size:13px;margin:8px 0";
- lab.append("Show runs from: ",s);
- t.parentElement.insertBefore(lab,t);
- const cutoff=n=>{const d=new Date();d.setDate(d.getDate()-n);return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
- s.onchange=()=>{const n=+s.value,cut=n?cutoff(n):"";
-  t.querySelectorAll("tbody tr").forEach(tr=>{const c=tr.cells[di],v=c?c.textContent.trim().slice(0,10):"";tr.hidden=!!(cut&&v&&v<cut)})};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cnt=(r,cs)=>{let a=0,n=0;cs.forEach(c=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(m){a+=+m[1];n+=+m[2]}});return[a,n]};
+const frac=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a/n:-1};
+const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"·"};
+const tie=(x,y)=>(y.pct-x.pct)||((x.s||1e9)-(y.s||1e9));
+const mmss=t=>t?Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0"):"";
+const mark=(r,c)=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(!m)return"·";const f=+m[1]/+m[2];let s=f===1?"🟩":f>0?"🟨":"🟥";if(f===0&&r.req.includes(c))s+="⚠";return s};
+const S={q:"",size:"",days:"",top:"10",sort:{rank:["pct",-1]}};
+function bar(){
+ const b=$("bar");
+ b.style.cssText="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;margin:8px 0";
+ b.innerHTML=`<label>Model name <input id="fq" placeholder="e.g. qwen, gemma" style="width:150px"></label>
+ <label>Size <select id="fs"><option value="">any</option><option value="4">up to 4B</option><option value="8">up to 8B</option><option value="14">up to 14B</option><option value="40">up to 40B</option></select></label>
+ <label>Runs from <select id="fd"><option value="">all time</option><option value="7">last 7 days</option><option value="30">last 30 days</option><option value="90">last 90 days</option></select></label>
+ <label>Show <select id="ft"><option value="5">top 5</option><option value="10" selected>top 10</option><option value="20">top 20</option><option value="0">all runs</option></select></label>
+ <button id="fr">Reset</button><span id="fc" style="color:var(--mut)"></span>`;
+ const go=()=>{S.q=$("fq").value.trim().toLowerCase();S.size=$("fs").value;S.days=$("fd").value;S.top=$("ft").value;draw()};
+ ["fq","fs","fd","ft"].forEach(i=>$(i).addEventListener(i==="fq"?"input":"change",go));
+ $("fr").onclick=()=>{$("fq").value="";$("fs").value="";$("fd").value="";$("ft").value="10";go()};
 }
-try{dateFilter()}catch(e){}
-el.querySelectorAll("pre code.language-mermaid").forEach(c=>{const d=document.createElement("div");d.className="mermaid";d.textContent=c.textContent;c.parentElement.replaceWith(d)});
+function cutoff(n){const d=new Date();d.setDate(d.getDate()-n);return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")}
+function table(id,cols,rows,key){
+ const[k,dir]=S.sort[key]||[null,0],c=cols.find(c=>c.k===k);
+ if(c&&c.v)rows=[...rows].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*dir||tie(x,y)});
+ const h=cols.map(c=>`<th data-k="${c.k}"${c.v?' style="cursor:pointer"':""}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
+ const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
+ $(id).innerHTML=`<table><thead><tr>${h}</tr></thead><tbody>${b}</tbody></table>`;
+ $(id).querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{const c=cols.find(c=>c.k===t.dataset.k);if(!c.v)return;
+  const[k0,d0]=S.sort[key]||[];S.sort[key]=[c.k,k0===c.k?-d0:(c.str?1:-1)];draw()});
+ return rows;
+}
+function draw(){
+ let R=D.filter(r=>(!S.q||r.model.toLowerCase().includes(S.q))&&(!S.size||(r.pb!=null&&r.pb<=+S.size))&&(!S.days||!r.day||r.day>=cutoff(+S.days)));
+ R.sort(tie);
+ const code=s=>"<code>"+esc(s)+"</code>";
+ const cols=[{k:"n",l:"#",f:(r,i)=>i+1},
+  {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
+  {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
+  {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
+  {k:"score",l:"Score",v:r=>r.score,f:r=>r.score+"/"+r.max},
+  {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
+  {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
+  {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
+  {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
+  {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
+  {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
+ const total=R.length;
+ let V=table("rank",cols,R,"rank");
+ const top=+S.top;if(top)V=V.slice(0,top);
+ $("rank").querySelectorAll("tbody tr").forEach((tr,i)=>{tr.hidden=!!top&&i>=top});
+ $("fc").textContent=`Showing ${V.length} of ${total} runs (of ${D.length})`;
+ // per-role boards: local models only, each model's newest date in the filtered set
+ const board=(id,cs,key)=>{
+  const newest={};R.forEach(r=>{newest[r.model]=r.day>(newest[r.model]||"")?r.day:newest[r.model]||r.day});
+  const agg={};
+  R.forEach(r=>{const[a,n]=cnt(r,cs);if(!n||r.model.startsWith("claude-")||r.day!==newest[r.model])return;
+   const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,g:new Set,h:new Set,r});
+   m.a+=a;m.n+=n;m.runs++;m.g.add(r.git);m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
+  const L=Object.values(agg).map(m=>({...m,pct:Math.round(100*m.a/m.n),s:m.ss.length?m.ss.reduce((x,y)=>x+y)/m.ss.length:0}));
+  L.sort((x,y)=>(y.a/y.n-x.a/x.n)||(y.n-x.n)||((x.s||1e9)-(y.s||1e9)));
+  const rc=[{k:"n",l:"#",f:(m,i)=>i+1},
+   {k:"model",l:"Model",str:1,v:m=>m.model.toLowerCase(),f:m=>code(m.model)},
+   {k:"day",l:"Date",str:1,v:m=>m.day,f:m=>m.day},
+   {k:"g",l:"Code (git)",f:m=>[...m.g].filter(Boolean).map(code).join(", ")},
+   {k:"h",l:"Harness",f:m=>[...m.h].filter(Boolean).join(", ")||"-"},
+   {k:"a",l:"Role score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
+   {k:"pct",l:"%",v:m=>m.pct,f:m=>m.pct},
+   {k:"runs",l:"Runs",v:m=>m.runs,f:m=>m.runs},
+   {k:"s",l:"s/case",v:m=>m.s||1e9,f:m=>m.s?m.s.toFixed(1):""},
+   {k:"sh",l:"Shared memory GB",f:m=>m.r.shared||""},
+   {k:"pull",l:"Pull command",f:m=>code(m.r.pull)}];
+  const[k,d]=S.sort[key]||[],c=rc.find(c=>c.k===k);
+  const sorted=c&&c.v?[...L].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*d}):L;
+  const lim=top?Math.min(top,5):5;
+  table(id,rc,sorted.slice(0,lim),key);
+ };
+ board("rb",BC,"rb");board("rt",TC,"rt");
+ const heat=(id,cs)=>{const hc=[{k:"model",l:"Run",f:r=>code(r.model.slice(0,44))+" <small>"+r.day+"</small>"}]
+   .concat(cs.map(c=>({k:c,l:c.replace(/_/g," "),f:r=>mark(r,c)})));
+  table(id,hc,V,"h"+id)};
+ heat("hb",BC);heat("ht",TC);
+}
+bar();draw();
 el.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
-mermaid.initialize({startOnLoad:false,theme:matchMedia("(prefers-color-scheme:dark)").matches?"dark":"default"});
-mermaid.run({querySelector:".mermaid"});
 </script>"""
+def _data():
+    out = []
+    for r in rows:
+        out.append({"model": r["builder_model"], "day": r["day"], "params": r["params"], "pb": r["params_b"],
+                    "score": r["score"], "max": r["max"], "pct": r["pct"], "s": num(r, "mean_s_per_case"),
+                    "tot": num(r, "total_s"), "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
+                    "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
+                    "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
+                    "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "") for c in CASES}})
+    return out
+
+
+DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Filter and sort below; the default view shows the top runs by pass rate (ties by speed)._
+
+<div id="bar"></div>
+
+### Ranking
+
+{RANK_LEGEND_MD}
+
+<div id="rank"></div>
+
+### Best model per role (local models, top 5 each)
+
+Each role is ranked only on its own cases. Only a model's newest-dated runs count (within the filtered set), so older results from earlier code never mix with current ones; `Code (git)` shows the commit that produced them. Ties go to more evidence, then the faster model. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+
+**Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
+
+<div id="rb"></div>
+
+**Thinker** (cases: {", ".join(f"`{c}`" for c in THINKER_CASES)})
+
+<div id="rt"></div>
+
+Charts, the legend and the roles table are in [explorer.html](explorer.html).
+
+### Builder cases (code and file edits: needs write/edit tools)
+
+<div id="hb"></div>
+
+### Thinker cases (read, analyse, browse: needs read/graph/browser tools)
+
+<div id="ht"></div>
+"""
 (B / "index.html").write_text(
     PAGE.replace("__GH__", "https://github.com/maxh8086/tokenfrugal/blob/main/Benchmark")
         .replace("__MD__", json.dumps(p.read_text(encoding="utf-8")).replace("</", "<\\/"))
-        .replace("__RES__", json.dumps(re.sub(r"<!--.*?-->", "", auto, flags=re.S)).replace("</", "<\\/")),
+        .replace("__RES__", json.dumps(DYN).replace("</", "<\\/"))
+        .replace("__DATA__", json.dumps(_data()).replace("</", "<\\/"))
+        .replace("__BC__", json.dumps(BUILDER_CASES))
+        .replace("__TC__", json.dumps(THINKER_CASES)),
     encoding="utf-8")
 print(f"updated explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
