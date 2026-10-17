@@ -31,7 +31,7 @@ import modelinfo  # noqa: E402
 ap = argparse.ArgumentParser()
 ap.add_argument("builder", nargs="?")
 ap.add_argument("thinker", nargs="?")
-ap.add_argument("--n", type=int, default=2)
+ap.add_argument("--n", type=int, default=3)
 ap.add_argument("--tag")
 ap.add_argument("--csv", default=str(HERE.parent / "results" / "benchmark.csv"))
 ap.add_argument("--endpoint", help="OpenAI-compatible base URL (default: TOKENFRUGAL_LLM_URL / local Ollama)")
@@ -47,7 +47,8 @@ EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case"]
 META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "n",
         "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
         "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_pct", "context_used_used_pct", "context_used_free_tokens", "peak_model_ram_gb",
-        "valid_cases", "infra_cases", "mean_s_valid", "total_s"]
+        "valid_cases", "infra_cases", "mean_s_valid", "total_s",
+        "os", "cpu", "cores", "ram_gb", "gpu", "vram_gb", "ollama_version", "hardware_id"]
 
 
 def run_cmd(cmd):
@@ -180,7 +181,8 @@ if not out:
 row = out[0]
 score, mx = row[2].split("/")
 ran = row[3].split("/")[0]
-hw = hardware.info()["id"]
+hwi = hardware.info()
+hw = hwi["id"]
 meta = data.get("meta", {})
 endpoint = meta.get("endpoint") or a.endpoint or ""
 if endpoint and not any(h in endpoint for h in LOCAL):
@@ -206,6 +208,8 @@ rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "
        "tokens_in_per_run": sum(c.get("input", 0) for c in done),
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
        "peak_model_ram_gb": _peak_ram(data),
+       "os": hwi["os"], "cpu": hwi["cpu"], "cores": hwi["cores"] or "", "ram_gb": hwi["ram_gb"] or "",
+       "gpu": hwi["gpu"], "vram_gb": hwi["vram_gb"] or "", "ollama_version": hwi["ollama"], "hardware_id": hw,
        **{f"context_used_{k}": v for k, v in peaks.items()}}
 # valid_cases / infra_cases / mean_s_valid: see bench_csv.status_scores (infra cases excluded from validity and mean)
 rec["valid_cases"], rec["infra_cases"], rec["mean_s_valid"] = bench_csv.status_scores(real)
