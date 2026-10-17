@@ -5,7 +5,7 @@ Flow: **run → CSV → report → cloud review → Observations in `Benchmark.m
 | Step | Command | Output |
 |---|---|---|
 | 1. Check your hardware | `python Benchmark/script/hardware.py` | GPU / VRAM / RAM / Ollama version |
-| 2. Benchmark a model | `python Benchmark/script/run_benchmark.py qwen3:8b [thinker] --n 2` | one row appended to `results/benchmark.csv` |
+| 2. Benchmark a model | `python Benchmark/script/run_benchmark.py qwen3:8b [thinker] --n 3` | one row appended to `results/benchmark.csv` |
 | 3. Rebuild report | `python Benchmark/script/build_report.py` | tables + charts in `Benchmark.md`, `explorer.html` |
 | 4. Cloud review | give the prompt below to Claude / Codex / any API | updated `## Observations` |
 
