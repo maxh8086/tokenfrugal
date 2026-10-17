@@ -14,6 +14,13 @@ class GatewayArgvTests(unittest.TestCase):
         self.assertEqual(docker_mcp.gateway_argv("build", "2", "4Gb", docker="D"),
                          ["D", "mcp", "gateway", "run", "--profile", "build", "--cpus", "2", "--memory", "4Gb"])
 
+    def test_stateful_profile_is_long_lived(self):
+        self.assertEqual(docker_mcp.gateway_argv("browser", "1", "2Gb", docker="D"),
+                         ["D", "mcp", "gateway", "run", "--profile", "browser", "--cpus", "1", "--memory", "2Gb", "--long-lived"])
+
+    def test_stateless_profile_is_not_long_lived(self):
+        self.assertNotIn("--long-lived", docker_mcp.gateway_argv("build", "2", "4Gb", docker="D"))
+
     def test_missing_docker_binary_is_clear_error(self):
         with mock.patch("router.docker_mcp.shutil.which", return_value=None):
             with self.assertRaises(docker_mcp.DockerMcpError) as c:
