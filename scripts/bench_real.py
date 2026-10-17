@@ -300,7 +300,17 @@ async def run(n, timed, ok, failure_mode, stats):
             dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), CASE_TIMEOUT))
             end = _now()
             ran = ok(r)
-            good, note = (False, failure_mode(r)) if not ran else check(strip_tid(r))
+            if not ran:
+                good, note = False, failure_mode(r)
+            else:
+                try:
+                    good, note = check(strip_tid(r))
+                except Exception as e:  # noqa: BLE001 - a check that raises fails this repeat only, not the whole section
+                    good, note = False, f"check raised {type(e).__name__}: {e}"
+            if ran and not good:
+                # diagnostic: show what the shared scratch folder held at verify time (missing or overwritten files)
+                listing = sorted(p.name for p in SCRATCH.iterdir()) if SCRATCH.exists() else ["<no scratch dir>"]
+                note = f"{note} | scratch={listing}"
             trail = trail_of(r)
             tools = trail_tools(trail)
             req = REQUIRED_TOOLS.get(cid)

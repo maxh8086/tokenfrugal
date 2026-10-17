@@ -27,8 +27,16 @@ def docker_bin() -> str:
     return path
 
 
+# Profiles whose backend keeps state between tool calls (a browser tab, for example). Without --long-lived the
+# gateway tears the backend down after each call, so a navigate is lost before the next call reads the page.
+STATEFUL_PROFILES = frozenset({"browser"})
+
+
 def gateway_argv(profile: str, cpus: str = "1", memory: str = "2Gb", docker: str | None = None) -> list[str]:
-    return [docker or docker_bin(), "mcp", "gateway", "run", "--profile", profile, "--cpus", str(cpus), "--memory", memory]
+    argv = [docker or docker_bin(), "mcp", "gateway", "run", "--profile", profile, "--cpus", str(cpus), "--memory", memory]
+    if profile in STATEFUL_PROFILES:
+        argv.append("--long-lived")
+    return argv
 
 
 def profile_text(path: Path, workspace: str) -> str:
