@@ -48,6 +48,8 @@ def _llm_api_key() -> str:
 
 
 LLM_API_KEY = _llm_api_key()
+# Sampling temperature for every tokenfrugal model call (loop, summaries, benchmarks). 0.0 unless LOCAL_LLM_TEMPERATURE says otherwise.
+LLM_TEMPERATURE = float(os.getenv("LOCAL_LLM_TEMPERATURE", "0.0"))
 
 
 def _git_root(start: str):

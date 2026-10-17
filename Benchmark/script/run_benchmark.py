@@ -94,6 +94,9 @@ def preflight(endpoint, key, models):
             bad.append(name)
 
     print("preflight")
+    from router.config import LLM_TEMPERATURE
+    check(f"LOCAL_LLM_TEMPERATURE = {LLM_TEMPERATURE} (benchmarks need 0.0)", LLM_TEMPERATURE == 0.0,
+          "set LOCAL_LLM_TEMPERATURE=0.0 in .env (or unset it) and rerun")
     rc, _ = run_cmd(["docker", "info"])
     check("docker daemon", rc == 0, "start Docker Desktop")
     rc, out = run_cmd(["docker", "mcp", "profile", "ls"])
