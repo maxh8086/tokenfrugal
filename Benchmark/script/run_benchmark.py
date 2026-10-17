@@ -46,7 +46,7 @@ PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "doc
 EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case"]
 META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "n",
         "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
-        "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_pct", "context_used_used_pct", "context_used_free_tokens", "peak_model_ram_gb",
+        "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_gb", "peak_model_ram_gb",
         "valid_cases", "infra_cases", "mean_s_valid", "total_s",
         "os", "cpu", "cores", "ram_gb", "gpu", "vram_gb", "ollama_version", "hardware_id"]
 
@@ -222,9 +222,11 @@ rec.update(mi)
 cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels]
 dst = Path(a.csv)
 old = list(csv.DictReader(dst.open(encoding="utf-8"))) if dst.exists() else []
-with dst.open("w", newline="", encoding="utf-8") as f:  # rewrite so legacy rows get the new columns blank
+tmp = dst.with_suffix(".csv.tmp")  # write beside the target, then swap in, so a failed write never truncates the real file
+with tmp.open("w", newline="", encoding="utf-8") as f:  # rewrite so legacy rows get the new columns blank
     w = csv.DictWriter(f, fieldnames=cols, restval="")
     w.writeheader()
     w.writerows(old)
     w.writerow(rec)
+tmp.replace(dst)
 print(f"appended {rec['tag']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
