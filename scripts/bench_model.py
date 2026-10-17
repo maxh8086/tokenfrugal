@@ -56,8 +56,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--n",
         type=int,
-        default=2,
-        help="Number of benchmark repetitions (default: 2).",
+        default=3,
+        help="Number of benchmark repetitions (default: 3).",
     )
     parser.add_argument(
         "--tag",
