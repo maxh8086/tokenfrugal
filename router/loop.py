@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from openai import OpenAI
 
 from . import events
-from .config import (LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
+from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
                      TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
 from .lint import check_python
@@ -270,7 +270,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 if not used_tools:
                     kw["tool_choice"] = "required"
             if role["model"] not in _NO_TEMP:
-                kw["temperature"] = 0.1
+                kw["temperature"] = LLM_TEMPERATURE
             for _attempt in range(3):
                 try:
                     r = await asyncio.to_thread(_client.chat.completions.create, **kw)  # off the event loop

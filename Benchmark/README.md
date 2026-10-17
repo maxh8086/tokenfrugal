@@ -12,6 +12,19 @@ For results, use the live pages (GitHub shows `.html` files as source, so use th
 - [results/benchmark.csv](results/benchmark.csv) (local runs) and [results/cloud.csv](results/cloud.csv) (cloud baseline): source of truth, one row per run
 - [script/](script/README.md): run a new model, rebuild the report, review prompt
 
+## Configuration
+
+Set these in `.env` at the repo root (copy from `.env.example`). Real environment variables override `.env`.
+
+| Variable | Default | Used for |
+| --- | --- | --- |
+| `LOCAL_LLM_TEMPERATURE` | `0.0` | Sampling temperature for every local model call. Benchmarks need `0.0`; the preflight in `script/run_benchmark.py` fails otherwise. Recorded in each run's `temperature` column |
+| `TOKENFRUGAL_LLM_URL` | `http://localhost:11434/v1` | OpenAI-compatible endpoint the benchmark and router call. Overridable per run with `--endpoint` |
+| `TOKENFRUGAL_LLM_API_KEY` | `ollama` | API key for that endpoint. Overridable per run with `--api-key-env NAME`, which reads the key from the named variable; the key is never printed or stored |
+| `LOCAL_LLM_MAX_TOKENS` | `8192` | Editable in the dashboard settings. The router's tool loop currently caps each reply at 2048 tokens in code, so this value does not change benchmark replies |
+
+`.env.example` documents every variable. The benchmark's own `preflight` step prints PASS or FAIL for each check and the fix to apply.
+
 ## How to read the results
 
 Each row in `results/benchmark.csv` is one run of one model setup on the same 16 cases.

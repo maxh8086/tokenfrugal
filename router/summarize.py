@@ -1,7 +1,7 @@
 """Enforce the 150-300 token summary cap in code (second summarizing pass, then hard trim)."""
 from openai import OpenAI
 
-from .config import LLM_API_KEY, LLM_TIMEOUT, OLLAMA_URL, SUMMARY_MAX_TOKENS, SUMMARY_MIN_TOKENS
+from .config import LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SUMMARY_MAX_TOKENS, SUMMARY_MIN_TOKENS
 
 _LOCAL = any(h in OLLAMA_URL for h in ("localhost", "127.0.0.1", "[::1]", "host.docker.internal"))
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=2 if _LOCAL else 4)
@@ -34,7 +34,7 @@ def summarize(model: str, text: str, task: str) -> str:
                             "numbers, verdicts, next actions. No preamble, no filler."},
                            {"role": "user", "content": f"Task: {task}\n\nResult:\n{text}"}]}
         try:
-            r = _client.chat.completions.create(temperature=0.1, **kw)
+            r = _client.chat.completions.create(temperature=LLM_TEMPERATURE, **kw)
         except Exception as e:  # some endpoints reject sampling params for newer models
             if "temperature" not in str(e):
                 raise

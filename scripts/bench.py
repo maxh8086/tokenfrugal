@@ -25,7 +25,7 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
-from router.config import LLM_API_KEY, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_agents, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_agents, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 REALWORLD_CASES = 16
@@ -150,7 +150,7 @@ def bench_output(n, lengths=(128, 512, 1024, 2048, 4096)):
             for _ in range(max(1, n // 2)):
                 t = time.perf_counter()
                 try:
-                    r = c.chat.completions.create(model=model, max_tokens=ln, temperature=0.1, messages=[
+                    r = c.chat.completions.create(model=model, max_tokens=ln, temperature=LLM_TEMPERATURE, messages=[
                         {"role": "user", "content": "Write numbered sentences about the sea. Keep going until told to stop."}])
                     dt = time.perf_counter() - t
                     secs.append(dt)
@@ -331,7 +331,7 @@ async def main():
         data["hardware_samples"] = sampler.samples
         (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     sampler.stop()
-    data["meta"] = {"endpoint": OLLAMA_URL, "temperature": 0.1, "temperature_omitted": sorted(loop._NO_TEMP),
+    data["meta"] = {"endpoint": OLLAMA_URL, "temperature": LLM_TEMPERATURE,"temperature_omitted": sorted(loop._NO_TEMP),
                     "max_tokens": 2048, "builder": os.getenv("TOKENFRUGAL_MODEL_BUILDER", ""),
                     "thinker": os.getenv("TOKENFRUGAL_MODEL_THINKER", ""),
                     "git_sha": sh(["git", "rev-parse", "--short", "HEAD"]).strip()}
