@@ -225,7 +225,7 @@ def cases():
         _seed("bug.py", "def avg(xs):\n    return sum(xs) / len(xs)\n\nprint(avg([]))\n")
 
     def s_secret():
-        _seed("secret.py", "API_KEY = 'AKIAFAKEFAKEFAKE1234'" + chr(10) + "PASSWORD = 'hunter2'" + chr(10))
+        _seed("secret.py", "API_KEY = 'fake-key-7d41c9e0b2a6'" + chr(10) + "PASSWORD = 'hunter2'" + chr(10))
 
     def s_files():
         _seed("calc.py", "x = 1" + chr(10))
@@ -262,7 +262,7 @@ def cases():
         ("role_docs", "engineering-technical-writer", s_tests,
          f"Read {WS}/stack.py and describe its public methods in two sentences.", _all_has("push", "pop")),
         ("role_security", "security-auditor", s_secret,
-         f"Read {WS}/secret.py and list any hard-coded secrets.", _all_has("akiafakefakefake1234", "hunter2")),
+         f"Read {WS}/secret.py and list any hard-coded secrets.", _all_has("fake-key-7d41c9e0b2a6", "hunter2")),
         ("role_designer", "design-ui-designer", _none,
          "Call high_level_overview and report what it returns, or the exact error.", _has("penpot", "design", "file", "error")),  # tool call enforced by REQUIRED_TOOLS
         ("role_browser", "testing-evidence-collector", _none,
