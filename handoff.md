@@ -28,12 +28,8 @@ Gotchas:
 
 Status at this point:
 
-1. Dashboard on port 7777 (done, verified in a browser): three tabs (Dashboard, Configuration, Usage). "Show details" switches to Usage. The page has no console errors.
-2. Configuration tab (done, verified in a browser): global fields (CC_WORKSPACE, both bind-path variables, OPENAI_BASE_URL, LOCAL_LLM_TEMPERATURE, LOCAL_LLM_MAX_TOKENS), a model per role, and an MCP checklist per role with each MCP's tools listed. Save POSTs `/api/config`, which writes `router/config_overrides.json`. Verified: GET returns the saved values, POST round-trips, invalid values are dropped. Not yet verified: a gateway restart applying the saved values.
-3. Gateway wiring (done, not yet exercised): `router/config.py` loads the overrides (`role_models`, `role_mcps`, env-backed settings; real environment variables still win). `router/events.py` writes `roles.json` with `mcp_catalog`. `roles.json` must be regenerated after changes (`write_roles(load_personas())`).
-4. Bind mounts (open): restart the gateway, then verify `ts-fs-rw`, `ast-grep`, `ts-fs-ro`. `.env` already holds both `MCP_GATEWAY_DOCKER_BIND_*` variables. Also check that a shell-level `CC_WORKSPACE` does not override `.env`.
-5. Benchmark (open): finish the priority run for list 1 only, classify the 4B `slug`/`AssertionError` failures (model output vs mount), then Qwythos, then `scripts/bench_append.py` without `--dry-run`. List 2 (about 60 models) waits for explicit confirmation in chat.
-6. Housekeeping (open): re-check task `0cf6dd6716` (it claimed four files changed; git diff showed none). Close plan task 50 by hand (no delete tool). Plan task 51 (`ui-config`) can close once step 2 is verified after a gateway restart.
-7. Commit: not yet, and only when asked. The attribution rule conflicts (project and memory rules say no Co-Authored-By; a later reminder asks for it). Ask the user which applies before committing.
+1. Benchmark (open): finish the priority run for list 1 only, classify the 4B `slug`/`AssertionError` failures (model output vs mount), then Qwythos, then `scripts/bench_append.py` without `--dry-run`. List 2 (about 60 models) waits for explicit confirmation in chat.
+2. Housekeeping (open): re-check task `0cf6dd6716` (it claimed four files changed; git diff showed none). Close plan tasks 50 and 51 by hand (no delete tool).
+3. Commit: done for the working-tree reorganisation (4f9c35c). Future commits: no Co-Authored-By trailer, per the project and memory rules.
 
 Delegation: builder tasks go through `tokenfrugal.dispatch_task` in small pieces. Haiku fallback is used only after failures and is disclosed in the report.
