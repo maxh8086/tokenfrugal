@@ -132,6 +132,39 @@ def _docker(args):
         return 1, str(e)
 
 
+STALE_MCP_AGE = 900.0  # seconds; a gateway container this old outlived any case (watchdog is at most ~330s)
+
+
+def stale_mcp_containers(max_age=STALE_MCP_AGE, now=None):
+    """Ids of docker-mcp stdio containers older than max_age: leaked by a gateway client that was cancelled or killed."""
+    rc, out = _docker(["ps", "-q", "--filter", "label=docker-mcp=true"])
+    ids = out.split() if rc == 0 else []
+    if not ids:
+        return []
+    rc, out = _docker(["inspect", "-f", "{{.Id}} {{.Created}}", *ids])
+    if rc != 0:
+        return []
+    now = now or datetime.now(timezone.utc)
+    stale = []
+    for line in out.splitlines():
+        cid, _, created = line.partition(" ")
+        try:
+            made = datetime.fromisoformat(created.strip()[:19]).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if (now - made).total_seconds() > max_age:
+            stale.append(cid)
+    return stale
+
+
+def sweep_stale_mcp(max_age=STALE_MCP_AGE):
+    """Remove leaked gateway containers between repeats; returns how many were removed."""
+    ids = stale_mcp_containers(max_age)
+    if ids:
+        _docker(["rm", "-f", *ids])
+    return len(ids)
+
+
 def container_state():
     """Running, ExitCode, OOMKilled, StartedAt, FinishedAt of the synaptree container.
     Running is False (with the inspect error) when the container is missing."""
@@ -463,6 +496,7 @@ async def run(n, timed, ok, failure_mode, stats):
         uses = cid in SYNAPTREE_CASES
         runs = []
         for i in range(n):
+            sweep_stale_mcp()  # a cancelled or killed gateway leaves its stdio containers running
             _clean_scratch()  # no leftovers from the previous repeat or case; the seed below runs after this
             start = _now()
             pre = container_state() if uses else None
