@@ -6,7 +6,7 @@ import os
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from . import docker_mcp, profile_sync, secrets_store
+from . import docker_mcp, mcp_reap, profile_sync, secrets_store
 from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
@@ -76,10 +76,14 @@ async def open_profile(profile: str, params: dict | None = None):
                                    env={**os.environ,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS": WORKSPACE,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS": WORKSPACE})
-    async with stdio_client(sp) as (r, w):
-        async with ClientSession(r, w) as s:
-            await s.initialize()
-            yield s
+    await asyncio.to_thread(mcp_reap.enter, docker)
+    try:
+        async with stdio_client(sp) as (r, w):
+            async with ClientSession(r, w) as s:
+                await s.initialize()
+                yield s
+    finally:
+        await asyncio.to_thread(mcp_reap.leave, docker)  # gateway stdio containers stay inside this session
 
 
 def _schema(t) -> dict:
