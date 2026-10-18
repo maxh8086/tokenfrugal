@@ -32,12 +32,33 @@ def _git(*args: str, cwd: Path) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
 
 
+def _fetch_submodules(dest: Path) -> None:
+    """Fetch each submodule at the exact commit the clone records (gitlink), shallow, one level deep.
+
+    `git submodule update --depth 1` fails for some upstreams (e.g. chrome-devtools-mcp), so fetch by sha directly.
+    """
+    names = _git("config", "-f", ".gitmodules", "--get-regexp", r"^submodule\..*\.path$", cwd=dest).splitlines()
+    for line in names:
+        key, path = line.split(" ", 1)
+        url = _git("config", "-f", ".gitmodules", "--get", key.replace(".path", ".url"), cwd=dest)
+        gitlink = _git("ls-tree", "HEAD", path, cwd=dest).split()
+        if len(gitlink) < 3 or gitlink[1] != "commit":
+            raise RuntimeError(f"submodule {path}: no gitlink in HEAD")
+        sub = dest / path
+        sub.mkdir(parents=True, exist_ok=True)
+        _git("init", "-q", cwd=sub)
+        _git("fetch", "-q", "--depth", "1", url, gitlink[2], cwd=sub)
+        _git("checkout", "-q", "FETCH_HEAD", cwd=sub)
+
+
 def clone_at(repo: str, sha: str, dest: Path) -> None:
     """Fetch only `sha` into dest and check it out; fail if the result is not that exact commit."""
     dest.mkdir(parents=True, exist_ok=True)
     _git("init", "-q", cwd=dest)
     _git("fetch", "-q", "--depth", "1", repo, sha, cwd=dest)
     _git("checkout", "-q", "FETCH_HEAD", cwd=dest)
+    if (dest / ".gitmodules").exists():
+        _fetch_submodules(dest)
     head = _git("rev-parse", "HEAD", cwd=dest)
     if head != sha:
         raise RuntimeError(f"pinned {sha} but got {head}")
@@ -48,7 +69,12 @@ def build(name: str, p: dict, keep: bool = False) -> None:
     try:
         clone_at(p["repo"], p["sha"], tmp)
         print(f"{name}: cloned {p['repo']} @ {p['sha'][:12]}; building {p['image']}")
-        subprocess.run(["docker", "build", "-t", p["image"], "-f", str(ROOT / p["dockerfile"]), str(tmp)], check=True)
+        # OCI labels record which upstream commit the image was built from (check_pins compares against these).
+        labels = [
+            "--label", f"org.opencontainers.image.source={p['repo']}",
+            "--label", f"org.opencontainers.image.revision={p['sha']}",
+        ]
+        subprocess.run(["docker", "build", *labels, "-t", p["image"], "-f", str(ROOT / p["dockerfile"]), str(tmp)], check=True)
     finally:
         if keep:
             print(f"{name}: kept clone at {tmp}")

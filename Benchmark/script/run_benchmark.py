@@ -202,7 +202,8 @@ def _peak_ram(d):
     return round(m / 1024, 1) if m else ""
 
 
-rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4],
+_b, _t = meta.get("builder", ""), meta.get("thinker", "") or meta.get("builder", "")
+rec = {"tag": _b if _b == _t else f"{_b}+{_t}", "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4],
        **dict(zip(labels, row[5:])),
        "date": date, "endpoint": endpoint, "temperature": temp, "max_tokens": meta.get("max_tokens", ""),
        "builder_model": meta.get("builder", ""), "thinker_model": meta.get("thinker", ""),

@@ -56,7 +56,7 @@ Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "co
 - `loop.py` is the tool-calling loop (max 2 calls/step, forced first tool call, slop retry). `mcp_client.py` opens `docker mcp gateway run --profile <p>` and native stdio servers behind one `Router`. `summarize.py` enforces the token cap; `store.py` (SQLite, `router/tasks.db`) backs `get_detail`/`resume_task`.
 - `compose.py` + `docker-compose.yml` (project `ts-mcp`): roles with `compose: [...]` start their backends (`up -d --wait`) before a run and stop them after (`keep_alive` / `MCP_KEEP_ALIVE=1` skips the stop). The last router process to exit stops every `ts-mcp` container. Leave other compose projects alone.
 - Plan store (`plan.py`, Neo4j service `neo4j`, host 127.0.0.1:7697): `Task -DEPENDS_ON-> Task`, `Task -HAS_RUN-> Run`, `Task -HAS_EVENT-> Event`, `Task -LINKED_TO-> Commit`. `done` needs evidence (real git sha or finished router task id). Finished plans are pruned after `PLAN_RETENTION_DAYS` (default 30). Workers use the stdio server `python -m router.plan_mcp`.
-- Docker MCP profiles live in `profiles/*.yaml` with a `__WORKSPACE__` placeholder; `scripts/install_profiles.py` fills it in and builds helper images `tokenfrugal/chrome-devtools-mcp:1` and `tokenfrugal/penpot-mcp:1`.
+- Docker MCP profiles live in `profiles/*.yaml` with a `__WORKSPACE__` placeholder; `scripts/install_profiles.py` fills it in and builds helper images `maxh8086/chrome-devtools-mcp:1` and `tokenfrugal/penpot-mcp:1`.
 - Secrets (`SONARQUBE_TOKEN`, `NEO4J_AUTH`, ...) live in `~/.docker/mcp/mcp.env`, never in the repo or catalogue YAMLs.
 - Writable workspace for `ts-fs-rw` needs `:rw` in the catalogue volume and `CC_WORKSPACE` equal to that exact host path.
 

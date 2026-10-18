@@ -166,20 +166,25 @@ Manual steps: add the pin and Dockerfile, wire the service into `docker-compose.
 ### Prompt: build helper images from their pinned commits
 
 > In this repo, rebuild the helper images from the commits pinned in `docker/pins.yaml`.
-> 1. Run `python scripts/check_pins.py` and list which pins have a newer upstream tag. Do not change any pin. Do not pass `--write` unless I say so.
-> 2. Run `python scripts/pinned_build.py` for all pins, or `python scripts/pinned_build.py <name>` if I name one.
-> 3. If a build fails, show me the last 30 lines of the error and stop. Do not edit a Dockerfile to work around it without asking me.
-> 4. When the builds finish, list the images (`docker images`) and report each tag and its SHA.
+> 1. Run `python scripts/check_pins.py`. It lists each pin that has a newer upstream release tag and changes nothing.
+> 2. If there are newer releases, ask me which to rebuild. Do not rebuild without my yes.
+> 3. For each release I approve, run `python scripts/check_pins.py --rebuild`. Before a rebuild, the current image is kept as `<image>:rollback`. If the build fails, the old image is restored and the pin stays unchanged. Report the error and stop.
+> 4. Ask me before pushing. Only if I say yes, add `--push`. Pushes go to Docker Hub by default (`maxh8086/...`). Use a `ghcr.io/...` image name to push to GitHub instead.
+> 5. After a successful rebuild, the pin in `docker/pins.yaml` moves to the new commit SHA. Show me the diff, then list the images (`docker images`) and report each tag and its SHA.
+> 6. To roll back, run `docker tag <image>:rollback <image>` and tell me it was done. The pin is not reverted automatically, so revert it in `docker/pins.yaml` only if I ask.
+> 7. Never edit a Dockerfile to work around a failed build without asking me.
 
 Manual commands:
 
 ```bash
-python scripts/check_pins.py                        # shows newer upstream tags; --write updates pins
-python scripts/pinned_build.py                      # all pins
-python scripts/pinned_build.py chrome-devtools-mcp  # one pin; --keep leaves the clone
+python scripts/check_pins.py                          # report newer release tags only
+python scripts/check_pins.py --rebuild                # ask per release, build at the new commit, keep rollback
+python scripts/check_pins.py --rebuild --push         # also ask, then push the rebuilt image
+python scripts/pinned_build.py chrome-devtools-mcp    # build one pin at its current sha; --keep leaves the clone
+docker tag maxh8086/chrome-devtools-mcp:rollback maxh8086/chrome-devtools-mcp:1   # roll back
 ```
 
-`check_pins.py` only reports unless you add `--write`. Nothing is rebuilt until you run `pinned_build.py`.
+`check_pins.py` only reports unless you pass `--rebuild`. `--yes` answers every prompt for scripts, so use it with care. Without a terminal, prompts are skipped and nothing is built.
 
 ## Plan store
 
