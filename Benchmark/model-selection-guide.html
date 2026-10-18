@@ -32,7 +32,7 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}
 <div class="step"><strong>Valid cases.</strong> The run must finish all of its cases without infrastructure failure. The <em>Valid cases</em> column shows this. Partial runs are not ranked.</div>
 <div class="step"><strong>No infra flag.</strong> A ⚠infra mark next to the model name in the Ranking table means the run was affected by the environment (backend down, timeout), not by the model. Rerun before trusting it.</div>
 <div class="step"><strong>Fits in GPU memory.</strong> <em>Shared memory GB</em> above 0 means part of the model runs in system RAM. It still works, but it is slower and its speed numbers are not comparable with fully-GPU runs.</div>
-<div class="step"><strong>Current code.</strong> The <em>Code (git)</em> column shows the commit that produced the run. Prefer runs from the current code, since the router and prompts change over time. The per-role tables already use each model's newest runs.</div>
+<div class="step"><strong>Current code.</strong> The <em>Code (git)</em> column shows the commit that produced the run. Prefer runs from the current code, since the router and prompts change over time. The per-role tables compare each model across all of its runs, so check the <em>Latest run</em> and <em>Code (git)</em> columns to see which code produced the numbers.</div>
 <div class="step"><strong>Required tools.</strong> A ⚠ on a case means the case needs a tool the model failed to call. A model that fails required tool cases cannot do that role, even if its pass rate looks reasonable.</div>
 
 <h2>3. Qualify a thinker</h2>
@@ -63,7 +63,7 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}
 
 <h2>6. Find the best model quickly</h2>
 <ol>
-<li>Open the <a href="index.html">report</a> and read <strong>Best model per role</strong>. It lists the top five for builder and thinker separately, using only each model's newest runs.</li>
+<li>Open the <a href="index.html">report</a> and read <strong>Best model per role</strong>. It lists the top five for builder and thinker separately, comparing each model across all of its runs. Each model has a colored dot: 🟢 preferred, 🟡 usable, 🔴 not recommended. The full list of models per role is in the collapsed "Show the other models" block under each table, and the preferred choices (more than one per role) are listed under the tables.</li>
 <li>For a closer look, open the <a href="explorer.html">explorer</a>. Set <strong>role</strong> to builder or thinker, set <strong>Runs from</strong> to the last 30 days to see current code only, and sort by <strong>Rank</strong>.</li>
 <li>Apply the gates in section 2 to the top rows: valid cases, no infra flag, shared memory 0 GB.</li>
 <li>Among the rows that pass, pick the one with the highest pass rate. Use t/s to break ties.</li>
