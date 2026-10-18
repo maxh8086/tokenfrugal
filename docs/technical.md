@@ -99,7 +99,7 @@ Open http://localhost:9100, log in as `admin` / `admin`, set a new password, the
 
 ### 6. Register with your agent
 
-Claude Code, Cursor and other stdio clients use the JSON in the [README](../README.md#quick-start). For Codex, use the equivalent `[mcp_servers.tokenfrugal]` table in `~/.codex/config.toml`.
+Install steps for Windows, macOS and Linux, with a ready-to-paste prompt for Claude Code and for Codex, are in the [README](../README.md#install-windows-macos-linux). Claude Code uses `claude mcp add`. Codex uses the `[mcp_servers.tokenfrugal]` table in `~/.codex/config.toml`. Other stdio clients use the JSON shown there.
 
 Tools exposed to the agent: `dispatch_task`, `ask_followup`, `get_detail`, `resume_task`, `list_roles`, and the plan tools `plan_add`, `plan_overview`, `plan_revert` and `plan_update_from`. `server.py` is a simpler two-tool legacy server (`query_local_llm`) if you only want that.
 
