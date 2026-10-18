@@ -43,9 +43,12 @@ def _load(name):
     return list(csv.DictReader(_path.open(encoding="utf-8")))
 
 
-# Stage-1 rows are the only results in the report. benchmark.csv and cloud.csv
-# predate the tool-issue fix, so they are not loaded.
-rows = _load("stage1-fullrun.csv")
+# benchmark.csv is the source of truth (one row per raw run log in results/raw/).
+# Excluded from the report: diagnostic runs (probe, browser-longlived) and the cloud Haiku baseline,
+# which stays out of the ranking. Runs where every case hit an infra failure have no valid score.
+EXCLUDE_TAGS = {"probe-qwen-tracker-browser", "browser-longlived", "haiku-baseline"}
+rows = [r for r in _load("benchmark.csv") if r.get("tag") not in EXCLUDE_TAGS]
+rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0")]
 missing = [c for c in CASES if c not in rows[0]]
 if missing:
     raise SystemExit(f"benchmark CSVs are missing case columns: {missing}")

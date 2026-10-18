@@ -127,10 +127,18 @@
   .cfg-field input, .cfg-role select { padding: 6px 8px; border: 1px solid var(--line, #ccc); border-radius: 6px; background: var(--card, #fff); color: inherit; }
   .cfg-role { border: 1px solid var(--line, #ccc); border-radius: 8px; margin-bottom: 10px; }
   .cfg-role > summary { cursor: pointer; padding: 10px 12px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+  .cfg-role-model { margin: 8px 0 0 24px; min-width: 200px; max-width: 100%; }
   .cfg-role-body { padding: 0 12px 12px; display: grid; gap: 10px; }
   .cfg-role-body .cfg-field { max-width: 360px; }
   .cfg-mcp-box > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 4px 0; }
   .cfg-mcp-list { display: grid; gap: 4px; margin-top: 6px; }
+  .cfg-section { border: 1px solid var(--line, #ccc); border-radius: 8px; padding: 0 12px; margin: 12px 0; }
+  .cfg-section > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+  .cfg-section > summary::-webkit-details-marker { display: none; }
+  .cfg-section > summary::before { content: ">"; color: var(--muted); font-family: ui-monospace, monospace; font-weight: 700; font-size: 12px; width: 10px; display: inline-block; text-align: center; transition: transform .15s; }
+  .cfg-section[open] > summary::before { transform: rotate(90deg); }
+  .cfg-section > summary h3 { margin: 10px 0; }
+  .cfg-section > :not(summary) { margin-left: 18px; }
   .cfg-mcp-row { border: 1px solid var(--line, #ccc); border-radius: 6px; padding: 6px 10px; }
   .cfg-mcp-row > summary { cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; list-style: none; }
   .cfg-mcp-row > summary::-webkit-details-marker { display: none; }
@@ -177,13 +185,17 @@
   <section id="tab-configuration" hidden>
     <h2>Configuration</h2>
     <p class="note">Saved to <code>router/config_overrides.json</code>. The router reads it at start, so restart it to apply (MCP servers can be restarted below without that). Blank fields use the value from <code>.env</code>.</p>
-    <h3>Global settings</h3>
-    <div class="cfg-grid" id="cfg-global"></div>
-    <div class="cfg-actions"><button type="button" class="cfg-save-btn" onclick="saveConfig()">Save changes</button><span class="meta cfg-status-line"></span></div>
-    <h3>MCP servers</h3>
-    <p class="note">Restart recreates a server's backend containers and reconnects to it. The router keeps running. A server used by a running task is skipped.</p>
-    <div class="cfg-actions"><button type="button" id="mcp-all" onclick="restartMcp('all')">Reconnect all</button><span id="mcp-all-status" class="meta"></span></div>
-    <div id="cfg-mcp-servers"></div>
+    <details class="cfg-section">
+      <summary><h3>Global settings</h3></summary>
+      <div class="cfg-grid" id="cfg-global"></div>
+      <div class="cfg-actions"><button type="button" class="cfg-save-btn" onclick="saveConfig()">Save changes</button><span class="meta cfg-status-line"></span></div>
+    </details>
+    <details class="cfg-section">
+      <summary><h3>MCP servers</h3></summary>
+      <p class="note">Restart recreates a server's backend containers and reconnects to it. The router keeps running. A server used by a running task is skipped.</p>
+      <div class="cfg-actions"><button type="button" id="mcp-all" onclick="restartMcp('all')">Reconnect all</button><span id="mcp-all-status" class="meta"></span></div>
+      <div id="cfg-mcp-servers"></div>
+    </details>
     <h3>Roles: model and MCPs</h3>
     <p class="note">Each role runs one model with the MCPs ticked below. If no MCP is ticked, the role uses its default toolkit.</p>
     <p class="cfg-note">Expand an agent to change its model and MCP servers. Expand an MCP server to see its tools and set each one to Auto, Ask or Disable. The checkbox sets which MCP servers the agent may use. The Auto / Ask / Disable settings are saved, but the router does not enforce them yet.</p>
@@ -599,6 +611,14 @@ async function buildConfig() {
   const rolesBox = $('cfg-roles');
   rolesBox.replaceChildren();
   cfgRoleInputs = [];
+  // Ranked per role group from Benchmark/results/benchmark.csv via build_report.py (best first)
+  const RANKED = {
+    builder: ['hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS', 'gemma4:e4b', 'hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M', 'hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M', 'hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS', 'hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M', 'glm4:9b-chat-q5_K_M', 'hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M'],
+    thinker: ['hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS', 'hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M', 'hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M', 'hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M', 'hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'gemma4:e4b', 'hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS', 'glm4:9b-chat-q5_K_M', 'hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M'],
+  };
+  // Dot per model from the report status: 🟢 every run full and clean, 🟡 75% or more, 🔴 below that
+  const DOTS = { builder: ['🟢', '🟢', '🟡', '🟡', '🟡', '🔴', '🔴', '🔴', '🔴'], thinker: ['🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🔴', '🔴'] };
+  const groupOf = (role) => (['builder', 'data', 'devops'].includes(role) ? 'builder' : 'thinker');
   for (const r of roles) {
     // One collapsible card per agent role, titled with its name
     const card = el('details', 'cfg-role');
@@ -606,14 +626,27 @@ async function buildConfig() {
     title.append(el('span', '', r.role), el('span', 'meta', 'running: ' + r.model));
     card.append(title);
     const body = el('div', 'cfg-role-body');
-    const sel = el('select');
+    // Model is an expandable row like the MCP servers: the dropdown sits inside it
+    const modelRow = el('details', 'cfg-mcp-row');
+    const modelSum = el('summary', '');
+    modelSum.append(el('span', '', 'Model'));
+    const sel = el('select', 'cfg-role-model');
     const pick = (saved.role_models || {})[r.role] || '';
     sel.append(new Option('default (agents.yaml)', ''));
+    const group = groupOf(r.role);
+    const rank = new Map(RANKED[group].map((m, i) => [m, { dot: DOTS[group][i], top: i === 0 }]));
     const names = [...new Set([...models, ...(pick ? [pick] : [])])];
-    for (const m of names) sel.append(new Option(m, m));
+    for (const m of names) {
+      const k = rank.get(m);
+      sel.append(new Option(k ? `${k.dot} ${m}${k.top ? '  (top ranked)' : ''}` : m, m));
+    }
     sel.value = pick;
-    body.append(el('label', 'cfg-field', 'Model'));
-    body.lastChild.append(sel);
+    sel.title = 'Model for this role';
+    const modelNow = el('span', 'meta', pick || 'default (agents.yaml)');
+    sel.addEventListener('change', () => { modelNow.textContent = sel.value || 'default (agents.yaml)'; });
+    modelSum.append(modelNow);
+    modelRow.append(modelSum, sel);
+    body.append(modelRow);
     // Collapsible MCP list, one checkbox per MCP name
     const savedMcps = (saved.role_mcps || {})[r.role] || [];
     const checked = new Set(savedMcps.length ? savedMcps : (r.mcps || []));
