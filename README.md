@@ -22,26 +22,69 @@ TokenFrugal is an MCP server. Your cloud agent (Claude Code, Codex, Cursor or an
 4. **Working on confidential code.** For client or internal code that must not leave the machine, the source stays local and only summaries reach the cloud agent.
 5. **Documentation, design and browser checks.** Route docs to `docs`, UI mock-ups to `designer`, and page audits to `browser`, each with its own persona and tools.
 
-## Quick start
+## Install (Windows, macOS, Linux)
 
-You need Python 3.11+, git, Docker, and [Ollama](https://ollama.com) (or any OpenAI-compatible LLM API).
+You need Python 3.11+, git, Docker, and [Ollama](https://ollama.com) (or any OpenAI-compatible LLM API). Pick your agent below: each has the steps, then a prompt you can paste into the agent to do the install for you.
+
+### Install the router
 
 ```bash
 git clone https://github.com/maxh8086/tokenfrugal.git
 cd tokenfrugal
 python -m venv .venv
+```
+
+Activate the environment:
+
+- **Windows (PowerShell):** `.venv\Scripts\Activate.ps1`
+- **macOS / Linux:** `source .venv/bin/activate`
+
+Then install and check:
+
+```bash
 pip install -r requirements.txt
-cp .env.example .env          # set TOKENFRUGAL_LLM_URL
+cp .env.example .env          # Windows: copy .env.example .env, then set TOKENFRUGAL_LLM_URL
 python scripts/doctor.py      # checks everything and prints the fix commands
 ```
 
-Then register the router with your agent:
+Note the full path to the venv's Python for the next step: `.venv\Scripts\python.exe` on Windows, `.venv/bin/python` on macOS and Linux.
 
-```json
-{ "mcpServers": { "tokenfrugal": { "type": "stdio", "command": "python", "args": ["-m", "router.server"], "cwd": "<path-to>/tokenfrugal" } } }
+### Connect Claude Code
+
+Run from inside the `tokenfrugal` folder, replacing the placeholder with your venv Python path:
+
+```bash
+claude mcp add tokenfrugal -- <path-to-venv-python> -m router.server
 ```
 
-The full setup (models, Docker backends, tool profiles, smoke tests) is in the [technical guide](docs/technical.md#setup).
+**Prompt for Claude Code:**
+
+> Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install requirements.txt, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then register the router as an MCP server named tokenfrugal with `claude mcp add`, using the venv's Python, `-m router.server`, and the repo folder as the working directory. Do not write API keys into files or chat.
+
+### Connect Codex
+
+Add this table to `~/.codex/config.toml` (on Windows: `%USERPROFILE%\.codex\config.toml`), replacing the placeholders:
+
+```toml
+[mcp_servers.tokenfrugal]
+command = "<path-to-venv-python>"
+args = ["-m", "router.server"]
+cwd = "<path-to>/tokenfrugal"
+```
+
+**Prompt for Codex:**
+
+> Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install requirements.txt, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then add a `[mcp_servers.tokenfrugal]` table to my ~/.codex/config.toml that runs the venv's Python with `-m router.server` from the repo folder. Keep my existing config intact. Do not write API keys into files or chat.
+
+### Other MCP clients
+
+Any stdio MCP client can use the same command. Example JSON:
+
+```json
+{ "mcpServers": { "tokenfrugal": { "type": "stdio", "command": "<path-to-venv-python>", "args": ["-m", "router.server"], "cwd": "<path-to>/tokenfrugal" } } }
+```
+
+Restart the client after registering. The full setup (models, Docker backends, tool profiles, smoke tests) is in the [technical guide](docs/technical.md#setup).
 
 ## Learn more
 
