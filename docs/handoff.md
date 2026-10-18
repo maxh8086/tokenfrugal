@@ -1,45 +1,69 @@
-# Handoff: tokenfrugal text-tool fix, dashboard STATUS chip, client names
+# Handoff: open work after commit c344203
 
-Last updated: 2026-10-11
+State: tf-roles rename, 18 db-* roles, per-level skills and L1-L6 profiles are committed. Hard-suite benchmark files are
+uncommitted and separate. Rules: no Co-Authored-By trailer, no "generated with" footer, no push unless asked, stage
+explicit paths, never use the tokenfrugal MCP in this repo (Haiku subagents only), never print secrets, ignore the flaky
+live `tests/test_haiku_toolcalls.py`. Tests: `PYTHONPATH=. .venv/Scripts/python.exe -m unittest discover -s tests -t . -q`.
 
-## Where things are
+## Stage 1: live DB checks (no new software; images already pulled)
+Goal: confirm every db-* profile lists only its allowlisted tools and a dev role can write to scratch.
+1. Start scratch DBs: `scripts/mcp_up.ps1` or `docker compose --profile db-postgres up -d --wait` (needs dummy
+   `CRAWL4AI_API_TOKEN` and `SEARXNG_SECRET` env vars).
+2. For each of postgres, mysql, mssql, redis, elastic: run `docker mcp gateway run --profile db-<engine>-dev` and
+   `-admin` and list tools; check <=6 and no drop/delete/rename.
+3. Re-run the Postgres dev write check (create table, insert, select) and that admin rejects a write.
+4. Oracle: leave as wired + unit-tested (no scratch container); say so in the report.
+Done when: a table of engine x kind with tools-listed and write-result, stopped containers afterwards.
 
-- **Main checkout (the only active checkout):** `C:\Users\vaibh\Downloads\Projects\tokenfrugal`, branch `fix/devops-list-profile`. Gateways run from here.
-- **Merged to main:** PR #18 (https://github.com/maxh8086/tokenfrugal/pull/18), merge commit `ba9f83b`. It contains:
-  - `afe5329`: text-tool parsing fix and client_info fix.
-  - `f69556c`: `/health` route in `ui/server.js` and STATUS chip in `ui/index.html`.
-- The worktree `hiku-fallback-issue-8209ee` and branch `claude/hiku-fallback-issue-8209ee` (local and remote) are deleted. An empty folder at `.claude/worktrees/hiku-fallback-issue-8209ee` remains because it was locked during deletion. Remove it manually.
-- **Main checkout local branch `fix/devops-list-profile`:** has `98b500b`, the cherry-pick of `afe5329`. It is not yet merged with `ba9f83b`.
-- Offline tests: 105 pass (`.venv/Scripts/python.exe -m unittest discover -s tests -t . -q`), checked on the cherry-picked branch.
+Status: DONE (scratch DBs stopped, neo4j left running). Results:
 
-## Done
+| Engine / profile | Tools listed | Write result |
+|---|---|---|
+| postgres dev / admin | execute_sql, search_objects | dev writes OK; admin READONLY_VIOLATION |
+| mysql dev / admin | execute_sql, search_objects | dev writes OK; admin READONLY_VIOLATION |
+| mssql dev / admin | execute_sql, search_objects | dev create/insert/select OK; admin READONLY_VIOLATION |
+| redis-dev-l1 | get, hgetall, hset, lrange, set, smembers | set/get OK |
+| mongo-dev-l2 | collection-schema, create-collection, create-index, find, insert-many, update-many | create/insert OK; `find` right after writes returned "Connection closed" (open) |
+| mongo-admin-l2 | aggregate, collection-indexes, count, explain, find, mongodb-logs | find OK |
+| elastic-dev | esql, get_mappings, list_indices, search | list_indices OK |
+| oracle | n/a | wired and unit-tested only; no scratch container |
 
-1. **Text-tool parsing** (`router/loop.py`): `parse_text_calls`, `text_tool_prompt`, `text_view`. Unit tests in `tests/test_text_tools.py`. A live builder dispatch wrote the expected file (to the main checkout, see Open issues).
-2. **client_info fix** (`router/server.py`): the MCP field is snake_case `client_info`, not `clientInfo`. The old lookup raised AttributeError, which was suppressed, so no `client` event was emitted. Regression test: `tests/test_client_seen.py`.
-3. **`/health` route** (`ui/server.js`): reports `{status, clients}`. `status` is `up` if any gateway pid that has written to the events file is alive, else `down`. Pids are never exposed. Client names come from `client` events.
-4. **STATUS chip** (`ui/index.html`): `load()` fetches `/api/state` and `/health` in parallel. The chip is `disconnected` when `health.status !== 'up'`, otherwise `unavailable`, `running` or `idle`, per `renderChrome()`.
+Not checked: mongo-dev-l1, mongo-admin-l1, elastic-admin, redis-dev-l2/l3, redis-admin-l1 tool lists.
+Fixed: redis and oracle image digests pinned to the locally pulled ones in gen_db_profiles.py.
+Lesson: a killed or timed-out `docker mcp gateway run` client orphans its stdio containers (label docker-mcp=true);
+remove them with `docker ps -aq --filter label=docker-mcp-name=<server> | xargs docker rm -f`.
 
-## Open / not yet verified
+## Stage 2: coding ablation rerun
+Why: n=1 showed skills on = off (3/6 verified each); L4 timed out both arms.
+1. Per-role timeout, not one global value: add `timeout_s` per role in router/tf-roles.yaml; bench.py and
+   run_benchmark.py read it (replacing TASK_TIMEOUT_DEFAULT=150 and BENCH_CASE_TIMEOUT=600) and write it into every
+   result row. FREEZE the values before the n=3 run so the knob cannot flatter a role after seeing results.
+2. After each batch run Haiku reviews the failures: classifies each (timeout, tool-call error, wrong output, spec
+   ambiguity) and proposes spec/task/timeout changes as candidates only. They pass the Stage 3 gate (Sonnet 5.5 for
+   L1-L3, Opus 5.5 for L4-L6) and apply to the next run only, after a freeze. Nothing is auto-applied mid-experiment.
+3. `BENCH_SUITE=coding BENCH_OUT_DIR=Benchmark/results/coding PYTHONPATH=. .venv/Scripts/python.exe -m scripts.bench --only realworld --n 3 --tag abl3-on`,
+   then the same with `TOKENFRUGAL_NO_SKILLS=1` and tag `abl3-off`. Run sequentially in the background.
+4. Compare per level: verified rate and median seconds. Keep a skill only if on >= off on its level.
+Done when: a per-level table with n=3 and a keep/drop/rewrite verdict per skill.
 
-- **Dashboard on port 7777 is stale.** Node pid 5840 runs `C:\Users\vaibh\Downloads\Projects\tokenfrugal\ui\server.js` from the main checkout (started 00:25). It predates the `/health` route. Restarting Claude does not restart it.
-- **STATUS chip not verified in a browser.** `/health` was checked only on a fresh instance on port 7792. It returned `down`, correctly, since no gateway pid was alive at the time.
-- **Gateways must restart to pick up code.** Each Claude session starts its own gateway (`python -m router.server`). Start a new session that uses tokenfrugal, then run a task and check the dashboard for `up` and client names.
-- **Main checkout has uncommitted `router/config.py` change** that predates this work. Left alone.
-- **Main checkout has a local branch that is behind `main`:** `fix/devops-list-profile` at `98b500b` does not include `ba9f83b`. Sync it before committing there.
-- **Builder writes go to the main checkout**, not a worktree, because the gateway's workspace is the main checkout. Fix the workspace or accept it.
-- **Process note:** `ui/server.js` and `ui/index.html` were edited directly, not via tokenfrugal. CLAUDE.md says routine code goes to tokenfrugal first. This is disclosed in PR #18.
+## Stage 3: propose-and-gate skill learning
+Spec: Haiku proposes a SKILL.md change; Sonnet 5.5 reviews L1-L3, Opus 5.5 reviews L4-L6. Gates in order:
+(1) under 1.2k characters, (2) offline tests, (3) no regression on that level's cases (n>=3), (4) reviewer approval.
+Candidates go in `router/skills_candidates/<skill>/<ts>.md`; approved candidate is written to the working tree, never
+committed; the reviewer cannot edit the skill. Build `scripts/skill_gate.py` with unit tests that stub the model calls.
+Done when: gate order and rejection reasons are tested offline.
 
-## GitHub issues (maxh8086/tokenfrugal)
+## Stage 4: Haiku cloud baseline
+Write `scripts/haiku_run.py`: read `ANTHROPIC_API_KEY` from the Windows User env var without printing it; run the
+16-case suite on `claude-haiku-4-5`, one case first, then n=3, writing `Benchmark/results/cloud.csv`. Never ranked.
 
-- #16: queue status. A new session can't tell if tokenfrugal is busy. Still open.
-- #17: browser role fails. Docker container resolves `127.0.0.1` to itself, and Playwright tools are missing. Still open.
+## Stage 5: Codex / cloud agents README
+Add a README section: MCP config snippet and an AGENTS.md template. Mark it verified only after a real Codex run.
 
-## Do not touch
-
-- The other session's `ui/app/api.py` Haiku-fallback work.
-
-## Next steps
-
-1. Sync the main checkout to `main` (it is behind `ba9f83b`), then stop pid 5840 and start the dashboard from the main checkout: `UI_PORT=7777 GATEWAY_EVENTS=C:/Users/vaibh/Downloads/Projects/tokenfrugal/router/events.jsonl node ui/server.js`. Confirm `curl http://127.0.0.1:7777/health` returns JSON with `status`.
-2. Start a new Claude session that uses tokenfrugal, run a small task, and confirm `/health` returns `up` with a client name. Confirm the STATUS chip reads running or idle.
-3. Remove the empty folder `.claude/worktrees/hiku-fallback-issue-8209ee` once no session has it open.
+## Stage 6: hard-suite and loose ends
+- hard section in explorer.html and Benchmark.md; live test of the hard block in run_benchmark.py
+- reorder md_table() so s/case precedes t/s; scan tf_roles_ui.py and explorer.html for the old t/s formula
+- harden subtotal and the csv loader against Excel date-mangled cells; check the Test Model card in the browser pane
+- decide on profiles/build-data.yaml + router/skills/role-data (used by data-engineer)
+- verify "agentl-growth-mentor" in tf-roles.yaml (~line 202) is pre-existing
+- re-index synaptree from the main checkout; stop http.server on port 8765 (task bf43mceh9)
