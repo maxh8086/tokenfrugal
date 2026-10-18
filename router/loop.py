@@ -218,6 +218,11 @@ def text_view(msgs: list) -> list:
     return out
 
 
+def role_timeout(role: dict) -> float:
+    """Whole-task limit in seconds: the role's frozen timeout_s when set, else the global TASK_TIMEOUT."""
+    return float(role.get("timeout_s") or TASK_TIMEOUT)
+
+
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
               tid: str = "") -> tuple[str, list]:
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
@@ -232,10 +237,11 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         body = path.read_text(encoding="utf-8").split("---", 2)[-1].strip()
         system += f"\n\nSkill {name}:\n{body}"
     msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
+    limit = role_timeout(role)
     try:
-        return await asyncio.wait_for(_run(agent, role, msgs, tid), TASK_TIMEOUT or None)
+        return await asyncio.wait_for(_run(agent, role, msgs, tid), limit or None)
     except asyncio.TimeoutError:
-        e = LoopError(f"task timed out after {TASK_TIMEOUT:g}s")
+        e = LoopError(f"task timed out after {limit:g}s")
         e.msgs = msgs
         raise e
     except BaseException as e:
