@@ -76,6 +76,21 @@ cwd = "<path-to>/tokenfrugal"
 
 > Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install requirements.txt, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then add a `[mcp_servers.tokenfrugal]` table to my ~/.codex/config.toml that runs the venv's Python with `-m router.server` from the repo folder. Keep my existing config intact. Do not write API keys into files or chat.
 
+#### AGENTS.md for Codex and other agents
+
+Codex reads `AGENTS.md` from the project root. Copy [examples/example_agents.md](examples/example_agents.md) into your project as `AGENTS.md`; it tells the agent when to call `dispatch_task`, how to handle failures, and to find code through `synaptree` before reading files. Minimal version:
+
+```markdown
+# AGENTS.md
+- Delegate routine work (code, tests, docstrings, lint fixes, summaries) with `dispatch_task(agent, task)`; pick the slug from `list_roles`. Keep architecture and hard decisions for yourself.
+- Results are 150-300 token summaries; call `get_detail(task_id)` sparingly.
+- On failure call `resume_task(task_id)` once, then split the task.
+- Pass file paths, not file contents. Run the project's tests after every delegated change.
+- Never print or commit secrets.
+```
+
+> **Not yet verified.** The config table and the AGENTS.md template follow Codex's documented format, but they have not been tested in a real Codex run. This note stays until they are.
+
 ### Other MCP clients
 
 Any stdio MCP client can use the same command. Example JSON:
