@@ -613,11 +613,11 @@ async function buildConfig() {
   cfgRoleInputs = [];
   // Ranked per role group from Benchmark/results/benchmark.csv via build_report.py (best first)
   const RANKED = {
-    builder: ['hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS', 'gemma4:e4b', 'hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M', 'hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M', 'hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS', 'hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M', 'glm4:9b-chat-q5_K_M', 'hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M'],
-    thinker: ['hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS', 'hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M', 'hf.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF:Q4_K_M', 'hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M', 'hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'gemma4:e4b', 'hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS', 'glm4:9b-chat-q5_K_M', 'hf.co/bartowski/google_gemma-3-12b-it-GGUF:Q4_K_M'],
+    builder: ['hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'gemma4:e4b'],
+    thinker: ['gemma4:e4b', 'hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K'],
   };
   // Dot per model from the report status: 🟢 every run full and clean, 🟡 75% or more, 🔴 below that
-  const DOTS = { builder: ['🟢', '🟢', '🟡', '🟡', '🟡', '🔴', '🔴', '🔴', '🔴'], thinker: ['🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🔴', '🔴'] };
+  const DOTS = { builder: ['🟢', '🟡'], thinker: ['🟡', '🟡'] };
   const groupOf = (role) => (['builder', 'data', 'devops'].includes(role) ? 'builder' : 'thinker');
   for (const r of roles) {
     // One collapsible card per agent role, titled with its name
