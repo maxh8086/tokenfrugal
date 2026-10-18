@@ -3,15 +3,15 @@
 # Local-only: no cloud fallback. Failures return a capped error summary to Haiku.
 models:
   builder: hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K
-  thinker: gemma4:e4b
+  thinker: prism-bonsai-4b-q1:latest
 # Per-agent model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
 # Empty by default: every agent uses its role's model. Add entries here, or override
 # without touching this file via `python -m scripts.agent_ui` (writes router/agent_models.json).
 agent_models: {}
 # Slugs accepted even with no model mapping (benchmark cases dispatch to these).
-known_agents: [engineering-backend-architect, design-ui-designer, gis-analyst, support-docs-writer]
+known_agents: [coding-l1, coding-l2, coding-l3, coding-l4, coding-l5, coding-l6, engineering-backend-architect, design-ui-designer, gis-analyst, support-docs-writer]
 roles:
-  builder:  {model: builder, profile: build,      max_steps: 12, native: [synaptree], tools: [read_file, write_file, edit_file, search_files, search_graph, get_code_snippet]}
+  builder:  {model: builder, profile: build,      max_steps: 12, native: [synaptree, sandbox], tools: [read_file, write_file, edit_file, search_graph, get_code_snippet, run_tests]}
   data:     {model: builder, profile: build-data, max_steps: 12, tools: [read_file, list_directory]}  # no SQL MCP wired yet
   analyzer: {model: thinker, profile: analyze,    max_steps: 10, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep]}
   security: {model: thinker, profile: security,   max_steps: 10, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule]}
@@ -21,6 +21,12 @@ roles:
   designer: {model: thinker, profile: design,     max_steps: 10, compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape]}
   browser:  {model: thinker, profile: browser,    max_steps: 8,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit]}
   tracker:  {model: thinker, max_steps: 6,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note], skills: [planning]}
+  code-l1:  {model: builder, profile: code-l1, max_steps: 8,  native: [sandbox], tools: [read_file, write_file, run_tests]}
+  code-l2:  {model: builder, profile: code-l2, max_steps: 10, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests]}
+  code-l3:  {model: builder, profile: code-l3, max_steps: 12, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, directory_tree, run_tests]}
+  code-l4:  {model: builder, profile: code-l4, max_steps: 12, native: [sandbox], tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests]}
+  code-l5:  {model: builder, profile: code-l5, max_steps: 14, native: [sandbox], tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python]}
+  code-l6:  {model: builder, profile: code-l6, max_steps: 14, native: [synaptree, sandbox], tools: [search_graph, trace_path, get_code_snippet, read_file, edit_file, run_tests]}
   github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents]}  # read-only; create/close/merge PRs stay with Haiku
   github-actions-read: {model: thinker, profile: github, max_steps: 8, tools: [actions_list, actions_get, get_job_logs]}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code]}
@@ -140,6 +146,12 @@ overrides:
   testing-workflow-optimizer: analyzer
   zk-steward: docs
   github-ops: github-read
+  coding-l1: code-l1
+  coding-l2: code-l2
+  coding-l3: code-l3
+  coding-l4: code-l4
+  coding-l5: code-l5
+  coding-l6: code-l6
   github-actions-ops: github-actions-read
 # Agents whose slug lacks the folder prefix: folder -> slugs (resolve via that folder's division role).
 members:
