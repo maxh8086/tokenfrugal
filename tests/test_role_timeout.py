@@ -35,7 +35,7 @@ class RoleTimeout(unittest.TestCase):
     def test_bench_limits_replace_case_timeout(self):
         t, wd = bench_real.case_limits("coding-l4")
         self.assertEqual((t, wd), (300.0, 300.0 + bench_real.WATCHDOG_GRACE))
-        t, wd = bench_real.case_limits("devops")
+        t, wd = bench_real.case_limits("engineering-devops-automator")
         self.assertIsNone(t)
         self.assertEqual(wd, bench_real.CASE_TIMEOUT)
 
