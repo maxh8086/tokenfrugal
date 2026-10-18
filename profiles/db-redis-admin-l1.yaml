@@ -1,0 +1,30 @@
+version: 1
+id: db-redis-admin-l1
+name: db-redis-admin-l1
+secrets:
+  default:
+    provider: docker-desktop-store
+servers:
+- type: image
+  secrets: default
+  tools:
+  - info
+  - dbsize
+  - client_list
+  - scan_keys
+  - get_indexes
+  - get_index_info
+  image: mcp/redis@sha256:0cd246d56f0f26235f1230a44b28834c3603c8900afad62767220772cfe4c509
+  snapshot:
+    server:
+      name: redis
+      type: server
+      image: mcp/redis@sha256:0cd246d56f0f26235f1230a44b28834c3603c8900afad62767220772cfe4c509
+      description: Redis (admin)
+      title: redis
+      remote: {}
+      env:
+      - name: REDIS_HOST
+        value: host.docker.internal
+      - name: REDIS_PORT
+        value: '6379'

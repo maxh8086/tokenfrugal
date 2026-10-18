@@ -115,6 +115,88 @@ services:
       retries: 20
       start_period: 5s
 
+  # Scratch databases for the db-* roles. Ephemeral (no volumes), loopback only, throwaway test password
+  # (must match SCRATCH_PW in scripts/gen_db_profiles.py). Never point real data at these.
+  db-postgres:
+    image: postgres:16
+    profiles: [db-postgres]
+    environment: {POSTGRES_USER: tf, POSTGRES_PASSWORD: "${TF_DB_PASSWORD:-tf_scratch_pw}", POSTGRES_DB: tf_scratch}
+    ports: ["127.0.0.1:5432:5432"]
+    mem_limit: 512m
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tf -d tf_scratch"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  db-mysql:
+    image: mysql:8.0
+    profiles: [db-mysql]
+    environment: {MYSQL_ROOT_PASSWORD: "${TF_DB_PASSWORD:-tf_scratch_pw}", MYSQL_DATABASE: tf_scratch}
+    ports: ["127.0.0.1:3306:3306"]
+    mem_limit: 768m
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 10s
+
+  db-mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    profiles: [db-mssql]
+    environment: {ACCEPT_EULA: "Y", MSSQL_SA_PASSWORD: "${TF_DB_MSSQL_PASSWORD:-tf_Scratch_pw1}", MSSQL_PID: Developer}
+    ports: ["127.0.0.1:1433:1433"]
+    mem_limit: 2g
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 20s
+
+  db-mongo:
+    image: mongo:7
+    profiles: [db-mongo]
+    ports: ["127.0.0.1:27017:27017"]
+    mem_limit: 512m
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1}).ok' | grep -q 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  db-redis:
+    image: redis:7
+    profiles: [db-redis]
+    ports: ["127.0.0.1:6379:6379"]
+    mem_limit: 256m
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  db-elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    profiles: [db-elastic]
+    environment: {discovery.type: single-node, xpack.security.enabled: "false", ES_JAVA_OPTS: "-Xms512m -Xmx512m"}
+    ports: ["127.0.0.1:9200:9200"]
+    mem_limit: 1g
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
 volumes:
   neo4j_data:
   # existing volumes from the former `docker run` sonarqube-ce container (keeps its data)

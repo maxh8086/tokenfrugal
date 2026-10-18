@@ -5,15 +5,15 @@ import os
 import tempfile
 import unittest
 
-from scripts import agent_routing_eval as pre
+from scripts import tf_roles_routing_eval as pre
 
 AGENTS_YAML = """\
-agent_models:
+tf_roles_models:
   engineering-backend-architect: builder
   design-ui-designer: builder
 overrides:
   testing-api-tester: builder
-agent_skills:
+tf_roles_skills:
   product-manager: planning
 divisions:
   engineering: [engineering-backend-architect]

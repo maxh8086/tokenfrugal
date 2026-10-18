@@ -1,0 +1,28 @@
+version: 1
+id: db-elastic-dev
+name: db-elastic-dev
+secrets:
+  default:
+    provider: docker-desktop-store
+servers:
+- type: image
+  secrets: default
+  tools:
+  - esql
+  - get_mappings
+  - list_indices
+  - search
+  image: mcp/elasticsearch@sha256:9c978b8277e32be0229e0c2f5c631e4106dd1c9c955ec361814588688582bcfd
+  snapshot:
+    server:
+      name: elasticsearch
+      type: server
+      image: mcp/elasticsearch@sha256:9c978b8277e32be0229e0c2f5c631e4106dd1c9c955ec361814588688582bcfd
+      description: Elasticsearch (dev)
+      title: elasticsearch
+      remote: {}
+      command:
+      - stdio
+      env:
+      - name: ES_URL
+        value: http://host.docker.internal:9200

@@ -33,7 +33,7 @@ TokenFrugal router --> ONE local model (builder or thinker)
 
 ## Roles
 
-Roles are defined in `router/agents.yaml`. Each role runs on the local model set for it: the `builder` model for code and file edits, or the `thinker` model for reading and analysis. An agent can be overridden to a different model (see [Choosing a model per agent](#choosing-a-model-per-agent)).
+Roles are defined in `router/tf-roles.yaml`. Each role runs on the local model set for it: the `builder` model for code and file edits, or the `thinker` model for reading and analysis. An agent can be overridden to a different model (see [Choosing a model per agent](#choosing-a-model-per-agent)).
 
 | Role | Model | Docker profile | Typical work |
 | --- | --- | --- | --- |
@@ -70,7 +70,7 @@ python scripts/doctor.py
 
 ### 2. Pull and create the two local models
 
-Choose a builder model and a thinker model that suit your hardware (the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) compares them per role). Pull the base models, then create the tags that `router/agents.yaml` expects, using the Modelfiles in `models/`:
+Choose a builder model and a thinker model that suit your hardware (the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) compares them per role). Pull the base models, then create the tags that `router/tf-roles.yaml` expects, using the Modelfiles in `models/`:
 
 ```bash
 ollama pull <builder-base-model>
@@ -111,9 +111,9 @@ Tools exposed to the agent: `dispatch_task`, `ask_followup`, `get_detail`, `resu
 | `CC_WORKSPACE` | `.env` or real env var | Folder the file tools may write to |
 | `MCP_ENV_FILE` | `.env` or env | Path to the secrets file (default `~/.docker/mcp/mcp.env`) |
 | `PLAN_RETENTION_DAYS` | `.env` | 30. Finished plans are pruned after this |
-| `TOKENFRUGAL_AGENT_MODELS` | env | `0` turns off per-agent model mapping |
+| `TOKENFRUGAL_TF_ROLES_MODELS` | env | `0` turns off per-agent model mapping |
 | `TOKENFRUGAL_MODEL_*` | env | Any value pins every agent to the role models |
-| `TOKENFRUGAL_AGENT_MODELS_FILE` | env | Location of the per-agent mapping file |
+| `TOKENFRUGAL_TF_ROLES_MODELS_FILE` | env | Location of the per-agent mapping file |
 | `TOKENFRUGAL_UI` / `TOKENFRUGAL_UI_OPEN` | env | `0` disables the dashboard / skips the browser pop-up |
 | `UI_PORT` | env | Dashboard port (default 7777, or `port:` in `router/ui.yaml`) |
 | `GATEWAY_EVENTS` | env | Path of the event log (default `router/events.jsonl`) |
@@ -122,15 +122,15 @@ Restart the MCP client after changing settings.
 
 ## Choosing a model per agent
 
-`agent_models` in `router/agents.yaml` maps an agent slug to a local model. A value is `builder`, `thinker` or any Ollama tag. Agents not listed use their role's model.
+`tf_roles_models` in `router/tf-roles.yaml` maps an agent slug to a local model. A value is `builder`, `thinker` or any Ollama tag. Agents not listed use their role's model.
 
 Edit the mapping in a browser instead of the YAML:
 
 ```bash
-python -m scripts.agent_ui            # http://127.0.0.1:7878
+python -m scripts.tf_roles_ui            # http://127.0.0.1:7878
 ```
 
-Changes are saved to `router/agent_models.json` (git-ignored), which overrides the YAML. Restart the MCP client to apply.
+Changes are saved to `router/tf-roles_models.json` (git-ignored), which overrides the YAML. Restart the MCP client to apply.
 
 To compare models, use the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) and the [model selection guide](https://maxh8086.github.io/tokenfrugal/Benchmark/model-selection-guide.html). Results change as models and code change, so they are not listed in this guide.
 
@@ -144,12 +144,12 @@ The easiest way to make these changes is to give your agent a prompt. Paste one 
 
 > In this repo, add the Docker MCP catalogue server `<server-name>` to the `<role>` role.
 > 1. Add it to the matching profile in `profiles/*.yaml`. Follow the format of the existing profiles. Create a new profile file only if no existing profile fits.
-> 2. In `router/agents.yaml`, allowlist 4-6 of the server's tools for `<role>`. If the server exposes more than 6 tools, list them and ask me which to keep.
+> 2. In `router/tf-roles.yaml`, allowlist 4-6 of the server's tools for `<role>`. If the server exposes more than 6 tools, list them and ask me which to keep.
 > 3. Run `python scripts/install_profiles.py`, then `python scripts/smoke.py` and report the result for `<role>`.
 > 4. If the server needs a token, name the variable and say where it goes (`~/.docker/mcp/mcp.env`). Never write a secret into a repo file or into chat.
 > Show me the diff. Then tell me to restart the MCP client.
 
-Manual steps: edit `profiles/*.yaml` and `router/agents.yaml`, then run `python scripts/install_profiles.py` and restart the router.
+Manual steps: edit `profiles/*.yaml` and `router/tf-roles.yaml`, then run `python scripts/install_profiles.py` and restart the router.
 
 ### Prompt: add a helper server outside the catalogue
 
@@ -157,11 +157,11 @@ Manual steps: edit `profiles/*.yaml` and `router/agents.yaml`, then run `python 
 > 1. Read `docker/pins.yaml` and one existing helper directory under `docker/` (for example `docker/penpot-mcp/`). Follow their layout.
 > 2. Add an entry to `docker/pins.yaml` with `repo`, `sha` (the full 40 characters, never a branch name), `image`, and `dockerfile`. Add a `tag_regex` if the upstream uses release tags.
 > 3. Create the Dockerfile at the path you set in `dockerfile`. It builds from the cloned repo as its context.
-> 4. Add the service to `docker-compose.yml` (project `ts-mcp`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/agents.yaml`, and allowlist 4-6 of its tools.
+> 4. Add the service to `docker-compose.yml` (project `ts-mcp`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/tf-roles.yaml`, and allowlist 4-6 of its tools.
 > 5. Run `python scripts/pinned_build.py <name>`, then `python scripts/install_profiles.py`.
 > Report the image tag and the SHA. Do not change other pins or roles. Show me the diff.
 
-Manual steps: add the pin and Dockerfile, wire the service into `docker-compose.yml`, `profiles/*.yaml` and `router/agents.yaml`, then run `python scripts/pinned_build.py <name>` and `python scripts/install_profiles.py`.
+Manual steps: add the pin and Dockerfile, wire the service into `docker-compose.yml`, `profiles/*.yaml` and `router/tf-roles.yaml`, then run `python scripts/pinned_build.py <name>` and `python scripts/install_profiles.py`.
 
 ### Prompt: build helper images from their pinned commits
 

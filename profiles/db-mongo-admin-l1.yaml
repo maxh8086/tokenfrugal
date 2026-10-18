@@ -1,0 +1,30 @@
+version: 1
+id: db-mongo-admin-l1
+name: db-mongo-admin-l1
+secrets:
+  default:
+    provider: docker-desktop-store
+servers:
+- type: image
+  secrets: default
+  tools:
+  - list-databases
+  - list-collections
+  - collection-schema
+  - collection-indexes
+  - db-stats
+  - collection-storage-size
+  image: mcp/mongodb@sha256:7ea2f40b6e1f704f386354d7eaa97776de6ca19e48133916c08e1bd9ee0c0086
+  snapshot:
+    server:
+      name: mongodb
+      type: server
+      image: mcp/mongodb@sha256:7ea2f40b6e1f704f386354d7eaa97776de6ca19e48133916c08e1bd9ee0c0086
+      description: MongoDB (admin)
+      title: mongodb
+      remote: {}
+      env:
+      - name: MDB_MCP_CONNECTION_STRING
+        value: mongodb://host.docker.internal:27017/tf_scratch
+      - name: MDB_MCP_READ_ONLY
+        value: 'true'

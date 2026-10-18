@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from router.config import load_agents, resolve_role
+from router.config import load_tf_roles, resolve_role
 
 ROOT = Path(__file__).resolve().parent.parent
 READ_ONLY_WRITES = {"merge_pull_request", "update_pull_request", "issue_write", "actions_run_trigger"}
@@ -11,7 +11,7 @@ READ_ONLY_WRITES = {"merge_pull_request", "update_pull_request", "issue_write", 
 
 class GithubRouting(unittest.TestCase):
     def setUp(self):
-        self.cfg = load_agents()
+        self.cfg = load_tf_roles()
 
     def test_github_ops_routes_to_read_role_with_github_profile(self):
         role = resolve_role("github-ops", self.cfg)

@@ -210,8 +210,12 @@
     <div id="usage"></div>
   </section>
   <section id="tab-benchmark" hidden>
-    <iframe id="bidx" title="Benchmark index" scrolling="no" onload="fitFrame(this)" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px;margin-bottom:10px"></iframe>
-    <details id="brun"><summary style="font-size:1.05em;font-weight:600;padding:10px 14px;margin-bottom:10px;border:1px solid #4c8dff;border-radius:8px;background:rgba(76,141,255,.12);color:#9cc3ff;cursor:pointer">Test Model</summary>
+    <details id="brun" style="margin-bottom:12px;border:1px solid #4c8dff;border-radius:10px;background:linear-gradient(135deg,rgba(76,141,255,.16),rgba(76,141,255,.04));padding:0 14px">
+    <summary style="list-style:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 0;cursor:pointer">
+      <span style="font-size:1.6em">&#9654;</span>
+      <span style="flex:1;min-width:220px"><b style="font-size:1.1em">Test your own model</b><br><span class="meta">Run the same real-world coding cases on any installed Ollama model or OpenAI-compatible endpoint, then share the result.</span></span>
+      <span style="padding:8px 16px;border-radius:8px;background:#4c8dff;color:#fff;font-weight:600">Open test panel</span>
+    </summary>
     <p class="note">Test one model on the real-world coding cases (same harness as the published results). Pick an installed Ollama model, or give an OpenAI-compatible endpoint URL.</p>
     <div class="cfg-actions">
       <label>Model <select id="bm"></select></label>
@@ -240,7 +244,9 @@
       <p class="note">LinkedIn cannot prefill text from a link: the text is copied for you, paste it into the post box that opens.</p>
     </div>
     </details>
+    <iframe id="bidx" title="Benchmark index" scrolling="no" onload="fitFrame(this)" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px;margin-bottom:10px"></iframe>
   </section>
+  <button type="button" id="tfab" hidden onclick="openTest()" style="position:fixed;right:18px;bottom:18px;z-index:20;padding:10px 18px;border:0;border-radius:999px;background:#4c8dff;color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer">&#9654; Test a model</button>
   <section id="tab-explorer" hidden>
     <iframe id="expl" title="Benchmark explorer" scrolling="no" onload="fitFrame(this)" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px"></iframe>
   </section>
@@ -393,6 +399,7 @@ function showTab(name) {
   }
   if (name === 'usage') renderUsage();
   if (name === 'configuration') buildConfig();
+  $('tfab').hidden = name !== 'benchmark';
   if (name === 'benchmark') { benchInit(); if (!$('bidx').src) $('bidx').src = '/Benchmark/index.html'; }
   if (name === 'explorer' && !$('expl').src) $('expl').src = '/Benchmark/explorer.html';
 }
@@ -414,8 +421,7 @@ function fitFrame(f) {
     }
     if (f.id === 'bidx' && nav) for (const x of nav.querySelectorAll('a')) {
       if (/run or add a model/i.test(x.textContent)) {
-        x.textContent = 'Test Model'; x.href = '#'; x.removeAttribute('target');
-        x.onclick = (e) => { e.preventDefault(); const d = $('brun'); d.open = true; benchInit(); d.scrollIntoView({ behavior: 'smooth' }); };
+        x.hidden = true; // the Test your own model card sits above the report, so the nav link is redundant
       }
     }
     // Collapse first: scrollHeight never drops below the frame's own height, so a shrinking page would keep its old height
@@ -426,6 +432,7 @@ function fitFrame(f) {
     d.addEventListener('click', () => setTimeout(set, 30), true);
   } catch (e) { /* cross-origin: keep fixed height */ }
 }
+function openTest() { const d = $('brun'); d.open = true; benchInit(); d.scrollIntoView({ behavior: 'smooth', block: 'start' }); const pr = $('bm'); if (pr) setTimeout(() => pr.focus({ preventScroll: true }), 400); }
 function modelOpts(id) {
   const sel = $(id), models = (state.services && state.services.ollama && state.services.ollama.models) || [];
   if (sel.options.length !== models.length) sel.replaceChildren(...models.map((m) => { const o = document.createElement('option'); o.value = o.textContent = m; return o; }));
@@ -613,11 +620,14 @@ async function buildConfig() {
   cfgRoleInputs = [];
   // Ranked per role group from Benchmark/results/benchmark.csv via build_report.py (best first)
   const RANKED = {
-    builder: ['hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'gemma4:e4b'],
-    thinker: ['gemma4:e4b', 'hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K'],
+    builder: ['hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'ts-qwen3-8b-16384:latest', 'gemma4:e4b', 'hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS', 'ts-qwen25c-7b-16384:latest', 'ts-gemma4-e4b-16384:latest', 'hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M', 'qwen3-vl:8b-instruct-q4_K_M', 'ts-ministral-3-8b-16384:latest', 'ts-qwen3-4b-16384:latest', 'prism-bonsai-4b-q1:latest', 'qwen2.5-coder:7b-instruct-q5_K_M', 'qwen2.5-coder-yarn:3b', 'prism-bonsai-8b-q1:latest', 'ts-granite4-micro-16384:latest', 'ts-llama3-1-8b-16384:latest', 'ts-qwen2-5-7b-16384:latest', 'qwen2.5:1.5b', 'llama3.2:3b-16k', 'granite3.3:2b', 'hf.co/empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M', 'ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-16384:latest', 'hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS', 'ts-phi4-mini-16384:latest', 'llama3.2:1b', 'hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M', 'lfm2.5-thinking:1.2b', 'prism-bonsai-1.7b-q1:latest'],
+    thinker: ['prism-bonsai-4b-q1:latest', 'ts-granite4-micro-16384:latest', 'hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M', 'ts-qwen2-5-7b-16384:latest', 'llama3.2:3b-16k', 'hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS', 'qwen3-vl:8b-instruct-q4_K_M', 'ts-llama3-1-8b-16384:latest', 'hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K', 'qwen2.5-coder:7b-instruct-q5_K_M', 'prism-bonsai-8b-q1:latest', 'gemma4:e4b', 'ts-gemma4-e4b-16384:latest', 'ts-qwen3-8b-16384:latest', 'lfm2.5-thinking:1.2b', 'ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-16384:latest', 'hf.co/empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M', 'hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS', 'hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M', 'ts-qwen25c-7b-16384:latest', 'qwen2.5:1.5b', 'qwen2.5-coder-yarn:3b', 'prism-bonsai-1.7b-q1:latest', 'ts-ministral-3-8b-16384:latest', 'granite3.3:2b', 'ts-qwen3-4b-16384:latest', 'llama3.2:1b', 'ts-phi4-mini-16384:latest'],
   };
   // Dot per model from the report status: 🟢 every run full and clean, 🟡 75% or more, 🔴 below that
-  const DOTS = { builder: ['🟢', '🟡'], thinker: ['🟡', '🟡'] };
+  const DOTS = { builder: ['🟢', '🟢', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴'], thinker: ['🟢', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🟡', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴', '🔴'] };
+  // Cloud model on the same cases, reference only
+  const CLOUD = { builder: 'claude-haiku-5-5 8/8 (reference, not ranked)', thinker: 'claude-haiku-5-5 24/24 (reference, not ranked)' };
+  const HARD = {"prism-bonsai-4b-q1:latest": "9/15", "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M": "15/15", "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS": "13/15", "qwen3-vl:8b-instruct-q4_K_M": "14/15", "llama3.2:3b-16k": "6/15", "cogito:8b": "2/15", "qwen3:4b-thinking-2507-q4_K_M": "6/15", "hermes3:8b": "3/15", "granite4:tiny-h": "9/15", "nemotron-3-nano:4b": "11/15"};
   const groupOf = (role) => (['builder', 'data', 'devops'].includes(role) ? 'builder' : 'thinker');
   for (const r of roles) {
     // One collapsible card per agent role, titled with its name
@@ -632,21 +642,21 @@ async function buildConfig() {
     modelSum.append(el('span', '', 'Model'));
     const sel = el('select', 'cfg-role-model');
     const pick = (saved.role_models || {})[r.role] || '';
-    sel.append(new Option('default (agents.yaml)', ''));
+    sel.append(new Option('default (tf-roles.yaml)', ''));
     const group = groupOf(r.role);
     const rank = new Map(RANKED[group].map((m, i) => [m, { dot: DOTS[group][i], top: i === 0 }]));
     const names = [...new Set([...models, ...(pick ? [pick] : [])])];
     for (const m of names) {
       const k = rank.get(m);
       // Unranked models get a white dot so every entry carries a color
-      sel.append(new Option(`${k ? k.dot : '⚪'} ${m}${k && k.top ? '  (top ranked)' : ''}`, m));
+      sel.append(new Option(`${k ? k.dot : '⚪'} ${m}${k && k.top ? '  (top ranked)' : ''}${group === 'thinker' && HARD[m] ? '  [hard ' + HARD[m] + ']' : ''}`, m));
     }
     sel.value = pick;
     sel.title = 'Model for this role';
-    const modelNow = el('span', 'meta', pick || 'default (agents.yaml)');
-    sel.addEventListener('change', () => { modelNow.textContent = sel.value || 'default (agents.yaml)'; });
+    const modelNow = el('span', 'meta', pick || 'default (tf-roles.yaml)');
+    sel.addEventListener('change', () => { modelNow.textContent = sel.value || 'default (tf-roles.yaml)'; });
     modelSum.append(modelNow);
-    const legend = el('span', 'meta', `${group} ranking: 🟢 every run clean · 🟡 75% or more · 🔴 below 75% · ⚪ not ranked`);
+    const legend = el('span', 'meta', `${group} ranking: 🟢 every run clean · 🟡 75% or more · 🔴 below 75% · ⚪ not ranked` + (CLOUD[group] ? ` · ☁️ ${CLOUD[group]}` : ''));
     modelRow.append(modelSum, sel, legend);
     body.append(modelRow);
     // Collapsible MCP list, one checkbox per MCP name

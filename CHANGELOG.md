@@ -5,6 +5,7 @@ All notable changes to this project. Versions follow `pyproject.toml` and `route
 ## Unreleased
 
 ### Changed
+- Renamed the agent config to tf-roles: `router/agents.yaml` is now `router/tf-roles.yaml`, `scripts/agent_ui.py` is now `scripts/tf_roles_ui.py`, and `dispatch_task` accepts `role` as an alias of `agent`. The `agent_*` names fall back until 2027-03-31.
 - Persona naming is now agent naming: config keys (`agent_models`, `agent_skills`), env vars (`TOKENFRUGAL_AGENT_MODELS`, `TOKENFRUGAL_AGENT_MODELS_FILE`, `TOKENFRUGAL_AGENT_MCPS_FILE`), override files (`router/agent_models.json`, `router/agent_mcps.json`), scripts (`scripts/agent_ui.py`, `scripts/agent_routing_eval.py`), and the benchmark data key (`agent:`).
 
 ### Deprecated

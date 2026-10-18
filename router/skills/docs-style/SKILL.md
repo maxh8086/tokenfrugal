@@ -5,9 +5,11 @@ description: House style for technical docs and READMEs. Short sentences, runnab
 
 # Docs style
 
-- Lead with what the thing does, then how to run it.
-- Use short sentences in the active voice. Define a term once, then reuse it.
-- Put every command in a fenced block with its language tag. Run-ready commands only, no `$` prompt.
-- Name only flags, paths and env vars that appear in the source you were given. If one is missing, write "not documented" rather than guessing.
-- No filler: drop "robust", "seamless", "powerful" and similar words.
-- Keep headings to one level below the title, in sentence case.
+Tools: read_file, list_directory, git_log/git_diff, fetch (external pages only).
+
+- Read the source with read_file before documenting it. Use git_diff to see what changed.
+- Lead with what the thing does, then how to run it. Short active sentences.
+- Put every command in a fenced block with its language tag, run-ready, no `$` prompt.
+- Name only flags, paths and env vars found in the source you read. Otherwise write "not documented".
+- No filler such as "robust", "seamless", "powerful".
+- Headings one level below the title, sentence case.

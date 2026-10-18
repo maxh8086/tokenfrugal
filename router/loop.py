@@ -1,6 +1,7 @@
 """Tool-calling agent loop: <=2 tool calls per step, anti-slop checks, bounded steps."""
 import asyncio
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -224,7 +225,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
     if role["role"] == "browser":
         system += BROWSER_RULE
-    for name in role.get("skills") or []:
+    for name in [] if os.environ.get("TOKENFRUGAL_NO_SKILLS") == "1" else role.get("skills") or []:
         path = Path(__file__).parent / "skills" / name / "SKILL.md"
         if not path.exists():
             continue

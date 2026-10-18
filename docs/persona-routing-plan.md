@@ -6,9 +6,9 @@ A persona is a bundle of local model, skills and tools:
 
 | Layer | What it is | Where it lives today |
 | --- | --- | --- |
-| Local model | `builder` (`qwen2.5-coder-yarn:3b`) or `thinker` (`llama3.2:3b-16k`), or a per-persona tag | `router/agents.yaml` `models`, `persona_models` |
+| Local model | `builder` (`qwen2.5-coder-yarn:3b`) or `thinker` (`llama3.2:3b-16k`), or a per-persona tag | `router/tf-roles.yaml` `models`, `persona_models` |
 | Skill | A `SKILL.md` attached to a persona | `persona_skills` (only `planning`, on the shepherd) |
-| Tools | Allowlist per role, from Docker MCP profiles and native servers | `roles` in `router/agents.yaml` |
+| Tools | Allowlist per role, from Docker MCP profiles and native servers | `roles` in `router/tf-roles.yaml` |
 
 ## Routing
 
@@ -44,7 +44,7 @@ Adoption rule: laya is used only if it clearly beats the keyword baseline on our
 
 ## Evaluation (next step)
 
-1. Label about 100 tasks with the correct persona slug, drawn from the agency-agents divisions in `router/agents.yaml`. Store as JSONL rows with `task` and `persona`.
+1. Label about 100 tasks with the correct persona slug, drawn from the agency-agents divisions in `router/tf-roles.yaml`. Store as JSONL rows with `task` and `persona`.
 2. Produce predictions from each router as JSONL rows with `persona`: keyword baseline, Haiku, and laya (if adopted for testing).
 3. Score with `scripts/persona_routing_eval.py`:
 
@@ -52,7 +52,7 @@ Adoption rule: laya is used only if it clearly beats the keyword baseline on our
    .venv/Scripts/python.exe scripts/persona_routing_eval.py --labels scratchpad/routing/labels.jsonl --predictions scratchpad/routing/haiku.jsonl
    ```
 
-   Exit code 2 means some labels name slugs not in `agents.yaml`. Fix the labels before scoring.
+   Exit code 2 means some labels name slugs not in `tf-roles.yaml`. Fix the labels before scoring.
 
 ## Open questions
 
