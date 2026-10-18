@@ -46,6 +46,30 @@ Why: n=1 showed skills on = off (3/6 verified each); L4 timed out both arms.
 4. Compare per level: verified rate and median seconds. Keep a skill only if on >= off on its level.
 Done when: a per-level table with n=3 and a keep/drop/rewrite verdict per skill.
 
+### Stage 2 results (n=3, tags abl3-on / abl3-off, Benchmark/results/coding/20261018-*)
+Frozen timeout_s: coding l1 120, l2 150, l3 180, l4-l6 300. Non-coding (verified p95 x 1.5, up to 10, floor 60):
+builder 90, data-engineer 60, analyzer 60, security 160, reviewer 60, debugger 220, docs 100, designer 160,
+browser 80, tracker 60, research 60. Roles never benchmarked (devops, finance, github-*) keep the global default.
+
+| Level | Verified on / off | Median s on / off | Verdict |
+| --- | --- | --- | --- |
+| L1 clamp | 3/3 / 3/3 | 16.6 / 21.5 | keep |
+| L2 slugify | 0/3 / 0/3 (ran 2/3 vs 0/3, off timed out at 150 s) | 64.2 / 152.6 | keep; rewrite candidate |
+| L3 tax | 3/3 / 3/3 | 34.1 / 34.3 | keep |
+| L4 rename | 0/3 / 0/3 | 278.3 / 282.2 | keep (on >= off); rewrite candidate |
+| L5 median | 3/3 / 3/3 | 27.4 / 34.1 | keep |
+| L6 callers | 0/3 / 0/3 | 111.4 / 65.3 | keep (on >= off); rewrite candidate, on is slower |
+
+Reading: skills never lowered verified rate; they help only on speed (L1, L5) and avoiding the L2 timeout. No level
+shows a verified-rate gain, so the skills are not proven useful at n=3. L2, L4, L6 fail with both arms, so the
+cause is model or spec, not the skill.
+Failure review (candidates only, done by hand from the result rows, not by a Haiku subagent):
+- L2: raw `<tool_call>` text emitted instead of a call (on); timeout (off). Candidate: tighten tool-call format line in code-l2.
+- L4: model summarises test output instead of editing; off emits raw `<tool_call>`. Candidate: require edit_file before the final answer. L4 sits near the 300 s limit.
+- L6: model answers from analysis prose without the exact caller list; off emits raw `<tool_call>`. Candidate: require listing callers in file:line form.
+These go through the Stage 3 gate; none applied.
+
+
 ## Stage 3: propose-and-gate skill learning
 Spec: Haiku proposes a SKILL.md change; Sonnet 5.5 reviews L1-L3, Opus 5.5 reviews L4-L6. Gates in order:
 (1) under 1.2k characters, (2) offline tests, (3) no regression on that level's cases (n>=3), (4) reviewer approval.
