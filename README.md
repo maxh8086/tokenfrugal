@@ -59,6 +59,8 @@ claude mcp add tokenfrugal -- <path-to-venv-python> -m router.server
 
 **Optional: show TokenFrugal as a subagent.** Copy [examples/tokenfrugal_subagent.md](examples/tokenfrugal_subagent.md) to `.claude/agents/tokenfrugal.md` in your project. Claude Code then lists it as its own agent with its own usage. That usage is the small wrapper's Claude tokens; the local model's tokens are not counted by Claude.
 
+**The `.claude/agents/` folder in this repo.** It holds project subagent definitions that Claude Code loads automatically when you open the repo. It currently contains [`.claude/agents/tokenfrugal.md`](.claude/agents/tokenfrugal.md), a copy of the example above (a Haiku wrapper that only calls the `tokenfrugal` MCP tools). The rest of `.claude/` stays local and ignored; `.gitignore` re-includes only `.claude/agents/`, so any agent file you add there is tracked.
+
 **Prompt for Claude Code:**
 
 > Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install requirements.txt, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then register the router as an MCP server named tokenfrugal with `claude mcp add`, using the venv's Python, `-m router.server`, and the repo folder as the working directory. Do not write API keys into files or chat.
