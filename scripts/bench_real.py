@@ -10,7 +10,7 @@ import sys
 from datetime import datetime, timezone
 
 from router import loop, server, store
-from router.config import ROOT, SYNAPTREE_PROJECT
+from router.config import ROOT, SYNAPTREE_PROJECT, resolve_role
 
 SCRATCH = ROOT / "bench" / "scratch"
 WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
@@ -444,6 +444,15 @@ def active_cases():
     return hard_cases() if suite == "hard" else coding_cases() if suite == "coding" else cases()
 
 
+WATCHDOG_GRACE = 30.0  # the router's own task timeout fires first so a timeout is classified by the router
+
+
+def case_limits(agent):
+    """(role timeout_s or None, watchdog seconds): a role's frozen timeout_s replaces BENCH_CASE_TIMEOUT."""
+    t = resolve_role(agent, server.CFG).get("timeout_s")
+    return (float(t), float(t) + WATCHDOG_GRACE) if t else (None, CASE_TIMEOUT)
+
+
 async def run(n, timed, ok, failure_mode, stats):
     SCRATCH.mkdir(parents=True, exist_ok=True)
     res = {}
@@ -466,7 +475,8 @@ async def run(n, timed, ok, failure_mode, stats):
                 print(f"  realworld/{cid} #{i + 1} infra: {INFRA_ERROR}", flush=True)
                 continue
             setup()
-            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), CASE_TIMEOUT))
+            role_t, watchdog = case_limits(agent)
+            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), watchdog))
             end = _now()
             ran = ok(r)
             if not ran:
@@ -496,7 +506,7 @@ async def run(n, timed, ok, failure_mode, stats):
             rec = {"run": i + 1, "start": start, "end": end, "s": round(dt, 1), "ok": ran, "verified": bool(good),
                    "status": status, "dispatched": True, "error": r, "note": str(note)[:140],
                    "peak": u.get("peak", 0), "input": u.get("input", 0), "output": u.get("output", 0),
-                   "trail_tools": tools}
+                   "trail_tools": tools, "timeout_s": role_t if role_t else CASE_TIMEOUT}
             if state is not None:
                 rec["container_state"] = state
                 rec["container_logs"] = container_logs(start)
@@ -512,5 +522,6 @@ async def run(n, timed, ok, failure_mode, stats):
                     "s": stats(live_s) or None, "peak": max(x["peak"] for x in runs),
                     "input": round(sum(x["input"] for x in live) / max(nl, 1)),
                     "output": round(sum(x["output"] for x in live) / max(nl, 1)),
+                    "timeout_s": case_limits(agent)[0] or CASE_TIMEOUT,
                     "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3], "runs": runs}
     return res
