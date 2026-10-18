@@ -638,14 +638,16 @@ async function buildConfig() {
     const names = [...new Set([...models, ...(pick ? [pick] : [])])];
     for (const m of names) {
       const k = rank.get(m);
-      sel.append(new Option(k ? `${k.dot} ${m}${k.top ? '  (top ranked)' : ''}` : m, m));
+      // Unranked models get a white dot so every entry carries a color
+      sel.append(new Option(`${k ? k.dot : '⚪'} ${m}${k && k.top ? '  (top ranked)' : ''}`, m));
     }
     sel.value = pick;
     sel.title = 'Model for this role';
     const modelNow = el('span', 'meta', pick || 'default (agents.yaml)');
     sel.addEventListener('change', () => { modelNow.textContent = sel.value || 'default (agents.yaml)'; });
     modelSum.append(modelNow);
-    modelRow.append(modelSum, sel);
+    const legend = el('span', 'meta', `${group} ranking: 🟢 every run clean · 🟡 75% or more · 🔴 below 75% · ⚪ not ranked`);
+    modelRow.append(modelSum, sel, legend);
     body.append(modelRow);
     // Collapsible MCP list, one checkbox per MCP name
     const savedMcps = (saved.role_mcps || {})[r.role] || [];
