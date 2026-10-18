@@ -27,13 +27,13 @@ TokenFrugal router --> ONE local model (builder or thinker)
 ```
 
 - The router maps the agent slug (an [agency-agents](https://github.com/msitarzewski/agency-agents) persona) to a **role**. A role sets the model, the Docker MCP profile, the tool allowlist and a step limit.
-- Each task runs on one model. The builder and thinker never run together.
+- Each task runs on one model. The builder and thinker models never run together.
 - Only the summary, the `task_id` and any `ask_followup` answer return to the cloud agent. The full output stays in the local store (`router/tasks.db`, SQLite) and is readable with `get_detail(task_id)`.
 - Failures return a capped error and a `task_id`. The cloud agent calls `resume_task(task_id)` once, or re-scopes the task smaller.
 
 ## Roles
 
-Roles are defined in `router/agents.yaml`. The model is `builder` (`qwen2.5-coder-yarn:3b`) or `thinker` (`llama3.2:3b-16k`), unless overridden per agent.
+Roles are defined in `router/agents.yaml`. Each role runs on the local model set for it: the `builder` model for code and file edits, or the `thinker` model for reading and analysis. An agent can be overridden to a different model (see [Choosing a model per agent](#choosing-a-model-per-agent)).
 
 | Role | Model | Docker profile | Typical work |
 | --- | --- | --- | --- |
@@ -70,12 +70,16 @@ python scripts/doctor.py
 
 ### 2. Pull and create the two local models
 
+Choose a builder model and a thinker model that suit your hardware (the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) compares them per role). Pull the base models, then create the tags that `router/agents.yaml` expects, using the Modelfiles in `models/`:
+
 ```bash
-ollama pull qwen2.5-coder:3b
-ollama pull llama3.2:3b
-ollama create qwen2.5-coder-yarn:3b -f models/builder.Modelfile
-ollama create llama3.2:3b-16k -f models/thinker.Modelfile
+ollama pull <builder-base-model>
+ollama pull <thinker-base-model>
+ollama create <builder-tag> -f models/builder.Modelfile
+ollama create <thinker-tag> -f models/thinker.Modelfile
 ```
+
+Replace the placeholders with the base models and tags you chose. `doctor.py` reports which tags are missing.
 
 ### 3. Start backends and install tool profiles
 
