@@ -231,17 +231,22 @@ def _role_agg(cases):
     return agg
 
 
+BEST_AVAILABLE_COUNT = 3
+
+
 def role_pick(cases):
-    """(preferred list, faster) for one role. Preferred = green models in rank order; faster = the
-    quickest preferred model with the same pass rate as the top one, when it is not the top one."""
-    greens = [(n, m) for n, m in _sort_role(_role_agg(cases)) if _status(m) == "green"]
+    """(preferred list, faster, best available) for one role. Preferred = green models in rank order; faster = the
+    quickest preferred model with the same pass rate as the top one, when it is not the top one.
+    When no model is green, best available = the top-ranked models (amber before red) instead."""
+    ranked = _sort_role(_role_agg(cases))
+    greens = [(n, m) for n, m in ranked if _status(m) == "green"]
     if not greens:
-        return [], None
+        return [], None, [n for n, _ in ranked[:BEST_AVAILABLE_COUNT]]
     top_name, top = greens[0]
     top_pct = top["a"] / top["n"]
     same = [(n, m) for n, m in greens if m["a"] / m["n"] == top_pct and m["t"]]
     fast_name = max(same, key=lambda kv: sum(kv[1]["t"]) / len(kv[1]["t"]), default=(None, None))[0]
-    return [n for n, _ in greens], (fast_name if fast_name != top_name else None)
+    return [n for n, _ in greens], (fast_name if fast_name != top_name else None), []
 
 
 def role_rank(cases, top=5):
@@ -271,9 +276,11 @@ def role_text():
     o = []
     for label, cases in (("Builder", BUILDER_CASES), ("Thinker", THINKER_CASES)):
         agg = _role_agg(cases)
-        greens, fast = role_pick(cases)
+        greens, fast, best = role_pick(cases)
         if not greens:
-            o.append(f"- **{label}:** no model is preferred yet (none passes every case in every run without flags).")
+            o.append(f"- **{label}:** no model passes every case in every run without flags, so these are the best available:")
+            for name in best:
+                o.append(f"  - {DOT[_status(agg[name])]} `{name}` — pull: `{agg[name]['pull']}`")
             continue
         o.append(f"- **{label}:** {len(greens)} preferred choice{'s' if len(greens) > 1 else ''}:")
         for name in greens:
