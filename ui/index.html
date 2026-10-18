@@ -623,7 +623,7 @@ async function buildConfig() {
     // One collapsible card per agent role, titled with its name
     const card = el('details', 'cfg-role');
     const title = el('summary', '');
-    title.append(el('span', '', r.role), el('span', 'meta', 'running: ' + r.model));
+    title.append(el('span', '', r.role), el('span', 'meta', 'running: ' + ((saved.role_models || {})[r.role] || r.model)));
     card.append(title);
     const body = el('div', 'cfg-role-body');
     // Model is an expandable row like the MCP servers: the dropdown sits inside it
