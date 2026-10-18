@@ -104,6 +104,8 @@ Ask your agent: "use tokenfrugal to write unit tests for `utils.py`". Tools: `di
 
 `agent_models` in `router/agents.yaml` maps an agent slug to the local model it runs on. Models for each agent can be compared in the [benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/). A value is `builder`, `thinker` or any Ollama tag; agents not listed use their role's model.
 
+To choose a model for a role, see the [model selection guide](https://maxh8086.github.io/tokenfrugal/Benchmark/model-selection-guide.html), which explains the gates and how to rank candidates from the benchmark.
+
 Edit the mapping in a browser instead of the yaml:
 
 ```bash
@@ -116,7 +118,7 @@ Your changes are saved to `router/agent_models.json` (git-ignored, or set `TOKEN
 
 <!-- Maintainer note: keep this README to information that stays true over time. Do not put benchmark results, rankings or "best model" claims here; link to the HTML pages instead. -->
 
-Results change as models and code change, so they are not listed here. See the [live benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) for rankings and the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html) to filter and sort runs.
+Results change as models and code change, so they are not listed here. See the [live benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/) for rankings and the [live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html) to filter and sort runs. The [model selection guide](https://maxh8086.github.io/tokenfrugal/Benchmark/model-selection-guide.html) explains how to read them.
 
 ## Adding MCP servers
 

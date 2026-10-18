@@ -1,0 +1,82 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TokenFrugal model selection guide</title>
+<style>
+:root{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b;--code:#f4f4f4}
+@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036;--code:#22262b}}
+:root[data-theme="light"]{--bg:#fff;--fg:#222;--mut:#666;--line:#e3e3e3;--acc:#2e9e5b;--code:#f4f4f4}
+:root[data-theme="dark"]{--bg:#16181b;--fg:#e6e6e6;--mut:#9aa;--line:#2c3036;--code:#22262b}
+body{font:15px/1.55 system-ui;margin:0;background:var(--bg);color:var(--fg)}
+nav{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+nav a{color:var(--acc);font-weight:600;text-decoration:none}
+main{max-width:880px;margin:0 auto;padding:8px 16px 48px}
+a{color:var(--acc)}h1,h2,h3{line-height:1.25}h2{border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}
+code{background:var(--code);padding:1px 4px;border-radius:3px}
+.step{border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:12px 0}
+.mut{color:var(--mut)}
+</style>
+<nav><a href="index.html">Report</a><a href="explorer.html">Interactive explorer</a><a href="../README.md#choosing-a-model-per-agent">Choosing a model per agent</a></nav>
+<main>
+<h1>Model selection guide</h1>
+<p>This guide explains how to choose a local model for a TokenFrugal role, and how to read the <a href="index.html">benchmark report</a> and <a href="explorer.html">explorer</a> to do it. It describes the method only. It does not list results, because those change with each run; the report shows the current numbers.</p>
+
+<h2>1. Pick the role first</h2>
+<p>TokenFrugal has two local roles. A model is only comparable within the role it is tested for.</p>
+<ul>
+<li><strong>Builder</strong>: writes or edits code and files. Scored on <code>write_function</code>, <code>fix_bug</code>, <code>write_tests</code> and <code>rename_across_files</code>. It needs write and edit tools.</li>
+<li><strong>Thinker</strong>: reads, analyses and browses. Scored on 12 cases, from <code>find_symbol</code> and <code>review_sqli</code> to <code>browser_navigate_snapshot</code> and <code>web_crawl</code>. It needs read and search tools, plus the tools of its specific role (browser, design, docs or planning).</li>
+</ul>
+<p>The report's <em>Builder</em> and <em>Thinker</em> columns show each model's score on its own role's cases only. Use those columns, not the overall score, to compare models for one role.</p>
+
+<h2>2. Check the gates before the ranking</h2>
+<p>A model that fails a gate is not a candidate, however high its score. Each gate maps to a column or flag in the report.</p>
+<div class="step"><strong>Valid cases.</strong> The run must finish all of its cases without infrastructure failure. The <em>Valid cases</em> column shows this. Partial runs are not ranked.</div>
+<div class="step"><strong>No infra flag.</strong> A ⚠infra mark next to the model name in the Ranking table means the run was affected by the environment (backend down, timeout), not by the model. Rerun before trusting it.</div>
+<div class="step"><strong>Fits in GPU memory.</strong> <em>Shared memory GB</em> above 0 means part of the model runs in system RAM. It still works, but it is slower and its speed numbers are not comparable with fully-GPU runs.</div>
+<div class="step"><strong>Current code.</strong> The <em>Code (git)</em> column shows the commit that produced the run. Prefer runs from the current code, since the router and prompts change over time. The per-role tables already use each model's newest runs.</div>
+<div class="step"><strong>Required tools.</strong> A ⚠ on a case means the case needs a tool the model failed to call. A model that fails required tool cases cannot do that role, even if its pass rate looks reasonable.</div>
+
+<h2>3. Qualify a thinker</h2>
+<ul>
+<li><strong>Every thinker case passes</strong> in every repeat. Thinker work is read-only, so a missed read or wrong answer is the failure to look for.</li>
+<li><strong>Tool-call cases matter most.</strong> The cases <code>plan_status</code>, <code>design_overview</code> and <code>browser_navigate_snapshot</code> require the tools <code>plan_status</code>, <code>high_level_overview</code> and <code>navigate_page</code>. <code>security_file_read</code> checks that the model respects file-access limits.</li>
+<li><strong>Consistency across repeats.</strong> A case that passes once and fails once is unstable. The per-case heatmap in the report shows each repeat, so check that the repeats agree.</li>
+<li><strong>Speed as a tiebreaker</strong> between models that pass the same cases.</li>
+</ul>
+
+<h2>4. Qualify a builder</h2>
+<ul>
+<li><strong>All four builder cases pass</strong> in every repeat. <code>rename_across_files</code> changes several files and must leave them consistent.</li>
+<li><strong>Verified output only.</strong> A case counts when the output passes the checks, not when the model says it is done. A model that claims success without the change is scored as a failure.</li>
+<li><strong>Test-writing is a separate skill.</strong> <code>write_tests</code> is often the first case a model fails, so a builder that passes the other three but not this one may still suit small edits.</li>
+<li><strong>Speed as a tiebreaker</strong>, using <em>s per case</em> and <em>t/s</em>.</li>
+</ul>
+
+<h2>5. Rank the candidates</h2>
+<p>The report ranks models by pass rate first, then speed. The <em>Rank</em> column combines both: 60% pass rate and 40% speed (on a log scale, so very fast models are not favoured over accurate ones). Use it to sort, but check the gates above before choosing.</p>
+<ul>
+<li><strong>Pass rate (%)</strong> = verified checks passed / total checks. Compare percentages, not raw scores, because older and newer runs can have different totals.</li>
+<li><strong>t/s</strong> = tokens generated per second, the main speed metric.</li>
+<li><strong>s per case</strong> = mean seconds per case, a secondary speed metric. It includes tool calls, so it can differ from t/s.</li>
+<li><strong>Run time</strong> = wall clock for the whole run.</li>
+</ul>
+<p>Treat gaps of a case or two between runs of similar models as noise. Only the number of runs is small (two or three per case), so a clear lead should hold across repeats.</p>
+
+<h2>6. Find the best model quickly</h2>
+<ol>
+<li>Open the <a href="index.html">report</a> and read <strong>Best model per role</strong>. It lists the top five for builder and thinker separately, using only each model's newest runs.</li>
+<li>For a closer look, open the <a href="explorer.html">explorer</a>. Set <strong>role</strong> to builder or thinker, set <strong>Runs from</strong> to the last 30 days to see current code only, and sort by <strong>Rank</strong>.</li>
+<li>Apply the gates in section 2 to the top rows: valid cases, no infra flag, shared memory 0 GB.</li>
+<li>Among the rows that pass, pick the one with the highest pass rate. Use t/s to break ties.</li>
+<li>Check that its repeats agree on every case of the role.</li>
+</ol>
+
+<h2>7. Confirm on your own machine</h2>
+<p>Results depend on hardware and on the model's quantisation. Before you assign a model in <code>router/agents.yaml</code>, run the benchmark on your machine. The prompt is in <a href="../README.md#choosing-a-model-per-agent">the README</a> and the method is described on the <a href="index.html">report page</a>. Your run's row appears in the explorer with your machine's details.</p>
+
+<h2>8. What the benchmark does not measure</h2>
+<ul>
+<li>General quality outside the 16 cases.</li>
+<li>Very long contexts. The cases are short, so they do not test each model tag's context limit.</li>
+<li>Models served by an engine other than Ollama. Results are for the local Ollama setup only.</li>
+</ul>
+</main>
