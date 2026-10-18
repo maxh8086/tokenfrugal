@@ -21,9 +21,9 @@ FORBIDDEN = ("drop", "delete", "rename", "remove", "truncate", "flush")  # no al
 IMAGES = {
     "dbhub": "bytebase/dbhub@sha256:ce8d2c76be9ca98cb36b28ac9cabd4d8a71abaae3939ecfe43e85ec00d0d57b4",
     "mongo": "mcp/mongodb@sha256:7ea2f40b6e1f704f386354d7eaa97776de6ca19e48133916c08e1bd9ee0c0086",
-    "redis": "mcp/redis@sha256:0cd246d56f0f26235f1230a44b28834c3603c8900afad62767220772cfe4c509",
+    "redis": "mcp/redis@sha256:e886a7e9990a084a20d46adcea8e7c89d539271f1b453ffabdce4c3f96f27fa0",
     "elastic": "mcp/elasticsearch@sha256:9c978b8277e32be0229e0c2f5c631e4106dd1c9c955ec361814588688582bcfd",
-    "oracle": "mcp/oracle@sha256:76d733b869f424eca1715a6566f4a472aee2599308e766179ec10abdea46ad70",
+    "oracle": "mcp/oracle@sha256:1e73b1423220b9b49d904e031af9df5df5f2631686328b8136663eb9bd5f3957",
 }
 
 # SQL engines served by dbhub: DSN against the scratch container (oracle has no live scratch container).
