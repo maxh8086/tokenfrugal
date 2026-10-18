@@ -1,0 +1,43 @@
+model,case,run,verified,status,seconds,tokens_in,tokens_out,note
+claude-haiku-4-5,write_function,1,1,ok,3.6,2135,379,
+claude-haiku-4-5,write_function,2,1,ok,3.6,2121,411,
+claude-haiku-4-5,write_function,3,1,ok,3.6,2129,381,
+claude-haiku-4-5,fix_bug,1,1,ok,4.3,3164,289,
+claude-haiku-4-5,fix_bug,2,1,ok,4.2,3144,265,
+claude-haiku-4-5,fix_bug,3,1,ok,4.4,3144,284,
+claude-haiku-4-5,write_tests,1,1,ok,11.1,4424,1650,rc=0 tests=11 ---------------------------------------------------------------------- Ran 11 tests in 0.000s  OK 
+claude-haiku-4-5,write_tests,2,1,ok,10.2,4385,1463,rc=0 tests=12 ---------------------------------------------------------------------- Ran 12 tests in 0.000s  OK 
+claude-haiku-4-5,write_tests,3,1,ok,11.3,4412,1661,rc=0 tests=14 ---------------------------------------------------------------------- Ran 14 tests in 0.000s  OK 
+claude-haiku-4-5,rename_across_files,1,1,ok,6.6,3719,621,def new_name(x):     return x + 1 from a_mod import new_name  print(new_name(1))
+claude-haiku-4-5,rename_across_files,2,1,ok,6.3,3675,581,def new_name(x):     return x + 1 from a_mod import new_name  print(new_name(1))
+claude-haiku-4-5,rename_across_files,3,1,ok,7.1,3786,669,def new_name(x):     return x + 1 from a_mod import new_name  print(new_name(1))
+claude-haiku-4-5,find_symbol,1,1,ok,4.0,1883,151,"Based on the search results, `resolve_role` is defined at:  **File path: `router/config.py`**  The f"
+claude-haiku-4-5,find_symbol,2,1,ok,2.8,1865,112,"Based on the search results, `resolve_role` is defined in:  **`router/config.py`**  The function app"
+claude-haiku-4-5,find_symbol,3,1,ok,3.1,1865,130,"Based on the search results, `resolve_role` is defined in:  **File path:** `router/config.py`  It ap"
+claude-haiku-4-5,review_sqli,1,1,ok,4.3,1929,333,## Security Vulnerability Found  **Vulnerability Class: SQL Injection**  ### Details:  The `get_user
+claude-haiku-4-5,review_sqli,2,1,ok,4.2,1926,321,## Security Vulnerability Found  **Vulnerability Class: SQL Injection**  ### Details:  The `get_user
+claude-haiku-4-5,review_sqli,3,1,ok,4.6,1926,340,## Security Vulnerability Analysis  **Vulnerability Class: SQL Injection**  ### Details:  The code h
+claude-haiku-4-5,debug_trace,1,1,ok,3.6,1924,226,## Exception and Root Cause  **Exception:** `ZeroDivisionError: division by zero`  **Root Cause:** T
+claude-haiku-4-5,debug_trace,2,1,ok,3.4,1924,243,"Based on the code, here's what happens:  **Exception:** `ZeroDivisionError`  **Root Cause:** The fun"
+claude-haiku-4-5,debug_trace,3,1,ok,3.5,1924,198,**Exception:** `ZeroDivisionError`  **Root Cause:** The function `avg()` attempts to divide by `len(
+claude-haiku-4-5,summarize_readme,1,1,ok,4.2,3572,232,"Based on the README, here's a 3-sentence summary of TokenFrugal:  TokenFrugal is an MCP server that "
+claude-haiku-4-5,summarize_readme,2,1,ok,3.6,3572,190,## Summary  TokenFrugal is an MCP (Model Context Protocol) server that routes routine coding tasks t
+claude-haiku-4-5,summarize_readme,3,1,ok,3.8,3572,192,"## Summary  TokenFrugal is an MCP server that routes routine coding tasks (like tests, docstrings, a"
+claude-haiku-4-5,role_analyzer,1,1,ok,3.0,1865,127,"Based on the search results, `resolve_role` is defined in:  **File path:** `router/config.py`  It ap"
+claude-haiku-4-5,role_analyzer,2,1,ok,3.1,1865,117,"Based on the search results, `resolve_role` is defined in **`router/config.py`**. It appears to have"
+claude-haiku-4-5,role_analyzer,3,1,ok,3.0,1865,130,"Based on the search results, `resolve_role` is defined in the file:  **`router/config.py`**  It appe"
+claude-haiku-4-5,role_data,1,1,ok,2.8,1930,203,Here are the files in `C:/Users/vaibh/Downloads/Projects/tokenfrugal/bench/scratch`:  1. a.py 2. a_m
+claude-haiku-4-5,role_data,2,1,ok,2.8,1930,197,Here are the files in `C:/Users/vaibh/Downloads/Projects/tokenfrugal/bench/scratch`:  1. a.py 2. a_m
+claude-haiku-4-5,role_data,3,1,ok,2.8,1930,195,Here are the files in `C:/Users/vaibh/Downloads/Projects/tokenfrugal/bench/scratch`:  1. a.py 2. a_m
+claude-haiku-4-5,role_docs,1,1,ok,2.3,1954,141,"The `Stack` class has three public methods: `push(x)` adds an element to the top of the stack, and `"
+claude-haiku-4-5,role_docs,2,1,ok,2.8,1954,153,"The public methods of the Stack class are `push(x)`, which adds an item to the top of the stack, and"
+claude-haiku-4-5,role_docs,3,1,ok,2.4,1954,148,The `Stack` class has two main public methods: `push(x)` which adds an element to the top of the sta
+claude-haiku-4-5,role_security,1,1,ok,4.3,1920,291,The file contains the following hard-coded secrets:  1. **API_KEY**: `'fake-key-7d41c9e0b2a6'` 2. **
+claude-haiku-4-5,role_security,2,1,ok,3.0,1920,184,Here are the hard-coded secrets found in the file:  1. **API_KEY**: `'fake-key-7d41c9e0b2a6'` 2. **P
+claude-haiku-4-5,role_security,3,1,ok,3.8,1920,279,The file contains the following hard-coded secrets:  1. **API_KEY**: `'fake-key-7d41c9e0b2a6'` 2. **
+claude-haiku-4-5,role_designer,1,,n/a,0,0,0,needs a service with no cloud stand-in
+claude-haiku-4-5,role_browser,1,,n/a,0,0,0,needs a service with no cloud stand-in
+claude-haiku-4-5,role_tracker,1,,n/a,0,0,0,needs a service with no cloud stand-in
+claude-haiku-4-5,role_research,1,1,ok,2.9,2010,144,"Based on the crawl_markdown output from https://example.com, the page heading is **""Example Domain""*"
+claude-haiku-4-5,role_research,2,1,ok,2.7,2010,138,"Based on the crawl_markdown result from https://example.com, the page heading is **""Example Domain""*"
+claude-haiku-4-5,role_research,3,1,ok,2.6,2024,134,"Based on the crawled content from https://example.com, the page heading is:  **Example Domain**  Thi"
