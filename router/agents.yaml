@@ -2,8 +2,8 @@
 # Role -> local model, Docker MCP profile, tool allowlist (names as exposed by the router).
 # Local-only: no cloud fallback. Failures return a capped error summary to Haiku.
 models:
-  builder: qwen2.5-coder-yarn:3b
-  thinker: llama3.2:3b-16k
+  builder: hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K
+  thinker: gemma4:e4b
 # Per-agent model (agency-agents slug -> Ollama tag, or the logical name builder/thinker).
 # Empty by default: every agent uses its role's model. Add entries here, or override
 # without touching this file via `python -m scripts.agent_ui` (writes router/agent_models.json).
