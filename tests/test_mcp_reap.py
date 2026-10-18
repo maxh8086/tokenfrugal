@@ -7,7 +7,7 @@ from router import mcp_reap
 
 class ReapTests(unittest.TestCase):
     def setUp(self):
-        mcp_reap._active, mcp_reap._before = 0, set()
+        mcp_reap._active, mcp_reap._before, mcp_reap._seen = 0, set(), set()
 
     def run_with(self, snapshots):
         calls, snaps = [], iter(snapshots)
@@ -32,6 +32,20 @@ class ReapTests(unittest.TestCase):
             self.assertEqual(mcp_reap.leave(), 0)
             self.assertEqual(mcp_reap.leave(), 1)
         self.assertEqual(calls[-1], ["rm", "-f", "a"])
+
+    def test_sweep_removes_containers_seen_by_an_earlier_sweep(self):
+        calls, p = self.run_with(["old\n", "old\na\n", "old\na\nb\n"])
+        with p:
+            mcp_reap.enter()
+            self.assertEqual(mcp_reap.sweep(), 0)  # a is first seen, kept
+            self.assertEqual(mcp_reap.sweep(), 1)  # a is idle now, b is first seen
+        self.assertEqual(calls[-1], ["rm", "-f", "a"])
+
+    def test_sweep_without_open_gateway_does_nothing(self):
+        calls, p = self.run_with([])
+        with p:
+            self.assertEqual(mcp_reap.sweep(), 0)
+        self.assertEqual(calls, [])
 
     def test_nothing_new_means_no_rm(self):
         calls, p = self.run_with(["x\n", "x\n"])

@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 from openai import OpenAI
 
-from . import events
+from . import events, mcp_reap
 from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
                      TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
@@ -350,6 +350,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     out = f"tool error: {c.function.name} timed out after {TOOL_TIMEOUT:g}s; try a narrower path or query"
                 except Exception as e:  # tool errors go back to the model, not up
                     out = f"tool error: {e}"
+                if role["role"] != "browser":  # browser sessions keep state in their container
+                    await asyncio.to_thread(mcp_reap.sweep)  # idle per-call stdio containers do not pile up mid-run
                 if out.startswith("tool error") or bad_args:  # the trail keeps the error text, so get_detail shows why a call failed
                     events.emit("tool_error", id=tid, name=c.function.name, error=out[:300])
                 msgs.append({"role": "tool", "tool_call_id": c.id, "content": out[:TOOL_CAP]})
