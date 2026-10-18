@@ -1,0 +1,28 @@
+version: 1
+id: db-mysql-dev
+name: db-mysql-dev
+secrets:
+  default:
+    provider: docker-desktop-store
+servers:
+- type: image
+  secrets: default
+  tools:
+  - execute_sql
+  - search_objects
+  image: bytebase/dbhub@sha256:ce8d2c76be9ca98cb36b28ac9cabd4d8a71abaae3939ecfe43e85ec00d0d57b4
+  snapshot:
+    server:
+      name: dbhub
+      type: server
+      image: bytebase/dbhub@sha256:ce8d2c76be9ca98cb36b28ac9cabd4d8a71abaae3939ecfe43e85ec00d0d57b4
+      description: DBHub SQL access (mysql, dev)
+      title: dbhub
+      remote: {}
+      command:
+      - --transport
+      - stdio
+      - --config
+      - /dbhub.toml
+      volumes:
+      - __REPO__/profiles/dbhub/mysql-dev.toml:/dbhub.toml:ro

@@ -6,9 +6,9 @@ from pathlib import Path
 from unittest import mock
 
 from router import config
-from router.config import load_agents, resolve_role
+from router.config import load_tf_roles, resolve_role
 
-CLEAN = {"TOKENFRUGAL_MODEL_BUILDER": "", "TOKENFRUGAL_MODEL_THINKER": "", "TOKENFRUGAL_AGENT_MODELS": ""}
+CLEAN = {"TOKENFRUGAL_MODEL_BUILDER": "", "TOKENFRUGAL_MODEL_THINKER": "", "TOKENFRUGAL_TF_ROLES_MODELS": ""}
 
 
 def load(override=None):
@@ -16,8 +16,8 @@ def load(override=None):
         f = Path(d) / "pm.json"
         if override is not None:
             f.write_text(json.dumps(override), encoding="utf-8")
-        with mock.patch.object(config, "AGENT_MODELS_FILE", f):
-            return load_agents()
+        with mock.patch.object(config, "TF_ROLES_MODELS_FILE", f):
+            return load_tf_roles()
 
 
 class AgentModelTests(unittest.TestCase):
@@ -49,34 +49,34 @@ class AgentModelTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, CLEAN):
             f = Path(d) / "pm.json"
             f.write_text("{not json", encoding="utf-8")
-            with mock.patch.object(config, "AGENT_MODELS_FILE", f):
-                self.assertEqual(resolve_role("gis-analyst", load_agents())["model"], "qwen2.5-coder-yarn:3b")
+            with mock.patch.object(config, "TF_ROLES_MODELS_FILE", f):
+                self.assertEqual(resolve_role("gis-analyst", load_tf_roles())["model"], load_tf_roles()["models"]["builder"])
 
     def test_model_env_pins_everything(self):
         with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {**CLEAN, "TOKENFRUGAL_MODEL_BUILDER": "pin:1b"}), \
-             mock.patch.object(config, "AGENT_MODELS_FILE", Path(d) / "none.json"):
-            cfg = load_agents()
+             mock.patch.object(config, "TF_ROLES_MODELS_FILE", Path(d) / "none.json"):
+            cfg = load_tf_roles()
         self.assertEqual(resolve_role("engineering-backend-architect", cfg)["model"], "pin:1b")
 
     def test_disable_switch(self):
-        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {**CLEAN, "TOKENFRUGAL_AGENT_MODELS": "0"}), \
-             mock.patch.object(config, "AGENT_MODELS_FILE", Path(d) / "none.json"):
-            cfg = load_agents()
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {**CLEAN, "TOKENFRUGAL_TF_ROLES_MODELS": "0"}), \
+             mock.patch.object(config, "TF_ROLES_MODELS_FILE", Path(d) / "none.json"):
+            cfg = load_tf_roles()
         self.assertEqual(resolve_role("engineering-sre", cfg)["model"], cfg["models"]["thinker"])
 
 
 class EditorTests(unittest.TestCase):
     def test_save_keeps_only_changes_and_roundtrips(self):
-        from scripts import agent_ui
+        from scripts import tf_roles_ui
         with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, CLEAN), \
-             mock.patch.object(config, "AGENT_MCPS_FILE", Path(d) / "pc.json"), \
-             mock.patch.object(config, "AGENT_MODELS_FILE", Path(d) / "pm.json"):
-            diff = agent_ui.save({"models": {"engineering-backend-architect": "other:7b", "finance-analyst": "other:3b", "engineering-technical-writer": ""}})["models"]
+             mock.patch.object(config, "TF_ROLES_MCPS_FILE", Path(d) / "pc.json"), \
+             mock.patch.object(config, "TF_ROLES_MODELS_FILE", Path(d) / "pm.json"):
+            diff = tf_roles_ui.save({"models": {"engineering-backend-architect": "other:7b", "finance-analyst": "other:3b", "engineering-technical-writer": ""}})["models"]
             self.assertEqual(diff, {"engineering-backend-architect": "other:7b", "finance-analyst": "other:3b"})
-            cfg = load_agents()
+            cfg = load_tf_roles()
             self.assertEqual(resolve_role("finance-analyst", cfg)["model"], "other:3b")
             self.assertEqual(resolve_role("engineering-technical-writer", cfg)["model"], cfg["models"]["thinker"])
-            rows = agent_ui.state()["rows"]
+            rows = tf_roles_ui.state()["rows"]
             self.assertEqual(rows["finance-analyst"]["override"], "other:3b")
             self.assertEqual(rows["engineering-backend-architect"]["override"], "other:7b")
 

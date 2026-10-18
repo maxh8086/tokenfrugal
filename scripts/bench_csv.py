@@ -51,6 +51,28 @@ def _params(tag):
     return f"{m.group(1)}B" if m else ""
 
 
+def ollama_params(model, endpoint):
+    """Parameter count ("3.8B") that Ollama reports for `model` via /api/show; "" when unknown or not Ollama."""
+    import json
+    import urllib.request
+    if not model:
+        return ""
+    host = (endpoint or "").strip().rstrip("/")
+    host = (host[:-3] if host.endswith("/v1") else host).rstrip("/") or "http://localhost:11434"
+    try:
+        req = urllib.request.Request(host + "/api/show", data=json.dumps({"model": model}).encode("utf-8"),
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            size = (json.loads(resp.read().decode("utf-8")).get("details") or {}).get("parameter_size") or ""
+    except Exception:  # noqa: BLE001  (endpoint down, not Ollama, unknown model)
+        return ""
+    m = re.match(r"\s*(\d+(?:\.\d+)?)\s*([BMK])", size, re.I)
+    if not m:
+        return ""
+    n = float(m.group(1)) / {"B": 1, "M": 1e3, "K": 1e6}[m.group(2).upper()]
+    return f"{n:g}B"
+
+
 def _split(cell):
     a, b = cell.split("/")
     return int(a), int(b)
@@ -85,7 +107,8 @@ def rows(data):
         cells.append(c["verified"])
     tag = data.get("tag", "")
     mean = round(sum(means) / len(means), 1) if means else ""
-    return [[tag, _params(tag), f"{v_tot}/{v_n}", f"{r_tot}/{v_n}", mean] + cells]
+    params = (data.get("model_params") or {}).get("builder") or _params(tag)  # Ollama's figure beats the tag guess
+    return [[tag, params, f"{v_tot}/{v_n}", f"{r_tot}/{v_n}", mean] + cells]
 
 
 def status_scores(cases):

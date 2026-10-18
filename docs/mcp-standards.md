@@ -29,7 +29,7 @@ tokenfrugal maps Docker's layers onto three files and one set of scripts:
 | --- | --- | --- |
 | `profiles/*.yaml` | Profile definitions (image, volumes, secrets, snapshot) | Profile + catalogue entry |
 | `router/mcp_catalog.yaml` | MCP catalogue: label, profile or native server, compose backends, tool names | Catalogue entry |
-| `router/agents.yaml` | Roles: model, profile, tool allowlist (6 or fewer for 3B models) | Client-side tool choice |
+| `router/tf-roles.yaml` | Roles: model, profile, tool allowlist (6 or fewer for 3B models) | Client-side tool choice |
 | `scripts/install_profiles.py` | Imports profiles, fills `__WORKSPACE__` | `docker mcp profile import` |
 
 Key rule: Docker decides what a profile can expose. tokenfrugal decides what a role may call. Both layers must allow a tool before an agent can use it.
@@ -91,14 +91,14 @@ Adding an MCP from the dashboard follows the Claude-style import flow: **Add plu
 ### Step 7: Tool allowlists (two layers)
 
 1. **Profile level** (Docker): enable only the tools the role needs with `docker mcp profile tools <profile> --enable <server>.<tool>`. Do not use `--enable-all` for a new server.
-2. **Role level** (tokenfrugal): add the tool names to `router/agents.yaml` under the role, at most 6 per role. Do not add a tool at role level that the profile does not enable.
+2. **Role level** (tokenfrugal): add the tool names to `router/tf-roles.yaml` under the role, at most 6 per role. Do not add a tool at role level that the profile does not enable.
 
 Confirm with `docker mcp tools ls` that the tool is exposed, and `docker mcp tools inspect <tool>` for its schema.
 
 ### Step 8: Register in tokenfrugal
 
 - Add an entry to `router/mcp_catalog.yaml` with `label`, one of `profile:` or `native:`, `compose:` if it needs backends, and `tools:`.
-- Add the MCP to the relevant role in `agents.yaml`.
+- Add the MCP to the relevant role in `tf-roles.yaml`.
 - For a native stdio server (not a Docker image), set `native:` and add the server to `router/config.py`. A compose backend goes in `docker-compose.yml` under project `ts-mcp`. Leave other compose projects alone.
 
 ### Step 9: Verify
@@ -120,7 +120,7 @@ python scripts/smoke.py
 
 ### Step 10: Remove an MCP
 
-Remove it in reverse order: `agents.yaml` roles, then `mcp_catalog.yaml`, then `docker mcp profile server remove`, then the profile YAML, then `docker mcp secret rm` for keys nothing else uses, then `docker mcp oauth revoke` if it was OAuth.
+Remove it in reverse order: `tf-roles.yaml` roles, then `mcp_catalog.yaml`, then `docker mcp profile server remove`, then the profile YAML, then `docker mcp secret rm` for keys nothing else uses, then `docker mcp oauth revoke` if it was OAuth.
 
 ## 4. Standards that apply to every MCP
 

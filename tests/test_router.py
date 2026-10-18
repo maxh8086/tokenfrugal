@@ -8,12 +8,12 @@ from types import SimpleNamespace
 os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from router import store  # noqa: E402
-from router.config import load_agents, resolve_role  # noqa: E402
+from router.config import load_tf_roles, resolve_role  # noqa: E402
 from router.loop import arg_error, coerce_args, parse_text_calls, slop_check  # noqa: E402
 from router.mcp_client import Router, to_openai_tools  # noqa: E402
 from router.summarize import hard_trim, tokens  # noqa: E402
 
-CFG = load_agents()
+CFG = load_tf_roles()
 
 
 class Roles(unittest.TestCase):
@@ -30,7 +30,7 @@ class Roles(unittest.TestCase):
         self.assertEqual(resolve_role("zzz-unknown", CFG)["role"], "builder")
 
     def test_only_two_models_and_tool_cap(self):
-        self.assertEqual(set(CFG["models"].values()), {"qwen2.5-coder-yarn:3b", "llama3.2:3b-16k"})
+        self.assertEqual(set(CFG["models"]), {"builder", "thinker"})  # defaults are benchmark-driven, so tags are not pinned
         for name, r in CFG["roles"].items():
             self.assertLessEqual(len(r["tools"]), 6, name)
             self.assertIn(r["model"], CFG["models"], name)

@@ -19,11 +19,14 @@ from router import config
 
 ROUTER = Path(config.__file__).resolve().parent
 ENV_KEYS = [
-    "TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-    "TOKENFRUGAL_AGENT_MCPS_FILE", "TOKENFRUGAL_PERSONA_MCPS_FILE",
-    "TOKENFRUGAL_AGENT_MODELS", "TOKENFRUGAL_PERSONA_MODELS",
+    "TOKENFRUGAL_TF_ROLES_MODELS_FILE", "TOKENFRUGAL_TF_ROLES_MCPS_FILE",
+    "TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_AGENT_MCPS_FILE",
+    "TOKENFRUGAL_PERSONA_MODELS_FILE", "TOKENFRUGAL_PERSONA_MCPS_FILE",
+    "TOKENFRUGAL_TF_ROLES_MODELS", "TOKENFRUGAL_AGENT_MODELS", "TOKENFRUGAL_PERSONA_MODELS",
     "TOKENFRUGAL_MODEL_BUILDER", "TOKENFRUGAL_MODEL_THINKER",
 ]
+PERSONA_ONLY = (("TOKENFRUGAL_PERSONA_MODELS_FILE", "persona_models.json"),)
+CHAIN = config._LEGACY_MODELS_FILES  # agent_* then persona_*, after the tf-roles name
 
 
 def _clean_env(**extra):
@@ -32,7 +35,12 @@ def _clean_env(**extra):
     return mock.patch.dict(os.environ, env)
 
 
-class AgentFileFallback(unittest.TestCase):
+def _file(d: Path, env=None, legacy=CHAIN) -> Path:
+    with _clean_env(**(env or {})):
+        return config._tf_roles_file("TOKENFRUGAL_TF_ROLES_MODELS_FILE", "tf-roles_models.json", legacy)
+
+
+class PersonaFileFallback(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
@@ -43,87 +51,78 @@ class AgentFileFallback(unittest.TestCase):
         self.patch_file.stop()
         self.tmp.cleanup()
 
-    def test_legacy_file_used_when_new_absent(self):
+    def test_persona_file_used_when_nothing_newer_exists(self):
         (self.dir / "persona_models.json").write_text("{}", encoding="utf-8")
-        with _clean_env():
-            path = config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                                      "agent_models.json", "persona_models.json")
-        self.assertEqual(path, self.dir / "persona_models.json")
+        self.assertEqual(_file(self.dir, legacy=PERSONA_ONLY), self.dir / "persona_models.json")
 
-    def test_new_file_wins_over_legacy(self):
+    def test_agent_file_wins_over_persona(self):
         (self.dir / "persona_models.json").write_text("{}", encoding="utf-8")
         (self.dir / "agent_models.json").write_text("{}", encoding="utf-8")
-        with _clean_env():
-            path = config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                                      "agent_models.json", "persona_models.json")
-        self.assertEqual(path, self.dir / "agent_models.json")
+        self.assertEqual(_file(self.dir), self.dir / "agent_models.json")
 
-    def test_new_path_when_neither_exists(self):
-        with _clean_env():
-            path = config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                                      "agent_models.json", "persona_models.json")
-        self.assertEqual(path, self.dir / "agent_models.json")
+    def test_tf_roles_file_wins_over_both(self):
+        for n in ("persona_models.json", "agent_models.json", "tf-roles_models.json"):
+            (self.dir / n).write_text("{}", encoding="utf-8")
+        self.assertEqual(_file(self.dir), self.dir / "tf-roles_models.json")
 
-    def test_legacy_env_var_honoured(self):
-        with _clean_env(TOKENFRUGAL_PERSONA_MODELS_FILE="/x/pm.json"):
-            path = config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                                      "agent_models.json", "persona_models.json")
-        self.assertEqual(path, Path("/x/pm.json"))
+    def test_new_path_when_nothing_exists(self):
+        self.assertEqual(_file(self.dir), self.dir / "tf-roles_models.json")
 
-    def test_new_env_var_wins_over_legacy(self):
-        with _clean_env(TOKENFRUGAL_AGENT_MODELS_FILE="/new/am.json", TOKENFRUGAL_PERSONA_MODELS_FILE="/x/pm.json"):
-            path = config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                                      "agent_models.json", "persona_models.json")
-        self.assertEqual(path, Path("/new/am.json"))
+    def test_persona_env_var_honoured(self):
+        self.assertEqual(_file(self.dir, env={"TOKENFRUGAL_PERSONA_MODELS_FILE": "/x/pm.json"}), Path("/x/pm.json"))
+
+    def test_tf_roles_env_var_wins_over_legacy(self):
+        path = _file(self.dir, env={"TOKENFRUGAL_TF_ROLES_MODELS_FILE": "/new/tr.json",
+                                    "TOKENFRUGAL_PERSONA_MODELS_FILE": "/x/pm.json"})
+        self.assertEqual(path, Path("/new/tr.json"))
 
 
 MODELS = {"gis-analyst": "llama3.2:3b-16k", "engineering-backend-architect": "qwen2.5-coder-yarn:3b"}
 SKILLS = {"gis-analyst": ["browser"]}
 
 
-def _write_agents_yaml(d: Path, models_key: str, skills_key: str) -> None:
-    """Minimal agents.yaml copy with the given keys; the rest is the shipped file."""
-    text = (ROUTER / "agents.yaml").read_text(encoding="utf-8")
-    text = text.replace("\nagent_models: {}", "")
-    text = text.replace("\nagent_skills:", f"\n{skills_key}:", 1)
+def _write_tf_roles_yaml(d: Path, models_key: str, skills_key: str) -> None:
+    """Minimal tf-roles.yaml copy with the given keys; the rest is the shipped file."""
+    text = (ROUTER / "tf-roles.yaml").read_text(encoding="utf-8")
+    text = text.replace("\ntf_roles_models: {}", "")
+    text = text.replace("\ntf_roles_skills:", f"\n{skills_key}:", 1)
     body = "".join(f"  {k}: {v}\n" for k, v in MODELS.items())
     text += f"\n{models_key}:\n{body}"
     skills = "".join(f"  {k}: [{', '.join(v)}]\n" for k, v in SKILLS.items())
     text = text.replace(f"\n{skills_key}:\n", f"\n{skills_key}:\n{skills}", 1)
-    (d / "agents.yaml").write_text(text, encoding="utf-8")
+    (d / "tf-roles.yaml").write_text(text, encoding="utf-8")
 
 
 def _load(d: Path, env=None) -> dict:
-    """load_agents() reading agents.yaml from d, with no user override files."""
+    """load_tf_roles() reading tf-roles.yaml from d, with no user override files."""
     patches = [
         mock.patch.object(config, "__file__", str(d / "config.py")),
-        mock.patch.object(config, "AGENT_MODELS_FILE", d / "none.json"),
-        mock.patch.object(config, "AGENT_MCPS_FILE", d / "none.json"),
+        mock.patch.object(config, "TF_ROLES_MODELS_FILE", d / "none.json"),
+        mock.patch.object(config, "TF_ROLES_MCPS_FILE", d / "none.json"),
     ]
     for p in patches:
         p.start()
     try:
         with _clean_env(**(env or {})):
-            return config.load_agents()
+            return config.load_tf_roles()
     finally:
         for p in patches:
             p.stop()
 
 
-class LegacyAgentsYaml(unittest.TestCase):
-    """agents.yaml with the pre-rename persona_models / persona_skills keys."""
+class PersonaYaml(unittest.TestCase):
+    """tf-roles.yaml with the pre-rename persona_models / persona_skills keys."""
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
-        shutil.copy(ROUTER / "mcp_catalog.yaml", self.dir / "mcp_catalog.yaml")
         self.legacy_dir = self.dir / "legacy"
         self.current_dir = self.dir / "current"
         for d, models_key, skills_key in ((self.legacy_dir, "persona_models", "persona_skills"),
-                                          (self.current_dir, "agent_models", "agent_skills")):
+                                          (self.current_dir, "tf_roles_models", "tf_roles_skills")):
             d.mkdir()
             shutil.copy(ROUTER / "mcp_catalog.yaml", d / "mcp_catalog.yaml")
-            _write_agents_yaml(d, models_key, skills_key)
+            _write_tf_roles_yaml(d, models_key, skills_key)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -146,43 +145,39 @@ class LegacyAgentsYaml(unittest.TestCase):
         self.assertEqual(cfg["agent_models"], {})
 
     def test_new_env_disables_model_mapping(self):
-        cfg = _load(self.current_dir, env={"TOKENFRUGAL_AGENT_MODELS": "0"})
+        cfg = _load(self.current_dir, env={"TOKENFRUGAL_TF_ROLES_MODELS": "0"})
         self.assertEqual(cfg["agent_models"], {})
 
 
-class LegacyOverrideFiles(unittest.TestCase):
+class PersonaOverrideFiles(unittest.TestCase):
     def test_persona_models_json_applied(self):
         with tempfile.TemporaryDirectory() as d, _clean_env():
             d = Path(d)
             (d / "persona_models.json").write_text('{"gis-analyst": "llama3.2:3b-16k"}', encoding="utf-8")
             with mock.patch.object(config, "__file__", str(d / "config.py")):
-                path = config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                                          "agent_models.json", "persona_models.json")
-            with mock.patch.object(config, "AGENT_MODELS_FILE", path), \
-                 mock.patch.object(config, "AGENT_MCPS_FILE", d / "none.json"):
-                cfg = config.load_agents()
+                path = config._tf_roles_file("TOKENFRUGAL_TF_ROLES_MODELS_FILE", "tf-roles_models.json", PERSONA_ONLY)
+            with mock.patch.object(config, "TF_ROLES_MODELS_FILE", path), \
+                 mock.patch.object(config, "TF_ROLES_MCPS_FILE", d / "none.json"):
+                cfg = config.load_tf_roles()
         self.assertEqual(cfg["agent_models"]["gis-analyst"], "llama3.2:3b-16k")
 
 
-class LegacyDeprecationWarning(unittest.TestCase):
+class PersonaDeprecationWarning(unittest.TestCase):
     def setUp(self):
         config._LEGACY_SEEN.clear()
 
     def test_warning_printed_once_for_legacy_env(self):
         buf = io.StringIO()
         with _clean_env(TOKENFRUGAL_PERSONA_MODELS_FILE="/x/pm.json"), contextlib.redirect_stderr(buf):
-            config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                               "agent_models.json", "persona_models.json")
-            config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                               "agent_models.json", "persona_models.json")
-        self.assertEqual(buf.getvalue().count("deprecated persona_* name"), 1)
-        self.assertIn("2027-03-31", buf.getvalue())
+            _file(None)
+            _file(None, env={"TOKENFRUGAL_PERSONA_MODELS_FILE": "/x/pm.json"})
+        self.assertEqual(buf.getvalue().count("deprecated; rename to tf-roles"), 1)
+        self.assertIn("(fallback removed after 2027-03-31)", buf.getvalue())
 
     def test_no_warning_when_new_name_used(self):
         buf = io.StringIO()
-        with _clean_env(TOKENFRUGAL_AGENT_MODELS_FILE="/new/am.json"), contextlib.redirect_stderr(buf):
-            config._agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE",
-                               "agent_models.json", "persona_models.json")
+        with _clean_env(TOKENFRUGAL_TF_ROLES_MODELS_FILE="/new/tr.json"), contextlib.redirect_stderr(buf):
+            _file(None, env={"TOKENFRUGAL_TF_ROLES_MODELS_FILE": "/new/tr.json"})
         self.assertEqual(buf.getvalue(), "")
 
 

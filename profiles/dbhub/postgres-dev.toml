@@ -1,0 +1,12 @@
+[[sources]]
+id = "default"
+dsn = "postgres://tf:tf_scratch_pw@host.docker.internal:5432/tf_scratch?sslmode=disable"
+
+[[tools]]
+name = "execute_sql"
+source = "default"
+readonly = false
+
+[[tools]]
+name = "search_objects"
+source = "default"

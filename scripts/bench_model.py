@@ -93,7 +93,7 @@ def main(argv=None) -> int:
         target = "ollama (default LLM URL)"
         env["TOKENFRUGAL_MODEL_BUILDER"] = args.model
         env["TOKENFRUGAL_MODEL_THINKER"] = args.model
-        env["TOKENFRUGAL_AGENT_MODELS"] = "0"
+        env["TOKENFRUGAL_TF_ROLES_MODELS"] = "0"
         model_override = args.model
 
     out_rel = f"bench/{tag}"

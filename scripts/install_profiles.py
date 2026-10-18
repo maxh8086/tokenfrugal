@@ -43,7 +43,7 @@ def main() -> int:
         for src in sorted((ROOT / "profiles").glob("*.yaml")):
             name = src.stem
             out = Path(tmp) / src.name
-            out.write_text(src.read_text(encoding="utf-8").replace("__WORKSPACE__", ws), encoding="utf-8")
+            out.write_text(src.read_text(encoding="utf-8").replace("__WORKSPACE__", ws).replace("__REPO__", str(ROOT).replace("\\", "/")), encoding="utf-8")
             subprocess.run(["docker", "mcp", "profile", "remove", name], capture_output=True)
             r = subprocess.run(["docker", "mcp", "profile", "import", str(out)], capture_output=True, text=True)
             print(("ok   " if r.returncode == 0 else "FAIL ") + name, (r.stderr or r.stdout).strip()[:200] if r.returncode else "")

@@ -25,10 +25,9 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
-from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_agents, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_tf_roles, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
-REALWORLD_CASES = 16
 SECTION_MARGIN = 600  # seconds
 
 
@@ -39,7 +38,7 @@ def section_timeout(n):
     env = os.getenv("BENCH_SECTION_TIMEOUT")
     if env:
         return float(env)
-    return REALWORLD_CASES * n * bench_real.CASE_TIMEOUT + SECTION_MARGIN
+    return len(bench_real.active_cases()) * n * bench_real.CASE_TIMEOUT + SECTION_MARGIN
 
 
 SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
@@ -94,7 +93,7 @@ def failure_mode(r):
 async def bench_roles(n):
     res = {}
     role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
-    cfg = load_agents()
+    cfg = load_tf_roles()
     missing = set(cfg["roles"]) - set(ROLE_TASKS)
     # assert not missing, f"bench does not cover roles: {sorted(missing)}"
     if missing:  # report uncovered roles instead of aborting the whole section
@@ -141,7 +140,7 @@ def bench_output(n, lengths=(128, 512, 1024, 2048, 4096)):
     """Direct completions per model: tokens/s and whether the length cap is honoured."""
     from openai import OpenAI
     c = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=180, max_retries=0)
-    cfg = load_agents()["models"]
+    cfg = load_tf_roles()["models"]
     res = {}
     for name, model in cfg.items():
         res[name] = {}
@@ -303,6 +302,12 @@ async def main():
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     data = {"tag": a.tag, "stamp": stamp, "n": a.n, "results": {},
             "env": bench_env.capture_env(), "task_timeout": bench_env.task_timeout(_ENV_AT_START, TASK_TIMEOUT_DEFAULT)}
+    # Parameter counts come from Ollama before any case runs, one model at a time, so a missing model shows up now.
+    for role in ("builder", "thinker"):
+        model = os.getenv(f"TOKENFRUGAL_MODEL_{role.upper()}", "")
+        size = bench_csv.ollama_params(model, OLLAMA_URL)
+        data.setdefault("model_params", {})[role] = size
+        print(f"params {role} {model or '(default)'}: {size or 'not reported by endpoint'}", flush=True)
     sampler = bench_env.HardwareSampler(interval=2.0)
     sampler.start()
     async def _real(n):
@@ -339,7 +344,17 @@ async def main():
     data["hardware_samples"] = sampler.samples
     (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
     (OUT / f"{stamp}-{a.tag}.md").write_text(markdown(data), encoding="utf-8")
-    bench_csv.write(data, OUT / f"{stamp}-{a.tag}-realworld.csv")
+    if os.getenv("BENCH_SUITE", "").strip().lower() != "hard":  # the CSV layout only has the default 16 cases
+        bench_csv.write(data, OUT / f"{stamp}-{a.tag}-realworld.csv")
+    else:  # hard suite: its own summary CSV, never benchmark.csv
+        import csv
+        with open(OUT / f"{stamp}-{a.tag}-hard_results.csv", "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["model", "case", "verified", "ran", "status", "median_s", "notes"])
+            for cid, r in (data["results"].get("realworld") or {}).items():
+                med = (r.get("s") or {}).get("p50") if isinstance(r, dict) else None
+                w.writerow([a.tag, cid, r.get("verified", ""), r.get("ran", ""), r.get("status", ""),
+                            med if med is not None else "", " | ".join(r.get("notes", []))])
     print("wrote", OUT / f"{stamp}-{a.tag}.md")
 
 

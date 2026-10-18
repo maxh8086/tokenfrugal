@@ -1,0 +1,30 @@
+version: 1
+id: db-redis-dev-l2
+name: db-redis-dev-l2
+secrets:
+  default:
+    provider: docker-desktop-store
+servers:
+- type: image
+  secrets: default
+  tools:
+  - lpush
+  - rpush
+  - sadd
+  - expire
+  - json_get
+  - json_set
+  image: mcp/redis@sha256:0cd246d56f0f26235f1230a44b28834c3603c8900afad62767220772cfe4c509
+  snapshot:
+    server:
+      name: redis
+      type: server
+      image: mcp/redis@sha256:0cd246d56f0f26235f1230a44b28834c3603c8900afad62767220772cfe4c509
+      description: Redis (dev)
+      title: redis
+      remote: {}
+      env:
+      - name: REDIS_HOST
+        value: host.docker.internal
+      - name: REDIS_PORT
+        value: '6379'

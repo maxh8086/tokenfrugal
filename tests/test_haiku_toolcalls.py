@@ -150,10 +150,10 @@ def check_router_tools(only: str = "") -> list:
 
 
 async def _role_rows(only: str) -> list:
-    from router.config import load_agents
+    from router.config import load_tf_roles
     from router.compose import backends
     from router.mcp_client import _schema, open_role
-    cfg = load_agents()
+    cfg = load_tf_roles()
     rows = []
     for rname, r in cfg["roles"].items():
         allow = list(r.get("tools") or [])

@@ -5,8 +5,8 @@ this script, taken from ``validate_labels``, ``main`` and ``keyword_route``:
 
 - ``task`` (str, required): the task text. Only read by ``keyword_route``.
 - ``agent`` (str, required): the expected slug. Must be a known slug, i.e. a
-  key of ``agent_models``, ``overrides`` or ``agent_skills`` in the agents
-  YAML (``--agents``, default ``router/agents.yaml``). Any other field is ignored.
+  key of ``tf_roles_models``, ``overrides`` or ``tf_roles_skills`` in the agents
+  YAML (``--agents``, default ``router/tf-roles.yaml``). Any other field is ignored.
 
 Predictions file (``--predictions``, optional): JSONL, one object per line, in the
 same order as the labels. Only ``agent`` (str or missing/null) is read. Missing
@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 
 import yaml
 
-SLUG_SECTIONS = ("agent_models", "overrides", "agent_skills")
+SLUG_SECTIONS = ("tf_roles_models", "agent_models", "overrides", "tf_roles_skills", "agent_skills")  # agent_* read as fallback
 
 
 def load_agent_slugs(agents_path: str) -> List[str]:
@@ -89,7 +89,7 @@ def _fmt(result: Dict) -> str:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Evaluate keyword agent routing.")
-    parser.add_argument("--agents", default="router/agents.yaml", help="agents YAML path")
+    parser.add_argument("--agents", default="router/tf-roles.yaml", help="agents YAML path")
     parser.add_argument("--labels", required=True, help="labels JSONL with 'task' and 'agent'")
     parser.add_argument("--predictions", help="predictions JSONL with 'agent'")
     parser.add_argument(

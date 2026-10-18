@@ -103,6 +103,7 @@ for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
 # keyring: refs are resolved from the OS store by mcp_client.open_native and passed to compose as ${SONARQUBE_TOKEN}
 NATIVE_SERVERS["sonarqube"]["env"] = {"SONARQUBE_TOKEN": "keyring:SONARQUBE_TOKEN"}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "router.plan_mcp"]}
+NATIVE_SERVERS["sandbox"] = {"command": sys.executable, "args": ["-m", "router.sandbox_mcp"]}  # run_tests / run_python in a network-less container
 # synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
 for _n, _spec in claude_import.load()["servers"].items():  # Claude-JSON imports (python -m router.claude_import)
     NATIVE_SERVERS.setdefault(_n, _spec)
@@ -120,40 +121,52 @@ TOOL_TIMEOUT = float(os.getenv("TOKENFRUGAL_TOOL_TIMEOUT", "60"))   # one MCP to
 TASK_TIMEOUT = float(os.getenv("TOKENFRUGAL_TASK_TIMEOUT", "540"))  # whole task; keep below the MCP client's tool timeout
 
 
-# The pre-rename persona_* names (env vars, override files, agents.yaml keys) are read as a fallback until this date.
-# tests/test_legacy_persona_config.py fails after it, which is the reminder to delete the fallback; CHANGELOG.md records it.
+# The pre-rename agent_* and persona_* names (env vars, override files, yaml keys) are read as a fallback until this date.
+# tests/test_legacy_agent_config.py and tests/test_legacy_persona_config.py fail after it, which is the reminder to delete
+# the fallbacks; CHANGELOG.md records it.
 LEGACY_REMOVE_AFTER = date(2027, 3, 31)
 _LEGACY_SEEN: set[str] = set()
+_LEGACY_MODEL_ENVS = ("TOKENFRUGAL_AGENT_MODELS", "TOKENFRUGAL_PERSONA_MODELS")
+_LEGACY_MODELS_FILES = (("TOKENFRUGAL_AGENT_MODELS_FILE", "agent_models.json"),
+                        ("TOKENFRUGAL_PERSONA_MODELS_FILE", "persona_models.json"))
+_LEGACY_MCPS_FILES = (("TOKENFRUGAL_AGENT_MCPS_FILE", "agent_mcps.json"),
+                      ("TOKENFRUGAL_PERSONA_MCPS_FILE", "persona_mcps.json"))
 
 
 def _legacy_notice(name: str) -> None:
-    """Warn on stderr once per process when a deprecated persona_* name is actually used."""
+    """Warn on stderr once per process when a deprecated agent_* or persona_* name is actually used."""
     if name in _LEGACY_SEEN:
         return
     _LEGACY_SEEN.add(name)
-    print(f"tokenfrugal: '{name}' is a deprecated persona_* name; rename it to the agent_* name. "
-          f"The fallback is removed after {LEGACY_REMOVE_AFTER.isoformat()}.", file=sys.stderr)
+    kind = "agent_*" if "agent" in name.lower() else "persona_*"
+    print(f"tokenfrugal: '{name}' is deprecated; rename to tf-roles ({kind} name). "
+          f"(fallback removed after {LEGACY_REMOVE_AFTER.isoformat()})", file=sys.stderr)
 
 
-def _agent_file(env_name: str, legacy_env: str, name: str, legacy_name: str) -> Path:
-    """Agent override file path. The agent_* env var and filename win. The pre-rename persona_* env var and file are a fallback until 2027-03-31 (LEGACY_REMOVE_AFTER); a deprecation warning is printed once when one is used."""
+def _tf_roles_file(env_name: str, name: str, legacy: tuple[tuple[str, str], ...]) -> Path:
+    """Override file path. The tf-roles env var and filename win. legacy = ((env, filename), ...) in precedence order:
+    the agent_* and persona_* names are a fallback until LEGACY_REMOVE_AFTER, and a deprecation warning is printed once."""
+    here = Path(__file__).parent
     if os.getenv(env_name):
         return Path(os.environ[env_name])
-    if os.getenv(legacy_env):
-        _legacy_notice(legacy_env)
-        return Path(os.environ[legacy_env])
-    new = Path(__file__).parent / name
-    legacy = Path(__file__).parent / legacy_name
-    if new.exists() or not legacy.exists():
+    for lenv, _ in legacy:
+        if os.getenv(lenv):
+            _legacy_notice(lenv)
+            return Path(os.environ[lenv])
+    new = here / name
+    if new.exists():
         return new
-    _legacy_notice(legacy_name)
-    return legacy
+    for _, lname in legacy:
+        if (here / lname).exists():
+            _legacy_notice(lname)
+            return here / lname
+    return new
 
 
-AGENT_MODELS_FILE = _agent_file("TOKENFRUGAL_AGENT_MODELS_FILE", "TOKENFRUGAL_PERSONA_MODELS_FILE", "agent_models.json", "persona_models.json")
+TF_ROLES_MODELS_FILE = _tf_roles_file("TOKENFRUGAL_TF_ROLES_MODELS_FILE", "tf-roles_models.json", _LEGACY_MODELS_FILES)
 
 
-AGENT_MCPS_FILE = _agent_file("TOKENFRUGAL_AGENT_MCPS_FILE", "TOKENFRUGAL_PERSONA_MCPS_FILE", "agent_mcps.json", "persona_mcps.json")
+TF_ROLES_MCPS_FILE = _tf_roles_file("TOKENFRUGAL_TF_ROLES_MCPS_FILE", "tf-roles_mcps.json", _LEGACY_MCPS_FILES)
 
 
 def load_catalog() -> dict:
@@ -168,42 +181,54 @@ def default_mcps(role: dict, catalog: dict) -> list[str]:
     return [n for n, m in catalog["mcps"].items() if set(m["tools"]) & set(role["tools"])]
 
 
-def load_agents() -> dict:
-    cfg = yaml.safe_load((Path(__file__).parent / "agents.yaml").read_text(encoding="utf-8"))
-    # agent_models is the key; persona_models is still read from agents.yaml until LEGACY_REMOVE_AFTER.
-    if not cfg.get("agent_models") and cfg.get("persona_models"):
-        _legacy_notice("persona_models")
-    pm = dict(cfg.get("agent_models") or cfg.get("persona_models") or {})
-    try:  # user overrides (written by scripts/agent_ui.py) win over the yaml defaults
-        pm.update(json.loads(AGENT_MODELS_FILE.read_text(encoding="utf-8")))
+def _yaml_section(cfg: dict, name: str, legacy: tuple[str, ...]) -> dict:
+    """Section `name` of tf-roles.yaml. Pre-rename keys are a fallback until LEGACY_REMOVE_AFTER."""
+    if cfg.get(name):
+        return cfg[name]
+    for old in legacy:
+        if cfg.get(old):
+            _legacy_notice(old)
+            return cfg[old]
+    return {}
+
+
+def load_tf_roles() -> dict:
+    cfg = yaml.safe_load((Path(__file__).parent / "tf-roles.yaml").read_text(encoding="utf-8"))
+    pm = dict(_yaml_section(cfg, "tf_roles_models", ("agent_models", "persona_models")))
+    try:  # user overrides (written by scripts/tf_roles_ui.py) win over the yaml defaults
+        pm.update(json.loads(TF_ROLES_MODELS_FILE.read_text(encoding="utf-8")))
     except (OSError, ValueError):
         pass
-    # Benchmarks pin one model for every agent with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_AGENT_MODELS=0 disables the mapping
-    # (TOKENFRUGAL_PERSONA_MODELS=0 is still honoured until LEGACY_REMOVE_AFTER).
-    if not os.getenv("TOKENFRUGAL_AGENT_MODELS") and os.getenv("TOKENFRUGAL_PERSONA_MODELS"):
-        _legacy_notice("TOKENFRUGAL_PERSONA_MODELS")
-    disabled = (os.getenv("TOKENFRUGAL_AGENT_MODELS") or os.getenv("TOKENFRUGAL_PERSONA_MODELS")) == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
+    # Benchmarks pin one model for every role with TOKENFRUGAL_MODEL_*; TOKENFRUGAL_TF_ROLES_MODELS=0 disables the mapping.
+    # The TOKENFRUGAL_AGENT_MODELS and TOKENFRUGAL_PERSONA_MODELS names are still honoured until LEGACY_REMOVE_AFTER.
+    if not os.getenv("TOKENFRUGAL_TF_ROLES_MODELS"):
+        for old in _LEGACY_MODEL_ENVS:
+            if os.getenv(old):
+                _legacy_notice(old)
+    switch = (os.getenv("TOKENFRUGAL_TF_ROLES_MODELS") or os.getenv("TOKENFRUGAL_AGENT_MODELS")
+              or os.getenv("TOKENFRUGAL_PERSONA_MODELS"))
+    disabled = switch == "0" or any(os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") for k in cfg["models"])
     cfg["known_agents"] = sorted(set(pm) | set(cfg.get("known_agents") or []))  # slugs stay valid when the model mapping is off
     if disabled:
         pm = {}
     cfg["agent_models"] = {k: v for k, v in pm.items() if isinstance(v, str) and v.strip()}
     cfg["mcp_catalog"] = load_catalog()["mcps"]
-    try:  # user MCP selection per agent (written by scripts/agent_ui.py); off whenever the model mapping is off
-        mc = json.loads(AGENT_MCPS_FILE.read_text(encoding="utf-8"))
+    try:  # user MCP selection per agent (written by scripts/tf_roles_ui.py); off whenever the model mapping is off
+        mc = json.loads(TF_ROLES_MCPS_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         mc = {}
     cfg["agent_mcps"] = {} if disabled else {k: v for k, v in mc.items() if isinstance(v, list)}
     for k in cfg["models"]:  # TOKENFRUGAL_MODEL_BUILDER / _THINKER swap a model without editing the yaml (benchmarks)
         cfg["models"][k] = os.getenv(f"TOKENFRUGAL_MODEL_{k.upper()}") or cfg["models"][k]
-    # agent_skills is the key; persona_skills is still read from agents.yaml until LEGACY_REMOVE_AFTER.
-    if not cfg.get("agent_skills") and cfg.get("persona_skills"):
-        _legacy_notice("persona_skills")
-    cfg["agent_skills"] = dict(cfg.get("agent_skills") or cfg.get("persona_skills") or {})
-    # Role -> model tag from the dashboard Configuration tab; wins over the logical model in agents.yaml.
+    cfg["agent_skills"] = dict(_yaml_section(cfg, "tf_roles_skills", ("agent_skills", "persona_skills")))
+    # Role -> model tag from the dashboard Configuration tab; wins over the logical model in tf-roles.yaml.
     cfg["role_models"] = {k: v for k, v in (_overrides.get("role_models") or {}).items() if isinstance(v, str) and v.strip()}
     # Role -> MCP names from the dashboard Configuration tab; an agent_mcps entry for one agent still wins.
     cfg["role_mcps"] = {k: [n for n in v if isinstance(n, str)] for k, v in (_overrides.get("role_mcps") or {}).items() if isinstance(v, list)}
     return cfg
+
+
+load_agents = load_tf_roles  # pre-rename name, kept for callers
 
 
 def resolve_role(agent: str, cfg: dict) -> dict:

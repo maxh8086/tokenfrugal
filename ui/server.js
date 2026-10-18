@@ -393,18 +393,19 @@ function benchTop(n) {
     .map(({ speed, ...s }) => s);
 }
 // Default post pick: among complete local runs (full check count, not partial reruns), the highest composite score.
-// composite = 0.6 * pass rate + 0.4 * ln(t/s) / ln(highest t/s among the candidates), so the speed reference moves with the pool.
+// composite = 0.6 * pass rate + 0.4 * ln(slowest s/case / s/case) / ln(slowest / fastest among the candidates), so the speed range moves with the pool.
 const POST_PASS_WEIGHT = 0.6;
 const POST_SPEED_WEIGHT = 0.4;
 function benchLatest() {
-  const all = benchTop(Infinity).filter((s) => s.ran && !s.model.startsWith('claude-') && s.tps > 0);
+  const all = benchTop(Infinity).filter((s) => s.ran && !s.model.startsWith('claude-') && s.s_per_case > 0);
   const full = Math.max(0, ...all.map((s) => s.ran));
   const runs = all.filter((s) => s.ran === full);
   if (!runs.length) return null;
-  const maxTps = Math.max(...runs.map((s) => s.tps));
+  const fast = Math.min(...runs.map((s) => s.s_per_case)), slow = Math.max(...runs.map((s) => s.s_per_case));
+  const speed = (s) => (slow <= fast ? 1 : Math.max(0, Math.min(1, Math.log(slow / s) / Math.log(slow / fast))));
   const scored = runs.map((s) => ({
     ...s,
-    composite: POST_PASS_WEIGHT * (s.pct / 100) + POST_SPEED_WEIGHT * (Math.log(s.tps) / Math.log(maxTps)),
+    composite: POST_PASS_WEIGHT * (s.pct / 100) + POST_SPEED_WEIGHT * speed(s.s_per_case),
   }));
   return scored.sort((a, b) => b.composite - a.composite || b.pct - a.pct)[0];
 }
