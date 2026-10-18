@@ -36,14 +36,19 @@ REQUIRED_TOOL_CASES = {
     "browser_navigate_snapshot": "navigate_page",       # role_browser
 }
 
-rows = []
-for _name in ("benchmark.csv", "cloud.csv"):
-    _path = B / "results" / _name
-    if _path.exists():
-        rows += list(csv.DictReader(_path.open(encoding="utf-8")))
+def _load(name):
+    _path = B / "results" / name
+    if not _path.exists():
+        return []
+    return list(csv.DictReader(_path.open(encoding="utf-8")))
+
+
+# Stage-1 rows are the only results in the report. benchmark.csv and cloud.csv
+# predate the tool-issue fix, so they are not loaded.
+rows = _load("stage1-fullrun.csv")
 missing = [c for c in CASES if c not in rows[0]]
 if missing:
-    raise SystemExit(f"benchmark.csv is missing case columns: {missing}")
+    raise SystemExit(f"benchmark CSVs are missing case columns: {missing}")
 
 
 def num(r, k):
@@ -171,39 +176,107 @@ def md_table():
     return "\n".join(o)
 
 
-def role_rank(cases, top=5):
-    """Local models ranked on one role's cases only. Only each model's newest-dated runs count, so
-    results from older harness or router code never mix with current ones. Runs on that date are
-    merged (passes and checks summed); ties go to more evidence, then speed. Cloud baseline excluded."""
-    newest = {}
-    for r in rows:
-        d = (r.get("date") or "")[:10]
-        newest[r["builder_model"]] = max(newest.get(r["builder_model"], ""), d)
+DOT = {"green": "🟢", "amber": "🟡", "red": "🔴"}
+DOT_LEGEND = [
+    "🟢 Preferred: every case of the role passes in every run, no infra flag, nothing spilled to system RAM.",
+    "🟡 Usable: passes at least 75% of the role's checks overall, or passes everything but had an infra flag or system-RAM spill.",
+    "🔴 Not recommended: below 75% of the role's checks.",
+]
+RANK_DOT_LEGEND_MD = "\n".join(f"- {l}" for l in DOT_LEGEND)
+
+
+def _status(m):
+    clean = m["infra"] == 0 and m["shared"] == 0
+    if m["full"] == m["runs"] and clean:
+        return "green"
+    if m["a"] / m["n"] >= 0.75:
+        return "amber"
+    return "red"
+
+
+def _sort_role(agg):
+    return sorted(agg.items(), key=lambda kv: (-kv[1]["a"] / kv[1]["n"], -kv[1]["n"],
+                                                -sum(kv[1].get("t", [0])) / max(len(kv[1].get("t", [])), 1)))
+
+
+def _role_agg(cases):
+    """Per-model totals for one role's cases across ALL of the model's runs, so each model is compared
+    against its own history. Newest run date and the newest run's shared memory are kept for display."""
     agg = {}
     for r in rows:
         a, n = subtotal(r, cases)
-        if not n or r["builder_model"].startswith("claude-") or (r.get("date") or "")[:10] != newest[r["builder_model"]]:
+        name = r["builder_model"]
+        if not n or name.startswith("claude-"):
             continue
-        m = agg.setdefault(r["builder_model"], {"a": 0, "n": 0, "runs": 0, "s": [], "r": r, "d": newest[r["builder_model"]], "g": set(), "h": set()})
+        d = (r.get("date") or "")[:10]
+        m = agg.setdefault(name, {"a": 0, "n": 0, "runs": 0, "full": 0, "infra": 0, "shared": 0,
+                                  "s": [], "t": [], "d": "", "g": set(), "h": set(), "pull": r["pull"]})
         m["a"] += a
         m["n"] += n
         m["runs"] += 1
+        m["full"] += a == n
+        m["infra"] += num(r, "infra_cases") > 0
+        m["shared"] = max(m["shared"], num(r, "shared_system_memory_gb"))
         m["g"].add((r.get("git_sha") or "")[:7])
         m["h"].add(r.get("harness_version") or "")
+        if d >= m["d"]:
+            m["d"], m["pull"] = d, r["pull"]
         if num(r, "mean_s_per_case"):
             m["s"].append(num(r, "mean_s_per_case"))
         if r["tps"] is not None:
-            m.setdefault("t", []).append(r["tps"])
-    ranked = sorted(agg.items(), key=lambda kv: (-kv[1]["a"] / kv[1]["n"], -kv[1]["n"],
-                                                  -sum(kv[1].get("t", [0])) / max(len(kv[1].get("t", [])), 1)))
-    o = ["| # | Model | Date | Code (git) | Harness | Role score | % | Runs | t/s | s/case | Shared memory GB | Pull command |",
-         "|--:|---|---|---|---|--:|--:|--:|--:|--:|--:|---|"]
-    for i, (name, m) in enumerate(ranked[:top], 1):
-        tps_avg = f"{sum(m['t']) / len(m['t']):.1f}" if m.get("t") else ""
+            m["t"].append(r["tps"])
+    return agg
+
+
+def role_pick(cases):
+    """(preferred list, faster) for one role. Preferred = green models in rank order; faster = the
+    quickest preferred model with the same pass rate as the top one, when it is not the top one."""
+    greens = [(n, m) for n, m in _sort_role(_role_agg(cases)) if _status(m) == "green"]
+    if not greens:
+        return [], None
+    top_name, top = greens[0]
+    top_pct = top["a"] / top["n"]
+    same = [(n, m) for n, m in greens if m["a"] / m["n"] == top_pct and m["t"]]
+    fast_name = max(same, key=lambda kv: sum(kv[1]["t"]) / len(kv[1]["t"]), default=(None, None))[0]
+    return [n for n, _ in greens], (fast_name if fast_name != top_name else None)
+
+
+def role_rank(cases, top=5):
+    """Every local model on one role's cases, compared across all its runs, with a status dot.
+    The first `top` rows show by default; the rest sit in a collapsed <details> block."""
+    ranked = _sort_role(_role_agg(cases))
+    head = ["| | # | Model | Latest run | Code (git) | Runs | Runs fully passing | Role score | % | Infra runs | Shared memory GB | t/s | s/case | Pull command |",
+            "|:-:|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|---|"]
+
+    def row(i, name, m):
+        tps = f"{sum(m['t']) / len(m['t']):.1f}" if m["t"] else ""
         spc = f"{sum(m['s']) / len(m['s']):.1f}" if m["s"] else ""
         sha = ", ".join(f"`{g}`" for g in sorted(m["g"]) if g)
-        o.append(f"| {i} | `{name}` | {m['d']} | {sha} | {', '.join(sorted(h for h in m['h'] if h)) or '-'} | {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {m['runs']} | {spc} "
-                 f"| {m['r'].get('shared_system_memory_gb') or ''} | `{m['r']['pull']}` |")
+        return (f"| {DOT[_status(m)]} | {i} | `{name}` | {m['d']} | {sha} | {m['runs']} | {m['full']}/{m['runs']} "
+                f"| {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {m['infra']} | {m['shared']:g} | {tps} | {spc} | `{m['pull']}` |")
+
+    o = head + [row(i, n, m) for i, (n, m) in enumerate(ranked[:top], 1)]
+    rest = ranked[top:]
+    if rest:
+        o += ["", f"<details><summary>Show the other {len(rest)} models</summary>", "", *head,
+              *[row(i, n, m) for i, (n, m) in enumerate(rest, top + 1)], "", "</details>"]
+    return "\n".join(o)
+
+
+def role_text():
+    """Preferred models per role, each with its status dot, plus the faster option (see role_pick)."""
+    o = []
+    for label, cases in (("Builder", BUILDER_CASES), ("Thinker", THINKER_CASES)):
+        agg = _role_agg(cases)
+        greens, fast = role_pick(cases)
+        if not greens:
+            o.append(f"- **{label}:** no model is preferred yet (none passes every case in every run without flags).")
+            continue
+        o.append(f"- **{label}:** {len(greens)} preferred choice{'s' if len(greens) > 1 else ''}:")
+        for name in greens:
+            o.append(f"  - {DOT['green']} `{name}` — pull: `{agg[name]['pull']}`")
+        if fast:
+            o.append(f"  - Faster option with the same pass rate: `{fast}` — pull: `{agg[fast]['pull']}`")
     return "\n".join(o)
 
 
@@ -250,7 +323,7 @@ _{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` a
 
 ### Best model per role (local models, top 5 each)
 
-Each role is ranked only on its own cases, because one model is pinned to both roles in a run. Only a model's newest-dated runs count, so older results from earlier code never mix with current ones; the `Code (git)` column shows the commit that produced them. Results change as the router and harness change, so re-run a model after significant changes before trusting its place. Ties go to the model with more evidence, then the faster one. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+Each role is ranked only on its own cases, because one model is pinned to both roles in a run. Each model is compared across all of its runs, so `Runs fully passing` shows how consistent it is; the `Code (git)` column shows the commits that produced those runs. Results change as the router and harness change, so re-run a model after significant changes before trusting its place. Ties go to the model with more evidence, then the faster one. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
 
 **Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
 
@@ -555,12 +628,11 @@ function draw(id){
   let V=table(id,cols,R,"rank");V=topN(V,top,r=>r.model);
   render(id,cols,V,"rank");note(id,V.length,R.length,"runs");
  }else if(id==="rb"||id==="rt"){
-  const cs=id==="rb"?BC:TC,newest={};
-  R.forEach(r=>{if(r.day>(newest[r.model]||""))newest[r.model]=r.day});
+  const cs=id==="rb"?BC:TC;
   const agg={};
-  R.forEach(r=>{const[a,n]=cnt(r,cs);if(!n||r.model.startsWith("claude-")||r.day!==newest[r.model])return;
+  R.forEach(r=>{const[a,n]=cnt(r,cs);if(!n||r.model.startsWith("claude-"))return;
    const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,g:new Set,h:new Set,r});
-   m.a+=a;m.n+=n;m.runs++;m.g.add(r.git);m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
+   m.a+=a;m.n+=n;m.runs++;if(r.day>m.day)m.day=r.day;m.g.add(r.git);m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
   const L=Object.values(agg).map(m=>({...m,pct:Math.round(100*m.a/m.n),s:m.ss.length?m.ss.reduce((x,y)=>x+y)/m.ss.length:0}));
   L.sort((x,y)=>(y.a/y.n-x.a/x.n)||(y.n-x.n)||((y.tps||0)-(x.tps||0))||((x.s||1e9)-(y.s||1e9)));
   const rc=[{k:"n",l:"#",f:(m,i)=>i+1},
@@ -615,7 +687,7 @@ DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchm
 
 ### Best model per role (local models, top 5 each)
 
-Each role is ranked only on its own cases. Only a model's newest-dated runs count (within the filtered set), so older results from earlier code never mix with current ones; `Code (git)` shows the commit that produced them. Ties go to more evidence, then the faster model. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+Each role is ranked only on its own cases. Each model is compared across all of its runs in the filtered set; `Runs fully passing` in the recommendation table shows how consistent it is, and `Code (git)` shows the commits that produced those runs. Ties go to more evidence, then the faster model. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
 
 **Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
 
@@ -628,6 +700,22 @@ Each role is ranked only on its own cases. Only a model's newest-dated runs coun
 <div id="rt-bar"></div>
 
 <div id="rt"></div>
+
+### Recommended model per role
+
+Each model is compared across all of its runs. The dot shows how far to trust it for that role:
+
+{RANK_DOT_LEGEND_MD}
+
+**Builder**
+
+{role_rank(BUILDER_CASES, top=5)}
+
+**Thinker**
+
+{role_rank(THINKER_CASES, top=5)}
+
+{role_text()}
 
 Charts, the legend and the roles table are in [explorer.html](explorer.html).
 
