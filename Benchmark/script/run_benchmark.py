@@ -8,7 +8,6 @@ one CSV row. The CSV is the source of truth; run build_report.py afterwards,
 then have a cloud model review the CSV and update Observations in Benchmark.md (see README.md).
 """
 import argparse
-import csv
 import json
 import os
 import socket
@@ -25,6 +24,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import bench_csv  # noqa: E402
+import csvstore  # noqa: E402
 import hardware  # noqa: E402
 import modelinfo  # noqa: E402
 
@@ -36,6 +36,8 @@ ap.add_argument("--tag")
 ap.add_argument("--csv", default=str(HERE.parent / "results" / "benchmark.csv"))
 ap.add_argument("--endpoint", help="OpenAI-compatible base URL (default: TOKENFRUGAL_LLM_URL / local Ollama)")
 ap.add_argument("--api-key-env", help="name of the env var holding the endpoint API key (value is never printed)")
+ap.add_argument("--no-hard", action="store_true", help="skip the hard thinker suite that normally follows the 48-case run")
+ap.add_argument("--coding", action="store_true", help="after the run, also run the L1-L6 coding suite (sandbox run_tests; needs Docker)")
 ap.add_argument("--from-json", help="skip the run and import an existing bench JSON")
 a = ap.parse_args()
 
@@ -136,6 +138,7 @@ def preflight(endpoint, key, models):
     if ids:
         for m in dict.fromkeys(models):
             check(f"model {m}", m in ids, "pull or enable it on the endpoint")
+            print(f"        params: {bench_csv.ollama_params(m, endpoint) or 'not reported'}")
     if bad:
         sys.exit(f"preflight failed: {', '.join(bad)}")
 
@@ -182,6 +185,8 @@ out = bench_csv.rows(data)
 if not out:
     sys.exit(f"no realworld results in {src}")
 row = out[0]
+if not row[1]:  # older raw JSON without model_params: ask Ollama now
+    row[1] = bench_csv.ollama_params(data.get("meta", {}).get("builder", ""), data.get("meta", {}).get("endpoint") or a.endpoint or "")
 score, mx = row[2].split("/")
 ran = row[3].split("/")[0]
 hwi = hardware.info()
@@ -219,14 +224,33 @@ rec["valid_cases"], rec["infra_cases"], rec["mean_s_valid"] = bench_csv.status_s
 rec["total_s"] = bench_csv.total_seconds(real)  # elapsed time of all repeats, timeouts and infra included
 mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["context_used_peak_tokens"])
 rec.update(mi)
-cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels]
+cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels] + ["raw_json"]
 dst = Path(a.csv)
-old = list(csv.DictReader(dst.open(encoding="utf-8"))) if dst.exists() else []
-tmp = dst.with_suffix(".csv.tmp")  # write beside the target, then swap in, so a failed write never truncates the real file
-with tmp.open("w", newline="", encoding="utf-8") as f:  # rewrite so legacy rows get the new columns blank
-    w = csv.DictWriter(f, fieldnames=cols, restval="")
-    w.writeheader()
-    w.writerows(old)
-    w.writerow(rec)
-tmp.replace(dst)
+rec["raw_json"] = src.name
+try:
+    backup = csvstore.append_row(dst, cols, rec, HERE.parent / "results" / "runs.jsonl")
+except csvstore.CsvSchemaError as e:
+    sys.exit(f"CSV NOT WRITTEN (run kept in results/runs.jsonl and {src}): {e}")
+if backup:
+    print(f"backup: {backup}")
 print(f"appended {rec['tag']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
+
+if not a.from_json and not a.no_hard:
+    # Hard thinker suite (5 cases): reported next to the 48-case score, never written to benchmark.csv.
+    hard_dir = HERE.parent / "results" / "hard"
+    hard_dir.mkdir(parents=True, exist_ok=True)
+    hard_env = {**env, "BENCH_SUITE": "hard", "BENCH_OUT_DIR": str(hard_dir)}
+    hard_tag = ("hard-" + thinker.replace(":", "-").replace("/", "-"))[:50]
+    hp = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", hard_tag],
+                        cwd=ROOT, env=hard_env, check=False)
+    print(f"hard suite {'done' if hp.returncode == 0 else f'exited {hp.returncode}'}: results in {hard_dir}")
+
+if a.coding and not a.from_json:
+    # L1-L6 coding suite (6 cases, one role/profile per level): reported separately, never written to benchmark.csv.
+    code_dir = HERE.parent / "results" / "coding"
+    code_dir.mkdir(parents=True, exist_ok=True)
+    code_env = {**env, "BENCH_SUITE": "coding", "BENCH_OUT_DIR": str(code_dir)}
+    code_tag = ("coding-" + a.builder.replace(":", "-").replace("/", "-"))[:50]
+    cp = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", code_tag],
+                        cwd=ROOT, env=code_env, check=False)
+    print(f"coding suite {'done' if cp.returncode == 0 else f'exited {cp.returncode}'}: results in {code_dir}")

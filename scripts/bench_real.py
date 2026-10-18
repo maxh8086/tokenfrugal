@@ -26,7 +26,7 @@ WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
 SYNAPTREE_CONTAINER = "synaptree-synaptree-1"
 SYNAPTREE_CASES = {"write_function", "fix_bug", "write_tests", "rename_across_files",
                    "find_symbol", "review_sqli", "debug_trace", "role_analyzer",  # cases 1-7 and 9
-                   "role_browser"}  # also the browser case, which needs the synaptree UI container
+                   "role_browser", "code_l6_callers"}  # also the browser case, which needs the synaptree UI container
 CASE_TIMEOUT = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # seconds; per-repeat watchdog, a hit is scored as a failure (status timeout)
 LOG_TAIL_LINES = 60
 LOG_CAP_BYTES = 4096
@@ -275,11 +275,180 @@ def cases():
     ]
 
 
+def _groups(*groups):
+    """Tolerant answer check: every group needs at least one of its words in the reply (case-insensitive)."""
+    def check(a):
+        low = a.lower()
+        return (all(any(w in low for w in g) for g in groups), a[:100].replace("\n", " "))
+    return check
+
+
+def hard_cases():
+    """Opt-in harder THINKER suite (BENCH_SUITE=hard): multi-step analysis questions whose answer text is checked
+    with tolerant word groups. Seed files live in SCRATCH. Same tuple shape as cases(); none need the synaptree container."""
+    def s_multifile():
+        _seed("money.py", "def to_cents(amount):\n    return int(amount * 100)\n")
+        _seed("ledger.py", "from money import to_cents\n\n\nclass Ledger:\n    def __init__(self):\n"
+              "        self.cents = 0\n\n    def add(self, amount):\n        self.cents += to_cents(amount)\n\n"
+              "    def total(self):\n        return self.cents / 100\n")
+        _seed("report.py", "from ledger import Ledger\n\n\ndef invoice(items):\n    led = Ledger()\n"
+              "    for x in items:\n        led.add(x)\n    return f'{led.total():.2f}'\n")
+
+    def c_multifile(a):
+        return _groups(("to_cents", "money.py"), ("round", "float", "truncat", "floor"))(a)
+
+    def s_vulns():
+        _seed("api.py", "import subprocess\n\n\ndef find_user(conn, name):\n"
+              "    return conn.execute(\"SELECT * FROM users WHERE name = '\" + name + \"'\").fetchall()\n\n\n"
+              "def backup(path):\n    subprocess.call('tar -czf /tmp/b.tgz ' + path, shell=True)\n")
+
+    def c_vulns(a):
+        return _groups(("sql", "sqli"), ("command", "shell", "os command"))(a)
+
+    def s_trace():
+        _seed("trace_cfg.py", "CONFIG = {'retries': '3'}\n\n\ndef load_retries(cfg):\n"
+              "    return cfg['retries'] + 1\n\n\ndef run(cfg):\n    n = load_retries(cfg)\n    return n * 2\n\n\n"
+              "print(run(CONFIG))\n")
+
+    def c_trace(a):
+        return _groups(("typeerror", "type error"), ("string", "str", "text"))(a)
+
+    def s_summary():
+        filler = " Routine maintenance notes were recorded for the week and nothing else changed."
+        _seed("notes.txt", "Weekly engineering notes.\n" + "\n".join(
+            f"Item {i}: routine check {i} passed.{filler}" for i in range(1, 9)) + "\n"
+            "Key decisions: the cache now runs on Redis. The request timeout went from 5 seconds to 12 seconds. "
+            "Retries use exponential backoff with jitter. The legacy admin page was removed.\n")
+
+    def c_summary(a):
+        sentences = [s for s in re.split(r"[.!?](?=\s|$)", a) if s.strip()]
+        ok, note = _groups(("redis",), ("12", "twelve"), ("backoff", "back-off", "back off"), ("admin",))(a)
+        return (ok and len(sentences) <= 5 and len(a) <= 900, note)
+
+    def s_compare():
+        _seed("dedupe.py", "def dedupe_a(xs):\n    out = []\n    for x in xs:\n        if x not in out:\n"
+              "            out.append(x)\n    return out\n\n\ndef dedupe_b(xs):\n    return list(set(xs))\n")
+
+    def c_compare(a):
+        return _groups(("order", "preserv"), ("set", "unordered", "hash"),
+                       ("quadratic", "n^2", "n²", "o(n^2)", "slower"))(a)
+
+    return [
+        ("hard_multifile_bug", "engineering-sre", s_multifile,
+         f"{WS}/ledger.py, {WS}/money.py and {WS}/report.py: invoice(['19.99', ...]) gives totals that are a cent low. "
+         "Trace the calls across the three files, name the root cause and the file it is in, and say how to fix it.",
+         c_multifile),
+        ("hard_two_vulns", "testing-code-reviewer", s_vulns,
+         f"Review {WS}/api.py for security problems. Name every distinct vulnerability class in it, with the line that has it.",
+         c_vulns),
+        ("hard_ambiguous_trace", "engineering-sre", s_trace,
+         f"Running {WS}/trace_cfg.py crashes. Read it, name the exception type, and give the real root cause, "
+         "not just the line that raised it.", c_trace),
+        ("hard_long_summary", "engineering-technical-writer", s_summary,
+         f"Read {WS}/notes.txt and summarize the key decisions in at most 5 sentences. Keep the specific values.",
+         c_summary),
+        ("hard_compare_functions", "testing-code-reviewer", s_compare,
+         f"In {WS}/dedupe.py compare dedupe_a and dedupe_b: say what differs in output and in complexity.",
+         c_compare),
+    ]
+
+
+def _sandbox_tests(files):
+    """Re-write the given test files (so a model cannot pass by editing them), then run unittest discovery in the
+    same network-less python container the sandbox MCP tool uses. Returns (passed, tail)."""
+    for name, text in files.items():
+        _seed(name, text)
+    argv = ["docker", "run", "--rm", "--network", "none", "--cpus", "2", "--memory", "1g",
+            "-e", "PYTHONDONTWRITEBYTECODE=1", "-v", f"{SCRATCH}:/work:ro", "-w", "/work",
+            os.getenv("TOKENFRUGAL_SANDBOX_IMAGE", "python:3.13-slim"), "python", "-m", "unittest", "discover", "-s", ".", "-q"]
+    env = {**os.environ, "MSYS_NO_PATHCONV": "1"}
+    p = subprocess.run(argv, capture_output=True, text=True, timeout=90, env=env)
+    return p.returncode == 0, (p.stdout + p.stderr).strip()[-140:].replace("\n", " ")
+
+
+def coding_cases():
+    """Opt-in CODING suite (BENCH_SUITE=coding): levels L1-L6, each dispatched to its own role (coding-l1..l6, own
+    Docker MCP profile and at most 6 tools). Each case seeds a project with failing unittests; the model must fix the
+    code, and the check re-writes the tests and runs them in the sandbox container."""
+    def case(cid, agent, files, tests, task):
+        def seed():
+            for n, t in {**files, **tests}.items():
+                _seed(n, t)
+
+        def check(_a):
+            return _sandbox_tests(tests)
+        return (cid, agent, seed, task + f" Folder: {WS}. Do not edit the test files; run the tests with run_tests "
+                f"(folder {WS}) until they pass.", check)
+
+    return [
+        case("code_l1_clamp", "coding-l1",
+             {"util.py": "def clamp(x, lo, hi):\n    if x < lo:\n        return hi\n    if x > hi:\n        return lo\n    return x\n"},
+             {"test_util.py": "import unittest\nfrom util import clamp\n\n\nclass T(unittest.TestCase):\n"
+              "    def test_low(self):\n        self.assertEqual(clamp(-5, 0, 10), 0)\n"
+              "    def test_high(self):\n        self.assertEqual(clamp(50, 0, 10), 10)\n"
+              "    def test_mid(self):\n        self.assertEqual(clamp(5, 0, 10), 5)\n"},
+             "Fix the bug in clamp() in util.py."),
+        case("code_l2_slugify", "coding-l2",
+             {"text.py": "def slugify(s):\n    raise NotImplementedError\n"},
+             {"test_text.py": "import unittest\nfrom text import slugify\n\n\nclass T(unittest.TestCase):\n"
+              "    def test_basic(self):\n        self.assertEqual(slugify('Hello World'), 'hello-world')\n"
+              "    def test_punct(self):\n        self.assertEqual(slugify('  A, b & c! '), 'a-b-c')\n"
+              "    def test_empty(self):\n        self.assertEqual(slugify('***'), '')\n"},
+             "Implement slugify(s) in text.py: lowercase, runs of non-alphanumerics become one '-', no leading or trailing '-'."),
+        case("code_l3_tax", "coding-l3",
+             {"pricing.py": "def line_total(price, qty):\n    return price * qty\n",
+              "cart.py": "from pricing import line_total\n\n\ndef cart_total(items):\n"
+                         "    return sum(line_total(p, q) for p, q in items)\n"},
+             {"test_cart.py": "import unittest\nfrom cart import cart_total\nfrom pricing import line_total\n\n\n"
+              "class T(unittest.TestCase):\n"
+              "    def test_line_default(self):\n        self.assertEqual(line_total(10, 2), 20)\n"
+              "    def test_line_tax(self):\n        self.assertAlmostEqual(line_total(10, 2, tax=0.1), 22.0)\n"
+              "    def test_cart_tax(self):\n        self.assertAlmostEqual(cart_total([(10, 2), (5, 1)], tax=0.2), 30.0)\n"
+              "    def test_cart_default(self):\n        self.assertEqual(cart_total([(10, 2), (5, 1)]), 25)\n"},
+             "Add an optional tax rate (default 0) to line_total in pricing.py and cart_total in cart.py, passing it through."),
+        case("code_l4_rename", "coding-l4",
+             {"calc.py": "def calc_avg(xs):\n    return sum(xs) / len(xs)\n",
+              "report.py": "from calc import calc_avg\n\n\ndef summary(xs):\n    return f'avg={calc_avg(xs):.1f}'\n",
+              "cli.py": "import calc\n\n\ndef run(xs):\n    return calc.calc_avg(xs)\n"},
+             {"test_rename.py": "import unittest\nimport calc, cli, report\n\n\nclass T(unittest.TestCase):\n"
+              "    def test_new_name(self):\n        self.assertEqual(calc.mean([1, 2, 3]), 2)\n"
+              "    def test_old_gone(self):\n        self.assertFalse(hasattr(calc, 'calc_avg'))\n"
+              "    def test_cli(self):\n        self.assertEqual(cli.run([2, 4]), 3)\n"
+              "    def test_report(self):\n        self.assertEqual(report.summary([2, 4]), 'avg=3.0')\n"},
+             "Rename calc_avg to mean everywhere (definition and every caller in all files)."),
+        case("code_l5_median", "coding-l5",
+             {"stats.py": "def median(xs):\n    xs = sorted(xs)\n    return xs[len(xs) // 2]\n\n\n"
+                          "def spread(xs):\n    return max(xs) - min(xs)\n"},
+             {"test_stats.py": "import unittest\nfrom stats import median, spread\n\n\nclass T(unittest.TestCase):\n"
+              "    def test_odd(self):\n        self.assertEqual(median([3, 1, 2]), 2)\n"
+              "    def test_even(self):\n        self.assertEqual(median([4, 1, 3, 2]), 2.5)\n"
+              "    def test_one(self):\n        self.assertEqual(median([7]), 7)\n"
+              "    def test_spread(self):\n        self.assertEqual(spread([1, 9, 4]), 8)\n"},
+             "The tests in test_stats.py fail. Run them, read the failure, find the cause and fix the code."),
+        case("code_l6_callers", "coding-l6",
+             {"store.py": "def save(key, value):\n    return {key: value}\n",
+              "a.py": "from store import save\n\n\ndef put_a(v):\n    return save('a', v)\n",
+              "b.py": "from store import save\n\n\ndef put_b(v):\n    return save('b', v)\n"},
+             {"test_store.py": "import unittest\nimport a, b\nfrom store import save\n\n\nclass T(unittest.TestCase):\n"
+              "    def test_save_ns(self):\n        self.assertEqual(save('k', 1, ns='x'), {'x:k': 1})\n"
+              "    def test_a(self):\n        self.assertEqual(a.put_a(1), {'a:a': 1})\n"
+              "    def test_b(self):\n        self.assertEqual(b.put_b(2), {'b:b': 2})\n"},
+             "Add a required namespace argument ns to save() in store.py (key becomes 'ns:key'), "
+             "then update every caller (find them with the code graph) to pass ns='a' in a.py and ns='b' in b.py."),
+    ]
+
+
+def active_cases():
+    """The case list this run uses: hard_cases() for BENCH_SUITE=hard, coding_cases() for coding, else cases()."""
+    suite = os.getenv("BENCH_SUITE", "").strip().lower()
+    return hard_cases() if suite == "hard" else coding_cases() if suite == "coding" else cases()
+
+
 async def run(n, timed, ok, failure_mode, stats):
     SCRATCH.mkdir(parents=True, exist_ok=True)
     res = {}
     pick = [c for c in os.getenv("BENCH_CASES", "").split(",") if c]  # e.g. BENCH_CASES=write_tests,role_browser
-    for cid, agent, setup, task, check in cases():
+    for cid, agent, setup, task, check in active_cases():
         if pick and cid not in pick:
             continue
         uses = cid in SYNAPTREE_CASES
