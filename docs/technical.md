@@ -138,25 +138,48 @@ To compare models, use the [benchmark report](https://maxh8086.github.io/tokenfr
 
 Most tools come from the Docker MCP Toolkit catalogue as maintained, sandboxed containers. Each role runs through `docker mcp gateway run --profile <name>`.
 
-To add a catalogue server:
+The easiest way to make these changes is to give your agent a prompt. Paste one of the prompts below into Claude Code or Codex from inside the `tokenfrugal` folder. The agent edits the files and runs the scripts, then reports back. The manual commands are listed after each prompt if you prefer to run them yourself.
 
-1. Add it to a profile in `profiles/*.yaml`.
-2. Allowlist 4-6 of its tools for the role in `router/agents.yaml`.
-3. Run `python scripts/install_profiles.py`, then restart the router.
+### Prompt: add a catalogue MCP server
 
-Servers outside the catalogue are shipped with the repo, in one of two ways:
+> In this repo, add the Docker MCP catalogue server `<server-name>` to the `<role>` role.
+> 1. Add it to the matching profile in `profiles/*.yaml`. Follow the format of the existing profiles. Create a new profile file only if no existing profile fits.
+> 2. In `router/agents.yaml`, allowlist 4-6 of the server's tools for `<role>`. If the server exposes more than 6 tools, list them and ask me which to keep.
+> 3. Run `python scripts/install_profiles.py`, then `python scripts/smoke.py` and report the result for `<role>`.
+> 4. If the server needs a token, name the variable and say where it goes (`~/.docker/mcp/mcp.env`). Never write a secret into a repo file or into chat.
+> Show me the diff. Then tell me to restart the MCP client.
 
-- **Containerised helper:** a Dockerfile in `docker/` wraps the upstream tool (for example `tokenfrugal/chrome-devtools-mcp:1` or `tokenfrugal/penpot-mcp:1`). `docker-compose.yml` (project `ts-mcp`) starts it for roles that list it under `compose:`.
-- **Native stdio server:** a role lists a local server under `native:` when it cannot run in Docker.
+Manual steps: edit `profiles/*.yaml` and `router/agents.yaml`, then run `python scripts/install_profiles.py` and restart the router.
 
-To build helpers from an exact upstream commit, `docker/pins.yaml` pins each upstream by full SHA:
+### Prompt: add a helper server outside the catalogue
+
+> In this repo, add a containerised helper for `<upstream repo URL>`, pinned to the full commit SHA `<40-char-sha>`. Use the tag `<tag>` only as a label; the SHA is what builds.
+> 1. Read `docker/pins.yaml` and one existing helper directory under `docker/` (for example `docker/penpot-mcp/`). Follow their layout.
+> 2. Add an entry to `docker/pins.yaml` with `repo`, `sha` (the full 40 characters, never a branch name), `image`, and `dockerfile`. Add a `tag_regex` if the upstream uses release tags.
+> 3. Create the Dockerfile at the path you set in `dockerfile`. It builds from the cloned repo as its context.
+> 4. Add the service to `docker-compose.yml` (project `ts-mcp`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/agents.yaml`, and allowlist 4-6 of its tools.
+> 5. Run `python scripts/pinned_build.py <name>`, then `python scripts/install_profiles.py`.
+> Report the image tag and the SHA. Do not change other pins or roles. Show me the diff.
+
+Manual steps: add the pin and Dockerfile, wire the service into `docker-compose.yml`, `profiles/*.yaml` and `router/agents.yaml`, then run `python scripts/pinned_build.py <name>` and `python scripts/install_profiles.py`.
+
+### Prompt: build helper images from their pinned commits
+
+> In this repo, rebuild the helper images from the commits pinned in `docker/pins.yaml`.
+> 1. Run `python scripts/check_pins.py` and list which pins have a newer upstream tag. Do not change any pin. Do not pass `--write` unless I say so.
+> 2. Run `python scripts/pinned_build.py` for all pins, or `python scripts/pinned_build.py <name>` if I name one.
+> 3. If a build fails, show me the last 30 lines of the error and stop. Do not edit a Dockerfile to work around it without asking me.
+> 4. When the builds finish, list the images (`docker images`) and report each tag and its SHA.
+
+Manual commands:
 
 ```bash
+python scripts/check_pins.py                        # shows newer upstream tags; --write updates pins
 python scripts/pinned_build.py                      # all pins
 python scripts/pinned_build.py chrome-devtools-mcp  # one pin; --keep leaves the clone
 ```
 
-To check whether any pin can move to a newer upstream tag, run `python scripts/check_pins.py`. Add `--write` to update `docker/pins.yaml`. Nothing is rebuilt until you run `pinned_build.py`.
+`check_pins.py` only reports unless you add `--write`. Nothing is rebuilt until you run `pinned_build.py`.
 
 ## Plan store
 
