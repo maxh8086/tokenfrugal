@@ -1,0 +1,3021 @@
+{
+ "tag": "llama3-2-1b-n1",
+ "stamp": "20261018-162803",
+ "n": 1,
+ "results": {
+  "realworld": {
+   "write_function": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 37.6,
+     "p50": 37.6,
+     "p95": 37.6,
+     "max": 37.6,
+     "mean": 37.6
+    },
+    "peak": 3643,
+    "input": 31294,
+    "output": 2501,
+    "notes": [
+     "FAILED (builder/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('3901e7d4cd') to retry."
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T10:58:03+00:00",
+      "end": "2026-10-18T10:58:41+00:00",
+      "s": 37.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[3901e7d4cd] FAILED (builder/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('3901e7d4cd') to retry.",
+      "note": "FAILED (builder/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('3901e7d4cd') to retry.",
+      "peak": 3643,
+      "input": 31294,
+      "output": 2501,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file",
+       "read_file",
+       "read_file",
+       "search_graph",
+       "read_file",
+       "read_file",
+       "search_graph",
+       "read_file",
+       "search_graph",
+       "search_graph"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "fix_bug": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 14.3,
+     "p50": 14.3,
+     "p95": 14.3,
+     "max": 14.3,
+     "mean": 14.3
+    },
+    "peak": 1766,
+    "input": 7261,
+    "output": 1058,
+    "notes": [
+     "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n | scratch=['calc.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T10:58:41+00:00",
+      "end": "2026-10-18T10:58:55+00:00",
+      "s": 14.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[3c81642681] {\"type\":\"function\",\"function\":{\"name\":\"edit_file\", \"parameters\": {\"path\": \"/workspace/tokenfrugal/bench/scratch/calc.py\", \"edits\": \"[{'oldText': 'add', 'newText': 'subtract'}]\"}}",
+      "note": "Traceback (most recent call last):\n  File \"<string>\", line 2, in <module>\nAssertionError\n | scratch=['calc.py']",
+      "peak": 1766,
+      "input": 7261,
+      "output": 1058,
+      "trail_tools": [
+       "edit_file",
+       "edit_file"
+      ]
+     }
+    ]
+   },
+   "write_tests": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 11.9,
+     "p50": 11.9,
+     "p95": 11.9,
+     "max": 11.9,
+     "mean": 11.9
+    },
+    "peak": 1340,
+    "input": 5934,
+    "output": 436,
+    "notes": [
+     "rc=1 tests=0 test tests for push, pop and len (at least 3 tests).\n             ^^^^^\nSyntaxError: invalid syntax\n | scratch=['stack.py', 'te"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T10:58:55+00:00",
+      "end": "2026-10-18T10:59:08+00:00",
+      "s": 11.9,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[c22a17082d] Successfully wrote to /workspace/tokenfrugal/bench/scratch/test_stack.py\nSuccessfully wrote to /workspace/tokenfrugal/bench/scratch/test_stack.py\nFiles changed: /workspace/tokenfrugal/bench/scratch/stack.py, /workspace/tokenfrugal/bench/scratch/test_stack.py\nVerdict: success",
+      "note": "rc=1 tests=0 test tests for push, pop and len (at least 3 tests).\n             ^^^^^\nSyntaxError: invalid syntax\n | scratch=['stack.py', 'te",
+      "peak": 1340,
+      "input": 5934,
+      "output": 436,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "write_file",
+       "write_file",
+       "read_file",
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "rename_across_files": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 42.8,
+     "p50": 42.8,
+     "p95": 42.8,
+     "max": 42.8,
+     "mean": 42.8
+    },
+    "peak": 5707,
+    "input": 18351,
+    "output": 5313,
+    "notes": [
+     "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1)) | scratch=['a_mod.py', 'b_mod.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T10:59:08+00:00",
+      "end": "2026-10-18T10:59:51+00:00",
+      "s": 42.8,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[26d9c7cbee] new_name\n\ntool error: unknown argument(s) label, required, type; missing required argument(s) new_name. Call again with only new_name.",
+      "note": "def old_name(x):     return x + 1 from a_mod import old_name  print(old_name(1)) | scratch=['a_mod.py', 'b_mod.py']",
+      "peak": 5707,
+      "input": 18351,
+      "output": 5313,
+      "trail_tools": [
+       "edit_file",
+       "search_graph",
+       "list_directory",
+       "search_graph"
+      ]
+     }
+    ]
+   },
+   "find_symbol": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 11.4,
+     "p50": 11.4,
+     "p95": 11.4,
+     "max": 11.4,
+     "mean": 11.4
+    },
+    "peak": 1203,
+    "input": 9223,
+    "output": 422,
+    "notes": [
+     "FAILED (builder/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('4a97c9143a') to retry."
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T10:59:51+00:00",
+      "end": "2026-10-18T11:00:02+00:00",
+      "s": 11.4,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[4a97c9143a] FAILED (builder/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('4a97c9143a') to retry.",
+      "note": "FAILED (builder/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('4a97c9143a') to retry.",
+      "peak": 1203,
+      "input": 9223,
+      "output": 422,
+      "trail_tools": [
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph",
+       "search_graph"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "review_sqli": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 14.9,
+     "p50": 14.9,
+     "p95": 14.9,
+     "max": 14.9,
+     "mean": 14.9
+    },
+    "peak": 2062,
+    "input": 10036,
+    "output": 335,
+    "notes": [
+     "FAILED (reviewer/llama3.2:1b): LoopError: no final answer in 8 steps. Call resume_task('f839d6389a') to retry."
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:00:02+00:00",
+      "end": "2026-10-18T11:00:18+00:00",
+      "s": 14.9,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f839d6389a] FAILED (reviewer/llama3.2:1b): LoopError: no final answer in 8 steps. Call resume_task('f839d6389a') to retry.",
+      "note": "FAILED (reviewer/llama3.2:1b): LoopError: no final answer in 8 steps. Call resume_task('f839d6389a') to retry.",
+      "peak": 2062,
+      "input": 10036,
+      "output": 335,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file",
+       "read_file",
+       "read_file"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "debug_trace": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 43.0,
+     "p50": 43.0,
+     "p95": 43.0,
+     "max": 43.0,
+     "mean": 43.0
+    },
+    "peak": 2094,
+    "input": 4168,
+    "output": 2341,
+    "notes": [
+     "The exception is `RuntimeError` and the root cause is that the `Benchmark.model_sweep` function is t | scratch=['bug.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:00:18+00:00",
+      "end": "2026-10-18T11:01:02+00:00",
+      "s": 43.0,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[d42041020a] The exception is `RuntimeError` and the root cause is that the `Benchmark.model_sweep` function is trying to access a non-existent file `ollama_models.py` in the `model_sweep` directory.\n\nThe findings are:\n\n* The crash occurred on the 85th line of the `scratch/bug.py` file.\n* The crash occurred on the 43rd line of the `model_sweep/ollama_models.py` file.\n* The crash occurred on the 71st line of the `scratch/bug.py` file.\n* The crash occurred on the 1st line of the `Benchmark.results/raw/20261015-201542-haiku-baseline.json` file.\n\nThe verdict is: The root cause is a misconfigured `Benchmark.model_sweep` function that tries to access a non-existent file. The smallest reversible step is to update the `Benchmark.model_sweep` function to correctly reference the `ollama_models.py` file.\n\nThe files changed are: `scratch/bug.py`, `Benchmark.model_sweep/ollama_models.py`, `Benchmark.results/raw/20261015-201542-haiku-baseline.json`.\n\nThe verdict is: The root cause is a misconfigured `Benchmark.model_sweep` function that tries to access a non-existent file. The smallest reversible step is to update the `Benchmark.model_sweep` function to correctly reference the `ollama_models.py` file.",
+      "note": "The exception is `RuntimeError` and the root cause is that the `Benchmark.model_sweep` function is t | scratch=['bug.py']",
+      "peak": 2094,
+      "input": 4168,
+      "output": 2341,
+      "trail_tools": [
+       "search_graph",
+       "search_graph"
+      ]
+     }
+    ]
+   },
+   "summarize_readme": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 66.6,
+     "p50": 66.6,
+     "p95": 66.6,
+     "max": 66.6,
+     "mean": 66.6
+    },
+    "peak": 7889,
+    "input": 26962,
+    "output": 6518,
+    "notes": [
+     "FAILED (docs/llama3.2:1b): LoopError: answer contains filler/placeholder text; redo with concrete content. Cal"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:01:02+00:00",
+      "end": "2026-10-18T11:02:08+00:00",
+      "s": 66.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[a3178d38bd] FAILED (docs/llama3.2:1b): LoopError: answer contains filler/placeholder text; redo with concrete content. Call resume_task('a3178d38bd') to retry.",
+      "note": "FAILED (docs/llama3.2:1b): LoopError: answer contains filler/placeholder text; redo with concrete content. Cal",
+      "peak": 7889,
+      "input": 26962,
+      "output": 6518,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "role_analyzer": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 16.1,
+     "p50": 16.1,
+     "p95": 16.1,
+     "max": 16.1,
+     "mean": 16.1
+    },
+    "peak": 1911,
+    "input": 9075,
+    "output": 378,
+    "notes": [
+     "FAILED (analyzer/llama3.2:1b): LoopError: no final answer in 10 steps. Call resume_task('c006ab74cd') to retry"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:02:08+00:00",
+      "end": "2026-10-18T11:02:25+00:00",
+      "s": 16.1,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[c006ab74cd] FAILED (analyzer/llama3.2:1b): LoopError: no final answer in 10 steps. Call resume_task('c006ab74cd') to retry.",
+      "note": "FAILED (analyzer/llama3.2:1b): LoopError: no final answer in 10 steps. Call resume_task('c006ab74cd') to retry",
+      "peak": 1911,
+      "input": 9075,
+      "output": 378,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file",
+       "read_file",
+       "read_file",
+       "search_graph",
+       "search_graph"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "role_data": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 8.4,
+     "p50": 8.4,
+     "p95": 8.4,
+     "max": 8.4,
+     "mean": 8.4
+    },
+    "peak": 953,
+    "input": 7378,
+    "output": 462,
+    "notes": [
+     "FAILED (data/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('df89725424') to retry."
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:02:25+00:00",
+      "end": "2026-10-18T11:02:33+00:00",
+      "s": 8.4,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[df89725424] FAILED (data/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('df89725424') to retry.",
+      "note": "FAILED (data/llama3.2:1b): LoopError: no final answer in 12 steps. Call resume_task('df89725424') to retry.",
+      "peak": 953,
+      "input": 7378,
+      "output": 462,
+      "trail_tools": [
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "list_directory"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "role_docs": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 16.6,
+     "p50": 16.6,
+     "p95": 16.6,
+     "max": 16.6,
+     "mean": 16.6
+    },
+    "peak": 1100,
+    "input": 1500,
+    "output": 94,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:02:34+00:00",
+      "end": "2026-10-18T11:02:50+00:00",
+      "s": 16.6,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[66f125ce9e] The public methods of the `Stack` class are `push`, `pop`, and `__len__`. The `push` method adds an element to the top of the stack, the `pop` method removes and returns the top element, and the `__len__` method returns the number of elements in the stack.\n\nNot found",
+      "note": "The public methods of the `Stack` class are `push`, `pop`, and `__len__`. The `push` method adds an ",
+      "peak": 1100,
+      "input": 1500,
+      "output": 94,
+      "trail_tools": [
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "role_security": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 77.3,
+     "p50": 77.3,
+     "p95": 77.3,
+     "max": 77.3,
+     "mean": 77.3
+    },
+    "peak": 2335,
+    "input": 8379,
+    "output": 4358,
+    "notes": [
+     "{\"result\": \"not found\", \"type\": \"file\", \"file_path\": \"/workspace/tokenfrugal/bench/scratch/secret.py | scratch=['secret.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:02:50+00:00",
+      "end": "2026-10-18T11:04:08+00:00",
+      "s": 77.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[971c01c59b] {\"result\": \"not found\", \"type\": \"file\", \"file_path\": \"/workspace/tokenfrugal/bench/scratch/secret.py\", \"contents\": \"secret = 'my_secret_key'\"}\n\nfile:3 - secret.py - hard-coded secret - fixed.",
+      "note": "{\"result\": \"not found\", \"type\": \"file\", \"file_path\": \"/workspace/tokenfrugal/bench/scratch/secret.py | scratch=['secret.py']",
+      "peak": 2335,
+      "input": 8379,
+      "output": 4358,
+      "trail_tools": [
+       "read_file",
+       "list_directory",
+       "read_file",
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "role_designer": {
+    "verified": "1/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 20.1,
+     "p50": 20.1,
+     "p95": 20.1,
+     "max": 20.1,
+     "mean": 20.1
+    },
+    "peak": 1018,
+    "input": 3837,
+    "output": 330,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:04:08+00:00",
+      "end": "2026-10-18T11:04:28+00:00",
+      "s": 20.1,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[89ce2071fb] findings: The high_level_overview tool still returned an error, indicating that it is unable to execute or process the provided arguments.\n\nfiles changed: 0",
+      "note": "findings: The high_level_overview tool still returned an error, indicating that it is unable to exec",
+      "peak": 1018,
+      "input": 3837,
+      "output": 330,
+      "trail_tools": [
+       "high_level_overview",
+       "high_level_overview",
+       "high_level_overview"
+      ]
+     }
+    ]
+   },
+   "role_browser": {
+    "verified": "0/1",
+    "ran": "1/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 2.3,
+     "p50": 2.3,
+     "p95": 2.3,
+     "max": 2.3,
+     "mean": 2.3
+    },
+    "peak": 207,
+    "input": 207,
+    "output": 47,
+    "notes": [
+     "``` not found ```  navigate_page(url=\"/workspace/README.md\", take_snapshot, take_screenshot) ```  fi | scratch=[]"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:04:28+00:00",
+      "end": "2026-10-18T11:04:30+00:00",
+      "s": 2.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[eda824b001] ```\nnot found\n```\n\nnavigate_page(url=\"/workspace/README.md\", take_snapshot, take_screenshot)\n```\n\nfinal result: \nfindings: \nfiles changed: \nverdict: page title not found\n```",
+      "note": "``` not found ```  navigate_page(url=\"/workspace/README.md\", take_snapshot, take_screenshot) ```  fi | scratch=[]",
+      "peak": 207,
+      "input": 207,
+      "output": 47,
+      "trail_tools": []
+     }
+    ]
+   },
+   "role_tracker": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 4.6,
+     "p50": 4.6,
+     "p95": 4.6,
+     "max": 4.6,
+     "mean": 4.6
+    },
+    "peak": 955,
+    "input": 4930,
+    "output": 179,
+    "notes": [
+     "FAILED (tracker/llama3.2:1b): LoopError: no final answer in 6 steps. Call resume_task('ea2510da35') to retry."
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:04:30+00:00",
+      "end": "2026-10-18T11:04:35+00:00",
+      "s": 4.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ea2510da35] FAILED (tracker/llama3.2:1b): LoopError: no final answer in 6 steps. Call resume_task('ea2510da35') to retry.",
+      "note": "FAILED (tracker/llama3.2:1b): LoopError: no final answer in 6 steps. Call resume_task('ea2510da35') to retry.",
+      "peak": 955,
+      "input": 4930,
+      "output": 179,
+      "trail_tools": [
+       "plan_status",
+       "plan_status",
+       "plan_status",
+       "plan_status",
+       "plan_status",
+       "plan_status"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "role_research": {
+    "verified": "0/1",
+    "ran": "0/1",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 15.3,
+     "p50": 15.3,
+     "p95": 15.3,
+     "max": 15.3,
+     "mean": 15.3
+    },
+    "peak": 765,
+    "input": 4103,
+    "output": 214,
+    "notes": [
+     "FAILED (research/llama3.2:1b): LoopError: no final answer in 8 steps. Call resume_task('230b1d01f5') to retry."
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T11:04:36+00:00",
+      "end": "2026-10-18T11:04:51+00:00",
+      "s": 15.3,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[230b1d01f5] FAILED (research/llama3.2:1b): LoopError: no final answer in 8 steps. Call resume_task('230b1d01f5') to retry.",
+      "note": "FAILED (research/llama3.2:1b): LoopError: no final answer in 8 steps. Call resume_task('230b1d01f5') to retry.",
+      "peak": 765,
+      "input": 4103,
+      "output": 214,
+      "trail_tools": [
+       "crawl_markdown",
+       "crawl_markdown",
+       "crawl_markdown",
+       "crawl_markdown"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "hardware": {
+  "samples": 123,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 28.2,
+   "max": 46.5
+  },
+  "ram_pct": {
+   "min": 64.3,
+   "avg": 71.8,
+   "max": 79.4
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 43.7,
+   "max": 94.0
+  },
+  "vram_used_mib": {
+   "min": 775.0,
+   "avg": 3669.7,
+   "max": 3756.0
+  },
+  "gpu_temp_c": {
+   "min": 38.0,
+   "avg": 54.7,
+   "max": 70.0
+  },
+  "gpu_power_w": {
+   "min": 1.7,
+   "avg": 40.3,
+   "max": 85.2
+  },
+  "ollama_ram_mib": {
+   "min": 68.4,
+   "avg": 71.7,
+   "max": 73.1
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "100% GPU": 120
+  },
+  "max_cpu_share_pct": 0.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792321083.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 38.0,
+   "gpu_power_w": 2.41,
+   "cpu_pct": 0.0,
+   "ram_pct": 64.3,
+   "ollama_ram_mib": 68.4,
+   "ollama": []
+  },
+  {
+   "t": 1792321086.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 38.0,
+   "gpu_power_w": 6.23,
+   "cpu_pct": 24.3,
+   "ram_pct": 64.5,
+   "ollama_ram_mib": 68.4,
+   "ollama": []
+  },
+  {
+   "t": 1792321089.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 38.0,
+   "gpu_power_w": 2.91,
+   "cpu_pct": 29.4,
+   "ram_pct": 64.8,
+   "ollama_ram_mib": 68.7,
+   "ollama": []
+  },
+  {
+   "t": 1792321093.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2122.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 40.0,
+   "gpu_power_w": 18.94,
+   "cpu_pct": 24.5,
+   "ram_pct": 66.8,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321096.5,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3748.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 74.44,
+   "cpu_pct": 24.7,
+   "ram_pct": 68.1,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321100.0,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3748.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 76.73,
+   "cpu_pct": 31.9,
+   "ram_pct": 68.2,
+   "ollama_ram_mib": 70.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321103.4,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3748.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 76.99,
+   "cpu_pct": 30.9,
+   "ram_pct": 68.2,
+   "ollama_ram_mib": 70.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321106.5,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3748.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 77.67,
+   "cpu_pct": 26.3,
+   "ram_pct": 67.8,
+   "ollama_ram_mib": 70.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321109.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 20.63,
+   "cpu_pct": 36.0,
+   "ram_pct": 68.6,
+   "ollama_ram_mib": 71.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321113.1,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 82.22,
+   "cpu_pct": 33.6,
+   "ram_pct": 68.5,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321116.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 23.34,
+   "cpu_pct": 32.0,
+   "ram_pct": 68.4,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321119.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 22.68,
+   "cpu_pct": 23.1,
+   "ram_pct": 68.5,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321123.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 44.0,
+   "gpu_power_w": 10.46,
+   "cpu_pct": 24.1,
+   "ram_pct": 68.4,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321126.5,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 75.52,
+   "cpu_pct": 25.1,
+   "ram_pct": 68.5,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321129.7,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 77.51,
+   "cpu_pct": 27.4,
+   "ram_pct": 68.5,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321132.9,
+   "gpu_util_pct": 85.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 72.25,
+   "cpu_pct": 36.0,
+   "ram_pct": 68.7,
+   "ollama_ram_mib": 72.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321136.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 18.09,
+   "cpu_pct": 17.4,
+   "ram_pct": 68.6,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321139.5,
+   "gpu_util_pct": 68.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 44.0,
+   "gpu_power_w": 7.0,
+   "cpu_pct": 29.4,
+   "ram_pct": 68.8,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321142.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 23.03,
+   "cpu_pct": 32.6,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321146.2,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 69.42,
+   "cpu_pct": 40.8,
+   "ram_pct": 69.4,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321149.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 3.8,
+   "cpu_pct": 22.1,
+   "ram_pct": 68.9,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321152.9,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 76.69,
+   "cpu_pct": 26.1,
+   "ram_pct": 68.8,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321156.0,
+   "gpu_util_pct": 90.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 75.85,
+   "cpu_pct": 28.1,
+   "ram_pct": 68.9,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321159.4,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 75.38,
+   "cpu_pct": 28.0,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321162.5,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 77.07,
+   "cpu_pct": 27.9,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321165.7,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 77.81,
+   "cpu_pct": 21.7,
+   "ram_pct": 68.7,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321169.1,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 73.48,
+   "cpu_pct": 36.9,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321172.3,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 81.16,
+   "cpu_pct": 23.1,
+   "ram_pct": 69.2,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321175.5,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 79.84,
+   "cpu_pct": 20.7,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321178.6,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 80.67,
+   "cpu_pct": 23.4,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321181.9,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 80.51,
+   "cpu_pct": 30.6,
+   "ram_pct": 69.2,
+   "ollama_ram_mib": 71.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321185.1,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 81.82,
+   "cpu_pct": 22.5,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321188.2,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 81.83,
+   "cpu_pct": 21.7,
+   "ram_pct": 69.3,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321191.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 8.32,
+   "cpu_pct": 21.0,
+   "ram_pct": 69.2,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321194.8,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 4.9,
+   "cpu_pct": 26.6,
+   "ram_pct": 69.0,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321198.1,
+   "gpu_util_pct": 80.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 69.29,
+   "cpu_pct": 25.9,
+   "ram_pct": 69.3,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321201.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 23.13,
+   "cpu_pct": 18.4,
+   "ram_pct": 69.1,
+   "ollama_ram_mib": 73.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321204.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 22.5,
+   "ram_pct": 68.0,
+   "ollama_ram_mib": 73.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321208.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.72,
+   "cpu_pct": 24.8,
+   "ram_pct": 68.3,
+   "ollama_ram_mib": 73.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321211.5,
+   "gpu_util_pct": 89.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 7.38,
+   "cpu_pct": 33.9,
+   "ram_pct": 68.3,
+   "ollama_ram_mib": 73.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321214.8,
+   "gpu_util_pct": 90.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 74.58,
+   "cpu_pct": 27.9,
+   "ram_pct": 68.6,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321218.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 14.04,
+   "cpu_pct": 16.5,
+   "ram_pct": 68.6,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321221.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 4.71,
+   "cpu_pct": 27.9,
+   "ram_pct": 69.2,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321224.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 46.0,
+   "gpu_power_w": 1.73,
+   "cpu_pct": 13.0,
+   "ram_pct": 68.9,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321227.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 28.2,
+   "ram_pct": 70.0,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321231.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 22.1,
+   "ram_pct": 69.9,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321234.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 44.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 30.8,
+   "ram_pct": 70.2,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321238.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 44.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 34.3,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321241.3,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 76.63,
+   "cpu_pct": 26.6,
+   "ram_pct": 70.6,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321244.5,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 78.48,
+   "cpu_pct": 21.4,
+   "ram_pct": 70.7,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321247.7,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 78.88,
+   "cpu_pct": 25.2,
+   "ram_pct": 70.8,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321250.9,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 76.03,
+   "cpu_pct": 30.8,
+   "ram_pct": 70.8,
+   "ollama_ram_mib": 71.4,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321254.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 24.11,
+   "cpu_pct": 24.0,
+   "ram_pct": 71.1,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321257.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 23.25,
+   "cpu_pct": 21.1,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321260.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 10.41,
+   "cpu_pct": 18.2,
+   "ram_pct": 70.1,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321264.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 2.33,
+   "cpu_pct": 27.6,
+   "ram_pct": 70.1,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321267.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 46.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 20.5,
+   "ram_pct": 70.2,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321270.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 46.0,
+   "gpu_power_w": 3.1,
+   "cpu_pct": 34.0,
+   "ram_pct": 70.2,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321274.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 2.0,
+   "cpu_pct": 30.9,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 71.5,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321277.7,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 75.45,
+   "cpu_pct": 33.4,
+   "ram_pct": 70.7,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321280.9,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 77.39,
+   "cpu_pct": 23.6,
+   "ram_pct": 70.8,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321284.2,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 78.41,
+   "cpu_pct": 26.3,
+   "ram_pct": 70.7,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321287.5,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 73.68,
+   "cpu_pct": 35.8,
+   "ram_pct": 70.2,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321290.9,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 79.65,
+   "cpu_pct": 30.1,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321294.2,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 79.02,
+   "cpu_pct": 25.6,
+   "ram_pct": 70.4,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321297.3,
+   "gpu_util_pct": 88.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 78.37,
+   "cpu_pct": 28.6,
+   "ram_pct": 70.4,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321300.7,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 85.25,
+   "cpu_pct": 27.7,
+   "ram_pct": 70.4,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321303.9,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 77.45,
+   "cpu_pct": 25.5,
+   "ram_pct": 70.4,
+   "ollama_ram_mib": 72.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321307.1,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 83.36,
+   "cpu_pct": 23.6,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 72.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321310.3,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 74.16,
+   "cpu_pct": 32.2,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 72.0,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321313.5,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 75.28,
+   "cpu_pct": 26.7,
+   "ram_pct": 70.9,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321316.9,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 78.33,
+   "cpu_pct": 35.4,
+   "ram_pct": 70.7,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321320.4,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 75.56,
+   "cpu_pct": 38.3,
+   "ram_pct": 70.7,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321323.7,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 78.96,
+   "cpu_pct": 29.3,
+   "ram_pct": 70.6,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321326.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 23.91,
+   "cpu_pct": 21.6,
+   "ram_pct": 70.5,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321330.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 6.48,
+   "cpu_pct": 18.5,
+   "ram_pct": 70.3,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321333.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 30.0,
+   "ram_pct": 70.4,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321337.1,
+   "gpu_util_pct": 88.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 63.38,
+   "cpu_pct": 34.3,
+   "ram_pct": 71.0,
+   "ollama_ram_mib": 72.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321340.4,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 78.31,
+   "cpu_pct": 23.2,
+   "ram_pct": 71.3,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321343.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 23.37,
+   "cpu_pct": 24.5,
+   "ram_pct": 71.3,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321347.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 50.0,
+   "gpu_power_w": 10.25,
+   "cpu_pct": 24.6,
+   "ram_pct": 71.1,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321350.6,
+   "gpu_util_pct": 33.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 59.37,
+   "cpu_pct": 30.3,
+   "ram_pct": 71.2,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321353.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 58.53,
+   "cpu_pct": 21.9,
+   "ram_pct": 71.0,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321357.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 50.0,
+   "gpu_power_w": 10.54,
+   "cpu_pct": 25.4,
+   "ram_pct": 71.3,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321360.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.16,
+   "cpu_pct": 19.3,
+   "ram_pct": 71.3,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321364.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.76,
+   "cpu_pct": 36.2,
+   "ram_pct": 71.4,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321367.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.78,
+   "cpu_pct": 32.5,
+   "ram_pct": 71.8,
+   "ollama_ram_mib": 71.9,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321371.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 23.82,
+   "cpu_pct": 39.8,
+   "ram_pct": 71.4,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321374.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 10.29,
+   "cpu_pct": 35.9,
+   "ram_pct": 73.0,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321378.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 4.37,
+   "cpu_pct": 35.9,
+   "ram_pct": 73.4,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321381.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 46.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 46.5,
+   "ram_pct": 74.4,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321384.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 46.0,
+   "gpu_power_w": 1.95,
+   "cpu_pct": 31.2,
+   "ram_pct": 74.5,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321388.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 46.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 39.7,
+   "ram_pct": 76.9,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321391.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 37.3,
+   "ram_pct": 77.1,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321395.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 46.3,
+   "ram_pct": 77.5,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321398.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 40.0,
+   "ram_pct": 77.1,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321402.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 3.96,
+   "cpu_pct": 39.0,
+   "ram_pct": 77.2,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321405.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 40.5,
+   "ram_pct": 78.0,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321408.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 45.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 40.2,
+   "ram_pct": 77.8,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321412.5,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 65.18,
+   "cpu_pct": 42.7,
+   "ram_pct": 78.5,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321415.8,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 69.09,
+   "cpu_pct": 33.4,
+   "ram_pct": 78.8,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321419.3,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 77.42,
+   "cpu_pct": 33.1,
+   "ram_pct": 79.2,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321422.5,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 80.62,
+   "cpu_pct": 23.8,
+   "ram_pct": 79.1,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321425.8,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 81.54,
+   "cpu_pct": 21.5,
+   "ram_pct": 79.1,
+   "ollama_ram_mib": 71.3,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321429.2,
+   "gpu_util_pct": 89.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 76.59,
+   "cpu_pct": 29.7,
+   "ram_pct": 79.3,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321432.5,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 80.39,
+   "cpu_pct": 26.5,
+   "ram_pct": 79.1,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321435.7,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 80.7,
+   "cpu_pct": 20.5,
+   "ram_pct": 79.0,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321438.9,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 81.14,
+   "cpu_pct": 25.2,
+   "ram_pct": 78.8,
+   "ollama_ram_mib": 71.7,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321442.2,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 72.49,
+   "cpu_pct": 39.1,
+   "ram_pct": 79.4,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321445.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 10.49,
+   "cpu_pct": 20.2,
+   "ram_pct": 79.1,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321448.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 4.33,
+   "cpu_pct": 23.1,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321452.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.72,
+   "cpu_pct": 25.7,
+   "ram_pct": 77.7,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321455.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.21,
+   "cpu_pct": 20.6,
+   "ram_pct": 77.6,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321458.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 32.3,
+   "ram_pct": 77.3,
+   "ollama_ram_mib": 71.8,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321462.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.48,
+   "cpu_pct": 37.9,
+   "ram_pct": 77.6,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321465.4,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 77.03,
+   "cpu_pct": 33.6,
+   "ram_pct": 77.6,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321468.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 23.1,
+   "cpu_pct": 21.9,
+   "ram_pct": 76.3,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321472.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 23.12,
+   "cpu_pct": 26.7,
+   "ram_pct": 76.1,
+   "ollama_ram_mib": 71.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321475.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 23.47,
+   "cpu_pct": 22.8,
+   "ram_pct": 76.2,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321478.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 7.85,
+   "cpu_pct": 31.5,
+   "ram_pct": 76.3,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321482.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 2.47,
+   "cpu_pct": 24.3,
+   "ram_pct": 76.2,
+   "ollama_ram_mib": 72.1,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321485.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 2.22,
+   "cpu_pct": 29.0,
+   "ram_pct": 76.1,
+   "ollama_ram_mib": 72.2,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792321488.5,
+   "gpu_util_pct": 37.0,
+   "vram_used_mib": 3756.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 62.47,
+   "cpu_pct": 36.0,
+   "ram_pct": 76.5,
+   "ollama_ram_mib": 72.6,
+   "ollama": [
+    {
+     "model": "llama3.2:1b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.0,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "llama3.2:1b",
+  "thinker": "llama3.2:1b",
+  "git_sha": "eddf510"
+ }
+}
