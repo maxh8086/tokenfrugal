@@ -1,0 +1,3009 @@
+{
+ "tag": "hard-nemotron-3-nano-4b",
+ "stamp": "20261018-194242",
+ "n": 3,
+ "results": {
+  "realworld": {
+   "hard_multifile_bug": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 31.2,
+     "p50": 31.2,
+     "p95": 51.3,
+     "max": 51.3,
+     "mean": 37.9
+    },
+    "peak": 4073,
+    "input": 15551,
+    "output": 321,
+    "notes": [
+     "<tool_call> <function=read_file> | scratch=['ledger.py', 'money.py', 'report.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T14:12:43+00:00",
+      "end": "2026-10-18T14:13:34+00:00",
+      "s": 51.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[020226af4c] <tool_call>\n<function=read_file>",
+      "note": "<tool_call> <function=read_file> | scratch=['ledger.py', 'money.py', 'report.py']",
+      "peak": 4073,
+      "input": 15551,
+      "output": 321,
+      "trail_tools": [
+       "search_graph",
+       "search_files",
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T14:13:34+00:00",
+      "end": "2026-10-18T14:14:05+00:00",
+      "s": 31.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[e11630acb9] <tool_call>\n<function=read_file>",
+      "note": "<tool_call> <function=read_file> | scratch=['ledger.py', 'money.py', 'report.py']",
+      "peak": 4073,
+      "input": 15551,
+      "output": 321,
+      "trail_tools": [
+       "search_graph",
+       "search_files",
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T14:14:05+00:00",
+      "end": "2026-10-18T14:14:36+00:00",
+      "s": 31.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[6f5c6749ef] <tool_call>\n<function=read_file>",
+      "note": "<tool_call> <function=read_file> | scratch=['ledger.py', 'money.py', 'report.py']",
+      "peak": 4073,
+      "input": 15551,
+      "output": 321,
+      "trail_tools": [
+       "search_graph",
+       "search_files",
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "hard_two_vulns": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 20.9,
+     "p50": 21.3,
+     "p95": 22.5,
+     "max": 22.5,
+     "mean": 21.6
+    },
+    "peak": 2675,
+    "input": 5199,
+    "output": 681,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T14:14:36+00:00",
+      "end": "2026-10-18T14:14:58+00:00",
+      "s": 21.3,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[0aff25da71] file: /workspace/tokenfrugal/bench/scratch/api.py:4  - high  - SQL injection  - name (user input)\nfile: /workspace/tokenfrugal/bench/scratch/api.py:7  - high  - Command injection  - path (user input)",
+      "note": "file: /workspace/tokenfrugal/bench/scratch/api.py:4  - high  - SQL injection  - name (user input) fi",
+      "peak": 2675,
+      "input": 5199,
+      "output": 681,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T14:14:58+00:00",
+      "end": "2026-10-18T14:15:19+00:00",
+      "s": 20.9,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[cdd8097507] file: /workspace/tokenfrugal/bench/scratch/api.py:4  - high  - SQL injection  - name (user input)\nfile: /workspace/tokenfrugal/bench/scratch/api.py:7  - high  - Command injection  - path (user input)",
+      "note": "file: /workspace/tokenfrugal/bench/scratch/api.py:4  - high  - SQL injection  - name (user input) fi",
+      "peak": 2675,
+      "input": 5199,
+      "output": 681,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T14:15:19+00:00",
+      "end": "2026-10-18T14:15:41+00:00",
+      "s": 22.5,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[7cfe7423a6] file: /workspace/tokenfrugal/bench/scratch/api.py:4  - high  - SQL injection  - name (user input)\nfile: /workspace/tokenfrugal/bench/scratch/api.py:7  - high  - Command injection  - path (user input)",
+      "note": "file: /workspace/tokenfrugal/bench/scratch/api.py:4  - high  - SQL injection  - name (user input) fi",
+      "peak": 2675,
+      "input": 5199,
+      "output": 681,
+      "trail_tools": [
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "hard_ambiguous_trace": {
+    "verified": "2/3",
+    "ran": "2/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 44.9,
+     "p50": 55.1,
+     "p95": 98.4,
+     "max": 98.4,
+     "mean": 66.1
+    },
+    "peak": 4758,
+    "input": 20192,
+    "output": 1655,
+    "notes": [
+     "FAILED (debugger/nemotron-3-nano:4b): InternalServerError: Error code: 500 - {'error': {'message': 'XML syntax"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T14:15:41+00:00",
+      "end": "2026-10-18T14:17:19+00:00",
+      "s": 98.4,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[24e4aa850b] FAILED (debugger/nemotron-3-nano:4b): InternalServerError: Error code: 500 - {'error': {'message': 'XML syntax error on line 9: element <function> closed by </parameter>', 'type': 'api_error', 'param': None, 'code': None}}. Call resume_task('24e4aa850b') to retry.",
+      "note": "FAILED (debugger/nemotron-3-nano:4b): InternalServerError: Error code: 500 - {'error': {'message': 'XML syntax",
+      "peak": 4758,
+      "input": 33443,
+      "output": 3457,
+      "trail_tools": [
+       "read_file",
+       "execute_code",
+       "git_log",
+       "list_directory",
+       "list_directory",
+       "sequentialthinking",
+       "execute_code"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T14:17:20+00:00",
+      "end": "2026-10-18T14:18:15+00:00",
+      "s": 55.1,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[4789f65692] Root cause: TypeError due to string concatenation with integer. The config value 'retries' is a string, but the code attempts to add 1 to it, causing \"can only concatenate str (not int) to str\". The line `load_retries(cfg)` returns `cfg['retries'] + 1`, where `cfg['retries']` is the string '3'. The real issue is the data type mismatch, not just the line number.",
+      "note": "Root cause: TypeError due to string concatenation with integer. The config value 'retries' is a stri",
+      "peak": 4108,
+      "input": 15621,
+      "output": 923,
+      "trail_tools": [
+       "read_file",
+       "execute_code",
+       "git_log"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T14:18:15+00:00",
+      "end": "2026-10-18T14:19:00+00:00",
+      "s": 44.9,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[6611b4d3c0] **Exception type:** `TypeError`  \n**Root cause:** The `CONFIG` dictionary stores `'retries': '3'` as a string, but `load_retries` attempts to add `1` to it, causing a `TypeError` when the string is concatenated. The `run` function then tries to multiply the string by `2`, which is invalid.  \n**Evidence:** `load_retries` returns `'3' + 1` \u2192 `TypeError: can only concatenate str (not int) to str`.  \n**Minimal fix:** Change `CONFIG = {'retries': '3'}` to `CONFIG = {'retries': 3}` (integer).  \n**Suspect commit:** The config value was set as a string in the original commit.",
+      "note": "**Exception type:** `TypeError`   **Root cause:** The `CONFIG` dictionary stores `'retries': '3'` as",
+      "peak": 4018,
+      "input": 11513,
+      "output": 584,
+      "trail_tools": [
+       "read_file",
+       "execute_code"
+      ]
+     }
+    ]
+   },
+   "hard_long_summary": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 21.6,
+     "p50": 22.2,
+     "p95": 23.0,
+     "max": 23.0,
+     "mean": 22.3
+    },
+    "peak": 2049,
+    "input": 3779,
+    "output": 255,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T14:19:00+00:00",
+      "end": "2026-10-18T14:19:23+00:00",
+      "s": 23.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[54cc114039] The cache now runs on Redis. The request timeout increased from 5 seconds to 12 seconds. Retries use exponential backoff with jitter. The legacy admin page was removed. Routine checks 1\u20118 all passed.",
+      "note": "The cache now runs on Redis. The request timeout increased from 5 seconds to 12 seconds. Retries use",
+      "peak": 2049,
+      "input": 3779,
+      "output": 255,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T14:19:23+00:00",
+      "end": "2026-10-18T14:19:45+00:00",
+      "s": 22.2,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[aca2700452] The cache now runs on Redis. The request timeout increased from 5 seconds to 12 seconds. Retries use exponential backoff with jitter. The legacy admin page was removed. Routine checks 1\u20118 all passed.",
+      "note": "The cache now runs on Redis. The request timeout increased from 5 seconds to 12 seconds. Retries use",
+      "peak": 2049,
+      "input": 3779,
+      "output": 255,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T14:19:45+00:00",
+      "end": "2026-10-18T14:20:07+00:00",
+      "s": 21.6,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[8aedbc19fa] The cache now runs on Redis. The request timeout increased from 5 seconds to 12 seconds. Retries use exponential backoff with jitter. The legacy admin page was removed. Routine checks 1\u20118 all passed.",
+      "note": "The cache now runs on Redis. The request timeout increased from 5 seconds to 12 seconds. Retries use",
+      "peak": 2049,
+      "input": 3779,
+      "output": 255,
+      "trail_tools": [
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "hard_compare_functions": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 19.3,
+     "p50": 20.5,
+     "p95": 21.4,
+     "max": 21.4,
+     "mean": 20.4
+    },
+    "peak": 2803,
+    "input": 10599,
+    "output": 375,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T14:20:07+00:00",
+      "end": "2026-10-18T14:20:28+00:00",
+      "s": 21.4,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[aaa7739072] no defects found. I checked the file /workspace/tokenfrugal/bench/scratch/dedupe.py, comparing dedupe_a and dedupe_b. The differences are: dedupe_a preserves input order while dedupe_b does not; dedupe_a has O(n\u00b2) worst\u2011case complexity due to linear membership checks, whereas dedupe_b is O(n) average complexity using a set.",
+      "note": "no defects found. I checked the file /workspace/tokenfrugal/bench/scratch/dedupe.py, comparing dedup",
+      "peak": 2803,
+      "input": 10599,
+      "output": 375,
+      "trail_tools": [
+       "search_files",
+       "list_directory",
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T14:20:28+00:00",
+      "end": "2026-10-18T14:20:49+00:00",
+      "s": 20.5,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[57eab6c101] no defects found. I checked the file /workspace/tokenfrugal/bench/scratch/dedupe.py, comparing dedupe_a and dedupe_b. The differences are: dedupe_a preserves input order while dedupe_b does not; dedupe_a has O(n\u00b2) worst\u2011case complexity due to linear membership checks, whereas dedupe_b is O(n) average complexity using a set.",
+      "note": "no defects found. I checked the file /workspace/tokenfrugal/bench/scratch/dedupe.py, comparing dedup",
+      "peak": 2803,
+      "input": 10599,
+      "output": 375,
+      "trail_tools": [
+       "search_files",
+       "list_directory",
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T14:20:49+00:00",
+      "end": "2026-10-18T14:21:08+00:00",
+      "s": 19.3,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[5478bf2649] no defects found. I checked the file /workspace/tokenfrugal/bench/scratch/dedupe.py, comparing dedupe_a and dedupe_b. The differences are: dedupe_a preserves input order while dedupe_b does not; dedupe_a has O(n\u00b2) worst\u2011case complexity due to linear membership checks, whereas dedupe_b is O(n) average complexity using a set.",
+      "note": "no defects found. I checked the file /workspace/tokenfrugal/bench/scratch/dedupe.py, comparing dedup",
+      "peak": 2803,
+      "input": 10599,
+      "output": 375,
+      "trail_tools": [
+       "search_files",
+       "list_directory",
+       "read_file"
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "model_params": {
+  "builder": "3.1B",
+  "thinker": "4B"
+ },
+ "hardware": {
+  "samples": 141,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 42.2,
+   "max": 67.0
+  },
+  "ram_pct": {
+   "min": 77.5,
+   "avg": 82.3,
+   "max": 85.2
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 45.2,
+   "max": 100.0
+  },
+  "vram_used_mib": {
+   "min": 1226.0,
+   "avg": 5182.9,
+   "max": 5998.0
+  },
+  "gpu_temp_c": {
+   "min": 52.0,
+   "avg": 60.7,
+   "max": 78.0
+  },
+  "gpu_power_w": {
+   "min": 3.2,
+   "avg": 29.4,
+   "max": 81.6
+  },
+  "ollama_ram_mib": {
+   "min": 75.1,
+   "avg": 76.0,
+   "max": 77.2
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "100% GPU": 140
+  },
+  "max_cpu_share_pct": 0.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792332763.1,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 5998.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 4.68,
+   "cpu_pct": 0.0,
+   "ram_pct": 82.6,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "granite4:tiny-h",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332766.7,
+   "gpu_util_pct": 25.0,
+   "vram_used_mib": 5998.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 4.03,
+   "cpu_pct": 42.6,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "granite4:tiny-h",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332770.1,
+   "gpu_util_pct": 26.0,
+   "vram_used_mib": 5998.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.88,
+   "cpu_pct": 40.4,
+   "ram_pct": 83.2,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "granite4:tiny-h",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332773.5,
+   "gpu_util_pct": 21.0,
+   "vram_used_mib": 5998.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.96,
+   "cpu_pct": 37.4,
+   "ram_pct": 83.2,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "granite4:tiny-h",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332776.8,
+   "gpu_util_pct": 26.0,
+   "vram_used_mib": 5998.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.97,
+   "cpu_pct": 48.2,
+   "ram_pct": 83.4,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "granite4:tiny-h",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332780.3,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 5998.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.81,
+   "cpu_pct": 58.4,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "granite4:tiny-h",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332783.8,
+   "gpu_util_pct": 21.0,
+   "vram_used_mib": 1226.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 13.6,
+   "cpu_pct": 41.4,
+   "ram_pct": 77.5,
+   "ollama_ram_mib": 77.2,
+   "ollama": []
+  },
+  {
+   "t": 1792332787.5,
+   "gpu_util_pct": 33.0,
+   "vram_used_mib": 5116.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 19.28,
+   "cpu_pct": 48.9,
+   "ram_pct": 79.9,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332791.2,
+   "gpu_util_pct": 2.0,
+   "vram_used_mib": 5128.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 18.29,
+   "cpu_pct": 42.3,
+   "ram_pct": 79.9,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332794.7,
+   "gpu_util_pct": 99.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 73.1,
+   "cpu_pct": 35.4,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332798.4,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 12.98,
+   "cpu_pct": 39.7,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332801.8,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 25.55,
+   "cpu_pct": 38.0,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332805.4,
+   "gpu_util_pct": 2.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 25.83,
+   "cpu_pct": 48.0,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.9,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332808.9,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 42.77,
+   "cpu_pct": 44.7,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332812.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 10.69,
+   "cpu_pct": 22.8,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332815.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 5.37,
+   "cpu_pct": 32.2,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332818.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.49,
+   "cpu_pct": 34.1,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332822.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.56,
+   "cpu_pct": 26.8,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332825.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.53,
+   "cpu_pct": 33.0,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332829.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.36,
+   "cpu_pct": 63.2,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332832.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.44,
+   "cpu_pct": 46.0,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.2,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332836.1,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 75.95,
+   "cpu_pct": 35.3,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332839.7,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 74.85,
+   "cpu_pct": 48.3,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332843.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 12.21,
+   "cpu_pct": 39.7,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332846.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 10.61,
+   "cpu_pct": 30.5,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332849.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.55,
+   "cpu_pct": 40.8,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332853.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.54,
+   "cpu_pct": 35.1,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332856.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.52,
+   "cpu_pct": 37.6,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332860.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.22,
+   "cpu_pct": 43.5,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332863.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 3.3,
+   "cpu_pct": 46.7,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332867.3,
+   "gpu_util_pct": 92.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 77.85,
+   "cpu_pct": 38.7,
+   "ram_pct": 80.4,
+   "ollama_ram_mib": 75.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332870.9,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 76.28,
+   "cpu_pct": 40.3,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332874.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 24.12,
+   "cpu_pct": 29.8,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332877.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 10.71,
+   "cpu_pct": 38.2,
+   "ram_pct": 80.4,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332881.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 3.54,
+   "cpu_pct": 32.7,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332884.4,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 7.59,
+   "cpu_pct": 39.4,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332887.9,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 62.72,
+   "cpu_pct": 41.9,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332891.6,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5176.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 75.32,
+   "cpu_pct": 43.6,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332895.2,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 71.11,
+   "cpu_pct": 40.6,
+   "ram_pct": 82.3,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332898.9,
+   "gpu_util_pct": 13.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 11.26,
+   "cpu_pct": 42.6,
+   "ram_pct": 82.5,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332903.0,
+   "gpu_util_pct": 47.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 6.25,
+   "cpu_pct": 53.1,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332906.7,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 10.42,
+   "cpu_pct": 47.6,
+   "ram_pct": 82.6,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332910.3,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 73.24,
+   "cpu_pct": 42.4,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332913.8,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 73.12,
+   "cpu_pct": 42.0,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332917.3,
+   "gpu_util_pct": 9.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 25.69,
+   "cpu_pct": 39.1,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332920.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 7.84,
+   "cpu_pct": 31.7,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332925.2,
+   "gpu_util_pct": 21.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 8.03,
+   "cpu_pct": 56.7,
+   "ram_pct": 83.4,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332929.0,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 39.94,
+   "cpu_pct": 48.1,
+   "ram_pct": 83.2,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332932.6,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 74.14,
+   "cpu_pct": 40.4,
+   "ram_pct": 83.2,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332936.2,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 65.04,
+   "cpu_pct": 44.7,
+   "ram_pct": 83.1,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332939.9,
+   "gpu_util_pct": 4.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 60.81,
+   "cpu_pct": 41.7,
+   "ram_pct": 82.9,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332943.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 8.75,
+   "cpu_pct": 34.4,
+   "ram_pct": 82.6,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332946.9,
+   "gpu_util_pct": 23.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.21,
+   "cpu_pct": 29.5,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332950.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 3.79,
+   "cpu_pct": 41.9,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332954.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 3.87,
+   "cpu_pct": 34.5,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332957.9,
+   "gpu_util_pct": 23.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 3.75,
+   "cpu_pct": 48.3,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332961.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 3.5,
+   "cpu_pct": 52.6,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 75.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332965.3,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 15.59,
+   "cpu_pct": 39.7,
+   "ram_pct": 82.5,
+   "ollama_ram_mib": 75.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332969.0,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 76.33,
+   "cpu_pct": 44.5,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 76.2,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332972.6,
+   "gpu_util_pct": 8.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 10.84,
+   "cpu_pct": 41.8,
+   "ram_pct": 82.6,
+   "ollama_ram_mib": 76.2,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332976.3,
+   "gpu_util_pct": 4.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 6.94,
+   "cpu_pct": 51.0,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332980.0,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 75.92,
+   "cpu_pct": 35.9,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332983.5,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 50.97,
+   "cpu_pct": 42.7,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 75.2,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332987.1,
+   "gpu_util_pct": 53.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 74.11,
+   "cpu_pct": 48.1,
+   "ram_pct": 83.3,
+   "ollama_ram_mib": 75.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332990.7,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 75.88,
+   "cpu_pct": 36.9,
+   "ram_pct": 83.4,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332994.2,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 74.84,
+   "cpu_pct": 34.0,
+   "ram_pct": 83.4,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792332997.9,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 53.13,
+   "cpu_pct": 45.5,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333001.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 22.08,
+   "cpu_pct": 41.8,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333005.1,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 4.67,
+   "cpu_pct": 31.6,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333008.7,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 75.09,
+   "cpu_pct": 34.0,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333012.3,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 76.38,
+   "cpu_pct": 37.9,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333015.8,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 75.0,
+   "gpu_power_w": 75.93,
+   "cpu_pct": 34.2,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333019.3,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 75.0,
+   "gpu_power_w": 77.13,
+   "cpu_pct": 32.2,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333022.8,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 76.0,
+   "gpu_power_w": 77.72,
+   "cpu_pct": 37.5,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333026.3,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 76.0,
+   "gpu_power_w": 77.81,
+   "cpu_pct": 34.4,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333029.8,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 77.0,
+   "gpu_power_w": 77.97,
+   "cpu_pct": 31.1,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333033.4,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 78.0,
+   "gpu_power_w": 81.59,
+   "cpu_pct": 35.6,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333037.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 25.74,
+   "cpu_pct": 33.1,
+   "ram_pct": 84.1,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333040.7,
+   "gpu_util_pct": 16.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 6.03,
+   "cpu_pct": 41.4,
+   "ram_pct": 84.2,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333044.6,
+   "gpu_util_pct": 31.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 3.96,
+   "cpu_pct": 45.7,
+   "ram_pct": 84.4,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333048.6,
+   "gpu_util_pct": 37.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 4.32,
+   "cpu_pct": 53.0,
+   "ram_pct": 84.5,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333052.4,
+   "gpu_util_pct": 33.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 8.42,
+   "cpu_pct": 46.5,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333056.3,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 7.32,
+   "cpu_pct": 60.7,
+   "ram_pct": 84.8,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333060.3,
+   "gpu_util_pct": 30.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.14,
+   "cpu_pct": 64.5,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333064.1,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 15.89,
+   "cpu_pct": 41.3,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333068.0,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 73.75,
+   "cpu_pct": 54.8,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 75.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333071.9,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 11.03,
+   "cpu_pct": 67.0,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 75.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333075.7,
+   "gpu_util_pct": 44.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.3,
+   "cpu_pct": 57.2,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 75.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333079.4,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 77.69,
+   "cpu_pct": 45.0,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 75.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333083.0,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 25.42,
+   "cpu_pct": 48.6,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333086.8,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 65.86,
+   "cpu_pct": 58.3,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 75.9,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333090.4,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 70.21,
+   "cpu_pct": 49.3,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 75.9,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333093.9,
+   "gpu_util_pct": 22.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 9.49,
+   "cpu_pct": 34.6,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 75.9,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333097.4,
+   "gpu_util_pct": 26.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 4.61,
+   "cpu_pct": 51.5,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.9,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333101.4,
+   "gpu_util_pct": 32.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 4.53,
+   "cpu_pct": 50.1,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333104.9,
+   "gpu_util_pct": 29.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.19,
+   "cpu_pct": 31.6,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333108.6,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.4,
+   "cpu_pct": 36.0,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 75.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333112.3,
+   "gpu_util_pct": 21.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 8.97,
+   "cpu_pct": 62.7,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 75.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333115.9,
+   "gpu_util_pct": 30.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.28,
+   "cpu_pct": 45.0,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 75.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333119.5,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 21.29,
+   "cpu_pct": 38.9,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333123.0,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 22.21,
+   "cpu_pct": 49.1,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333126.7,
+   "gpu_util_pct": 15.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 11.09,
+   "cpu_pct": 43.6,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333130.2,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 71.11,
+   "cpu_pct": 36.4,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333133.7,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 73.91,
+   "cpu_pct": 41.3,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333137.2,
+   "gpu_util_pct": 11.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 11.34,
+   "cpu_pct": 40.0,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333140.6,
+   "gpu_util_pct": 32.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 7.14,
+   "cpu_pct": 30.7,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333144.0,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.4,
+   "cpu_pct": 32.9,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333147.5,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.28,
+   "cpu_pct": 51.4,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333151.2,
+   "gpu_util_pct": 44.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.35,
+   "cpu_pct": 48.5,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333154.6,
+   "gpu_util_pct": 31.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.11,
+   "cpu_pct": 41.9,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 75.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333158.3,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 73.59,
+   "cpu_pct": 49.0,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 75.7,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333162.2,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 74.17,
+   "cpu_pct": 54.6,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333165.7,
+   "gpu_util_pct": 10.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 11.17,
+   "cpu_pct": 29.1,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333169.4,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.43,
+   "cpu_pct": 33.9,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333173.2,
+   "gpu_util_pct": 29.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.19,
+   "cpu_pct": 58.2,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333176.7,
+   "gpu_util_pct": 31.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.11,
+   "cpu_pct": 37.8,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 75.8,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333180.3,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 18.31,
+   "cpu_pct": 48.4,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333183.9,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 70.21,
+   "cpu_pct": 44.8,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333187.5,
+   "gpu_util_pct": 8.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 13.48,
+   "cpu_pct": 46.2,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333191.0,
+   "gpu_util_pct": 33.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.17,
+   "cpu_pct": 34.6,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333194.7,
+   "gpu_util_pct": 30.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.22,
+   "cpu_pct": 50.5,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333198.4,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 4.34,
+   "cpu_pct": 41.5,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 76.0,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333202.1,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 78.49,
+   "cpu_pct": 53.5,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333205.5,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 70.89,
+   "cpu_pct": 37.2,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333209.1,
+   "gpu_util_pct": 7.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 12.16,
+   "cpu_pct": 40.7,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333212.7,
+   "gpu_util_pct": 29.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.13,
+   "cpu_pct": 34.3,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333216.3,
+   "gpu_util_pct": 33.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.44,
+   "cpu_pct": 46.5,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 76.1,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333219.8,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 73.99,
+   "cpu_pct": 44.1,
+   "ram_pct": 82.1,
+   "ollama_ram_mib": 76.2,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333223.9,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 58.79,
+   "cpu_pct": 60.3,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333227.4,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 22.72,
+   "cpu_pct": 35.5,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333230.8,
+   "gpu_util_pct": 13.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 11.28,
+   "cpu_pct": 29.5,
+   "ram_pct": 83.3,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333234.5,
+   "gpu_util_pct": 33.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.2,
+   "cpu_pct": 45.1,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333238.2,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 5.55,
+   "cpu_pct": 49.2,
+   "ram_pct": 83.3,
+   "ollama_ram_mib": 76.3,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333241.7,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 59.05,
+   "cpu_pct": 50.5,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333245.6,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 70.95,
+   "cpu_pct": 53.7,
+   "ram_pct": 84.1,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333249.3,
+   "gpu_util_pct": 16.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.08,
+   "cpu_pct": 33.1,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333252.8,
+   "gpu_util_pct": 29.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.21,
+   "cpu_pct": 36.7,
+   "ram_pct": 83.8,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333256.2,
+   "gpu_util_pct": 29.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.29,
+   "cpu_pct": 40.9,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 76.4,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333259.9,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 70.9,
+   "cpu_pct": 45.7,
+   "ram_pct": 83.0,
+   "ollama_ram_mib": 76.5,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333263.5,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 51.84,
+   "cpu_pct": 44.7,
+   "ram_pct": 83.4,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792333267.1,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 5177.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 22.45,
+   "cpu_pct": 38.5,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "nemotron-3-nano:4b",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.0,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "qwen2.5-coder-yarn:3b",
+  "thinker": "nemotron-3-nano:4b",
+  "git_sha": "ffae5b4"
+ }
+}

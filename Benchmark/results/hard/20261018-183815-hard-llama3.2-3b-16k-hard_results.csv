@@ -1,0 +1,6 @@
+model,case,verified,ran,status,median_s,notes
+hard-llama3.2-3b-16k,hard_multifile_bug,3/3,3/3,valid,33.1,
+hard-llama3.2-3b-16k,hard_two_vulns,0/3,3/3,valid,14.2,No defects found. | scratch=['api.py'] | no defects found | scratch=['api.py']
+hard-llama3.2-3b-16k,hard_ambiguous_trace,0/3,3/3,valid,28.0,Exception type: KeyError Root cause: The 'retries' key in the CONFIG dictionary is expected to be an | scratch=['trace_cfg.py']
+hard-llama3.2-3b-16k,hard_long_summary,3/3,3/3,valid,17.2,
+hard-llama3.2-3b-16k,hard_compare_functions,0/3,3/3,valid,17.9,file:/workspace/tokenfrugal/bench/scratch/dedupe.py - info - both functions use set to remove duplic | scratch=['dedupe.py']

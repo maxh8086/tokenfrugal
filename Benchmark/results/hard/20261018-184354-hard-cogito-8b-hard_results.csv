@@ -1,0 +1,6 @@
+model,case,verified,ran,status,median_s,notes
+hard-cogito-8b,hard_multifile_bug,0/3,0/3,valid,66.4,FAILED (debugger/cogito:8b): LoopError: you answered without calling any tool; call a tool to read real data f
+hard-cogito-8b,hard_two_vulns,2/3,3/3,valid,34.6,1. file:/workspace/tokenfrugal/bench/scratch/api.py - severity: high - problem: SQL injection vulner | scratch=['api.py']
+hard-cogito-8b,hard_ambiguous_trace,0/3,0/3,valid,88.8,FAILED (debugger/cogito:8b): LoopError: you answered without calling any tool; call a tool to read real data f
+hard-cogito-8b,hard_long_summary,0/3,0/3,valid,62.8,FAILED (docs/cogito:8b): LoopError: you answered without calling any tool; call a tool to read real data first
+hard-cogito-8b,hard_compare_functions,0/3,3/3,valid,38.5,no defects found  The code appears to be a correct implementation of deduplication functions. Both d | scratch=['dedupe.py'] | no defects found  The code appears to be correct. Both dedupe_a and dedupe_b produce the same output | scratch=['dedupe.py']

@@ -1,0 +1,4986 @@
+{
+ "tag": "hard-hf.co-unsloth-Qwen3.5-9B-GGUF-IQ4_XS",
+ "stamp": "20261018-180323",
+ "n": 3,
+ "results": {
+  "realworld": {
+   "hard_multifile_bug": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 80.2,
+     "p50": 81.7,
+     "p95": 90.9,
+     "max": 90.9,
+     "mean": 84.3
+    },
+    "peak": 3098,
+    "input": 14513,
+    "output": 1208,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T12:33:23+00:00",
+      "end": "2026-10-18T12:34:54+00:00",
+      "s": 90.9,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[2d050811c9] **Symptom:** `invoice(['19.99', ...])` returns totals that are a cent low.\n\n**Evidence:** \n- `money.py:to_cents()` uses `int(amount * 100)`\n- `19.99 * 100` in IEEE 754 floating-point = `1998.9999999999998`\n- `int()` truncates to `1998` instead of rounding to `1999`\n\n**Root cause:** Floating-point precision loss in `money.py`. The `int()` call truncates instead of rounding.\n\n**File with root cause:** `/workspace/tokenfrugal/bench/scratch/money.py`\n\n**Fix:** Replace `int(amount * 100)` with `round(amount * 100)` in `money.py`.\n\n**Fix applied:** Changed `money.py` to use `round()` instead of `int()`.",
+      "note": "**Symptom:** `invoice(['19.99', ...])` returns totals that are a cent low.  **Evidence:**  - `money.",
+      "peak": 3098,
+      "input": 14513,
+      "output": 1208,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file",
+       "edit_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T12:34:54+00:00",
+      "end": "2026-10-18T12:36:15+00:00",
+      "s": 81.7,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[b03e17c069] **Symptom:** `invoice(['19.99', ...])` returns totals that are a cent low.\n\n**Evidence:** \n- `money.py:to_cents()` uses `int(amount * 100)`\n- `19.99 * 100` in IEEE 754 floating-point = `1998.9999999999998`\n- `int()` truncates to `1998` instead of rounding to `1999`\n\n**Root cause:** Floating-point precision loss in `money.py`. The `int()` call truncates instead of rounding.\n\n**File with root cause:** `/workspace/tokenfrugal/bench/scratch/money.py`\n\n**Fix:** Replace `int(amount * 100)` with `round(amount * 100)` in `money.py`.\n\n**Fix applied:** Changed `money.py` to use `round()` instead of `int()`.",
+      "note": "**Symptom:** `invoice(['19.99', ...])` returns totals that are a cent low.  **Evidence:**  - `money.",
+      "peak": 3098,
+      "input": 14513,
+      "output": 1208,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file",
+       "edit_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T12:36:16+00:00",
+      "end": "2026-10-18T12:37:36+00:00",
+      "s": 80.2,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[e8b0db34eb] **Symptom:** `invoice(['19.99', ...])` returns totals that are a cent low.\n\n**Evidence:** \n- `money.py:to_cents()` uses `int(amount * 100)`\n- `19.99 * 100` in IEEE 754 floating-point = `1998.9999999999998`\n- `int()` truncates to `1998` instead of rounding to `1999`\n\n**Root cause:** Floating-point precision loss in `money.py`. The `int()` call truncates instead of rounding.\n\n**File with root cause:** `/workspace/tokenfrugal/bench/scratch/money.py`\n\n**Fix:** Replace `int(amount * 100)` with `round(amount * 100)` in `money.py`.\n\n**Fix applied:** Changed `money.py` to use `round()` instead of `int()`.",
+      "note": "**Symptom:** `invoice(['19.99', ...])` returns totals that are a cent low.  **Evidence:**  - `money.",
+      "peak": 3098,
+      "input": 14513,
+      "output": 1208,
+      "trail_tools": [
+       "read_file",
+       "read_file",
+       "read_file",
+       "edit_file"
+      ]
+     }
+    ]
+   },
+   "hard_two_vulns": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 23.5,
+     "p50": 23.8,
+     "p95": 24.3,
+     "max": 24.3,
+     "mean": 23.9
+    },
+    "peak": 2027,
+    "input": 3945,
+    "output": 250,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T12:37:36+00:00",
+      "end": "2026-10-18T12:37:59+00:00",
+      "s": 23.5,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[aafeb4dd53] Found 2 security vulnerabilities in `/workspace/tokenfrugal/bench/scratch/api.py`:\n\n1. **SQL Injection** - Line 4: The `name` parameter is directly concatenated into an SQL query without sanitization or parameterization, allowing arbitrary SQL injection.\n\n2. **Command Injection** - Line 7: The `path` parameter is directly concatenated into a shell command with `shell=True`, allowing arbitrary command injection.",
+      "note": "Found 2 security vulnerabilities in `/workspace/tokenfrugal/bench/scratch/api.py`:  1. **SQL Injecti",
+      "peak": 2027,
+      "input": 3945,
+      "output": 250,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T12:37:59+00:00",
+      "end": "2026-10-18T12:38:23+00:00",
+      "s": 23.8,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[66fafe4efc] Found 2 security vulnerabilities in `/workspace/tokenfrugal/bench/scratch/api.py`:\n\n1. **SQL Injection** - Line 4: The `name` parameter is directly concatenated into an SQL query without sanitization or parameterization, allowing arbitrary SQL injection.\n\n2. **Command Injection** - Line 7: The `path` parameter is directly concatenated into a shell command with `shell=True`, allowing arbitrary command injection.",
+      "note": "Found 2 security vulnerabilities in `/workspace/tokenfrugal/bench/scratch/api.py`:  1. **SQL Injecti",
+      "peak": 2027,
+      "input": 3945,
+      "output": 250,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T12:38:23+00:00",
+      "end": "2026-10-18T12:38:48+00:00",
+      "s": 24.3,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[65a670f40e] Found 2 security vulnerabilities in `/workspace/tokenfrugal/bench/scratch/api.py`:\n\n1. **SQL Injection** - Line 4: The `name` parameter is directly concatenated into an SQL query without sanitization or parameterization, allowing arbitrary SQL injection.\n\n2. **Command Injection** - Line 7: The `path` parameter is directly concatenated into a shell command with `shell=True`, allowing arbitrary command injection.",
+      "note": "Found 2 security vulnerabilities in `/workspace/tokenfrugal/bench/scratch/api.py`:  1. **SQL Injecti",
+      "peak": 2027,
+      "input": 3945,
+      "output": 250,
+      "trail_tools": [
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "hard_ambiguous_trace": {
+    "verified": "1/3",
+    "ran": "1/3",
+    "status": "partial",
+    "infra_runs": 0,
+    "s": {
+     "min": 142.4,
+     "p50": 155.9,
+     "p95": 156.5,
+     "max": 156.5,
+     "mean": 151.6
+    },
+    "peak": 4646,
+    "input": 33477,
+    "output": 1086,
+    "notes": [
+     "FAILED (debugger/hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS): LoopError: task timed out after 150s. Call resume_task"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T12:38:48+00:00",
+      "end": "2026-10-18T12:41:25+00:00",
+      "s": 156.5,
+      "ok": false,
+      "verified": false,
+      "status": "timeout",
+      "dispatched": true,
+      "error": "[e8ad291738] FAILED (debugger/hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS): LoopError: task timed out after 150s. Call resume_task('e8ad291738') to retry.",
+      "note": "FAILED (debugger/hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS): LoopError: task timed out after 150s. Call resume_task",
+      "peak": 3514,
+      "input": 24758,
+      "output": 785,
+      "trail_tools": [
+       "read_file",
+       "execute_code",
+       "execute_code",
+       "execute_code",
+       "search_files",
+       "list_directory",
+       "read_file",
+       "execute_code"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T12:41:25+00:00",
+      "end": "2026-10-18T12:44:01+00:00",
+      "s": 155.9,
+      "ok": false,
+      "verified": false,
+      "status": "timeout",
+      "dispatched": true,
+      "error": "[8278005482] FAILED (debugger/hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS): LoopError: task timed out after 150s. Call resume_task('8278005482') to retry.",
+      "note": "FAILED (debugger/hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS): LoopError: task timed out after 150s. Call resume_task",
+      "peak": 4569,
+      "input": 34198,
+      "output": 916,
+      "trail_tools": [
+       "read_file",
+       "execute_code",
+       "execute_code",
+       "list_directory",
+       "execute_code",
+       "execute_code",
+       "list_directory",
+       "list_directory",
+       "execute_code",
+       "search_files"
+      ],
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T12:44:01+00:00",
+      "end": "2026-10-18T12:46:24+00:00",
+      "s": 142.4,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[3e933db2ae] ## SRE Triage: trace_cfg.py Crash\n\n**Symptom:** Script crashes with `TypeError` when attempting arithmetic on a string value.\n\n**Evidence:**\n```python\nCONFIG = {'retries': '3'}  # '3' is a STRING\n\ndef load_retries(cfg):\n    return cfg['retries'] + 1  # TypeError: can only concatenate str (not \"int\") to str\n\nprint(run(CONFIG))\n```\n\n**Root Cause:** `TypeError` - attempting to add integer `1` to string `'3'`. The `retries` value is stored as a string in the CONFIG dictionary, but the code performs arithmetic on it.\n\n**Fix:** Convert the string to an integer:\n```python\ndef load_retries(cfg):\n    return int(cfg['retries']) + 1\n```\n\n**What I could not check:** Did not run the script (file path issues with execution tools), but the code analysis is definitive.",
+      "note": "## SRE Triage: trace_cfg.py Crash  **Symptom:** Script crashes with `TypeError` when attempting arit",
+      "peak": 4646,
+      "input": 41475,
+      "output": 1557,
+      "trail_tools": [
+       "read_file",
+       "execute_code",
+       "execute_code",
+       "list_directory",
+       "execute_code",
+       "execute_code",
+       "list_directory",
+       "list_directory",
+       "list_directory",
+       "execute_code",
+       "execute_code"
+      ]
+     }
+    ]
+   },
+   "hard_long_summary": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 27.0,
+     "p50": 27.0,
+     "p95": 27.9,
+     "max": 27.9,
+     "mean": 27.3
+    },
+    "peak": 1675,
+    "input": 3061,
+    "output": 230,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T12:46:24+00:00",
+      "end": "2026-10-18T12:46:52+00:00",
+      "s": 27.9,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[efebecb4d5] The key decisions are: the cache now runs on Redis; the request timeout increased from 5 seconds to 12 seconds; retries use exponential backoff with jitter; and the legacy admin page was removed.",
+      "note": "The key decisions are: the cache now runs on Redis; the request timeout increased from 5 seconds to ",
+      "peak": 1675,
+      "input": 3061,
+      "output": 230,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T12:46:52+00:00",
+      "end": "2026-10-18T12:47:19+00:00",
+      "s": 27.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[4187296307] The key decisions are: the cache now runs on Redis; the request timeout increased from 5 seconds to 12 seconds; retries use exponential backoff with jitter; and the legacy admin page was removed.",
+      "note": "The key decisions are: the cache now runs on Redis; the request timeout increased from 5 seconds to ",
+      "peak": 1675,
+      "input": 3061,
+      "output": 230,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T12:47:19+00:00",
+      "end": "2026-10-18T12:47:46+00:00",
+      "s": 27.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f5bc1b2072] The key decisions are: the cache now runs on Redis; the request timeout increased from 5 seconds to 12 seconds; retries use exponential backoff with jitter; and the legacy admin page was removed.",
+      "note": "The key decisions are: the cache now runs on Redis; the request timeout increased from 5 seconds to ",
+      "peak": 1675,
+      "input": 3061,
+      "output": 230,
+      "trail_tools": [
+       "read_file"
+      ]
+     }
+    ]
+   },
+   "hard_compare_functions": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 39.1,
+     "p50": 39.2,
+     "p95": 42.0,
+     "max": 42.0,
+     "mean": 40.1
+    },
+    "peak": 2022,
+    "input": 3941,
+    "output": 625,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-18T12:47:46+00:00",
+      "end": "2026-10-18T12:48:28+00:00",
+      "s": 42.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f261de0865] **Comparison of `dedupe_a` vs `dedupe_b`:**\n\n| Aspect | dedupe_a | dedupe_b |\n|--------|----------|----------|\n| **Output order** | Preserves order of first occurrence | Arbitrary (set iteration order) |\n| **Time complexity** | O(n\u00b2) - `x not in out` is O(n) per element | O(n) average - set operations are O(1) |\n| **Space complexity** | O(n) | O(n) |\n| **Determinism** | Deterministic output | Non-deterministic output order |\n\n**Key differences:**\n\n1. **Output**: `dedupe_a` returns `[x for x in xs if x not in seen]` preserving original order. `dedupe_b` returns `list(set(xs))` with no order guarantee.\n\n2. **Complexity**: `dedupe_a` is quadratic O(n\u00b2) because membership testing in a list is O(n). `dedupe_b` is linear O(n) because set operations are O(1) average.\n\n**Example**: For `xs = [3, 1, 2, 1, 3]`:\n- `dedupe_a(xs)` \u2192 `[3, 1, 2]` (preserves first-occurrence order)\n- `dedupe_b(xs)` \u2192 could be `[1, 2, 3]` or any permutation (order not guaranteed)",
+      "note": "**Comparison of `dedupe_a` vs `dedupe_b`:**  | Aspect | dedupe_a | dedupe_b | |--------|----------|-",
+      "peak": 2022,
+      "input": 3941,
+      "output": 625,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 2,
+      "start": "2026-10-18T12:48:28+00:00",
+      "end": "2026-10-18T12:49:07+00:00",
+      "s": 39.1,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[d0652c074c] **Comparison of `dedupe_a` vs `dedupe_b`:**\n\n| Aspect | dedupe_a | dedupe_b |\n|--------|----------|----------|\n| **Output order** | Preserves order of first occurrence | Arbitrary (set iteration order) |\n| **Time complexity** | O(n\u00b2) - `x not in out` is O(n) per element | O(n) average - set operations are O(1) |\n| **Space complexity** | O(n) | O(n) |\n| **Determinism** | Deterministic output | Non-deterministic output order |\n\n**Key differences:**\n\n1. **Output**: `dedupe_a` returns `[x for x in xs if x not in seen]` preserving original order. `dedupe_b` returns `list(set(xs))` with no order guarantee.\n\n2. **Complexity**: `dedupe_a` is quadratic O(n\u00b2) because membership testing in a list is O(n). `dedupe_b` is linear O(n) because set operations are O(1) average.\n\n**Example**: For `xs = [3, 1, 2, 1, 3]`:\n- `dedupe_a(xs)` \u2192 `[3, 1, 2]` (preserves first-occurrence order)\n- `dedupe_b(xs)` \u2192 could be `[1, 2, 3]` or any permutation (order not guaranteed)",
+      "note": "**Comparison of `dedupe_a` vs `dedupe_b`:**  | Aspect | dedupe_a | dedupe_b | |--------|----------|-",
+      "peak": 2022,
+      "input": 3941,
+      "output": 625,
+      "trail_tools": [
+       "read_file"
+      ]
+     },
+     {
+      "run": 3,
+      "start": "2026-10-18T12:49:07+00:00",
+      "end": "2026-10-18T12:49:46+00:00",
+      "s": 39.2,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[c782da5698] **Comparison of `dedupe_a` vs `dedupe_b`:**\n\n| Aspect | dedupe_a | dedupe_b |\n|--------|----------|----------|\n| **Output order** | Preserves order of first occurrence | Arbitrary (set iteration order) |\n| **Time complexity** | O(n\u00b2) - `x not in out` is O(n) per element | O(n) average - set operations are O(1) |\n| **Space complexity** | O(n) | O(n) |\n| **Determinism** | Deterministic output | Non-deterministic output order |\n\n**Key differences:**\n\n1. **Output**: `dedupe_a` returns `[x for x in xs if x not in seen]` preserving original order. `dedupe_b` returns `list(set(xs))` with no order guarantee.\n\n2. **Complexity**: `dedupe_a` is quadratic O(n\u00b2) because membership testing in a list is O(n). `dedupe_b` is linear O(n) because set operations are O(1) average.\n\n**Example**: For `xs = [3, 1, 2, 1, 3]`:\n- `dedupe_a(xs)` \u2192 `[3, 1, 2]` (preserves first-occurrence order)\n- `dedupe_b(xs)` \u2192 could be `[1, 2, 3]` or any permutation (order not guaranteed)",
+      "note": "**Comparison of `dedupe_a` vs `dedupe_b`:**  | Aspect | dedupe_a | dedupe_b | |--------|----------|-",
+      "peak": 2022,
+      "input": 3941,
+      "output": 625,
+      "trail_tools": [
+       "read_file"
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "model_params": {
+  "builder": "3.1B",
+  "thinker": "8.95B"
+ },
+ "hardware": {
+  "samples": 250,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 56.6,
+   "max": 96.7
+  },
+  "ram_pct": {
+   "min": 74.2,
+   "avg": 82.9,
+   "max": 89.7
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 23.2,
+   "max": 100.0
+  },
+  "vram_used_mib": {
+   "min": 775.0,
+   "avg": 7073.9,
+   "max": 7132.0
+  },
+  "gpu_temp_c": {
+   "min": 52.0,
+   "avg": 62.7,
+   "max": 74.0
+  },
+  "gpu_power_w": {
+   "min": 1.7,
+   "avg": 28.0,
+   "max": 80.5
+  },
+  "ollama_ram_mib": {
+   "min": 76.6,
+   "avg": 77.3,
+   "max": 79.0
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "15%/85% CPU/GPU": 6,
+   "23%/77% CPU/GPU": 242
+  },
+  "max_cpu_share_pct": 23.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792326803.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6862.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 1.95,
+   "cpu_pct": 0.0,
+   "ram_pct": 79.6,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792326806.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6862.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 21.2,
+   "ram_pct": 80.1,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792326810.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6862.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 2.18,
+   "cpu_pct": 24.4,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792326813.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6862.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 25.3,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792326816.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6862.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.85,
+   "cpu_pct": 31.6,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792326820.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6862.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.78,
+   "cpu_pct": 41.4,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/empero-ai/Qwen3.8-9B-Distill-GGUF:Q4_K_M",
+     "processor": "15%/85% CPU/GPU",
+     "cpu_share_pct": 15.0
+    }
+   ]
+  },
+  {
+   "t": 1792326823.6,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 20.72,
+   "cpu_pct": 28.3,
+   "ram_pct": 74.2,
+   "ollama_ram_mib": 79.0,
+   "ollama": []
+  },
+  {
+   "t": 1792326826.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 20.37,
+   "cpu_pct": 21.7,
+   "ram_pct": 74.7,
+   "ollama_ram_mib": 79.0,
+   "ollama": []
+  },
+  {
+   "t": 1792326830.4,
+   "gpu_util_pct": 44.0,
+   "vram_used_mib": 6860.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 22.09,
+   "cpu_pct": 29.4,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 79.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326834.4,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 53.97,
+   "cpu_pct": 69.4,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 79.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326838.6,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 53.24,
+   "cpu_pct": 68.6,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 79.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326842.5,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 52.47,
+   "cpu_pct": 64.1,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 78.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326846.3,
+   "gpu_util_pct": 49.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 41.19,
+   "cpu_pct": 74.2,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 78.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326850.5,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 53.19,
+   "cpu_pct": 68.2,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 78.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326854.9,
+   "gpu_util_pct": 39.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 54.37,
+   "cpu_pct": 74.1,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 78.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326859.2,
+   "gpu_util_pct": 39.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 53.85,
+   "cpu_pct": 78.8,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 78.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326862.5,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 49.78,
+   "cpu_pct": 66.8,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 78.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326866.8,
+   "gpu_util_pct": 49.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 54.44,
+   "cpu_pct": 73.5,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326871.0,
+   "gpu_util_pct": 47.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 54.8,
+   "cpu_pct": 77.8,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326875.2,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 55.49,
+   "cpu_pct": 70.7,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326879.4,
+   "gpu_util_pct": 37.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 54.53,
+   "cpu_pct": 67.5,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326883.7,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 52.8,
+   "cpu_pct": 77.9,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326888.0,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.07,
+   "cpu_pct": 72.8,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326892.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 11.14,
+   "cpu_pct": 42.0,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326895.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.76,
+   "cpu_pct": 25.3,
+   "ram_pct": 80.1,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326898.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 2.04,
+   "cpu_pct": 23.8,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326901.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 18.7,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326905.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 2.12,
+   "cpu_pct": 23.2,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326908.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 41.5,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326912.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 33.7,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326915.4,
+   "gpu_util_pct": 47.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 55.53,
+   "cpu_pct": 54.6,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326919.6,
+   "gpu_util_pct": 49.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 54.64,
+   "cpu_pct": 69.2,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326923.4,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 36.95,
+   "cpu_pct": 72.0,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326927.0,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 52.94,
+   "cpu_pct": 65.2,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326931.1,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 50.89,
+   "cpu_pct": 70.7,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326935.4,
+   "gpu_util_pct": 48.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 55.18,
+   "cpu_pct": 79.4,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326939.7,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 52.46,
+   "cpu_pct": 66.0,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326943.3,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 53.96,
+   "cpu_pct": 60.2,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326947.7,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.2,
+   "cpu_pct": 81.4,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326951.9,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 53.54,
+   "cpu_pct": 70.4,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326956.0,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.76,
+   "cpu_pct": 69.5,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326960.3,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 52.98,
+   "cpu_pct": 77.7,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326964.8,
+   "gpu_util_pct": 52.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 54.37,
+   "cpu_pct": 74.6,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326969.0,
+   "gpu_util_pct": 45.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 55.01,
+   "cpu_pct": 67.4,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326972.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 10.96,
+   "cpu_pct": 38.1,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326976.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.78,
+   "cpu_pct": 20.4,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326979.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 23.9,
+   "ram_pct": 80.6,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326982.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 20.5,
+   "ram_pct": 80.8,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326985.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.76,
+   "cpu_pct": 36.7,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326989.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.96,
+   "cpu_pct": 29.6,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326992.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 37.5,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792326996.0,
+   "gpu_util_pct": 49.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 53.46,
+   "cpu_pct": 56.8,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327000.3,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 53.83,
+   "cpu_pct": 76.4,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327003.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 45.74,
+   "cpu_pct": 60.9,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327007.7,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 54.08,
+   "cpu_pct": 68.6,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327012.0,
+   "gpu_util_pct": 48.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 52.51,
+   "cpu_pct": 81.7,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327016.2,
+   "gpu_util_pct": 41.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.17,
+   "cpu_pct": 74.0,
+   "ram_pct": 81.4,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327021.3,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 55.68,
+   "cpu_pct": 80.2,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327025.9,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.07,
+   "cpu_pct": 82.1,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327030.7,
+   "gpu_util_pct": 47.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 54.91,
+   "cpu_pct": 75.0,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327035.6,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 54.14,
+   "cpu_pct": 72.4,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327040.4,
+   "gpu_util_pct": 37.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 54.58,
+   "cpu_pct": 79.3,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327045.4,
+   "gpu_util_pct": 49.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.5,
+   "cpu_pct": 72.7,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327050.2,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 50.71,
+   "cpu_pct": 76.5,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327053.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 11.05,
+   "cpu_pct": 24.3,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327057.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 5.12,
+   "cpu_pct": 20.5,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327060.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 25.5,
+   "ram_pct": 81.0,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327064.7,
+   "gpu_util_pct": 100.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 80.55,
+   "cpu_pct": 55.5,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327069.4,
+   "gpu_util_pct": 48.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 43.58,
+   "cpu_pct": 75.7,
+   "ram_pct": 82.4,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327074.2,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 53.6,
+   "cpu_pct": 77.2,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327078.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 24.82,
+   "cpu_pct": 56.0,
+   "ram_pct": 82.1,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327082.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.78,
+   "cpu_pct": 20.9,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327085.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 2.38,
+   "cpu_pct": 23.4,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327089.3,
+   "gpu_util_pct": 99.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 5.41,
+   "cpu_pct": 51.2,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327093.9,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 51.55,
+   "cpu_pct": 72.6,
+   "ram_pct": 82.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327098.4,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.11,
+   "cpu_pct": 72.3,
+   "ram_pct": 82.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327102.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 10.97,
+   "cpu_pct": 55.7,
+   "ram_pct": 82.3,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327106.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 10.69,
+   "cpu_pct": 19.9,
+   "ram_pct": 82.1,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327109.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 23.5,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327113.6,
+   "gpu_util_pct": 74.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 9.61,
+   "cpu_pct": 55.4,
+   "ram_pct": 82.1,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327118.1,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 53.05,
+   "cpu_pct": 75.4,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327122.7,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 53.17,
+   "cpu_pct": 77.8,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327127.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 14.39,
+   "cpu_pct": 58.3,
+   "ram_pct": 82.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327130.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.67,
+   "cpu_pct": 26.4,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327134.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.78,
+   "cpu_pct": 27.6,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327137.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 29.7,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327141.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 30.2,
+   "ram_pct": 83.5,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327145.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.85,
+   "cpu_pct": 44.9,
+   "ram_pct": 83.7,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327148.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 36.2,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 76.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327152.3,
+   "gpu_util_pct": 52.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 53.36,
+   "cpu_pct": 63.2,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327156.8,
+   "gpu_util_pct": 48.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 55.92,
+   "cpu_pct": 75.3,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327161.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 24.15,
+   "cpu_pct": 64.4,
+   "ram_pct": 84.1,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327165.1,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.64,
+   "cpu_pct": 45.9,
+   "ram_pct": 84.1,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327169.4,
+   "gpu_util_pct": 39.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 52.79,
+   "cpu_pct": 77.5,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327172.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.6,
+   "cpu_pct": 29.7,
+   "ram_pct": 84.3,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327176.1,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 52.96,
+   "cpu_pct": 57.7,
+   "ram_pct": 84.5,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327180.3,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 53.77,
+   "cpu_pct": 70.5,
+   "ram_pct": 84.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327184.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 15.03,
+   "cpu_pct": 44.1,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327187.6,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 18.78,
+   "cpu_pct": 41.7,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327191.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 28.63,
+   "cpu_pct": 52.7,
+   "ram_pct": 84.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327194.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.74,
+   "cpu_pct": 23.4,
+   "ram_pct": 83.5,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327198.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 29.1,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327201.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.0,
+   "cpu_pct": 27.9,
+   "ram_pct": 83.9,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327204.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.89,
+   "cpu_pct": 24.8,
+   "ram_pct": 83.7,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327207.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.01,
+   "cpu_pct": 22.4,
+   "ram_pct": 83.6,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327211.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 33.6,
+   "ram_pct": 84.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327214.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.07,
+   "cpu_pct": 24.4,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327218.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.19,
+   "cpu_pct": 23.2,
+   "ram_pct": 83.7,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327221.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.75,
+   "cpu_pct": 56.6,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327225.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.07,
+   "cpu_pct": 32.2,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327228.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 36.5,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327232.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.96,
+   "cpu_pct": 26.6,
+   "ram_pct": 84.7,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327236.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 34.7,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327240.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 22.9,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327243.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.97,
+   "cpu_pct": 23.9,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327247.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 28.5,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327250.8,
+   "gpu_util_pct": 51.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 52.18,
+   "cpu_pct": 38.2,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327254.9,
+   "gpu_util_pct": 52.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 52.71,
+   "cpu_pct": 70.3,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327258.9,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 52.38,
+   "cpu_pct": 75.1,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327263.6,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 54.58,
+   "cpu_pct": 78.8,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327267.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 17.49,
+   "cpu_pct": 46.5,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327271.2,
+   "gpu_util_pct": 45.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 56.49,
+   "cpu_pct": 58.7,
+   "ram_pct": 86.4,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327275.9,
+   "gpu_util_pct": 44.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 50.56,
+   "cpu_pct": 79.6,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327280.4,
+   "gpu_util_pct": 45.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 53.1,
+   "cpu_pct": 75.8,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327285.7,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 51.99,
+   "cpu_pct": 92.3,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327290.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 24.55,
+   "cpu_pct": 67.8,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327294.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.66,
+   "cpu_pct": 27.7,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327297.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.96,
+   "cpu_pct": 41.9,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 77.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327301.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 45.6,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 77.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327305.3,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 46.1,
+   "cpu_pct": 54.8,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 77.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327310.0,
+   "gpu_util_pct": 53.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 50.86,
+   "cpu_pct": 82.7,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327314.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 28.61,
+   "cpu_pct": 69.2,
+   "ram_pct": 84.7,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327318.2,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 19.77,
+   "cpu_pct": 36.8,
+   "ram_pct": 84.8,
+   "ollama_ram_mib": 77.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327322.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 33.6,
+   "cpu_pct": 81.2,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327326.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 10.75,
+   "cpu_pct": 34.4,
+   "ram_pct": 85.0,
+   "ollama_ram_mib": 77.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327330.1,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 54.67,
+   "cpu_pct": 64.3,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 78.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327334.1,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 52.24,
+   "cpu_pct": 75.9,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 78.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327338.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 22.03,
+   "cpu_pct": 63.9,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 78.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327342.3,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 46.23,
+   "cpu_pct": 52.4,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327346.8,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 52.66,
+   "cpu_pct": 81.5,
+   "ram_pct": 85.0,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327350.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.76,
+   "cpu_pct": 47.5,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327354.2,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 51.02,
+   "cpu_pct": 54.1,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327358.2,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 52.53,
+   "cpu_pct": 68.7,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 77.4,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327362.3,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 45.94,
+   "cpu_pct": 77.8,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327366.7,
+   "gpu_util_pct": 51.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 53.43,
+   "cpu_pct": 81.5,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327370.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 16.42,
+   "cpu_pct": 39.8,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327374.3,
+   "gpu_util_pct": 49.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 52.29,
+   "cpu_pct": 63.9,
+   "ram_pct": 86.6,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327378.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 17.56,
+   "cpu_pct": 46.1,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327381.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 10.73,
+   "cpu_pct": 28.8,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327385.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 46.6,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327389.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.92,
+   "cpu_pct": 35.6,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327393.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 37.1,
+   "ram_pct": 87.0,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327396.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 44.6,
+   "ram_pct": 86.8,
+   "ollama_ram_mib": 77.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327400.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 31.7,
+   "ram_pct": 86.4,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327404.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.92,
+   "cpu_pct": 39.6,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327408.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 33.2,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327411.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 36.7,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327415.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.0,
+   "cpu_pct": 38.6,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327418.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 26.1,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327422.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.92,
+   "cpu_pct": 41.5,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327426.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 31.7,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327430.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 29.5,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327433.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 40.8,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327437.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 31.0,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327442.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.73,
+   "cpu_pct": 76.3,
+   "ram_pct": 89.7,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327446.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.7,
+   "cpu_pct": 91.1,
+   "ram_pct": 86.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327450.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.71,
+   "cpu_pct": 85.5,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327455.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.77,
+   "cpu_pct": 96.7,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327459.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 72.7,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327463.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 60.0,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327467.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 44.9,
+   "ram_pct": 80.4,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327470.9,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 45.08,
+   "cpu_pct": 76.3,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327475.6,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 48.33,
+   "cpu_pct": 84.7,
+   "ram_pct": 79.0,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327479.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 27.74,
+   "cpu_pct": 74.3,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327483.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 10.61,
+   "cpu_pct": 35.4,
+   "ram_pct": 79.4,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327487.6,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 51.63,
+   "cpu_pct": 82.8,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327491.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 19.26,
+   "cpu_pct": 62.5,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327495.0,
+   "gpu_util_pct": 71.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 9.01,
+   "cpu_pct": 38.0,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327499.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 39.34,
+   "cpu_pct": 88.3,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327504.0,
+   "gpu_util_pct": 51.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 51.84,
+   "cpu_pct": 86.6,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327507.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.76,
+   "cpu_pct": 45.1,
+   "ram_pct": 79.6,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327510.8,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 50.46,
+   "cpu_pct": 56.7,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327515.4,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 52.05,
+   "cpu_pct": 88.5,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327519.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 20.6,
+   "cpu_pct": 54.5,
+   "ram_pct": 79.7,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327522.5,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 12.09,
+   "cpu_pct": 49.8,
+   "ram_pct": 81.2,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327526.9,
+   "gpu_util_pct": 45.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 50.48,
+   "cpu_pct": 88.7,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327530.8,
+   "gpu_util_pct": 37.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 53.8,
+   "cpu_pct": 76.8,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327534.6,
+   "gpu_util_pct": 44.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 49.84,
+   "cpu_pct": 74.8,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327538.9,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 53.01,
+   "cpu_pct": 91.0,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327542.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 14.15,
+   "cpu_pct": 41.7,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327545.5,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 45.87,
+   "cpu_pct": 53.5,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327549.5,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 53.93,
+   "cpu_pct": 79.7,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327554.1,
+   "gpu_util_pct": 45.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 52.49,
+   "cpu_pct": 89.2,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327557.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 18.75,
+   "cpu_pct": 56.5,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327561.3,
+   "gpu_util_pct": 83.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 12.69,
+   "cpu_pct": 44.3,
+   "ram_pct": 82.2,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327564.8,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 53.52,
+   "cpu_pct": 89.2,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327569.1,
+   "gpu_util_pct": 50.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 55.4,
+   "cpu_pct": 83.0,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327573.3,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 56.19,
+   "cpu_pct": 79.3,
+   "ram_pct": 82.8,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327577.5,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 51.47,
+   "cpu_pct": 87.3,
+   "ram_pct": 82.6,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327582.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 25.11,
+   "cpu_pct": 69.7,
+   "ram_pct": 82.4,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327585.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 10.86,
+   "cpu_pct": 32.7,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327588.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 5.52,
+   "cpu_pct": 38.7,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327591.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 59.6,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327595.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 41.5,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327598.5,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 5.59,
+   "cpu_pct": 48.0,
+   "ram_pct": 81.3,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327603.1,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 53.6,
+   "cpu_pct": 88.3,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 76.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327606.7,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 52.94,
+   "cpu_pct": 78.1,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327610.9,
+   "gpu_util_pct": 44.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 55.0,
+   "cpu_pct": 79.2,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327614.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.78,
+   "cpu_pct": 32.1,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327617.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 9.41,
+   "cpu_pct": 43.3,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327621.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 49.8,
+   "ram_pct": 81.6,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327624.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 42.2,
+   "ram_pct": 81.8,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327628.1,
+   "gpu_util_pct": 63.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 5.48,
+   "cpu_pct": 63.6,
+   "ram_pct": 81.7,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327632.7,
+   "gpu_util_pct": 82.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 28.24,
+   "cpu_pct": 87.1,
+   "ram_pct": 82.1,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327636.9,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 53.55,
+   "cpu_pct": 86.4,
+   "ram_pct": 81.9,
+   "ollama_ram_mib": 77.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327640.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 22.05,
+   "cpu_pct": 53.7,
+   "ram_pct": 81.5,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327644.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 4.9,
+   "cpu_pct": 49.3,
+   "ram_pct": 82.3,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327648.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 48.1,
+   "ram_pct": 82.3,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327651.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 1.85,
+   "cpu_pct": 33.6,
+   "ram_pct": 82.4,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327655.1,
+   "gpu_util_pct": 72.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 4.88,
+   "cpu_pct": 61.9,
+   "ram_pct": 82.4,
+   "ollama_ram_mib": 76.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327659.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 32.57,
+   "cpu_pct": 80.7,
+   "ram_pct": 82.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327663.7,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 54.71,
+   "cpu_pct": 85.1,
+   "ram_pct": 82.4,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327667.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 18.33,
+   "cpu_pct": 61.4,
+   "ram_pct": 82.2,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327671.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.69,
+   "cpu_pct": 30.7,
+   "ram_pct": 82.4,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327674.8,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 11.68,
+   "cpu_pct": 51.6,
+   "ram_pct": 82.5,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327678.8,
+   "gpu_util_pct": 50.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 52.95,
+   "cpu_pct": 85.2,
+   "ram_pct": 82.7,
+   "ollama_ram_mib": 77.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327682.6,
+   "gpu_util_pct": 42.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 52.03,
+   "cpu_pct": 70.9,
+   "ram_pct": 83.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327687.0,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 55.18,
+   "cpu_pct": 83.0,
+   "ram_pct": 83.2,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327692.1,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 49.43,
+   "cpu_pct": 92.0,
+   "ram_pct": 84.1,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327697.0,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 50.65,
+   "cpu_pct": 94.3,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 77.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327701.8,
+   "gpu_util_pct": 36.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 52.56,
+   "cpu_pct": 91.7,
+   "ram_pct": 84.8,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327706.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 24.76,
+   "cpu_pct": 81.2,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327710.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 10.74,
+   "cpu_pct": 40.1,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327714.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 1.95,
+   "cpu_pct": 33.2,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 77.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327717.9,
+   "gpu_util_pct": 99.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 7.58,
+   "cpu_pct": 55.2,
+   "ram_pct": 84.9,
+   "ollama_ram_mib": 77.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327722.5,
+   "gpu_util_pct": 25.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 37.74,
+   "cpu_pct": 81.9,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327727.0,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 53.46,
+   "cpu_pct": 84.2,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327731.4,
+   "gpu_util_pct": 41.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 54.86,
+   "cpu_pct": 81.9,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327736.2,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 53.92,
+   "cpu_pct": 83.2,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327740.6,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 53.55,
+   "cpu_pct": 79.6,
+   "ram_pct": 84.7,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327745.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 31.07,
+   "cpu_pct": 79.8,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327749.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 10.82,
+   "cpu_pct": 28.7,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327752.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 4.5,
+   "cpu_pct": 32.8,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327756.3,
+   "gpu_util_pct": 74.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 9.6,
+   "cpu_pct": 51.4,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 77.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327761.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 46.26,
+   "cpu_pct": 84.0,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 77.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327765.8,
+   "gpu_util_pct": 45.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 54.42,
+   "cpu_pct": 86.9,
+   "ram_pct": 84.3,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327770.4,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 54.52,
+   "cpu_pct": 80.9,
+   "ram_pct": 84.0,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327776.2,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 51.22,
+   "cpu_pct": 95.2,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327781.1,
+   "gpu_util_pct": 51.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 56.53,
+   "cpu_pct": 83.9,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  },
+  {
+   "t": 1792327785.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 7132.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 31.22,
+   "cpu_pct": 61.2,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 76.7,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+     "processor": "23%/77% CPU/GPU",
+     "cpu_share_pct": 23.0
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.0,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "qwen2.5-coder-yarn:3b",
+  "thinker": "hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS",
+  "git_sha": "eddf510"
+ }
+}
