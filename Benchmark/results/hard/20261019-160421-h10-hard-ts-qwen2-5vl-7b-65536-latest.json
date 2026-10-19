@@ -1,0 +1,1896 @@
+{
+ "tag": "h10-hard-ts-qwen2-5vl-7b-65536-latest",
+ "stamp": "20261019-160421",
+ "n": 3,
+ "results": {
+  "realworld": {
+   "hard_multifile_bug": {
+    "verified": "0/3",
+    "ran": "0/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 21.8,
+     "p50": 22.0,
+     "p95": 23.9,
+     "max": 23.9,
+     "mean": 22.6
+    },
+    "peak": 0,
+    "input": 0,
+    "output": 0,
+    "timeout_s": 220.0,
+    "notes": [
+     "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T10:34:21+00:00",
+      "end": "2026-10-19T10:34:45+00:00",
+      "s": 23.9,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[3b3392ceae] FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('3b3392ceae') to retry.",
+      "note": "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T10:34:46+00:00",
+      "end": "2026-10-19T10:35:07+00:00",
+      "s": 21.8,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ef1f39d46b] FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('ef1f39d46b') to retry.",
+      "note": "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T10:35:08+00:00",
+      "end": "2026-10-19T10:35:30+00:00",
+      "s": 22.0,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[902b067e82] FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('902b067e82') to retry.",
+      "note": "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "hard_two_vulns": {
+    "verified": "0/3",
+    "ran": "0/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 9.4,
+     "p50": 9.6,
+     "p95": 9.8,
+     "max": 9.8,
+     "mean": 9.6
+    },
+    "peak": 0,
+    "input": 0,
+    "output": 0,
+    "timeout_s": 60.0,
+    "notes": [
+     "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T10:35:31+00:00",
+      "end": "2026-10-19T10:35:40+00:00",
+      "s": 9.8,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[5fa249931c] FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('5fa249931c') to retry.",
+      "note": "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T10:35:41+00:00",
+      "end": "2026-10-19T10:35:50+00:00",
+      "s": 9.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[c87a819eb4] FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('c87a819eb4') to retry.",
+      "note": "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T10:35:51+00:00",
+      "end": "2026-10-19T10:36:00+00:00",
+      "s": 9.4,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[e94b93130c] FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('e94b93130c') to retry.",
+      "note": "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "hard_ambiguous_trace": {
+    "verified": "0/3",
+    "ran": "0/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 21.0,
+     "p50": 21.0,
+     "p95": 22.6,
+     "max": 22.6,
+     "mean": 21.5
+    },
+    "peak": 0,
+    "input": 0,
+    "output": 0,
+    "timeout_s": 220.0,
+    "notes": [
+     "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T10:36:01+00:00",
+      "end": "2026-10-19T10:36:23+00:00",
+      "s": 22.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[9e2cae8e7e] FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('9e2cae8e7e') to retry.",
+      "note": "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T10:36:24+00:00",
+      "end": "2026-10-19T10:36:45+00:00",
+      "s": 21.0,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[632c1bc102] FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('632c1bc102') to retry.",
+      "note": "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T10:36:45+00:00",
+      "end": "2026-10-19T10:37:06+00:00",
+      "s": 21.0,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[b002493721] FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('b002493721') to retry.",
+      "note": "FAILED (debugger/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "hard_long_summary": {
+    "verified": "0/3",
+    "ran": "0/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 12.7,
+     "p50": 13.9,
+     "p95": 14.3,
+     "max": 14.3,
+     "mean": 13.6
+    },
+    "peak": 0,
+    "input": 0,
+    "output": 0,
+    "timeout_s": 100.0,
+    "notes": [
+     "FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T10:37:07+00:00",
+      "end": "2026-10-19T10:37:21+00:00",
+      "s": 13.9,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[672ee59067] FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('672ee59067') to retry.",
+      "note": "FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 100.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T10:37:21+00:00",
+      "end": "2026-10-19T10:37:36+00:00",
+      "s": 14.3,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ee98c57577] FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('ee98c57577') to retry.",
+      "note": "FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 100.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T10:37:36+00:00",
+      "end": "2026-10-19T10:37:49+00:00",
+      "s": 12.7,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[0446941187] FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('0446941187') to retry.",
+      "note": "FAILED (docs/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 100.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "hard_compare_functions": {
+    "verified": "0/3",
+    "ran": "0/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 9.6,
+     "p50": 9.8,
+     "p95": 11.1,
+     "max": 11.1,
+     "mean": 10.2
+    },
+    "peak": 0,
+    "input": 0,
+    "output": 0,
+    "timeout_s": 60.0,
+    "notes": [
+     "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T10:37:49+00:00",
+      "end": "2026-10-19T10:38:00+00:00",
+      "s": 11.1,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[574b779616] FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('574b779616') to retry.",
+      "note": "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T10:38:01+00:00",
+      "end": "2026-10-19T10:38:11+00:00",
+      "s": 9.8,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[24c5bf2c48] FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('24c5bf2c48') to retry.",
+      "note": "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T10:38:11+00:00",
+      "end": "2026-10-19T10:38:21+00:00",
+      "s": 9.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ef07b96938] FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'registry.ollama.ai/library/ts-qwen2-5vl-7b-65536:latest does not support tools', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('ef07b96938') to retry.",
+      "note": "FAILED (reviewer/ts-qwen2-5vl-7b-65536:latest): BadRequestError: Error code: 400 - {'error': {'message': 'regi",
+      "peak": 0,
+      "input": 0,
+      "output": 0,
+      "trail_tools": [],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "model_params": {
+  "builder": "8.3B",
+  "thinker": "8.3B"
+ },
+ "hardware": {
+  "samples": 74,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 24.0,
+   "max": 40.8
+  },
+  "ram_pct": {
+   "min": 85.8,
+   "avg": 86.8,
+   "max": 88.0
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 0.0,
+   "max": 0.0
+  },
+  "vram_used_mib": {
+   "min": 6809.0,
+   "avg": 6809.0,
+   "max": 6809.0
+  },
+  "gpu_temp_c": {
+   "min": 47.0,
+   "avg": 48.4,
+   "max": 49.0
+  },
+  "gpu_power_w": {
+   "min": 1.7,
+   "avg": 2.1,
+   "max": 4.3
+  },
+  "ollama_ram_mib": {
+   "min": 102.1,
+   "avg": 102.2,
+   "max": 102.4
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "39%/61% CPU/GPU": 74
+  },
+  "max_cpu_share_pct": 39.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792406061.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 0.0,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 102.3,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406064.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 26.5,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 102.3,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406068.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 17.6,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 102.3,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406071.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 2.02,
+   "cpu_pct": 14.5,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 102.3,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406074.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 3.07,
+   "cpu_pct": 31.5,
+   "ram_pct": 86.5,
+   "ollama_ram_mib": 102.3,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406078.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 47.0,
+   "gpu_power_w": 1.97,
+   "cpu_pct": 34.7,
+   "ram_pct": 86.5,
+   "ollama_ram_mib": 102.3,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406081.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.04,
+   "cpu_pct": 26.0,
+   "ram_pct": 86.5,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406084.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.12,
+   "cpu_pct": 21.1,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406087.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 23.5,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406090.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 11.5,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406094.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.05,
+   "cpu_pct": 16.3,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406097.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.22,
+   "cpu_pct": 30.4,
+   "ram_pct": 86.3,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406100.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 35.1,
+   "ram_pct": 86.4,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406103.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.02,
+   "cpu_pct": 26.9,
+   "ram_pct": 86.6,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406107.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.92,
+   "cpu_pct": 13.1,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406110.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.78,
+   "cpu_pct": 26.9,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406113.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.02,
+   "cpu_pct": 14.5,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406116.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.95,
+   "cpu_pct": 13.2,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406119.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.04,
+   "cpu_pct": 24.6,
+   "ram_pct": 86.3,
+   "ollama_ram_mib": 102.4,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406123.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.89,
+   "cpu_pct": 38.1,
+   "ram_pct": 86.5,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406126.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 25.1,
+   "ram_pct": 86.6,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406129.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 12.8,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406132.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.98,
+   "cpu_pct": 25.4,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406136.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 18.3,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406139.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 28.2,
+   "ram_pct": 86.3,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406142.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.14,
+   "cpu_pct": 18.2,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406146.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 22.2,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406149.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.17,
+   "cpu_pct": 28.8,
+   "ram_pct": 86.3,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406152.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 13.3,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406155.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 27.2,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406158.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 28.6,
+   "ram_pct": 86.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406162.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 15.8,
+   "ram_pct": 86.1,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406165.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 22.9,
+   "ram_pct": 86.7,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406168.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.09,
+   "cpu_pct": 19.1,
+   "ram_pct": 86.7,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406171.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.74,
+   "cpu_pct": 21.1,
+   "ram_pct": 87.0,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406175.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.06,
+   "cpu_pct": 32.5,
+   "ram_pct": 87.0,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406178.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 35.6,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406181.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.05,
+   "cpu_pct": 11.8,
+   "ram_pct": 86.8,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406184.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 22.7,
+   "ram_pct": 86.6,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406188.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 2.73,
+   "cpu_pct": 17.3,
+   "ram_pct": 86.7,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406191.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 48.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 24.5,
+   "ram_pct": 86.9,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406194.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 29.8,
+   "ram_pct": 87.8,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406197.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 34.9,
+   "ram_pct": 87.8,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406201.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 31.2,
+   "ram_pct": 88.0,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406204.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.02,
+   "cpu_pct": 19.3,
+   "ram_pct": 87.8,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406207.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 24.4,
+   "ram_pct": 87.6,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406211.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.91,
+   "cpu_pct": 18.9,
+   "ram_pct": 87.6,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406214.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.76,
+   "cpu_pct": 24.0,
+   "ram_pct": 87.7,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406217.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 19.6,
+   "ram_pct": 87.7,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406220.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 32.2,
+   "ram_pct": 87.8,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406224.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 27.8,
+   "ram_pct": 87.3,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406227.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.85,
+   "cpu_pct": 19.9,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406230.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 3.23,
+   "cpu_pct": 21.4,
+   "ram_pct": 86.9,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406233.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.6,
+   "cpu_pct": 27.5,
+   "ram_pct": 87.2,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406237.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 4.31,
+   "cpu_pct": 31.3,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406240.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 29.3,
+   "ram_pct": 86.6,
+   "ollama_ram_mib": 102.1,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406243.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 21.3,
+   "ram_pct": 86.4,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406246.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 19.0,
+   "ram_pct": 86.6,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406250.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.53,
+   "cpu_pct": 40.8,
+   "ram_pct": 87.2,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406253.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.01,
+   "cpu_pct": 17.0,
+   "ram_pct": 87.6,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406256.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.16,
+   "cpu_pct": 30.8,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406260.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.47,
+   "cpu_pct": 26.9,
+   "ram_pct": 87.3,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406263.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 31.6,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406266.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.05,
+   "cpu_pct": 21.4,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406270.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 3.8,
+   "cpu_pct": 31.3,
+   "ram_pct": 87.2,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406273.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.06,
+   "cpu_pct": 27.9,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406276.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 27.8,
+   "ram_pct": 87.4,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406279.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.95,
+   "cpu_pct": 15.1,
+   "ram_pct": 87.2,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406283.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 2.02,
+   "cpu_pct": 24.1,
+   "ram_pct": 87.4,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406286.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 19.8,
+   "ram_pct": 87.6,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406289.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.73,
+   "cpu_pct": 29.3,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406292.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 3.02,
+   "cpu_pct": 17.3,
+   "ram_pct": 87.4,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406296.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 26.7,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  },
+  {
+   "t": 1792406299.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6809.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 49.0,
+   "gpu_power_w": 1.94,
+   "cpu_pct": 37.6,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 102.2,
+   "ollama": [
+    {
+     "model": "ts-llama3-1-8b-65536:latest",
+     "processor": "39%/61% CPU/GPU",
+     "cpu_share_pct": 39.0
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.0,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "ts-qwen2-5vl-7b-65536:latest",
+  "thinker": "ts-qwen2-5vl-7b-65536:latest",
+  "git_sha": "35dc001"
+ }
+}
