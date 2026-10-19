@@ -138,3 +138,9 @@ Runs c1 and t15 used smaller effective contexts (4096 default, or 16384 for `-16
 Flag for the user: the global `~/.claude/CLAUDE.md` names `llama3.2:3b-16k` as the thinker; that model is removed. Not edited here.
 
 Next session (run instructions): after the docs PR is merged and the user says go, run `scripts/seq.sh <hard|coding> <tagprefix> model...` sequentially (output `Benchmark/results/<suite>`), using the policy variants, n=3. Hard suite first, then coding L1-L6. Batches of 3 models; after each batch report per-role seconds, p95 and timeouts, validate logs, commit with explicit paths and push. Timeout changes are recorded here with their batch. Pending: code-l2 timeout_s 225 -> ~340 (not applied). Only one bench or Haiku process at a time.
+
+### Merge once concluded (2026-10-19)
+- Raw coding L1-L6 runs (c1, t15; 30 files) are committed in `Benchmark/results/coding`, hard raw runs in `Benchmark/results/hard`. Haiku baselines: `cloud_runs_coding.csv`, `cloud_runs_hard.csv` (separate, unranked).
+- `Benchmark/results/benchmark.csv` has no suite column (16 realworld case columns only), so the coding L1-L6 rows are NOT in it yet. Do not merge piecemeal.
+- When the model list is exhausted (Step 3 done): merge all hard and coding data (c1, t15 and the new policy-variant runs) into `benchmark.csv` once via `csvstore.py`, no blank cells; run `backfill_params.py` (use "n/a" only where truly inapplicable and list those cells); set csv and report dates to 2026-10-19 or later; rebuild reports with `build_report.py`; run the full tests (ignore flaky `tests/test_haiku_toolcalls.py`); commit with explicit paths and push.
+- Rollback: commits `0a4889a` (tooling), `ab59e23` (html), `760f8b6` (hard raw), `f18c942` (backups, runs.jsonl), `04d71a2` (benchmark.csv); local tag `pre-bench-data-commit` = `ab59e23`.
