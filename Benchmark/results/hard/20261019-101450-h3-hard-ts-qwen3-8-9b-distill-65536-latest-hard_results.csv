@@ -1,0 +1,6 @@
+model,case,verified,ran,status,median_s,notes
+h3-hard-ts-qwen3-8-9b-distill-65536-latest,hard_multifile_bug,3/3,3/3,valid,55.4,
+h3-hard-ts-qwen3-8-9b-distill-65536-latest,hard_two_vulns,3/3,3/3,valid,23.5,
+h3-hard-ts-qwen3-8-9b-distill-65536-latest,hard_ambiguous_trace,0/3,3/3,valid,151.8,## Crash Analysis  **Exception type:** `FileNotFoundError` (Errno 2)  **Root cause:** The file `/wor | scratch=['trace_cfg.py'] | ## Root Cause Analysis  **Exception type:** `FileNotFoundError` (raised by the OS when `subprocess.r | scratch=['trace_cfg.py'] | **Exception type:** `FileNotFoundError`  **Root cause:** The file `/workspace/tokenfrugal/bench/scra | scratch=['trace_cfg.py']
+h3-hard-ts-qwen3-8-9b-distill-65536-latest,hard_long_summary,3/3,3/3,valid,23.5,
+h3-hard-ts-qwen3-8-9b-distill-65536-latest,hard_compare_functions,3/3,3/3,valid,29.1,
