@@ -144,3 +144,7 @@ Next session (run instructions): after the docs PR is merged and the user says g
 - `Benchmark/results/benchmark.csv` has no suite column (16 realworld case columns only), so the coding L1-L6 rows are NOT in it yet. Do not merge piecemeal.
 - When the model list is exhausted (Step 3 done): merge all hard and coding data (c1, t15 and the new policy-variant runs) into `benchmark.csv` once via `csvstore.py`, no blank cells; run `backfill_params.py` (use "n/a" only where truly inapplicable and list those cells); set csv and report dates to 2026-10-19 or later; rebuild reports with `build_report.py`; run the full tests (ignore flaky `tests/test_haiku_toolcalls.py`); commit with explicit paths and push.
 - Rollback: commits `0a4889a` (tooling), `ab59e23` (html), `760f8b6` (hard raw), `f18c942` (backups, runs.jsonl), `04d71a2` (benchmark.csv); local tag `pre-bench-data-commit` = `ab59e23`.
+
+### Hard suite batch log (policy variants, n=3, sequential)
+- h1 (b1e1316): lfm2.5, qwen25c-7b-q5, glm4. glm4 fails with LoopError (answers without a tool call); no timeout change.
+- h2 (b95c433): cogito-8b 0/15 (multifile 2 and two_vulns 3 timeouts; wrong answers anyway); qwen3-5-9b-iq4xs 15/15 (p95: multifile 175.5s, ambiguous 96.7s, two_vulns 24.4s, summary 25.4s, compare 29.8s); qwen3-5-4b-q6k 12/15 (long_summary 0/3, p95 19.8s; other p95 at most 70.9s). No timeouts on the Qwen3.5 models. Timeout changes: none. Note for the final review: reviewer 60s is tight on slow models (cogito two_vulns p50 66s).
