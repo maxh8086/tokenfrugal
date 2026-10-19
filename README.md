@@ -111,6 +111,10 @@ Restart the client after registering. The full setup (models, Docker backends, t
 - **[Architecture write-up](docs/architecture.md)** and [interactive routing flowchart](docs/architecture-routing.html).
 - **[Benchmark report](https://maxh8086.github.io/tokenfrugal/Benchmark/)** and [model selection guide](https://maxh8086.github.io/tokenfrugal/Benchmark/model-selection-guide.html) for choosing a model per role.
 
+## Context window and local models
+
+Local models are tested at a fixed context window: `num_ctx = min(native context, 65536)` for models with a native window above 32768, and 32768 for the rest. The Ollama default (chosen from free video memory, 4096 on an 8 GB card) is not the test setting, and a Modelfile `num_ctx` overrides the `OLLAMA_CONTEXT_LENGTH` server variable, so tested models are variants with the value baked in (names end in `-65536`, `-32768`). Larger windows use more memory and slow runs. Details and the KV cache formula: [Benchmark/README.md](Benchmark/README.md#context-window-and-kv-cache).
+
 ## FAQ
 
 **Does it send my code to the cloud?** No. Local models run on your machine. Only short summaries return to your cloud agent.
@@ -123,4 +127,4 @@ Restart the client after registering. The full setup (models, Docker backends, t
 
 Apache-2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). Built on the work of many authors; see [CREDITS.md](CREDITS.md). Third-party backends run as their own unmodified containers under their own licences.
 
-Developed by Vaibhav Pavtekar with AI assistance (Claude Code).
+Developed by Vaibhav Pavtekar with AI assistance .

@@ -116,3 +116,25 @@ Proposed, NOT applied: code-l2 timeout_s 225 -> 340. No timeout change made sinc
 - User env: OLLAMA_CONTEXT_LENGTH 32768 -> 131072 (server minimum). Modelfile num_ctx overrides it, so 16384-capped models need new 32768 variants.
 - Native context < 32k: mistral-nemo-minitron-8b (8192), starcoder2-7b (16384). All other models are native >= 32k and need no scaling for 32k. qwen2.5-coder-yarn:3b has num_ctx 65536 on a 32768 native model; how its YaRN is applied is unconfirmed.
 - 128k KV cache at f16 is about 18 GB for an 8B model (about 9 GB at q8_0); machine has 31.3 GiB RAM. Verify with `ollama ps`.
+
+### Context policy (2026-10-19)
+Rule: `num_ctx = min(native, 65536)` for models with native context above 32768. Native 32768 or lower runs at 32768 (qwen3-8b at its native 40960). Variants are named `...-65536`, `...-32768`, `...-40960`. Ollama default is 4096 on this 8 GB card; a Modelfile `num_ctx` overrides `OLLAMA_CONTEXT_LENGTH` (=131072). The old `-16384`, `-16k` and `3b-32k` copies are removed; 66 Ollama entries remain. Policy text: `Benchmark/README.md`, "Context window and KV cache".
+
+`ollama ps` at the policy settings:
+| Model | Size | CPU/GPU | Context |
+|---|---|---|---|
+| ts-qwen3-8b-40960 | 8.9 GB | 29/71% | 40960 |
+| prism-bonsai-8b-q1-64k | 6.9 GB | 10/90% | 65536 |
+| ts-gemma-3-12b-65536 | 9.6 GB | 54/46% | 65536 |
+| ts-mistral-nemo-65536 | 13 GB | 54/46% | 65536 |
+| ts-qwen3-4b-65536 | 8.5 GB | 26/74% | 65536 |
+| ts-qwen25c-7b-32768 | 5.5 GB | 100% GPU | 32768 |
+
+Native-context and q8_0 KV sizing: see the KV formula in `Benchmark/README.md` (about 1.06 bytes per value at q8_0, `OLLAMA_KV_CACHE_TYPE=q8_0`, flash attention on). Native windows of 262144 or more are capped at 65536.
+
+Beyond native: starcoder2-7b (native 16384) and minitron-8b (native 8192) run at 32768, so their quality there is unverified.
+Runs c1 and t15 used smaller effective contexts (4096 default, or 16384 for `-16384` variants); they are not comparable with runs under this policy.
+
+Flag for the user: the global `~/.claude/CLAUDE.md` names `llama3.2:3b-16k` as the thinker; that model is removed. Not edited here.
+
+Next session (run instructions): after the docs PR is merged and the user says go, run `scripts/seq.sh <hard|coding> <tagprefix> model...` sequentially (output `Benchmark/results/<suite>`), using the policy variants, n=3. Hard suite first, then coding L1-L6. Batches of 3 models; after each batch report per-role seconds, p95 and timeouts, validate logs, commit with explicit paths and push. Timeout changes are recorded here with their batch. Pending: code-l2 timeout_s 225 -> ~340 (not applied). Only one bench or Haiku process at a time.
