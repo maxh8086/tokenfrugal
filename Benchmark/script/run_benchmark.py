@@ -53,6 +53,8 @@ META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "think
         "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_gb", "peak_model_ram_gb",
         "valid_cases", "infra_cases", "mean_s_valid", "total_s",
         "os", "cpu", "cores", "ram_gb", "gpu", "vram_gb", "ollama_version", "hardware_id"]
+HARD_COLS = ["hard_key", "hard_score", "hard_max", "hard_median_s", "hard_multifile_bug", "hard_two_vulns", "hard_ambiguous_trace",
+             "hard_long_summary", "hard_compare_functions", "hard_source_file", "hard_git_sha"]
 
 
 def run_cmd(cmd):
@@ -320,7 +322,7 @@ rec["valid_cases"] -= sum(c.get("status") == "no-tools" for c in real.values()) 
 rec["total_s"] = bench_csv.total_seconds(real)  # elapsed time of all repeats, timeouts and infra included
 mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["context_used_peak_tokens"])
 rec.update(mi)
-cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels] + ["raw_json"]
+cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels] + ["raw_json"] + HARD_COLS
 dst = Path(a.csv)
 rec["raw_json"] = src.name
 try:
