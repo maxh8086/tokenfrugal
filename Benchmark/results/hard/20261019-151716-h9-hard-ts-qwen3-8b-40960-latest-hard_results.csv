@@ -1,0 +1,6 @@
+model,case,verified,ran,status,median_s,notes
+h9-hard-ts-qwen3-8b-40960-latest,hard_multifile_bug,3/3,3/3,valid,162.6,
+h9-hard-ts-qwen3-8b-40960-latest,hard_two_vulns,2/3,2/3,partial,55.5,FAILED (reviewer/ts-qwen3-8b-40960:latest): LoopError: task timed out after 60s. Call resume_task('52b65b21a0'
+h9-hard-ts-qwen3-8b-40960-latest,hard_ambiguous_trace,0/3,3/3,valid,51.2,The script does not crash. It outputs `8`. Could not reproduce the crash. | scratch=['trace_cfg.py']
+h9-hard-ts-qwen3-8b-40960-latest,hard_long_summary,0/3,3/3,valid,67.1,The key decisions in **notes.txt** are:   1. The cache now runs on **Redis**.   2. The request timeo | scratch=['notes.txt'] | The key decisions in the notes are:   1. The cache now runs on Redis.   2. The request timeout was i | scratch=['notes.txt']
+h9-hard-ts-qwen3-8b-40960-latest,hard_compare_functions,0/3,0/3,timeout,64.7,FAILED (reviewer/ts-qwen3-8b-40960:latest): LoopError: task timed out after 60s. Call resume_task('89ded77d96' | FAILED (reviewer/ts-qwen3-8b-40960:latest): LoopError: task timed out after 60s. Call resume_task('ec9233a91b' | FAILED (reviewer/ts-qwen3-8b-40960:latest): LoopError: task timed out after 60s. Call resume_task('fe30a5f155'
