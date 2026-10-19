@@ -1,0 +1,3070 @@
+{
+ "tag": "h7-hard-ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536-latest",
+ "stamp": "20261019-135122",
+ "n": 3,
+ "results": {
+  "realworld": {
+   "hard_multifile_bug": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 26.0,
+     "p50": 27.2,
+     "p95": 42.0,
+     "max": 42.0,
+     "mean": 31.7
+    },
+    "peak": 2368,
+    "input": 3009,
+    "output": 21,
+    "timeout_s": 220.0,
+    "notes": [
+     "not found | scratch=['ledger.py', 'money.py', 'report.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T08:21:23+00:00",
+      "end": "2026-10-19T08:22:05+00:00",
+      "s": 42.0,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[e64f041eaf] not found",
+      "note": "not found | scratch=['ledger.py', 'money.py', 'report.py']",
+      "peak": 2368,
+      "input": 3009,
+      "output": 21,
+      "trail_tools": [
+       "search_graph"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T08:22:05+00:00",
+      "end": "2026-10-19T08:22:32+00:00",
+      "s": 27.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[545286cf45] not found",
+      "note": "not found | scratch=['ledger.py', 'money.py', 'report.py']",
+      "peak": 2368,
+      "input": 3009,
+      "output": 21,
+      "trail_tools": [
+       "search_graph"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T08:22:32+00:00",
+      "end": "2026-10-19T08:22:58+00:00",
+      "s": 26.0,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[593fb7fb9b] not found",
+      "note": "not found | scratch=['ledger.py', 'money.py', 'report.py']",
+      "peak": 2368,
+      "input": 3009,
+      "output": 21,
+      "trail_tools": [
+       "search_graph"
+      ],
+      "timeout_s": 220.0
+     }
+    ]
+   },
+   "hard_two_vulns": {
+    "verified": "0/3",
+    "ran": "2/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 34.0,
+     "p50": 34.6,
+     "p95": 36.6,
+     "max": 36.6,
+     "mean": 35.1
+    },
+    "peak": 1613,
+    "input": 3867,
+    "output": 168,
+    "timeout_s": 60.0,
+    "notes": [
+     "**Vulnerability Class:** Unvalidated Input Reaching Shell  **Line:** 10  **Problem:** The `backup` f | scratch=['api.py']",
+     "FAILED (reviewer/ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest): LoopError: empty answer. Ca"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T08:22:58+00:00",
+      "end": "2026-10-19T08:23:35+00:00",
+      "s": 36.6,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[7a123dc486] FAILED (reviewer/ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest): LoopError: empty answer. Call resume_task('7a123dc486') to retry.",
+      "note": "FAILED (reviewer/ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest): LoopError: empty answer. Ca",
+      "peak": 1613,
+      "input": 5236,
+      "output": 161,
+      "trail_tools": [
+       "search_files"
+      ],
+      "timeout_s": 60.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-17T09:08:53.398111174Z",
+       "FinishedAt": "2026-10-17T09:08:51.758235365Z"
+      },
+      "container_logs": ""
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T08:23:36+00:00",
+      "end": "2026-10-19T08:24:10+00:00",
+      "s": 34.0,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ed600cb5da] **Vulnerability Class:** Unvalidated Input Reaching Shell\n\n**Line:** 10\n\n**Problem:** The `backup` function uses `subprocess.call` with `shell=True`, allowing unvalidated user input (`path`) to reach the shell. This could lead to command injection vulnerabilities.\n\n**Verdict:** Security vulnerability found.",
+      "note": "**Vulnerability Class:** Unvalidated Input Reaching Shell  **Line:** 10  **Problem:** The `backup` f | scratch=['api.py']",
+      "peak": 1550,
+      "input": 3183,
+      "output": 172,
+      "trail_tools": [
+       "search_files",
+       "read_file",
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T08:24:10+00:00",
+      "end": "2026-10-19T08:24:44+00:00",
+      "s": 34.6,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[2c688b90e8] **Vulnerability Class:** Unvalidated Input Reaching Shell\n\n**Line:** 10\n\n**Problem:** The `backup` function uses `subprocess.call` with `shell=True`, allowing unvalidated user input (`path`) to reach the shell. This could lead to command injection vulnerabilities.\n\n**Verdict:** Security vulnerability found.",
+      "note": "**Vulnerability Class:** Unvalidated Input Reaching Shell  **Line:** 10  **Problem:** The `backup` f | scratch=['api.py']",
+      "peak": 1550,
+      "input": 3183,
+      "output": 172,
+      "trail_tools": [
+       "search_files",
+       "read_file",
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     }
+    ]
+   },
+   "hard_ambiguous_trace": {
+    "verified": "1/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 35.2,
+     "p50": 41.6,
+     "p95": 42.2,
+     "max": 42.2,
+     "mean": 39.7
+    },
+    "peak": 2321,
+    "input": 4487,
+    "output": 102,
+    "timeout_s": 220.0,
+    "notes": [
+     "Not found. | scratch=['trace_cfg.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T08:24:44+00:00",
+      "end": "2026-10-19T08:25:20+00:00",
+      "s": 35.2,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[ad31da215b] The script raises a `TypeError` at line 10. The root cause is that `load_retries` function is trying to access a key `'retries'` from a dictionary `cfg`, but `cfg` is not a dictionary, it's a string `'{'retries': '3'}'`.",
+      "note": "The script raises a `TypeError` at line 10. The root cause is that `load_retries` function is trying",
+      "peak": 2317,
+      "input": 2995,
+      "output": 97,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T08:25:20+00:00",
+      "end": "2026-10-19T08:26:02+00:00",
+      "s": 42.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[2171fecda0] Not found.",
+      "note": "Not found. | scratch=['trace_cfg.py']",
+      "peak": 2321,
+      "input": 5233,
+      "output": 105,
+      "trail_tools": [
+       "search_graph"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T08:26:02+00:00",
+      "end": "2026-10-19T08:26:44+00:00",
+      "s": 41.6,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[2ccf4b4ff1] Not found.",
+      "note": "Not found. | scratch=['trace_cfg.py']",
+      "peak": 2321,
+      "input": 5233,
+      "output": 105,
+      "trail_tools": [
+       "search_graph"
+      ],
+      "timeout_s": 220.0
+     }
+    ]
+   },
+   "hard_long_summary": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 23.6,
+     "p50": 24.7,
+     "p95": 25.1,
+     "max": 25.1,
+     "mean": 24.5
+    },
+    "peak": 1066,
+    "input": 1655,
+    "output": 78,
+    "timeout_s": 100.0,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T08:26:44+00:00",
+      "end": "2026-10-19T08:27:09+00:00",
+      "s": 25.1,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[8dfbd3fd15] - **Cache**: Now runs on Redis.\n- **Request Timeout**: Increased from 5 to 12 seconds.\n- **Retries**: Use exponential backoff with jitter.\n- **Legacy Admin Page**: Removed.",
+      "note": "- **Cache**: Now runs on Redis. - **Request Timeout**: Increased from 5 to 12 seconds. - **Retries**",
+      "peak": 1066,
+      "input": 1655,
+      "output": 78,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 100.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T08:27:09+00:00",
+      "end": "2026-10-19T08:27:33+00:00",
+      "s": 23.6,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[fb9bf9d4c1] - **Cache**: Now runs on Redis.\n- **Request Timeout**: Increased from 5 to 12 seconds.\n- **Retries**: Use exponential backoff with jitter.\n- **Legacy Admin Page**: Removed.",
+      "note": "- **Cache**: Now runs on Redis. - **Request Timeout**: Increased from 5 to 12 seconds. - **Retries**",
+      "peak": 1066,
+      "input": 1655,
+      "output": 78,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 100.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T08:27:33+00:00",
+      "end": "2026-10-19T08:27:57+00:00",
+      "s": 24.7,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[b47fc4cac5] - **Cache**: Now runs on Redis.\n- **Request Timeout**: Increased from 5 to 12 seconds.\n- **Retries**: Use exponential backoff with jitter.\n- **Legacy Admin Page**: Removed.",
+      "note": "- **Cache**: Now runs on Redis. - **Request Timeout**: Increased from 5 to 12 seconds. - **Retries**",
+      "peak": 1066,
+      "input": 1655,
+      "output": 78,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 100.0
+     }
+    ]
+   },
+   "hard_compare_functions": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 38.7,
+     "p50": 39.1,
+     "p95": 40.9,
+     "max": 40.9,
+     "mean": 39.6
+    },
+    "peak": 1798,
+    "input": 7410,
+    "output": 170,
+    "timeout_s": 60.0,
+    "notes": [
+     "no defects found | scratch=['dedupe.py']",
+     "not found | scratch=['dedupe.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T08:27:58+00:00",
+      "end": "2026-10-19T08:28:36+00:00",
+      "s": 38.7,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[b792f96a24] no defects found",
+      "note": "no defects found | scratch=['dedupe.py']",
+      "peak": 1798,
+      "input": 7435,
+      "output": 164,
+      "trail_tools": [
+       "git_diff",
+       "git_diff",
+       "read_file",
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T08:28:36+00:00",
+      "end": "2026-10-19T08:29:16+00:00",
+      "s": 39.1,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[b6b7f2d493] not found",
+      "note": "not found | scratch=['dedupe.py']",
+      "peak": 1798,
+      "input": 7398,
+      "output": 173,
+      "trail_tools": [
+       "git_diff",
+       "git_diff",
+       "read_file",
+       "git_diff"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T08:29:16+00:00",
+      "end": "2026-10-19T08:29:57+00:00",
+      "s": 40.9,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f93fbd9f00] not found",
+      "note": "not found | scratch=['dedupe.py']",
+      "peak": 1798,
+      "input": 7398,
+      "output": 173,
+      "trail_tools": [
+       "git_diff",
+       "git_diff",
+       "read_file",
+       "git_diff"
+      ],
+      "timeout_s": 60.0
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "model_params": {
+  "builder": "12.2B",
+  "thinker": "12.2B"
+ },
+ "hardware": {
+  "samples": 144,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 43.3,
+   "max": 78.5
+  },
+  "ram_pct": {
+   "min": 66.1,
+   "avg": 86.4,
+   "max": 89.5
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 16.7,
+   "max": 99.0
+  },
+  "vram_used_mib": {
+   "min": 797.0,
+   "avg": 6803.3,
+   "max": 6931.0
+  },
+  "gpu_temp_c": {
+   "min": 53.0,
+   "avg": 57.4,
+   "max": 72.0
+  },
+  "gpu_power_w": {
+   "min": 1.7,
+   "avg": 16.0,
+   "max": 81.8
+  },
+  "ollama_ram_mib": {
+   "min": 46.7,
+   "avg": 47.5,
+   "max": 48.1
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "100% GPU": 6,
+   "54%/46% CPU/GPU": 135
+  },
+  "max_cpu_share_pct": 54.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792398082.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5855.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.65,
+   "cpu_pct": 0.0,
+   "ram_pct": 67.5,
+   "ollama_ram_mib": 46.7,
+   "ollama": [
+    {
+     "model": "ts-granite4-micro-65536:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792398086.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5855.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 20.7,
+   "ram_pct": 67.6,
+   "ollama_ram_mib": 46.7,
+   "ollama": [
+    {
+     "model": "ts-granite4-micro-65536:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792398089.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5855.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.53,
+   "cpu_pct": 15.8,
+   "ram_pct": 67.6,
+   "ollama_ram_mib": 46.8,
+   "ollama": [
+    {
+     "model": "ts-granite4-micro-65536:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792398092.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5855.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 20.2,
+   "ram_pct": 68.2,
+   "ollama_ram_mib": 46.8,
+   "ollama": [
+    {
+     "model": "ts-granite4-micro-65536:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792398095.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5855.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 25.6,
+   "ram_pct": 68.6,
+   "ollama_ram_mib": 46.8,
+   "ollama": [
+    {
+     "model": "ts-granite4-micro-65536:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792398099.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 5855.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.81,
+   "cpu_pct": 37.6,
+   "ram_pct": 68.7,
+   "ollama_ram_mib": 46.8,
+   "ollama": [
+    {
+     "model": "ts-granite4-micro-65536:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792398102.6,
+   "gpu_util_pct": 8.0,
+   "vram_used_mib": 797.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 20.36,
+   "cpu_pct": 26.1,
+   "ram_pct": 66.1,
+   "ollama_ram_mib": 47.8,
+   "ollama": []
+  },
+  {
+   "t": 1792398105.9,
+   "gpu_util_pct": 1.0,
+   "vram_used_mib": 4075.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 18.28,
+   "cpu_pct": 29.3,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 47.8,
+   "ollama": []
+  },
+  {
+   "t": 1792398109.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 4075.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 7.16,
+   "cpu_pct": 29.6,
+   "ram_pct": 79.5,
+   "ollama_ram_mib": 47.8,
+   "ollama": []
+  },
+  {
+   "t": 1792398112.9,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6913.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 54.92,
+   "cpu_pct": 45.2,
+   "ram_pct": 89.0,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398116.2,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 33.66,
+   "cpu_pct": 68.1,
+   "ram_pct": 89.0,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398120.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 24.1,
+   "cpu_pct": 52.7,
+   "ram_pct": 89.5,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398123.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.55,
+   "cpu_pct": 12.7,
+   "ram_pct": 89.1,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398126.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 17.9,
+   "ram_pct": 89.2,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398129.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 24.4,
+   "ram_pct": 89.2,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398132.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 14.0,
+   "ram_pct": 89.3,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398135.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.77,
+   "cpu_pct": 21.1,
+   "ram_pct": 89.3,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398139.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 34.5,
+   "ram_pct": 88.1,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398142.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 38.7,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398145.7,
+   "gpu_util_pct": 99.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 81.78,
+   "cpu_pct": 52.0,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398149.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 22.08,
+   "cpu_pct": 58.8,
+   "ram_pct": 85.0,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398152.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 10.54,
+   "cpu_pct": 21.7,
+   "ram_pct": 84.6,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398156.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.75,
+   "cpu_pct": 19.1,
+   "ram_pct": 84.7,
+   "ollama_ram_mib": 47.3,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398159.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 18.2,
+   "ram_pct": 84.8,
+   "ollama_ram_mib": 47.3,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398162.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.92,
+   "cpu_pct": 20.8,
+   "ram_pct": 84.9,
+   "ollama_ram_mib": 47.3,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398165.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.96,
+   "cpu_pct": 32.6,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 47.3,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398169.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 2.31,
+   "cpu_pct": 35.2,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398172.1,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 60.62,
+   "cpu_pct": 49.3,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398176.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 22.15,
+   "cpu_pct": 61.8,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398179.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 10.6,
+   "cpu_pct": 17.6,
+   "ram_pct": 85.0,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398182.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.09,
+   "cpu_pct": 19.7,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398185.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.69,
+   "cpu_pct": 25.8,
+   "ram_pct": 85.2,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398188.9,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 58.96,
+   "cpu_pct": 54.8,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 47.4,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398193.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 14.61,
+   "cpu_pct": 66.2,
+   "ram_pct": 85.1,
+   "ollama_ram_mib": 47.9,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398196.3,
+   "gpu_util_pct": 16.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 33.08,
+   "cpu_pct": 58.1,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 47.9,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398200.9,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 43.96,
+   "cpu_pct": 73.4,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398205.9,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 21.48,
+   "cpu_pct": 72.5,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398209.4,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 29.27,
+   "cpu_pct": 67.1,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398213.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.39,
+   "cpu_pct": 44.6,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398216.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 2.15,
+   "cpu_pct": 16.0,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398219.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.75,
+   "cpu_pct": 18.2,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398222.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.23,
+   "cpu_pct": 30.1,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398226.2,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 26.92,
+   "cpu_pct": 52.9,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398230.5,
+   "gpu_util_pct": 22.0,
+   "vram_used_mib": 6929.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 14.15,
+   "cpu_pct": 63.4,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398234.8,
+   "gpu_util_pct": 19.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 35.46,
+   "cpu_pct": 67.6,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 47.9,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398239.1,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 34.82,
+   "cpu_pct": 67.4,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 48.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398243.8,
+   "gpu_util_pct": 24.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 16.11,
+   "cpu_pct": 67.8,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398247.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.62,
+   "cpu_pct": 38.9,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398250.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 2.56,
+   "cpu_pct": 19.4,
+   "ram_pct": 85.9,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398254.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.77,
+   "cpu_pct": 18.5,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398257.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 29.3,
+   "ram_pct": 86.0,
+   "ollama_ram_mib": 48.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398260.3,
+   "gpu_util_pct": 15.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 38.87,
+   "cpu_pct": 60.2,
+   "ram_pct": 85.8,
+   "ollama_ram_mib": 47.3,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398265.1,
+   "gpu_util_pct": 31.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 16.33,
+   "cpu_pct": 71.7,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398269.5,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 34.33,
+   "cpu_pct": 70.0,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398273.7,
+   "gpu_util_pct": 19.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 37.72,
+   "cpu_pct": 70.4,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398278.4,
+   "gpu_util_pct": 21.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 15.82,
+   "cpu_pct": 67.5,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398282.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.65,
+   "cpu_pct": 39.0,
+   "ram_pct": 85.3,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398285.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 2.57,
+   "cpu_pct": 21.1,
+   "ram_pct": 85.4,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398288.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 19.9,
+   "ram_pct": 85.5,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398291.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.73,
+   "cpu_pct": 17.5,
+   "ram_pct": 85.6,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398294.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 19.0,
+   "ram_pct": 85.7,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398298.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.9,
+   "cpu_pct": 40.8,
+   "ram_pct": 87.7,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398301.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.89,
+   "cpu_pct": 36.5,
+   "ram_pct": 87.6,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398304.8,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 28.37,
+   "cpu_pct": 39.7,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398309.4,
+   "gpu_util_pct": 20.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 25.71,
+   "cpu_pct": 70.4,
+   "ram_pct": 87.8,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398314.2,
+   "gpu_util_pct": 24.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 15.83,
+   "cpu_pct": 71.4,
+   "ram_pct": 87.7,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398318.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 10.7,
+   "cpu_pct": 35.6,
+   "ram_pct": 87.3,
+   "ollama_ram_mib": 48.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398321.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.48,
+   "cpu_pct": 19.4,
+   "ram_pct": 87.1,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398324.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 26.7,
+   "ram_pct": 87.0,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398327.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.89,
+   "cpu_pct": 16.6,
+   "ram_pct": 87.2,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398330.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 21.9,
+   "ram_pct": 87.2,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398334.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.86,
+   "cpu_pct": 39.9,
+   "ram_pct": 87.3,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398337.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 2.36,
+   "cpu_pct": 28.3,
+   "ram_pct": 87.6,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398340.5,
+   "gpu_util_pct": 16.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 47.89,
+   "cpu_pct": 66.1,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398344.9,
+   "gpu_util_pct": 27.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 14.96,
+   "cpu_pct": 66.5,
+   "ram_pct": 87.5,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398349.5,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 15.51,
+   "cpu_pct": 76.9,
+   "ram_pct": 87.7,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398353.0,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 66.81,
+   "cpu_pct": 57.2,
+   "ram_pct": 88.0,
+   "ollama_ram_mib": 47.0,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398356.7,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 34.07,
+   "cpu_pct": 66.3,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398359.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.81,
+   "cpu_pct": 24.6,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398363.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 2.05,
+   "cpu_pct": 34.2,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398366.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.25,
+   "cpu_pct": 27.8,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398369.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 15.9,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398373.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.78,
+   "cpu_pct": 26.0,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398376.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.98,
+   "cpu_pct": 31.9,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398379.6,
+   "gpu_util_pct": 5.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.78,
+   "cpu_pct": 31.7,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.3,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398382.9,
+   "gpu_util_pct": 15.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 45.37,
+   "cpu_pct": 75.5,
+   "ram_pct": 88.9,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398387.4,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 14.98,
+   "cpu_pct": 69.6,
+   "ram_pct": 88.9,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398391.7,
+   "gpu_util_pct": 39.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 15.22,
+   "cpu_pct": 67.0,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398395.3,
+   "gpu_util_pct": 43.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 10.47,
+   "cpu_pct": 64.6,
+   "ram_pct": 88.2,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398399.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 24.23,
+   "cpu_pct": 45.6,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398402.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 6.97,
+   "cpu_pct": 13.0,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398405.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 14.5,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398408.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.93,
+   "cpu_pct": 28.4,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398411.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 34.8,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398414.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.91,
+   "cpu_pct": 17.2,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398418.1,
+   "gpu_util_pct": 99.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 5.84,
+   "cpu_pct": 42.3,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398421.8,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 18.18,
+   "cpu_pct": 78.5,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398425.4,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 34.93,
+   "cpu_pct": 59.3,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398430.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 10.68,
+   "cpu_pct": 55.4,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398433.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 5.74,
+   "cpu_pct": 29.1,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398436.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.9,
+   "cpu_pct": 34.5,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398439.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 17.1,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398443.3,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 26.36,
+   "cpu_pct": 56.0,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.8,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398447.9,
+   "gpu_util_pct": 23.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 14.99,
+   "cpu_pct": 75.0,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398452.1,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 15.89,
+   "cpu_pct": 69.3,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398455.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 10.64,
+   "cpu_pct": 14.5,
+   "ram_pct": 88.1,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398458.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 2.81,
+   "cpu_pct": 28.4,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398461.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 37.2,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398465.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.75,
+   "cpu_pct": 20.0,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398468.4,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 26.64,
+   "cpu_pct": 63.0,
+   "ram_pct": 88.9,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398472.6,
+   "gpu_util_pct": 31.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 15.98,
+   "cpu_pct": 68.9,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398476.8,
+   "gpu_util_pct": 19.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 13.11,
+   "cpu_pct": 67.1,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398480.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 10.84,
+   "cpu_pct": 15.1,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398483.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 27.7,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.5,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398486.6,
+   "gpu_util_pct": 15.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 34.13,
+   "cpu_pct": 42.0,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398491.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 13.58,
+   "cpu_pct": 66.6,
+   "ram_pct": 89.0,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398494.6,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 67.0,
+   "gpu_power_w": 64.08,
+   "cpu_pct": 55.9,
+   "ram_pct": 89.1,
+   "ollama_ram_mib": 47.9,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398498.6,
+   "gpu_util_pct": 22.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 16.44,
+   "cpu_pct": 68.6,
+   "ram_pct": 89.1,
+   "ollama_ram_mib": 47.9,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398502.4,
+   "gpu_util_pct": 15.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 37.21,
+   "cpu_pct": 56.7,
+   "ram_pct": 89.0,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398507.3,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 59.91,
+   "cpu_pct": 77.3,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398511.2,
+   "gpu_util_pct": 22.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 17.05,
+   "cpu_pct": 69.0,
+   "ram_pct": 88.2,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398514.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 26.31,
+   "cpu_pct": 40.6,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398517.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.93,
+   "cpu_pct": 22.0,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398520.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.76,
+   "cpu_pct": 22.0,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398524.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 30.8,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398527.4,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 17.3,
+   "cpu_pct": 58.7,
+   "ram_pct": 88.6,
+   "ollama_ram_mib": 47.2,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398531.8,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 41.08,
+   "cpu_pct": 66.7,
+   "ram_pct": 88.7,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398535.0,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 31.86,
+   "cpu_pct": 65.1,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.6,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398539.6,
+   "gpu_util_pct": 40.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 16.68,
+   "cpu_pct": 64.3,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398544.1,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 17.17,
+   "cpu_pct": 76.2,
+   "ram_pct": 88.4,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398547.3,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 32.39,
+   "cpu_pct": 67.5,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398551.7,
+   "gpu_util_pct": 8.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 10.76,
+   "cpu_pct": 60.8,
+   "ram_pct": 88.8,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398555.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 10.73,
+   "cpu_pct": 31.4,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398558.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.95,
+   "cpu_pct": 18.1,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398561.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 21.8,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398564.9,
+   "gpu_util_pct": 98.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 54.19,
+   "cpu_pct": 44.9,
+   "ram_pct": 88.2,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398569.1,
+   "gpu_util_pct": 14.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 16.95,
+   "cpu_pct": 77.0,
+   "ram_pct": 88.5,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398572.9,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 44.89,
+   "cpu_pct": 57.3,
+   "ram_pct": 88.1,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398576.1,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 29.52,
+   "cpu_pct": 63.0,
+   "ram_pct": 88.1,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398580.8,
+   "gpu_util_pct": 23.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 16.0,
+   "cpu_pct": 68.0,
+   "ram_pct": 88.1,
+   "ollama_ram_mib": 47.1,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398585.0,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 46.49,
+   "cpu_pct": 66.1,
+   "ram_pct": 88.1,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398588.2,
+   "gpu_util_pct": 9.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 63.0,
+   "gpu_power_w": 32.65,
+   "cpu_pct": 67.5,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398592.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 11.67,
+   "cpu_pct": 69.5,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  },
+  {
+   "t": 1792398596.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6931.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 11.09,
+   "cpu_pct": 25.9,
+   "ram_pct": 88.3,
+   "ollama_ram_mib": 47.7,
+   "ollama": [
+    {
+     "model": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+     "processor": "54%/46% CPU/GPU",
+     "cpu_share_pct": 54.0
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.0,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+  "thinker": "ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest",
+  "git_sha": "0553480"
+ }
+}
