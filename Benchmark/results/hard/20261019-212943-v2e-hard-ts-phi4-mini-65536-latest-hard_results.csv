@@ -1,0 +1,6 @@
+model,case,verified,ran,status,median_s,notes
+v2e-hard-ts-phi4-mini-65536-latest,hard_multifile_bug,0/3,3/3,valid,27.2,"[{""name"":""read_file"",""arguments"":{""path"":""/workspace/tokenfrugal/bench/scratch/report.py""}] | scratch=['ledger.py', 'money.py', 'report.py']"
+v2e-hard-ts-phi4-mini-65536-latest,hard_two_vulns,3/3,3/3,valid,13.9,
+v2e-hard-ts-phi4-mini-65536-latest,hard_ambiguous_trace,0/3,2/3,valid,30.3,"FAILED (debugger/ts-phi4-mini-65536:latest): LoopError: you answered without calling any tool; call a tool to  | The exception type is `NameError`, which occurs because the variable `n` is not defined in the globa | scratch=['trace_cfg.py'] | The exception type is a `SyntaxError`. The real root cause is a missing colon ("":"") after the key 'r | scratch=['trace_cfg.py']"
+v2e-hard-ts-phi4-mini-65536-latest,hard_long_summary,0/3,3/3,valid,20.2,The key decisions summarized from the notes are as follows:  1. The caching system has been updated  | scratch=['notes.txt']
+v2e-hard-ts-phi4-mini-65536-latest,hard_compare_functions,0/3,3/3,valid,16.2,"no defects found  - dedupe_a and dedupe_b both produce the same output for the same input. - dedupe_ | scratch=['dedupe.py'] | no defects found  Checked dedupe_a and dedupe_b for correctness, data and state, security, and tests | scratch=['dedupe.py']"

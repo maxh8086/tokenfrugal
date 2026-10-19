@@ -214,3 +214,23 @@ Items 1-6 and 2B (router pre-reads up to two paths named in the task; `TOKENFRUG
 - h12 (n=3, policy contexts): gemma3-4b 0/15 (tool-support 400, no tools); starcoder2-7b and mistral-nemo-minitron-8b raw files kept, not yet classified (minitron shows MCPError Connection, likely infra).
 - First v2 try (deepseek-r1-8b, 20261019-184923) is INVALID as a comparison: 4/5 cases died on `MCPError: Connection closed` (Docker MCP gateway, 7-24s) and the run straddled the 2B edit. Not committed. Batch stopped at the user's request.
 - Next: re-run one failed set on the new loop with the fastest model, after checking the gateway is healthy.
+
+## Self-heal layers (added 2026-10-19)
+
+Root cause of the h11 "Connection closed, calls=0, ~12s" failures (0/15 for deepseek-r1-8b, phi4-mini, distill-qwen-7b): the
+`synaptree-synaptree-1` container (Exited 137) and `synaptree-neo4j-1` were stopped, so the native `docker exec` server died on open.
+Retries cannot help while a container stays stopped, so the router now starts it. Layers, outermost last:
+
+1. Call-time reopen: `conn_error` -> `Router(..., reopen)` reopens the session and retries, max 2 heals per call (`heals`).
+2. Open-time retry: `OPEN_ATTEMPTS = 3`, `_open_conn_error`, fresh `AsyncExitStack` per attempt.
+3. Ollama 500 retry in `loop.py` (`infra_error`).
+4. Container ensure: `mcp_client.ensure_backend(name)` starts `config.NATIVE_BACKENDS[name]` (neo4j first, then synaptree), waits up to
+   `BACKEND_WAIT_S` for running+healthy, never raises; no-op with `SYNAPTREE_HOST_NODE=1`. `open_role` calls it before every native open.
+   Not yet applied to `reconnect.py` / `claude_import.py` (they call `open_native` directly).
+
+Live check: both containers stopped, `open_role(None, ["synaptree"])` brought them back and opened in 45s with 37 tools.
+Tests: `tests/test_selfheal.py` (21 tests, docker mocked).
+
+Hard suite phi4-mini (policy contexts, n=3): h11 baseline 0/15 (infra), v2e 3/15 (old code, containers manually up; hard_two_vulns 3/3,
+others 0/3: raw tool-call JSON as answer, wrong exception types, wrong summaries, "no defects found"). Remaining failures are model/loop quality, not infra.
+v2d (0/15) is invalid: 12 of 15 runs connection-closed. v2/v2b/v2c are invalid too. v2f = same batch on the new code.
