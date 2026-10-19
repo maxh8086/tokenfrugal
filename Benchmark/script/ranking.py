@@ -38,7 +38,7 @@ def _load(name):
 # Excluded from the report: diagnostic runs (probe, browser-longlived) and the cloud Haiku baseline,
 # which stays out of the ranking. Runs where every case hit an infra failure have no valid score.
 EXCLUDE_TAGS = {"probe-qwen-tracker-browser", "browser-longlived", "haiku-baseline"}
-rows = [r for r in _load("benchmark.csv") if r.get("tag") not in EXCLUDE_TAGS] + _load("cloud.csv")  # cloud rows are shown, never ranked (_local)
+rows = [r for r in _load("benchmark.csv") if r.get("model") not in EXCLUDE_TAGS] + _load("cloud.csv")  # cloud rows are shown, never ranked (_local)
 rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
 missing = [c for c in CASES if c not in rows[0]]
 if missing:

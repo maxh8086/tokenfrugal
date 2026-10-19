@@ -47,7 +47,7 @@ HARNESS_VERSION = "1"
 LOOP_VERSION = "2"
 LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
-EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case"]
+EXTRA = ["model", "params", "score", "max", "ran", "mean_s_per_case"]
 META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "loop_version", "failure_kind", "n",
         "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
         "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_gb", "peak_model_ram_gb",
@@ -301,7 +301,7 @@ def _peak_ram(d):
     return round(m / 1024, 1) if m else ""
 
 
-rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4],
+rec = {"model": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4],
        **dict(zip(labels, row[5:])),
        "date": date, "endpoint": endpoint, "temperature": temp, "max_tokens": meta.get("max_tokens", ""),
        "builder_model": meta.get("builder", ""), "thinker_model": meta.get("thinker", ""),
@@ -329,7 +329,7 @@ except csvstore.CsvSchemaError as e:
     sys.exit(f"CSV NOT WRITTEN (run kept in results/runs.jsonl and {src}): {e}")
 if backup:
     print(f"backup: {backup}")
-print(f"appended {rec['tag']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
+print(f"appended {rec['model']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
 
 if not a.from_json and not a.no_hard and not no_tools:
     # Hard thinker suite (5 cases): reported next to the 48-case score, never written to benchmark.csv.
