@@ -18,6 +18,10 @@ class CsvSchemaError(Exception):
     pass
 
 
+# Value for a column that older rows do not have (or leave blank). Columns not listed migrate to "" as before.
+COLUMN_DEFAULTS = {"loop_version": "1"}  # rows written before loop_version existed ran the loop v1
+
+
 def read_rows(path, cols):
     """Existing rows as dicts keyed by header name. Raises CsvSchemaError on any mismatch."""
     with Path(path).open(encoding="utf-8", newline="") as f:
@@ -37,6 +41,11 @@ def read_rows(path, cols):
         if len(r) != len(head):
             raise CsvSchemaError(f"{path}: line {i} has {len(r)} fields, header has {len(head)}; refusing to rewrite")
         out.append(dict(zip(head, r)))
+    for k, default in COLUMN_DEFAULTS.items():
+        if k in cols:
+            for row in out:
+                if row.get(k, "") == "":
+                    row[k] = default
     return out
 
 

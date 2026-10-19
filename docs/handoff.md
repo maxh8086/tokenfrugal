@@ -191,3 +191,26 @@ Suggested order: A, B1-B4, C1-C3 first (small, all in `loop.py`/`server.py`/`sto
 - h9 (2026-10-19, n=3, policy contexts): qwen3-8b-40960 5/15 (4 timeouts: two_vulns 1, compare 3 at p50 64.7/p95 65.5 vs 60s cap; multifile 162.6/175.8, ambiguous 51.2/54.8, summary 67.1/68.1 0/3); gemma-3-12b 0/15, no timeouts, every run a 400 "does not support tools" from Ollama (infra-style failure, not model quality; 10-22s); llama3-1-8b 4/15, no timeouts (multifile 60.1/72.2 3/3, two_vulns 24.7/26.3 3/3, ambiguous 190.2/190.8 0/3, summary 1/3, compare 24.6/25.4 0/3). No timeout changes. Fourth batch with a model at ~65s vs the 60s cap.
 - h10 (2026-10-19, n=3, policy contexts): qwen2-5vl-7b 0/15, no timeouts, every run a 400 "does not support tools" (same infra-style failure as gemma-3-12b in h9; 10-22s); gemma4-e4b 15/15, no timeouts (multifile 89.0/111.8, two_vulns 16.8/17.4, ambiguous 34.9/36.3, summary 18.9/20.6, compare 19.4/21.6); bandtor-gemma-4-E4B-it 15/15, no timeouts (multifile 111.7/136.6, two_vulns 23.0/23.1, ambiguous 56.1/63.3, summary 20.1/21.8, compare 28.4/28.5). No timeout changes.
 - h11 (2026-10-19, n=3, policy contexts): deepseek-r1-8b 0/15, all 15 runs timed out (multifile 213.1/226.6, two_vulns 65.5/65.5, ambiguous 213.2/225.9, summary 101.9/103.2, compare 65.4/65.5; every case sits at or just past its cap); phi4-mini 0/15, 4 timeouts (compare 3 at 65.3/66.4, two_vulns 1 p95 64.5; multifile 42.7/56.8, ambiguous 54.5/56.9, summary 23.3/25.1 valid but wrong); deepseek-r1-distill-qwen-7b 0/15, 4 timeouts (compare 3 at 65.2/65.9, two_vulns 1 p95 65.1; multifile 93.8/105.8, ambiguous 83.8/88.8, summary 89.1/95.6). No timeout changes. The ~65s vs 60s and ~226 vs 220s cap-edge pattern now spans five batches (h6, h8, h9, h11).
+
+## Fix-first plan (approved 2026-10-19, in progress)
+
+Rollback: git tag `rollback-pre-loopfix` (commit 6c0c557). New runs carry a `loop_version` column (old=1, new=2) so old and new results never mix.
+
+Items and decisions:
+1. Bench preflight. Send one tiny tool request per model. An HTTP 400 "does not support tools" marks the model `no-tools` and skips its 15 runs. Optional (1B): try a tool-aware Modelfile TEMPLATE variant for no-tools models.
+2. Forced first call.
+   - 2A: if `tool_choice=required` is ignored, retry with a corrective user message that names the exact tool and args (e.g. "Call read_file with path=...").
+   - 2B: the router pre-runs the first read of paths named in the task and injects the result as a tool result.
+3. Salvage parser. Execute `<tool_call>` blocks (including the nemotron `<tool_call><function=read_file>` format) and `{"name": ..., "arguments": ...}` JSON found in text as real calls.
+4. `think:false` for thinking models that support it (option B only). `timeout_s` and caps stay unchanged.
+5. Wrap-up nudge at 70% of the step budget: "stop calling tools, give the final answer now".
+6. Ollama 500: check the Ollama log for OOM first. Self-heal and re-plug the MCP. Record it as infra, not model failure.
+7. Verifier check on ambiguous_trace (distill, qwythos and qwable answer FileNotFoundError): read the verifier and the answers. Widen the verifier if the answers are correct. Re-score from stored outputs. Do not re-run.
+
+Test plan: offline unit tests first. Then re-run ONE failed batch: h11 (deepseek-r1-8b, phi4-mini, deepseek-r1-distill-qwen-7b, all 0/15 before). The rollback tag stays available. Streak batches (h13+) are paused until this is validated.
+
+### Fix-first status (2026-10-19)
+Items 1-6 and 2B (router pre-reads up to two paths named in the task; `TOKENFRUGAL_NO_PREREAD=1` disables) are implemented in `router/loop.py` and `Benchmark/script/run_benchmark.py` (`loop_version` = 2). Offline suite: 353 tests OK (2 skipped). Item 7: the verifier is correct, no re-score.
+- h12 (n=3, policy contexts): gemma3-4b 0/15 (tool-support 400, no tools); starcoder2-7b and mistral-nemo-minitron-8b raw files kept, not yet classified (minitron shows MCPError Connection, likely infra).
+- First v2 try (deepseek-r1-8b, 20261019-184923) is INVALID as a comparison: 4/5 cases died on `MCPError: Connection closed` (Docker MCP gateway, 7-24s) and the run straddled the 2B edit. Not committed. Batch stopped at the user's request.
+- Next: re-run one failed set on the new loop with the fastest model, after checking the gateway is healthy.
