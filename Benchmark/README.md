@@ -72,4 +72,4 @@ TokenFrugal uses two local models, one per role. A task goes to one of them, nev
 - **Thinker** (`llama3.2:3b-16k`): reads, analyses and browses. Needs read, graph and browser tools.
   Cases: `find_symbol`, `review_sqli`, `debug_trace`, `summarize_readme`, `code_graph_search`, `list_project_files`, `read_docs_file`, `security_file_read`, `design_overview`, `browser_navigate_snapshot`, `plan_status`, `web_crawl`.
 
-The explorer's role table maps each role to its model class and allowed tools (read from `router/agents.yaml`). A case marked `⚠` scored 0 on a case that needs a specific tool, so the tool was likely missing or not called.
+The explorer's role table maps each role to its model class and allowed tools (read from `router/tf-roles.yaml`). A case marked `⚠` scored 0 on a case that needs a specific tool, so the tool was likely missing or not called.
