@@ -91,3 +91,14 @@ Add a README section: MCP config snippet and an AGENTS.md template. Mark it veri
 - decide on profiles/build-data.yaml + router/skills/role-data (used by data-engineer)
 - verify "agentl-growth-mentor" in tf-roles.yaml (~line 202) is pre-existing
 - re-index synaptree from the main checkout; stop http.server on port 8765 (task bf43mceh9)
+
+## Differential coding test log (2026-10-19)
+Haiku baseline (n=3): coding 18/18, hard 15/15 (`Benchmark/results/cloud_runs_coding.csv`, `cloud_runs_hard.csv`). Kept apart from the ranking.
+
+### Batch c1: old timeouts (code-l1 120, l2 150, l3 180, l4/l5/l6 300 s)
+10 local models, n=3, sequential. Results in `Benchmark/results/coding/*-c1-coding-*.md`. L4 was cap-bound at 300 s for the 9B models; L2 at 150 s for some.
+Best coverage: Qwen3.8-9B-Distill and Qwen3.5-9B (L1, L2, L3, L5 at 3/3). No local model matched Haiku on L4 or L6.
+
+### Timeout change after c1 (user request: 1.5x)
+`router/tf-roles.yaml` code-l1..l6 timeout_s: 120/150/180/300/300/300 -> 180/225/270/450/450/450.
+Batch t15 (temp, same coding set, n=3) ran with the new values into `Benchmark/results/coding-t15/`: Qwythos-9B-v2, ts-qwen3-8b-16384.
