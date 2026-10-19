@@ -148,3 +148,37 @@ Next session (run instructions): after the docs PR is merged and the user says g
 ### Hard suite batch log (policy variants, n=3, sequential)
 - h1 (b1e1316): lfm2.5, qwen25c-7b-q5, glm4. glm4 fails with LoopError (answers without a tool call); no timeout change.
 - h2 (b95c433): cogito-8b 0/15 (multifile 2 and two_vulns 3 timeouts; wrong answers anyway); qwen3-5-9b-iq4xs 15/15 (p95: multifile 175.5s, ambiguous 96.7s, two_vulns 24.4s, summary 25.4s, compare 29.8s); qwen3-5-4b-q6k 12/15 (long_summary 0/3, p95 19.8s; other p95 at most 70.9s). No timeouts on the Qwen3.5 models. Timeout changes: none. Note for the final review: reviewer 60s is tight on slow models (cogito two_vulns p50 66s).
+
+## Router clarity for Haiku (proposal, not implemented; review after the full test)
+
+Goal: Haiku (the instructor) always knows what happened to a dispatched task and how to change the next dispatch. Nothing below is edited while hard/coding batches run. Apply after h4 and the coding batches, then run the offline suite.
+
+### A. Approved: failure diagnostics (applies to every `dispatch_task`, not only the bench)
+- `loop.py`: `started` counter bumped before each model call (`started > calls` means a call was in flight); `run()` tags errors with `error_kind`: `step_timeout`, `request_timeout`, `no_tool_call`, `max_steps`, `error`.
+- `server._execute`: `error_kind`, `calls`, `first_call_unfinished` go on the `task_failed` event and the stored row; the FAILED string gets a 1-2 line fixed hint per kind:
+  - timeout, 0 calls finished: task or context too big; split to one file or one question, pass paths not pasted text, redispatch (do not `resume_task`).
+  - timeout, some calls done: `resume_task` or split the rest.
+  - no tool call: name the exact tool and path, or use another agent slug.
+  - max steps: narrow the scope.
+- `store.py`: `error_kind TEXT` column (migration next to `trail`, `heartbeat`). Bench only reads the new fields (CSV columns `calls`, `first_call_unfinished`, `error_kind` via `csvstore.py`, no blank cells). Unit tests for classification and counters.
+
+### B. Bench ideas missing in the router (review of `scripts/bench_real.py`)
+1. `classify` / `TIMEOUT_MARKERS` -> becomes `error_kind` (part of A; bench then reads it instead of matching strings).
+2. `REQUIRED_TOOLS` -> optional `required_tool` per role in `tf-roles.yaml`; the no-tool retry names the tool (e.g. `plan_status`). Today the router only forces some tool on step 1.
+3. `container_state` -> pre-flight for synaptree roles; backend down returns `error_kind=infra` at once with "backend down, do not resume or re-scope" instead of burning the role timeout.
+4. `trail_conn_error` / `CONN_MARKERS` -> on the first "Connection closed" tool error abort with `error_kind=infra`; today the model is fed the error and keeps calling dead tools. Check `router/reconnect.py` for overlap first (not read yet).
+5. `sweep_stale_mcp` (age > 900 s) -> one-time sweep at router start; `mcp_reap` only removes what its own process created, so containers of a killed router leak. Possible hazard (unconfirmed): with two routers alive, `mcp_reap.leave()` could remove the other's new containers.
+6. Low value: attach last `container_logs` lines to `get_detail` of failed synaptree tasks. Not porting: `WATCHDOG_GRACE`, `case_status`.
+
+### C. More options to make Haiku and tokenfrugal clearer
+1. **Structured status line on every reply**, success too: `[tid] OK|FAILED role/model calls=N secs=S files=a.py,b.py kind=<error_kind>`. Haiku parses one line instead of prose.
+2. **Files-changed manifest on success** (paths and `git diff --stat` numbers from the router, not the model's claim). Haiku verifies without `get_detail`; catches "done" reports with no file change.
+3. **Optional `accept` argument on `dispatch_task`** (a test command or a file-exists/grep check). The router runs it after the model finishes and returns `verified=true|false` with the first failing line. Removes the "never accept unrun code" step from Haiku.
+4. **`list_roles` with evidence**: per agent, measured pass rate by level (L1-L6, hard cases), typical and p95 seconds, `timeout_s`, and max reliable scope (one file / multi-file). Fed from the final `benchmark.csv`. Haiku then routes by data, and knows when a task is above a model's level and should be split or kept in the cloud.
+5. **Pre-dispatch size check**: router estimates prompt tokens and referenced file sizes; above a per-role threshold it rejects before running with "too large: split into N pieces / pass paths". Saves a whole timeout.
+6. **Repeat-failure escalation**: after two failures of the same agent on the same plan task, the reply says "switch agent slug or take it yourself", so Haiku does not loop on `resume_task`.
+7. **Task-spec template in the tool docstring** (goal, exact paths, acceptance check, out-of-scope). Cheapest; changes delegation behaviour, so measure with the coding suite first.
+8. **Live status for a running task** (`get_detail` or a `task_status` call): current step, last tool, seconds since last model reply. Lets Haiku decide to wait or cancel instead of blind waiting on a hung call.
+9. **Failure memory per agent** in the store (last N `error_kind` counts), surfaced in `list_roles`, so a role that keeps failing with `no_tool_call` is flagged before dispatch.
+
+Suggested order: A, B1-B4, C1-C3 first (small, all in `loop.py`/`server.py`/`store.py`); then C4 and C5 once the final data is merged; C6-C9 afterwards.
