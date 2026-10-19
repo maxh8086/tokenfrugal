@@ -170,10 +170,21 @@ def _repair(t: str, i: int, dec) -> tuple:
     return None, i
 
 
+FN_BLOCK = re.compile(r"<function=([\w.-]+)>(.*?)</function>", re.S)  # <function=NAME> ... </function>
+PARAM = re.compile(r"<parameter=([\w.-]+)>(.*?)</parameter>", re.S)
+PATH = re.compile(r"/workspace/[\w.\-/]+|(?<![\w.])/[\w.\-]+(?:/[\w.\-]+)*\.\w+")  # absolute paths in a task
+
+
 def parse_text_calls(text: str, names: set) -> list:
-    """Recover tool calls a small model wrote as JSON text (optionally in <tool_call>/code fences)."""
-    t = re.sub(r"</?tool_call>|```(?:json)?", "", text or "").strip()
+    """Recover tool calls a small model wrote as text: <function=NAME><parameter=KEY>VALUE</parameter> blocks,
+    or JSON, both optionally inside <tool_call>/code fences."""
+    body = text or ""
     calls = []
+    for fn, inner in FN_BLOCK.findall(body):
+        if fn in names:
+            args = {k: v.strip() for k, v in PARAM.findall(inner)}
+            calls.append(SimpleNamespace(id=f"txt_{len(calls)}", function=SimpleNamespace(name=fn, arguments=json.dumps(args))))
+    t = re.sub(r"</?tool_call>|```(?:json)?", "", FN_BLOCK.sub("", body)).strip()
     dec = json.JSONDecoder(strict=False)  # small models emit raw newlines inside "content" strings
     i = 0
     while (i := t.find("{", i)) != -1:
@@ -223,6 +234,56 @@ def role_timeout(role: dict) -> float:
     return float(role.get("timeout_s") or TASK_TIMEOUT)
 
 
+def first_call_hint(task: str, names: set) -> str | None:
+    """Corrective message for a model that answered without reading anything: name read_file, and the task's path if it has one."""
+    if "read_file" not in names:
+        return None
+    m = PATH.search(task or "")
+    if m:
+        path = m.group(0).rstrip(".,;:)'\"")
+        return f"You have not read anything yet. Call read_file with path={path} now, then answer from its result."
+    return "You have not read anything yet. Call read_file on the file you need now, then answer from its result."
+
+
+def named_paths(task: str | None, limit: int = 2) -> list[str]:
+    """Absolute paths the task names, in order, without repeats, capped at limit: the router reads them before the model starts."""
+    seen: list[str] = []
+    for m in PATH.finditer(task or ""):
+        p = m.group(0).rstrip(".,;:)'\"")
+        if p and p not in seen:
+            seen.append(p)
+            if len(seen) >= limit:
+                break
+    return seen
+
+
+def preread_messages(path: str, content: str, idx: int) -> list[dict]:
+    """A synthetic read_file call and its result, shaped like a call the model made itself."""
+    cid = f"preread-{idx}"
+    return [
+        {"role": "assistant", "content": "", "tool_calls": [
+            {"id": cid, "type": "function", "function": {"name": "read_file", "arguments": json.dumps({"path": path})}}]},
+        {"role": "tool", "tool_call_id": cid, "content": content},
+    ]
+
+
+def wrapup_due(step: int, max_steps: int, n_ok_results: int) -> bool:
+    """True from 70% of the step budget (ceil) until the last step, once some tool call has succeeded."""
+    return n_ok_results > 0 and step >= (7 * max_steps + 9) // 10 and step < max_steps  # (7m+9)//10 == ceil(0.7m)
+
+
+def infra_error(exc: BaseException) -> bool:
+    """Backend/runner failures worth one retry (HTTP 500, runner crashed), as opposed to request errors."""
+    s = str(exc).lower()
+    return bool(re.search(r"\b500\b", s) or "internalservererror" in s or "llama runner" in s
+                or ("runner" in s and ("terminated" in s or "stopped" in s)))
+
+
+def think_extra(role: dict) -> dict:
+    """Ask thinking models to skip their reasoning phase; empty for other roles."""
+    return {"extra_body": {"think": False}} if role.get("thinking") else {}
+
+
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
               tid: str = "") -> tuple[str, list]:
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
@@ -262,8 +323,30 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
         fail_retries = 0
         slop_retries = 0
         used_tools = any(m.get("role") == "tool" for m in msgs)
+        task_text = next((x.get("content") or "" for x in msgs if x.get("role") == "user"), "")
+        # 2B: read the paths the task names before the model starts, so a small model never has to find the first read itself
+        if "read_file" in names and not used_tools and not text_mode and role["role"] != "browser" \
+                and os.environ.get("TOKENFRUGAL_NO_PREREAD") != "1":
+            for i, p in enumerate(named_paths(task_text), 1):
+                try:
+                    res = await asyncio.wait_for(sess.call_tool("read_file", {"path": p}), TOOL_TIMEOUT or None)
+                    out = result_text(res)
+                except Exception:  # unreadable here: skip it silently, the model can still read it itself
+                    continue
+                if (hasattr(res, "is_error") and res.is_error) or (not hasattr(res, "is_error") and getattr(res, "isError", False)) \
+                        or not out.strip() or out.startswith(("Error:", "tool error", "Input validation error")):
+                    continue
+                events.emit("tool", id=tid, name="read_file", args="preread " + p[:150])
+                msgs += preread_messages(p, out[:TOOL_CAP], i)
+                ok_calls += 1
+                used_tools = True
+        hinted = False  # the first "answered without reading" retry names read_file (2A)
+        wrapped = False  # the wrap-up nudge is sent once
         for step in range(1, role["max_steps"] + 1):
             events.emit("step", id=tid, n=step)
+            if not wrapped and wrapup_due(step, role["max_steps"], ok_calls):
+                wrapped = True
+                msgs.append({"role": "user", "content": "Stop calling tools. Give the final answer now."})
             # the last step is reserved for the answer once real results exist: no tools, so the model cannot run out of steps
             force_answer = bool(ok_calls) and step == role["max_steps"]
             if force_answer:
@@ -271,13 +354,14 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                                                         "Answer now using only the tool results above."})
             use_tools = bool(tools) and not text_mode and not force_answer
             t0 = time.monotonic()
-            kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, "max_tokens": 2048}
+            kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, "max_tokens": 2048, **think_extra(role)}
             if use_tools and tools:
                 kw["tools"] = tools
                 if not used_tools:
                     kw["tool_choice"] = "required"
             if role["model"] not in _NO_TEMP:
                 kw["temperature"] = LLM_TEMPERATURE
+            infra_retried = False  # one retry after a 3s pause for runner/HTTP 500 failures
             for _attempt in range(3):
                 try:
                     r = await asyncio.to_thread(_client.chat.completions.create, **kw)  # off the event loop
@@ -289,6 +373,13 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                         del kw["temperature"]
                     elif "tool_choice" in kw and "tool_choice" in s:
                         del kw["tool_choice"]  # model/endpoint cannot force a tool call
+                    elif "extra_body" in kw and "think" in s.lower() and "400" in s:
+                        del kw["extra_body"]  # endpoint rejects the think flag: send the request without it
+                    elif infra_error(e):
+                        if infra_retried:
+                            raise LoopError(f"infra: {s[:300]}") from e
+                        infra_retried = True
+                        await asyncio.sleep(3)
                     else:
                         raise
             m = r.choices[0].message
@@ -307,7 +398,9 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     else:
                         bad += ". Unknown tool name? Valid tool names: " + ", ".join(sorted(names))
                 if not bad and tools and not used_tools:
-                    bad = "you answered without calling any tool; call a tool to read real data first"
+                    bad = (first_call_hint(task_text, names) if not hinted else None) or \
+                        "you answered without calling any tool; call a tool to read real data first"
+                    hinted = True
                 failed = not bad and used_tools and not ok_calls and fail_retries < 2
                 if failed:
                     fail_retries += 1

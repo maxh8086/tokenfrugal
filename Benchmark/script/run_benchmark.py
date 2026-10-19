@@ -43,10 +43,12 @@ a = ap.parse_args()
 
 # Bump when cases, scoring or router/harness behaviour change; rows with different values are not comparable.
 HARNESS_VERSION = "1"
+# Router tool-loop generation. Rows written before this column existed are read as "1" (csvstore.COLUMN_DEFAULTS).
+LOOP_VERSION = "2"
 LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
 EXTRA = ["tag", "params", "score", "max", "ran", "mean_s_per_case"]
-META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "n",
+META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "loop_version", "failure_kind", "n",
         "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
         "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_gb", "peak_model_ram_gb",
         "valid_cases", "infra_cases", "mean_s_valid", "total_s",
@@ -84,6 +86,85 @@ def mount_ok(shown: str, workspace: str) -> bool:
     norm = lambda t: t.replace("\\", "/").lower().rstrip("/")  # noqa: E731
     want = norm(workspace) + ":/workspace"
     return want in norm(shown).replace(" ", "")
+
+
+FAILURE_KINDS = ("no-tools", "no-tool-call", "timeout", "infra", "wrong-answer", "other")  # ties resolve in this order
+TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")  # same markers as scripts/bench_real.py
+
+
+def tool_support(endpoint, key, model):
+    """("ok" | "no-tools" | "error", text) from one chat request with a dummy tool, sent like the bench sends its own.
+    Only an HTTP 400 whose body says the model does not support tools yields "no-tools". Any other failure is
+    "error": reported, but it does not skip the model's runs."""
+    from openai import OpenAI
+    client = OpenAI(base_url=endpoint, api_key=key or "x", timeout=60, max_retries=0)
+    tool = {"type": "function", "function": {"name": "noop", "description": "Does nothing.",
+                                             "parameters": {"type": "object", "properties": {}}}}
+    try:
+        client.chat.completions.create(model=model, messages=[{"role": "user", "content": "Reply with ok."}],
+                                       tools=[tool], max_tokens=8)
+        return "ok", ""
+    except Exception as e:  # noqa: BLE001
+        text = f"{type(e).__name__}: {str(e)[:300]}"
+        if getattr(e, "status_code", None) == 400 and "does not support tools" in str(e).lower():
+            return "no-tools", text
+        return "error", text
+
+
+def run_failure_kind(run):
+    """Kind of one failed run (None when it passed). Reads the run dicts scripts/bench_real.py writes."""
+    if run.get("verified"):
+        return None
+    error = str(run.get("error") or "")
+    text = f"{error} {run.get('note') or ''}".lower()
+    if run.get("status") == "no-tools":
+        return "no-tools"
+    if run.get("status") == "infra" or error.startswith("infra:") or "ollama 500" in text:
+        return "infra"
+    if run.get("status") == "timeout" or any(m.lower() in text for m in TIMEOUT_MARKERS):
+        return "timeout"
+    if run.get("ok"):
+        return "wrong-answer"  # reached a final answer, but the output did not verify
+    if "tool call" in text:
+        return "no-tool-call"
+    return "other"
+
+
+def failure_kind(cases):
+    """One value per row: the most common kind among failed runs (ties follow FAILURE_KINDS), "ok" when none failed."""
+    counts = dict.fromkeys(FAILURE_KINDS, 0)
+    for c in cases.values():
+        if not isinstance(c, dict):  # skips a section-level {"error": ...} entry
+            continue
+        for r in c.get("runs", []):
+            k = run_failure_kind(r)
+            if k:
+                counts[k] += 1
+    if not any(counts.values()):
+        return "ok"
+    return max(FAILURE_KINDS, key=lambda k: counts[k])
+
+
+def write_no_tools_raw(raw, tag, n, builder, thinker, endpoint, errors):
+    """Synthetic raw result for a model without tool support: every realworld case is status "no-tools"
+    (not a quality failure, it never ran). Same shape as scripts.bench output, so bench_csv and the CSV row work unchanged."""
+    from router.config import LLM_TEMPERATURE
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    err = " | ".join(f"{m}: {t}" for m, t in errors.items())
+    cases = {}
+    for cid, _, _ in bench_csv.LAYOUT:
+        runs = [{"run": i + 1, "start": "", "end": "", "s": 0.0, "ok": False, "verified": False, "status": "no-tools",
+                 "dispatched": False, "error": err, "note": err, "peak": 0, "input": 0, "output": 0, "timeout_s": None}
+                for i in range(n)]
+        cases[cid] = {"verified": f"0/{n}", "ran": f"0/{n}", "status": "no-tools", "infra_runs": 0, "s": None,
+                      "peak": 0, "input": 0, "output": 0, "timeout_s": None, "notes": err, "runs": runs}
+    data = {"stamp": stamp, "tag": tag, "n": n,
+            "meta": {"endpoint": endpoint, "temperature": LLM_TEMPERATURE, "max_tokens": 2048,
+                     "builder": builder, "thinker": thinker, "git_sha": ""},
+            "results": {"realworld": cases}}
+    path = raw / f"{stamp}-{tag}.json"
+    path.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    return path
 
 
 def preflight(endpoint, key, models):
@@ -142,6 +223,7 @@ def preflight(endpoint, key, models):
     if bad:
         sys.exit(f"preflight failed: {', '.join(bad)}")
 
+no_tools = {}  # model -> error text, for models the endpoint refuses tools to; their runs are skipped
 if a.from_json:
     src = Path(a.from_json)
 else:
@@ -161,24 +243,36 @@ else:
             sys.exit(f"{a.api_key_env} is not set in your shell")
         env["TOKENFRUGAL_LLM_API_KEY"] = key
     endpoint = a.endpoint or os.environ.get("TOKENFRUGAL_LLM_URL") or "http://localhost:11434/v1"
-    preflight(endpoint, env.get("TOKENFRUGAL_LLM_API_KEY") or os.environ.get("TOKENFRUGAL_LLM_API_KEY"), [a.builder, thinker])
-    before = synaptree_state()
-    proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
-                          cwd=ROOT, env=env, check=False)
-    after = synaptree_state()
-    verdict = run_verdict(before, after, proc.returncode)
-    if verdict:
-        if not after[0] or after[1] != before[1]:
-            print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
-                  f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
-                  "analyzer: cases 1-7 and 9) are unreliable.")
-            sys.exit(f"not appended to CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
-                     f"--from-json once the synaptree container is stable.")
-        sys.exit(f"bench exited with code {proc.returncode}; not appended to CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
-    hits = sorted(raw.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
-    if not hits:
-        sys.exit(f"bench wrote no result file for tag {tag}")
-    src = hits[-1]
+    key = env.get("TOKENFRUGAL_LLM_API_KEY") or os.environ.get("TOKENFRUGAL_LLM_API_KEY")
+    preflight(endpoint, key, [a.builder, thinker])
+    print("tool support")
+    for m in dict.fromkeys([a.builder, thinker]):
+        state, text = tool_support(endpoint, key, m)
+        if state == "no-tools":
+            no_tools[m] = text
+        label = {"ok": "PASS", "no-tools": "NO-TOOLS", "error": "WARN"}[state]
+        print(f"  {label}  {m}" + ("" if state == "ok" else f"  -> {text}"))
+    if no_tools:
+        src = write_no_tools_raw(raw, tag, a.n, a.builder, thinker, endpoint, no_tools)
+        print(f"skipping the runs (no tool support); recorded as no-tools in {src}")
+    else:
+        before = synaptree_state()
+        proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
+                              cwd=ROOT, env=env, check=False)
+        after = synaptree_state()
+        verdict = run_verdict(before, after, proc.returncode)
+        if verdict:
+            if not after[0] or after[1] != before[1]:
+                print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
+                      f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
+                      "analyzer: cases 1-7 and 9) are unreliable.")
+                sys.exit(f"not appended to CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
+                         f"--from-json once the synaptree container is stable.")
+            sys.exit(f"bench exited with code {proc.returncode}; not appended to CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
+        hits = sorted(raw.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
+        if not hits:
+            sys.exit(f"bench wrote no result file for tag {tag}")
+        src = hits[-1]
 
 data = json.loads(src.read_text(encoding="utf-8"))
 out = bench_csv.rows(data)
@@ -211,7 +305,8 @@ rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "
        **dict(zip(labels, row[5:])),
        "date": date, "endpoint": endpoint, "temperature": temp, "max_tokens": meta.get("max_tokens", ""),
        "builder_model": meta.get("builder", ""), "thinker_model": meta.get("thinker", ""),
-       "git_sha": meta.get("git_sha", ""), "harness_version": HARNESS_VERSION, "n": data.get("n", ""),
+       "git_sha": meta.get("git_sha", ""), "harness_version": HARNESS_VERSION, "loop_version": LOOP_VERSION,
+       "failure_kind": failure_kind(real), "n": data.get("n", ""),
        "context_used_peak_tokens": max([c.get("peak", 0) for c in done] or [0]),
        "tokens_in_per_run": sum(c.get("input", 0) for c in done),
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
@@ -221,6 +316,7 @@ rec = {"tag": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "
        **{f"context_used_{k}": v for k, v in peaks.items()}}
 # valid_cases / infra_cases / mean_s_valid: see bench_csv.status_scores (infra cases excluded from validity and mean)
 rec["valid_cases"], rec["infra_cases"], rec["mean_s_valid"] = bench_csv.status_scores(real)
+rec["valid_cases"] -= sum(c.get("status") == "no-tools" for c in real.values())  # never ran: not a valid case
 rec["total_s"] = bench_csv.total_seconds(real)  # elapsed time of all repeats, timeouts and infra included
 mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["context_used_peak_tokens"])
 rec.update(mi)
@@ -235,7 +331,7 @@ if backup:
     print(f"backup: {backup}")
 print(f"appended {rec['tag']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
 
-if not a.from_json and not a.no_hard:
+if not a.from_json and not a.no_hard and not no_tools:
     # Hard thinker suite (5 cases): reported next to the 48-case score, never written to benchmark.csv.
     hard_dir = HERE.parent / "results" / "hard"
     hard_dir.mkdir(parents=True, exist_ok=True)
@@ -245,7 +341,7 @@ if not a.from_json and not a.no_hard:
                         cwd=ROOT, env=hard_env, check=False)
     print(f"hard suite {'done' if hp.returncode == 0 else f'exited {hp.returncode}'}: results in {hard_dir}")
 
-if a.coding and not a.from_json:
+if a.coding and not a.from_json and not no_tools:
     # L1-L6 coding suite (6 cases, one role/profile per level): reported separately, never written to benchmark.csv.
     code_dir = HERE.parent / "results" / "coding"
     code_dir.mkdir(parents=True, exist_ok=True)

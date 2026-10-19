@@ -4,7 +4,7 @@ from router import loop, server
 from router.config import resolve_role
 from scripts import bench_real
 
-FROZEN = {"code-l1": 120, "code-l2": 150, "code-l3": 180, "code-l4": 300, "code-l5": 300, "code-l6": 300}
+FROZEN = {"code-l1": 180, "code-l2": 225, "code-l3": 270, "code-l4": 450, "code-l5": 450, "code-l6": 450}
 
 
 class RoleTimeout(unittest.TestCase):
@@ -34,7 +34,7 @@ class RoleTimeout(unittest.TestCase):
 
     def test_bench_limits_replace_case_timeout(self):
         t, wd = bench_real.case_limits("coding-l4")
-        self.assertEqual((t, wd), (300.0, 300.0 + bench_real.WATCHDOG_GRACE))
+        self.assertEqual((t, wd), (450.0, 450.0 + bench_real.WATCHDOG_GRACE))
         t, wd = bench_real.case_limits("engineering-devops-automator")
         self.assertIsNone(t)
         self.assertEqual(wd, bench_real.CASE_TIMEOUT)
