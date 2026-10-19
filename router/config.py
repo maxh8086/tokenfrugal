@@ -78,6 +78,8 @@ NATIVE_SERVERS = {
                                             "node", "src/cli.js", "--stdio"]}
     ),
 }
+# Docker containers a native server needs running (name -> containers, dependency first). See mcp_client.ensure_backend.
+NATIVE_BACKENDS = {"synaptree": ["synaptree-neo4j-1", os.getenv("SYNAPTREE_CONTAINER", "synaptree-synaptree-1")]}
 # Compose-managed backends (docker-compose.yml). Secrets come from an env file outside the repo.
 COMPOSE_FILE = Path(os.getenv("MCP_COMPOSE_FILE", Path(__file__).resolve().parent.parent / "docker-compose.yml"))
 COMPOSE_PROJECT = "ts-mcp"

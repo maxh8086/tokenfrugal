@@ -7,7 +7,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from . import docker_mcp, mcp_reap, profile_sync, secrets_store
-from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
+from .config import MCP_CPUS, MCP_MEMORY, NATIVE_BACKENDS, NATIVE_SERVERS, SYNAPTREE_PROJECT, WORKSPACE
 
 
 # Arguments small models routinely omit; filled in before the call.
@@ -15,6 +15,9 @@ ARG_DEFAULTS = {"navigate_page": {"type": "url"}}
 
 CONN_ERROR_MARKERS = ("connection closed", "is not running", "broken pipe", "brokenpipe")
 MAX_HEALS_PER_CALL = 2
+OPEN_ATTEMPTS = 3  # initial open of a session: 1 try + 2 retries on connection errors
+BACKEND_WAIT_S = 90  # max time to wait for a native server's containers to be running and healthy
+BACKEND_POLL_S = 2
 
 
 def conn_error(exc: BaseException) -> bool:
@@ -23,6 +26,56 @@ def conn_error(exc: BaseException) -> bool:
         return False
     text = str(exc).lower()
     return any(m in text for m in CONN_ERROR_MARKERS)
+
+
+def _open_conn_error(exc: BaseException) -> bool:
+    """conn_error that also looks inside (possibly nested) exception groups raised by async context entry."""
+    if isinstance(exc, BaseExceptionGroup):
+        return any(_open_conn_error(e) for e in exc.exceptions)
+    return conn_error(exc)
+
+
+async def _docker(*args: str) -> tuple[int, str]:
+    """Run the docker binary; returns (returncode, combined output). Raises on timeout or missing binary."""
+    proc = await asyncio.create_subprocess_exec(docker_mcp.docker_bin(), *args,
+                                                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+    try:
+        out, _ = await asyncio.wait_for(proc.communicate(), timeout=30)
+    except asyncio.TimeoutError:
+        proc.kill()
+        raise
+    return proc.returncode, out.decode(errors="replace").strip()
+
+
+async def ensure_backend(name: str) -> bool:
+    """Start the Docker containers behind a native server and wait until they are running and healthy.
+
+    Best effort: True when the server needs no backend, False on any failure or timeout (never raises).
+    Containers are handled in NATIVE_BACKENDS order, each waited on before the next.
+    """
+    if name not in NATIVE_BACKENDS or os.getenv("SYNAPTREE_HOST_NODE") == "1":
+        return True
+    try:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + BACKEND_WAIT_S
+        for c in NATIVE_BACKENDS[name]:
+            while True:
+                rc, out = await _docker("inspect", "-f", "{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{end}}", c)
+                if rc != 0:
+                    return False  # container missing or docker unreachable: nothing to heal
+                status, _, health = out.partition("|")
+                if status == "running" and health in ("", "healthy"):
+                    break
+                if loop.time() >= deadline:
+                    return False
+                if status not in ("running", "restarting"):  # exited, dead, paused, created: start it
+                    rc, _ = await _docker("start", c)
+                    if rc != 0:
+                        return False
+                await asyncio.sleep(BACKEND_POLL_S)
+        return True
+    except Exception:
+        return False
 
 
 class Router:
@@ -86,9 +139,18 @@ async def open_role(profile: str | list[str] | None, native: list[str] | None = 
     stacks: list[contextlib.AsyncExitStack] = []  # every stack ever opened, closed on exit
 
     async def start(open_fn, *args):
-        st = contextlib.AsyncExitStack()
-        stacks.append(st)
-        return await st.enter_async_context(open_fn(*args)), st
+        for attempt in range(OPEN_ATTEMPTS):
+            st = contextlib.AsyncExitStack()  # fresh stack per attempt
+            stacks.append(st)
+            try:
+                return await st.enter_async_context(open_fn(*args)), st
+            except Exception as exc:
+                with contextlib.suppress(Exception):  # failed attempt: release whatever it half-entered
+                    await st.aclose()
+                stacks.remove(st)
+                if attempt == OPEN_ATTEMPTS - 1 or not _open_conn_error(exc):
+                    raise
+                await asyncio.sleep(1)
 
     def reopener(open_fn, *args, stack):
         cur = {"stack": stack}
@@ -110,15 +172,23 @@ async def open_role(profile: str | list[str] | None, native: list[str] | None = 
             sessions.append(sess)
             reopen[sess] = reopener(open_profile, p, pr, stack=st)
         for n in native or []:
-            ns, st = await start(open_native, n)
+            ns, st = await start(_open_native_ensured, n)
             sessions.append(ns)
             nat.add(ns)
-            reopen[ns] = reopener(open_native, n, stack=st)
+            reopen[ns] = reopener(_open_native_ensured, n, stack=st)
         yield Router(sessions, nat, reopen)
     finally:
         for st in reversed(stacks):
             with contextlib.suppress(Exception):  # dead sessions may fail to close
                 await st.aclose()
+
+
+@contextlib.asynccontextmanager
+async def _open_native_ensured(name: str):
+    """open_native preceded by ensure_backend, so a stopped backing container is started before every attempt."""
+    await ensure_backend(name)  # module globals resolved at call time
+    async with open_native(name) as s:
+        yield s
 
 
 @contextlib.asynccontextmanager
