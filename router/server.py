@@ -15,12 +15,25 @@ from fastmcp.server.middleware import Middleware
 
 from . import compose, events, plan, reconnect, store, ui_launcher
 from .config import check_agent, load_tf_roles, resolve_role
-from .loop import leaf, run, take_usage
+from .loop import failure_reason, leaf, run, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_tf_roles()
 STALE_REASON = "router stopped while task was running (no heartbeat)"
 HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
+RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # other reasons: re-scope instead
+RESCOPE = "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure."
+
+
+def failure_message(tid: str, role: dict, err: str, reason: str) -> str:
+    """The short failure reply Haiku reads: reason class plus the next step it should take."""
+    if reason in RESUME_HINT:
+        hint = f"Call resume_task('{tid}') to retry."
+    elif reason == "unknown":
+        hint = f"Call resume_task('{tid}') once, then re-scope."
+    else:
+        hint = RESCOPE
+    return f"[{tid}] FAILED ({role['role']}/{role['model']}) reason={reason}: {err}. {hint}"
 
 
 async def _warm_up():
@@ -131,14 +144,15 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         return f"[{tid}] {summary}"
     except Exception as e:  # noqa: BLE001
         e = leaf(e)
+        reason = failure_reason(f"{type(e).__name__}: {e}")
         err = hard_trim(f"{type(e).__name__}: {e}", 120)
         store.update(tid, status="failed", error=err)
-        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
+        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "router", err)
-        return f"[{tid}] FAILED ({role['role']}/{role['model']}): {err}. Call resume_task('{tid}') to retry."
+        return failure_message(tid, role, err, reason)
     finally:
         beat.cancel()
 
