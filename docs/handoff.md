@@ -102,3 +102,17 @@ Best coverage: Qwen3.8-9B-Distill and Qwen3.5-9B (L1, L2, L3, L5 at 3/3). No loc
 ### Timeout change after c1 (user request: 1.5x)
 `router/tf-roles.yaml` code-l1..l6 timeout_s: 120/150/180/300/300/300 -> 180/225/270/450/450/450.
 Batch t15 (temp, same coding set, n=3) ran with the new values into `Benchmark/results/coding-t15/`: Qwythos-9B-v2, ts-qwen3-8b-16384.
+
+### t15 results (verified of 3 per level, 1.5x caps; c1 in brackets)
+| Model | L1 | L2 | L3 | L4 | L5 | L6 |
+|---|---|---|---|---|---|---|
+| Qwythos-9B-v2 | 3 (3) | 2 (0) | 3 (3) | 0 (0) | 3 (3) | 0 (0) |
+| ts-qwen3-8b-16384 | 3 (3) | 1 (0) | 2 (3) | 0 (0) | 1 (0) | 2 (2) |
+Haiku is 3/3 at every level. Qwythos L2: one timeout at 225 s, p50 198 s, so a cap near 340 s would likely give 3/3. L4 is not cap-bound (Qwythos used the full 450 s on all 3; ts-qwen3-8b finished in ~100 s with wrong code). ts-qwen3-8b: empty-answer LoopErrors on L3 and L6, wrong result on L5.
+Proposed, NOT applied: code-l2 timeout_s 225 -> 340. No timeout change made since t15.
+
+### Context findings (2026-10-19)
+- Ollama auto-upgraded 0.40.5 -> 0.40.6 (unintended). Server log: `vram-based default context` gave default_num_ctx=4096 (8 GiB VRAM); an earlier boot saw 0 B VRAM. Models with no Modelfile num_ctx therefore likely ran c1/t15 at 4096; ts-*-16384 variants ran at 16k. Per-run context is unverified.
+- User env: OLLAMA_CONTEXT_LENGTH 32768 -> 131072 (server minimum). Modelfile num_ctx overrides it, so 16384-capped models need new 32768 variants.
+- Native context < 32k: mistral-nemo-minitron-8b (8192), starcoder2-7b (16384). All other models are native >= 32k and need no scaling for 32k. qwen2.5-coder-yarn:3b has num_ctx 65536 on a 32768 native model; how its YaRN is applied is unconfirmed.
+- 128k KV cache at f16 is about 18 GB for an 8B model (about 9 GB at q8_0); machine has 31.3 GiB RAM. Verify with `ollama ps`.
