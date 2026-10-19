@@ -21,12 +21,12 @@ roles:
   designer: {model: thinker, profile: design,     max_steps: 10, timeout_s: 160, compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape], skills: [role-designer]}
   browser:  {model: thinker, profile: browser,    max_steps: 8, timeout_s: 80,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit], skills: [role-browser]}
   tracker:  {model: thinker, max_steps: 6, timeout_s: 60,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note], skills: [role-tracker]}
-  code-l1:  {model: builder, profile: code-l1, max_steps: 8, timeout_s: 120,  native: [sandbox], tools: [read_file, write_file, run_tests], skills: [code-l1]}
-  code-l2:  {model: builder, profile: code-l2, max_steps: 10, timeout_s: 150, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [code-l2]}
-  code-l3:  {model: builder, profile: code-l3, max_steps: 12, timeout_s: 180, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, directory_tree, run_tests], skills: [code-l3]}
-  code-l4:  {model: builder, profile: code-l4, max_steps: 12, timeout_s: 300, native: [sandbox], tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests], skills: [code-l4]}
-  code-l5:  {model: builder, profile: code-l5, max_steps: 14, timeout_s: 300, native: [sandbox], tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python], skills: [code-l5]}
-  code-l6:  {model: builder, profile: code-l6, max_steps: 14, timeout_s: 300, native: [synaptree, sandbox], tools: [search_graph, trace_path, get_code_snippet, read_file, edit_file, run_tests], skills: [code-l6]}
+  code-l1:  {model: builder, profile: code-l1, max_steps: 8, timeout_s: 180,  native: [sandbox], tools: [read_file, write_file, run_tests], skills: [code-l1]}
+  code-l2:  {model: builder, profile: code-l2, max_steps: 10, timeout_s: 225, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [code-l2]}
+  code-l3:  {model: builder, profile: code-l3, max_steps: 12, timeout_s: 270, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, directory_tree, run_tests], skills: [code-l3]}
+  code-l4:  {model: builder, profile: code-l4, max_steps: 12, timeout_s: 450, native: [sandbox], tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests], skills: [code-l4]}
+  code-l5:  {model: builder, profile: code-l5, max_steps: 14, timeout_s: 450, native: [sandbox], tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python], skills: [code-l5]}
+  code-l6:  {model: builder, profile: code-l6, max_steps: 14, timeout_s: 450, native: [synaptree, sandbox], tools: [search_graph, trace_path, get_code_snippet, read_file, edit_file, run_tests], skills: [code-l6]}
   github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read]}  # read-only; create/close/merge PRs stay with Haiku
   github-actions-read: {model: thinker, profile: github, max_steps: 8, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read]}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops]}

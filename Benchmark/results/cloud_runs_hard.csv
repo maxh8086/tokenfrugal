@@ -1,0 +1,16 @@
+model,case,run,verified,status,seconds,tokens_in,tokens_out,note
+claude-haiku-4-5,hard_multifile_bug,1,1,ok,9.9,2407,918,Now I can trace the issue:  ## Analysis  **Call flow:** `invoice()` → `led.add()` → `to_cents()` → `
+claude-haiku-4-5,hard_multifile_bug,2,1,ok,8.3,2399,799,"Now I can trace the issue. Let me work through it:  1. **report.py** calls `invoice(['19.99', ...])`"
+claude-haiku-4-5,hard_multifile_bug,3,1,ok,7.2,2407,658,"Now I can trace the issue. Let me analyze the call flow:  1. **report.py** → `invoice(['19.99', ...]"
+claude-haiku-4-5,hard_two_vulns,1,1,ok,4.8,1982,380,## Security Vulnerability Review  I found **2 distinct vulnerability classes** in this file:  ### 1.
+claude-haiku-4-5,hard_two_vulns,2,1,ok,4.5,1981,345,## Security Vulnerabilities Found  I've identified the following distinct vulnerability classes in t
+claude-haiku-4-5,hard_two_vulns,3,1,ok,4.5,1985,386,## Security Vulnerabilities Found  I've identified **2 distinct vulnerability classes** in this code
+claude-haiku-4-5,hard_ambiguous_trace,1,1,ok,4.3,1995,312,Now I can see the issue!  **Exception Type:** `TypeError`  **Root Cause:**   The `CONFIG['retries']`
+claude-haiku-4-5,hard_ambiguous_trace,2,1,ok,3.5,1995,239,**Exception Type:** `TypeError`  **Root Cause:** The value of `CONFIG['retries']` is a **string** (`
+claude-haiku-4-5,hard_ambiguous_trace,3,1,ok,3.8,1995,278,**Exception Type:** `TypeError`  **Root Cause:** The `CONFIG` dictionary stores `'retries'` as a str
+claude-haiku-4-5,hard_long_summary,1,1,ok,2.6,2173,184,Here's a summary of the key decisions from the notes:  **Key Decisions Summary:** The cache infrastr
+claude-haiku-4-5,hard_long_summary,2,1,ok,2.5,2161,169,## Summary of Key Decisions  The document outlines four key decisions: (1) the cache now runs on Red
+claude-haiku-4-5,hard_long_summary,3,1,ok,2.4,2173,160,**Summary of Key Decisions:**  The cache infrastructure was switched to Redis. The request timeout w
+claude-haiku-4-5,hard_compare_functions,1,1,ok,5.8,1980,583,## Comparison: `dedupe_a` vs `dedupe_b`  ### Output Differences  **`dedupe_a`**: Preserves the origi
+claude-haiku-4-5,hard_compare_functions,2,1,ok,5.3,1978,486,## Comparison of `dedupe_a` and `dedupe_b`  ### Output Differences  - **`dedupe_a`**: Preserves the 
+claude-haiku-4-5,hard_compare_functions,3,1,ok,4.7,1978,469,## Comparison of `dedupe_a` and `dedupe_b`  ### Output Differences  **`dedupe_a`**: Preserves the **

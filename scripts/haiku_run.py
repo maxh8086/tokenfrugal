@@ -117,6 +117,7 @@ def one(case, call):
         return dict(case=cid, verified="", status="n/a", seconds=0, tokens_in=0, tokens_out=0,
                     note="needs a service with no cloud stand-in")
     b.SCRATCH.mkdir(parents=True, exist_ok=True)
+    b._clean_scratch()  # no leftovers from the previous repeat or case, same as the bench loop
     setup()
     t0 = time.time()
     try:
@@ -140,7 +141,7 @@ def main(argv=None):
     def call(payload):
         return http_call(key, payload)
 
-    cases = [c for c in b.cases() if not a.case or c[0] == a.case]
+    cases = [c for c in b.active_cases() if not a.case or c[0] == a.case]
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     new = not out.exists()

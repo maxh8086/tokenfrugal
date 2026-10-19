@@ -41,6 +41,20 @@ class HaikuRun(unittest.TestCase):
         r = h.one(case, lambda p: resp([{"type": "text", "text": "yes"}]))
         self.assertEqual((r["verified"], r["status"]), (1, "ok"))
 
+    def test_one_cleans_scratch_before_setup(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(h.b, "SCRATCH", Path(d)):
+            (Path(d) / "stale.py").write_text("x")
+            seen = []
+            case = ("c", "a", lambda: seen.append(sorted(p.name for p in Path(d).iterdir())), "t",
+                    lambda ans: (True, ""))
+            h.one(case, lambda p: resp([{"type": "text", "text": "ok"}]))
+            self.assertEqual(seen, [[]])
+
+    def test_main_honours_bench_suite(self):
+        with mock.patch.dict("os.environ", {"BENCH_SUITE": "coding"}):
+            ids = [c[0] for c in h.b.active_cases()]
+        self.assertTrue(all(i.startswith("code_") for i in ids))
+
     def test_localize_rewrites_workspace_paths(self):
         self.assertNotIn("/workspace/", h.localize(f"{h.b.WS}/a.py"))
 
