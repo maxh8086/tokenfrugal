@@ -13,13 +13,40 @@ from .config import MCP_CPUS, MCP_MEMORY, NATIVE_SERVERS, SYNAPTREE_PROJECT, WOR
 # Arguments small models routinely omit; filled in before the call.
 ARG_DEFAULTS = {"navigate_page": {"type": "url"}}
 
+CONN_ERROR_MARKERS = ("connection closed", "is not running", "broken pipe", "brokenpipe")
+MAX_HEALS_PER_CALL = 2
+
+
+def conn_error(exc: BaseException) -> bool:
+    """True when the exception means the gateway/container connection died (worth a reopen)."""
+    if isinstance(exc, asyncio.TimeoutError):
+        return False
+    text = str(exc).lower()
+    return any(m in text for m in CONN_ERROR_MARKERS)
+
 
 class Router:
-    """One session facade over a Docker profile plus optional native MCP servers."""
+    """One session facade over a Docker profile plus optional native MCP servers.
 
-    def __init__(self, sessions: list, native: set | None = None):
+    `reopen` maps a session to an async factory returning a fresh, initialised replacement;
+    used to self-heal when the connection dies mid-run.
+    """
+
+    def __init__(self, sessions: list, native: set | None = None, reopen: dict | None = None):
         self._sessions, self._owner, self._native = sessions, {}, native or set()
         self._needs_project = set()
+        self._reopen = dict(reopen or {})
+        self.heals = 0
+
+    def _swap(self, old, new):
+        self._sessions = [new if s is old else s for s in self._sessions]
+        for name, s in self._owner.items():
+            if s is old:
+                self._owner[name] = new
+        if old in self._native:
+            self._native.discard(old)
+            self._native.add(new)
+        self._reopen[new] = self._reopen.pop(old)
 
     async def list_tools(self):
         tools = []
@@ -36,20 +63,62 @@ class Router:
         if name in self._needs_project:
             args = {"project": SYNAPTREE_PROJECT, **args}
         args = {**ARG_DEFAULTS.get(name, {}), **args}
-        return await self._owner[name].call_tool(name, args)
+        heals = 0
+        while True:
+            s = self._owner[name]
+            try:
+                return await s.call_tool(name, args)
+            except Exception as exc:
+                factory = self._reopen.get(s)
+                if heals >= MAX_HEALS_PER_CALL or factory is None or not conn_error(exc):
+                    raise
+                try:
+                    new = await factory()
+                except Exception:
+                    raise exc  # reopen itself failed: report the original connection error
+                heals += 1
+                self.heals += 1
+                self._swap(s, new)
 
 
 @contextlib.asynccontextmanager
 async def open_role(profile: str | list[str] | None, native: list[str] | None = None, params: dict | None = None):
-    async with contextlib.AsyncExitStack() as stack:
-        profiles = [profile] if isinstance(profile, str) else list(profile or [])
-        sessions = [await stack.enter_async_context(open_profile(p, (params or {}).get(p))) for p in profiles]
-        nat = set()
+    stacks: list[contextlib.AsyncExitStack] = []  # every stack ever opened, closed on exit
+
+    async def start(open_fn, *args):
+        st = contextlib.AsyncExitStack()
+        stacks.append(st)
+        return await st.enter_async_context(open_fn(*args)), st
+
+    def reopener(open_fn, *args, stack):
+        cur = {"stack": stack}
+
+        async def reopen():
+            with contextlib.suppress(Exception):  # the dead connection's stack
+                await cur["stack"].aclose()
+            sess, cur["stack"] = await start(open_fn, *args)
+            return sess
+
+        return reopen
+
+    profiles = [profile] if isinstance(profile, str) else list(profile or [])
+    sessions, nat, reopen = [], set(), {}
+    try:
+        for p in profiles:
+            pr = (params or {}).get(p)
+            sess, st = await start(open_profile, p, pr)
+            sessions.append(sess)
+            reopen[sess] = reopener(open_profile, p, pr, stack=st)
         for n in native or []:
-            ns = await stack.enter_async_context(open_native(n))
+            ns, st = await start(open_native, n)
             sessions.append(ns)
             nat.add(ns)
-        yield Router(sessions, nat)
+            reopen[ns] = reopener(open_native, n, stack=st)
+        yield Router(sessions, nat, reopen)
+    finally:
+        for st in reversed(stacks):
+            with contextlib.suppress(Exception):  # dead sessions may fail to close
+                await st.aclose()
 
 
 @contextlib.asynccontextmanager
