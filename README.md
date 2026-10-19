@@ -127,4 +127,4 @@ Local models are tested at a fixed context window: `num_ctx = min(native context
 
 Apache-2.0 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). Built on the work of many authors; see [CREDITS.md](CREDITS.md). Third-party backends run as their own unmodified containers under their own licences.
 
-Developed by Vaibhav Pavtekar with AI assistance (Claude Code).
+Developed by Vaibhav Pavtekar with AI assistance .
