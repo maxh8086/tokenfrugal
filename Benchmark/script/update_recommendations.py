@@ -1,18 +1,23 @@
-"""Apply the benchmark ranking to the product: ui/index.html RANKED/DOTS and the router/agents.yaml default models.
+"""Apply the benchmark ranking to the product: ui/index.html RANKED/DOTS and the router/tf-roles.yaml default models.
 
     python Benchmark/script/update_recommendations.py [--dry-run]
 
 Uses the same per-role ranking and status dots as build_report.py (all local runs in benchmark.csv).
 The top model of each role (builder cases -> builder, thinker cases -> thinker) becomes the default.
 """
+import sys as _sys
+for _s in (_sys.stdout, _sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8", errors="replace")
+import json
 import re
 import sys
 
-from ranking import B, BUILDER_CASES, THINKER_CASES, DOT, _status, _sort_role, _role_agg
+from ranking import B, BUILDER_CASES, THINKER_CASES, DOT, _status, _sort_role, _role_agg, cloud_reference, hard_results
 
 ROOT = B.parent
 UI = ROOT / "ui" / "index.html"
-AGENTS = ROOT / "router" / "agents.yaml"
+AGENTS = ROOT / "router" / "tf-roles.yaml"
 
 
 def ranked(cases):
@@ -28,9 +33,22 @@ def main(dry=False):
     body = "".join(f"    {k}: {q([n for n, _ in v])},{chr(10)}" for k, v in picks.items())
     ranked_js = "const RANKED = {" + chr(10) + body + "  };"
     dots_js = "const DOTS = { " + ", ".join(f"{k}: {q([d for _, d in v])}" for k, v in picks.items()) + " };"
+    refs = {k: cloud_reference(c) for k, c in (("builder", BUILDER_CASES), ("thinker", THINKER_CASES))}
+    cloud_js = "const CLOUD = { " + ", ".join(
+        f"{k}: '{r[0]} {r[1]['a']}/{r[1]['n']} (reference, not ranked)'" for k, r in refs.items() if r) + " };"
+    hard_js = "const HARD = " + json.dumps({m: f"{r['a']}/{r['n']}" for m, r in hard_results().items()}) + ";"
     ui = UI.read_text(encoding="utf-8")
     ui2, n1 = re.subn(r"const RANKED = \{.*?\};", lambda m: ranked_js, ui, count=1, flags=re.S)
     ui2, n2 = re.subn(r"const DOTS = \{.*?\};", lambda m: dots_js, ui2, count=1, flags=re.S)
+    if "const CLOUD = {" in ui2:
+        ui2 = re.sub(r"const CLOUD = \{.*?\};", lambda m: cloud_js, ui2, count=1, flags=re.S)
+    else:
+        note = "  // Cloud model on the same cases, reference only" + chr(10) + "  " + cloud_js + chr(10)
+        ui2 = ui2.replace("  const groupOf = ", note + "  const groupOf = ", 1)
+    if "const HARD = " in ui2:
+        ui2 = re.sub(r"const HARD = \{.*?\};", lambda m: hard_js, ui2, count=1, flags=re.S)
+    else:
+        ui2 = ui2.replace("  const groupOf = ", "  // Hard thinker suite (verified/runs), shown next to thinker models" + chr(10) + "  " + hard_js + chr(10) + "  const groupOf = ", 1)
     if (n1, n2) != (1, 1):
         raise SystemExit("RANKED/DOTS not found in ui/index.html")
     ag = AGENTS.read_text(encoding="utf-8")
@@ -38,7 +56,7 @@ def main(dry=False):
     for role, v in picks.items():
         ag2, k = re.subn(rf"(?m)^(  {role}: ).*$", lambda m: m.group(1) + v[0][0], ag2, count=1)
         if k != 1:
-            raise SystemExit(f"models.{role} not found in agents.yaml")
+            raise SystemExit(f"models.{role} not found in tf-roles.yaml")
     for role, v in picks.items():
         print(f"{role}: default -> {v[0][1]} {v[0][0]}   (ranked: {', '.join(d + ' ' + n for n, d in v)})")
     if dry:
@@ -46,7 +64,7 @@ def main(dry=False):
         return 0
     UI.write_text(ui2, encoding="utf-8")
     AGENTS.write_text(ag2, encoding="utf-8")
-    print("updated ui/index.html and router/agents.yaml")
+    print("updated ui/index.html and router/tf-roles.yaml")
     return 0
 
 

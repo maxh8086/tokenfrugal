@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 
 B = Path(__file__).resolve().parent.parent          # Benchmark/
-AGENTS = B.parent / "router" / "agents.yaml"
+AGENTS = B.parent / "router" / "tf-roles.yaml"
 
 # The 16 real case columns. Anything else in the CSV (meta, context_used_* columns) is not a case.
 BUILDER_CASES = ["write_function", "fix_bug", "write_tests", "rename_across_files"]
@@ -38,8 +38,8 @@ def _load(name):
 # Excluded from the report: diagnostic runs (probe, browser-longlived) and the cloud Haiku baseline,
 # which stays out of the ranking. Runs where every case hit an infra failure have no valid score.
 EXCLUDE_TAGS = {"probe-qwen-tracker-browser", "browser-longlived", "haiku-baseline"}
-rows = [r for r in _load("benchmark.csv") if r.get("tag") not in EXCLUDE_TAGS]
-rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0")]
+rows = [r for r in _load("benchmark.csv") if r.get("tag") not in EXCLUDE_TAGS] + _load("cloud.csv")  # cloud rows are shown, never ranked (_local)
+rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
 missing = [c for c in CASES if c not in rows[0]]
 if missing:
     raise SystemExit(f"benchmark CSVs are missing case columns: {missing}")
@@ -56,8 +56,14 @@ def pct(r):
     return 100 * num(r, "score") / max(num(r, "max"), 1)
 
 
-def params_b(p):
+def params_b(p, model=""):
+    """Billions of parameters from the params column; if blank, from a size tag in the model name (4b, e4b, 1.2b)."""
     m = re.match(r"\s*([\d.]+)B", p or "")
+    if m:
+        return float(m.group(1))
+    if model.startswith("claude-"):
+        return None
+    m = re.search(r"(?:^|[^a-z\d.])e?(\d+(?:\.\d+)?)b(?![a-z])", model, re.I)
     return float(m.group(1)) if m else None
 
 
@@ -69,6 +75,7 @@ def case_frac(r, c):
         return None
 
 
+TRIAL = Path(__file__).resolve().parents[2] / "models" / "trial"
 LOCAL_BUILDS = {   # tag -> (base model to pull, Modelfile that derives the tag)
     "qwen2.5-coder-yarn:3b": ("qwen2.5-coder:3b", "models/builder.Modelfile"),
     "llama3.2:3b-16k": ("llama3.2:3b", "models/thinker.Modelfile"),
@@ -81,7 +88,17 @@ def origin(name):
         return "Anthropic API", "not pullable (cloud baseline)"
     if name in LOCAL_BUILDS:
         base, mf = LOCAL_BUILDS[name]
-        return "Ollama library + local Modelfile", f"ollama pull {base} && ollama create {name} -f {mf}"
+        return "Ollama library (run as local 16k wrapper)", f"ollama pull {base}"
+    if name.startswith("ts-"):
+        stem = name.split(":")[0]
+        for mf in (TRIAL / f"{stem}.Modelfile", TRIAL / f"{stem[3:]}.Modelfile"):
+            if mf.exists():
+                m = re.search(r"^FROM\s+(\S+)", mf.read_text(encoding="utf-8"), re.M)
+                if m:
+                    base = m.group(1)
+                    src = f"Hugging Face: {base[6:].split(':')[0]}" if base.startswith("hf.co/") else "Ollama library"
+                    return f"{src} (run as local 16k wrapper)", f"ollama pull {base}"
+        return "Local wrapper (original model unknown)", "original model unknown; run locally: ollama show " + name + " --modelfile"
     if name.startswith("hf.co/"):
         org_repo = name[len("hf.co/"):].split(":")[0]
         return f"Hugging Face: {org_repo}", f"ollama pull {name}"
@@ -112,27 +129,48 @@ def tps(r):
     return round(t / (s * m), 1) if s and m and t else None
 
 
-rows.sort(key=lambda r: (-(tps(r) or 0), -pct(r)))
+def spc(r):
+    """Seconds per case, the primary speed metric: mean wall seconds for one case (lower = faster). None when absent."""
+    return num(r, "mean_s_per_case") or None
+
+
+def speed_score(s, fast, slow):
+    """0-1 speed term from seconds per case on a log scale: the fastest in the pool scores 1, the slowest 0."""
+    if not s or not fast or not slow:
+        return 0
+    if slow <= fast:
+        return 1
+    return max(0, min(1, math.log(slow / s) / math.log(slow / fast)))
+
+
+rows.sort(key=lambda r: (spc(r) or 1e9, -pct(r)))
 for r in rows:
     r["pct"] = round(pct(r))
+    r["spc"] = spc(r)
     r["tps"] = tps(r)
     r["day"] = (r.get("date") or "")[:10]
     r["source"], r["pull"] = origin(r["builder_model"])
     r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
-    r["params_b"] = params_b(r["params"])
+    r["params_b"] = params_b(r["params"], r["builder_model"])
 
 
-# Composite score, the same formula as the post pick in ui/server.js: 0.6 x pass rate + 0.4 x ln(t/s) / ln(highest t/s).
-# Only local runs on the full check count take part; the speed reference is the highest t/s among those runs.
+# Composite score, the same formula as the post pick in ui/server.js:
+# 0.6 x pass rate + 0.4 x ln(slowest s/case / s/case) / ln(slowest s/case / fastest s/case).
+# Only local runs on the full check count take part; fastest and slowest are taken among those runs.
 # Cloud and partial runs get no composite (None) so they never shift the reference.
-_local = [r for r in rows if not r["builder_model"].startswith("claude-") and (r["tps"] or 0) > 0]
+_local = [r for r in rows if not r["builder_model"].startswith("claude-") and (r["spc"] or 0) > 0]
 _full = max((num(r, "max") for r in _local), default=0)
 _cands = [r for r in _local if num(r, "max") == _full]
-_max_tps = max((r["tps"] for r in _cands), default=1)
+_fast = min((r["spc"] for r in _cands), default=0)
+_slow = max((r["spc"] for r in _cands), default=0)
+_max_tps = max((r["tps"] for r in _cands if r["tps"]), default=1)  # kept for callers that still import it
 for r in rows:
     r["composite"] = None
-    if r in _cands and _max_tps > 1:
-        r["composite"] = round(0.6 * r["pct"] / 100 + 0.4 * math.log(r["tps"]) / math.log(_max_tps), 3)
+    if r in _cands:
+        r["composite"] = round(0.6 * r["pct"] / 100 + 0.4 * speed_score(r["spc"], _fast, _slow), 3)
+    elif r["builder_model"].startswith("claude-") and r["spc"] and _fast:
+        # cloud reference: same formula against the local range (speed clamped to 0-1); shown, never ranked
+        r["composite"] = round(0.6 * r["pct"] / 100 + 0.4 * speed_score(r["spc"], _fast, _slow), 3)
 
 
 def mmss(v):
@@ -148,9 +186,9 @@ RANK_LEGEND = [
     f"Score = verified checks passed out of total checks across {len(CASES)} cases.",
     "Pass rate % = Score / max.",
     "Builder / Thinker = the same score split by role cases.",
-    "t/s = tokens generated per second (primary speed metric) = tokens out / (s per case x cases).",
-    "Rank = 100 x (0.6 x pass rate + 0.4 x ln(t/s) / ln(highest t/s)), over full local runs (the post pick score). Blank = partial run or cloud baseline.",
-    "s per case = mean seconds per case (secondary speed metric).",
+    "s per case = mean wall seconds for one case (primary speed metric, lower = faster). It measures how long you wait for an answer, so wordy models get no credit for verbosity.",
+    "t/s = tokens generated per second, shown for information only; it no longer affects rank.",
+    "Rank = 100 x (0.6 x pass rate + 0.4 x speed), speed = ln(slowest s per case / s per case) / ln(slowest / fastest) over full local runs (the post pick score). Blank = partial run. The cloud baseline gets the same score against the local range (speed clamped to 0-1), shown for comparison and never ranked.",
     "Run time = wall clock for the whole run.",
     "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
     "Date = when the run happened; newer = made with newer code.",
@@ -159,14 +197,14 @@ RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
 
 
 def md_table():
-    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | t/s | Rank | s per case | Run time | Valid cases |",
+    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | s per case | t/s | Rank | Run time | Valid cases |",
          "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
         comp = "" if r["composite"] is None else f"{r['composite'] * 100:.1f}"
         o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
                  f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
-                 f"| {'' if r['tps'] is None else r['tps']} | {comp} | {r['mean_s_per_case']} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
+                 f"| {r['mean_s_per_case']} | {'' if r['tps'] is None else r['tps']} | {comp} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
 
@@ -188,9 +226,34 @@ def _status(m):
     return "red"
 
 
+_STATUS_ORDER = {"green": 0, "amber": 1, "red": 2}
+
+
+def role_score(m, fast, slow):
+    """Role recommendation score 0-1: 0.6 x pass rate on the role's own cases + 0.4 x speed, speed from the model's
+    mean seconds per case on a log scale between the fastest and slowest model in the role."""
+    s = sum(m["s"]) / len(m["s"]) if m["s"] else 0
+    return 0.6 * m["a"] / m["n"] + 0.4 * speed_score(s, fast, slow)
+
+
 def _sort_role(agg):
-    return sorted(agg.items(), key=lambda kv: (-kv[1]["a"] / kv[1]["n"], -kv[1]["n"],
-                                                -sum(kv[1].get("t", [0])) / max(len(kv[1].get("t", [])), 1)))
+    """Status first (green, amber, red), then role score, then more evidence. Each role is ranked on its own cases only."""
+    means = [sum(m["s"]) / len(m["s"]) for m in agg.values() if m["s"]]
+    fast, slow = min(means, default=0), max(means, default=0)
+    for m in agg.values():
+        m["score"] = round(role_score(m, fast, slow), 3)
+    return sorted(agg.items(), key=lambda kv: (_STATUS_ORDER[_status(kv[1])], -kv[1]["score"], -kv[1]["n"]))
+
+
+def cloud_reference(cases):
+    """Cloud (claude-*) reference for one role, from cloud.csv: pass rate on the cases it actually ran, scaled to the
+    role's size. The cloud model is the ceiling, shown beside the local ranking and never part of it. None if absent."""
+    best = None
+    for r in _load("cloud.csv"):
+        a, n = subtotal(r, cases)
+        if n and (best is None or a / n > best[1]["a"] / best[1]["n"]):
+            best = (r["builder_model"], {"a": a, "n": n})
+    return best
 
 
 def _role_agg(cases):
@@ -238,3 +301,51 @@ def role_pick(cases):
     same = [(n, m) for n, m in greens if m["a"] / m["n"] == top_pct and m["t"]]
     fast_name = max(same, key=lambda kv: sum(kv[1]["t"]) / len(kv[1]["t"]), default=(None, None))[0]
     return [n for n, _ in greens], (fast_name if fast_name != top_name else None), []
+
+
+# Hard thinker suite: separate from the 48-case standard. One JSON per run in results/hard/; the newest per model wins.
+HARD_CASES = ["hard_multifile_bug", "hard_two_vulns", "hard_ambiguous_trace", "hard_long_summary", "hard_compare_functions"]
+
+
+def hard_results(directory=None):
+    """{thinker model: {"cases": {case: (verified, n)}, "a": verified total, "n": runs total, "s": median s/run}}.
+    Reads results/hard/*.json (meta.thinker names the model); a model re-run later replaces its older result."""
+    d = Path(directory) if directory else B / "results" / "hard"
+    out = {}
+    for f in sorted(d.glob("*.json")):          # filenames start with a timestamp, so later files overwrite earlier ones
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            model = data["meta"]["thinker"]
+            res = data["results"]["realworld"]
+        except (OSError, ValueError, KeyError):
+            continue
+        cases, secs = {}, []
+        for c in HARD_CASES:
+            r = res.get(c)
+            if not r:
+                continue
+            try:
+                v, n = (int(x) for x in str(r["verified"]).split("/"))
+            except ValueError:
+                continue
+            cases[c] = (v, n)
+            if r.get("s", {}).get("p50"):
+                secs.append(float(r["s"]["p50"]))
+        if cases:
+            secs.sort()
+            out[model] = {"cases": cases, "a": sum(v for v, _ in cases.values()), "n": sum(n for _, n in cases.values()),
+                          "s": secs[len(secs) // 2] if secs else 0.0}
+    return out
+
+
+def hard_md(results=None):
+    """Markdown table of the hard suite, best first."""
+    res = hard_results() if results is None else results
+    if not res:
+        return "_No hard-suite runs yet._"
+    short = [c.replace("hard_", "") for c in HARD_CASES]
+    lines = ["| Model | Hard score | " + " | ".join(short) + " | median s/case |", "|---|---|" + "---|" * len(short) + "---|"]
+    for m, r in sorted(res.items(), key=lambda kv: (-kv[1]["a"] / max(kv[1]["n"], 1), kv[1]["s"] or 1e9)):
+        cells = [f"{r['cases'][c][0]}/{r['cases'][c][1]}" if c in r["cases"] else "·" for c in HARD_CASES]
+        lines.append(f"| `{m}` | {r['a']}/{r['n']} | " + " | ".join(cells) + f" | {r['s']:.0f} |")
+    return "\n".join(lines)

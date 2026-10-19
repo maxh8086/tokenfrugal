@@ -7,7 +7,7 @@ Flow: **run → CSV → report → cloud review → Observations in `Benchmark.m
 | 1. Check your hardware | `python Benchmark/script/hardware.py` | GPU / VRAM / RAM / Ollama version |
 | 2. Benchmark a model | `python Benchmark/script/run_benchmark.py qwen3:8b [thinker] --n 3` | one row appended to `results/benchmark.csv` |
 | 3. Rebuild report | `python Benchmark/script/build_report.py [--run [MODEL ...]] [--n 3] [--update ask\|yes\|no]` | tables + charts in `Benchmark.md`, `explorer.html`; `--run` first does a fresh benchmark run (no names = every local model in `benchmark.csv`); afterwards it asks "Update recommendations? [y/N]" and on yes runs `update_recommendations.py` |
-| 3b. Update recommendations | `python Benchmark/script/update_recommendations.py [--dry-run]` | sets `RANKED`/`DOTS` in `ui/index.html` and the default models in `router/agents.yaml` from all data in `benchmark.csv` |
+| 3b. Update recommendations | `python Benchmark/script/update_recommendations.py [--dry-run]` | sets `RANKED`/`DOTS` in `ui/index.html` and the default models in `router/tf-roles.yaml` from all data in `benchmark.csv` |
 | 4. Cloud review | give the prompt below to Claude / Codex / any API | updated `## Observations` |
 
 Prerequisites: the repo `.env`, Ollama (or an OpenAI-compatible endpoint) with the model pulled, Docker MCP
