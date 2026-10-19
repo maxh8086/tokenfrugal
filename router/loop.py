@@ -279,6 +279,27 @@ def infra_error(exc: BaseException) -> bool:
                 or ("runner" in s and ("terminated" in s or "stopped" in s)))
 
 
+def failure_reason(text: str) -> str:
+    """Coarse class of a task failure, so the orchestrator knows whether to resume or re-scope."""
+    s = (text or "").lower()
+    if s.startswith("infra:") or re.search(r"\b500\b", s) or any(
+            m in s for m in ("internalservererror", "llama runner", "runner terminated", "runner stopped")):
+        return "infra"
+    if re.search(r"connection closed|is not running|broken ?pipe", s):
+        return "connection"
+    if "timed out" in s:
+        return "timeout"
+    if "without calling any tool" in s:
+        return "no-tool-call"
+    if "tool call" in s and ("malformed" in s or "could not be run" in s or "wrote a tool call" in s):
+        return "malformed-tool-call"
+    if "no final answer" in s:
+        return "out-of-steps"
+    if "empty answer" in s or "filler/placeholder" in s:
+        return "bad-answer"
+    return "unknown"
+
+
 def think_extra(role: dict) -> dict:
     """Ask thinking models to skip their reasoning phase; empty for other roles."""
     return {"extra_body": {"think": False}} if role.get("thinking") else {}
