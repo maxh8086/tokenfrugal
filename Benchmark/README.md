@@ -25,6 +25,16 @@ Set these in `.env` at the repo root (copy from `.env.example`). Real environmen
 
 `.env.example` documents every variable. The benchmark's own `preflight` step prints PASS or FAIL for each check and the fix to apply.
 
+## Context window and KV cache
+
+Results depend on the context window (`num_ctx`) each model actually ran with, so the test setup fixes it per model.
+
+- **Policy.** `num_ctx = min(native context, 65536)` for models whose native window is above 32768. Models whose native window is 32768 or lower run at 32768 (or at their native size when that is larger, for example 40960). A model with a native window below 32768 therefore runs beyond what it was trained for, and its quality at that size is unverified.
+- **The Ollama default is not the test setting.** A Modelfile `num_ctx` overrides the server variable `OLLAMA_CONTEXT_LENGTH`. Without a Modelfile value, Ollama picks a default from free video memory (4096 on an 8 GB card). The router never sets `num_ctx`, so each tested model is a variant with the value baked in; the variant name ends in the context size, for example `-65536`.
+- **KV cache cost.** `bytes = 2 x layers x kv_heads x head_dim x bytes_per_value x tokens`, with about 1.06 bytes per value at `q8_0` (`OLLAMA_KV_CACHE_TYPE=q8_0`, `OLLAMA_FLASH_ATTENTION=1`). Very large native windows (262144 to 1048576 tokens) are capped because they do not fit in 31 GiB of RAM.
+- **Speed.** A larger context uses more memory, so more layers move from the GPU to the CPU and runs get slower. Check the split with `ollama ps`.
+- **Older results.** Runs made before this policy used smaller effective contexts (4096 default, or 16384 for `-16384` variants) and are not comparable with runs that follow it.
+
 ## How to read the results
 
 Each row in `results/benchmark.csv` is one run of one model setup on the same 16 cases.
