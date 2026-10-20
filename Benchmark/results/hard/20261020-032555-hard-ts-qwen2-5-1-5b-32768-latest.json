@@ -1,0 +1,2152 @@
+{
+ "tag": "hard-ts-qwen2-5-1-5b-32768-latest",
+ "stamp": "20261020-032555",
+ "n": 3,
+ "results": {
+  "realworld": {
+   "hard_multifile_bug": {
+    "verified": "1/3",
+    "ran": "2/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 30.2,
+     "p50": 33.1,
+     "p95": 48.9,
+     "max": 48.9,
+     "mean": 37.4
+    },
+    "peak": 2442,
+    "input": 3970,
+    "output": 216,
+    "timeout_s": 220.0,
+    "notes": [
+     "FAILED (debugger/ts-qwen2-5-1-5b-32768:latest) reason=unknown: BadRequestError: Error code: 400 - {'error': {'",
+     "The root cause of the issue is in the `money.py` file, specifically in the `to_cents` function. The  | scratch=['ledger.py', 'money.py', 're"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T21:55:55+00:00",
+      "end": "2026-10-19T21:56:29+00:00",
+      "s": 33.1,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[a3a106b492] The root cause of the issue is in the `money.py` file, specifically in the `to_cents` function. The function is intended to convert a monetary amount to cents, but it is currently converting to an integer, which is not the correct approach for monetary values. The function should return a float to maintain the precision of cents.\n\nTo fix this, the `to_cents` function should be updated to return a float, ensuring that the cents are correctly represented as a decimal value. Here is the corrected code:\n\n```python\nfrom money import to_cents\n\n\nclass Ledger:\n    def __init__(self):\n        self.cents = 0\n\n    def add(self, amount):\n        self.cents += to_cents(amount)\n\n    def total(self):\n        return self.cents / 100\n```\n\nThe `total` method in the `Ledger` class should also be updated to ensure it correctly calculates the total amount in cents. The current implementation is incorrect because it divides the total cents by 100, which is not the correct conversion for monetary values.\n\nTo fix this, the `total` method should be updated to return the total amount in cents directly, without the division by 100. [trimmed]",
+      "note": "The root cause of the issue is in the `money.py` file, specifically in the `to_cents` function. The ",
+      "peak": 2420,
+      "input": 2420,
+      "output": 346,
+      "trail_tools": [
+       "read_file",
+       "read_file"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T21:56:29+00:00",
+      "end": "2026-10-19T21:56:59+00:00",
+      "s": 30.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[791c473ffd] The root cause of the issue is in the `money.py` file, specifically in the `to_cents` function. The function is intended to convert a monetary amount to cents, but it is currently not working correctly. The function is multiplying the amount by 100, which is incorrect. The correct implementation should be to return the amount as a whole number without any conversion.\n\nTo fix this, the `to_cents` function should be updated to return the amount as a whole number without any conversion. Here is the corrected implementation:\n\n```python\nfrom money import to_cents\n\n\nclass Ledger:\n    def __init__(self):\n        self.cents = 0\n\n    def add(self, amount):\n        self.cents += to_cents(amount)\n\n    def total(self):\n        return self.cents / 100\n```\n\nThe `to_cents` function should be updated to return the amount as a whole number without any conversion. This will ensure that the totals in the `Ledger` class are calculated correctly.",
+      "note": "The root cause of the issue is in the `money.py` file, specifically in the `to_cents` function. The  | scratch=['ledger.py', 'money.py', 're",
+      "peak": 2420,
+      "input": 2420,
+      "output": 213,
+      "trail_tools": [
+       "read_file",
+       "read_file"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T21:57:00+00:00",
+      "end": "2026-10-19T21:57:49+00:00",
+      "s": 48.9,
+      "ok": false,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[9dbb57135a] FAILED (debugger/ts-qwen2-5-1-5b-32768:latest) reason=unknown: BadRequestError: Error code: 400 - {'error': {'message': 'invalid tool call arguments', 'type': 'invalid_request_error', 'param': None, 'code': None}}. Call resume_task('9dbb57135a') once, then re-scope.",
+      "note": "FAILED (debugger/ts-qwen2-5-1-5b-32768:latest) reason=unknown: BadRequestError: Error code: 400 - {'error': {'",
+      "peak": 2442,
+      "input": 7070,
+      "output": 88,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 220.0,
+      "container_state": {
+       "Running": true,
+       "ExitCode": 0,
+       "OOMKilled": false,
+       "StartedAt": "2026-10-19T16:06:10.024587914Z",
+       "FinishedAt": "2026-10-19T16:05:53.911674856Z"
+      },
+      "container_logs": ""
+     }
+    ]
+   },
+   "hard_two_vulns": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 14.7,
+     "p50": 15.5,
+     "p95": 16.1,
+     "max": 16.1,
+     "mean": 15.4
+    },
+    "peak": 1608,
+    "input": 1608,
+    "output": 59,
+    "timeout_s": 60.0,
+    "notes": [
+     "file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r \r file:4 - severity - secu | scratch=['api.py']",
+     "file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r \r file:4 - severity - secu | scratch=['cart.py', 'pricing.py', 'te"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T21:57:50+00:00",
+      "end": "2026-10-19T21:58:05+00:00",
+      "s": 15.5,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[8ae821f80e] file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r\n\r\nfile:4 - severity - security - unvalidated_input - path = '/tmp/b.tgz ' + path\r\n\r\nfile:4 - severity - security - unvalidated_input - shell = True",
+      "note": "file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r \r file:4 - severity - secu | scratch=['api.py']",
+      "peak": 1608,
+      "input": 1608,
+      "output": 59,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T21:58:05+00:00",
+      "end": "2026-10-19T21:58:20+00:00",
+      "s": 14.7,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[4f9b26fa9e] file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r\n\r\nfile:4 - severity - security - unvalidated_input - path = '/tmp/b.tgz ' + path\r\n\r\nfile:4 - severity - security - unvalidated_input - shell = True",
+      "note": "file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r \r file:4 - severity - secu | scratch=['api.py']",
+      "peak": 1608,
+      "input": 1608,
+      "output": 59,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T21:58:20+00:00",
+      "end": "2026-10-19T21:58:36+00:00",
+      "s": 16.1,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[5ae55a3b63] file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r\n\r\nfile:4 - severity - security - unvalidated_input - path = '/tmp/b.tgz ' + path\r\n\r\nfile:4 - severity - security - unvalidated_input - shell = True",
+      "note": "file:2 - severity - security - unvalidated_input - name = '\" + name + \"'\r \r file:4 - severity - secu | scratch=['cart.py', 'pricing.py', 'te",
+      "peak": 1608,
+      "input": 1608,
+      "output": 59,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     }
+    ]
+   },
+   "hard_ambiguous_trace": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 23.3,
+     "p50": 25.2,
+     "p95": 27.2,
+     "max": 27.2,
+     "mean": 25.2
+    },
+    "peak": 2309,
+    "input": 2309,
+    "output": 126,
+    "timeout_s": 220.0,
+    "notes": [
+     "The script is crashing because it is trying to access a dictionary key that does not exist. Specific | scratch=['trace_cfg.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T21:58:37+00:00",
+      "end": "2026-10-19T21:59:04+00:00",
+      "s": 27.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[05753f875e] The script is crashing because it is trying to access a dictionary key that does not exist. Specifically, the script is attempting to access the key 'retries' in the CONFIG dictionary, but the dictionary does not contain this key. The real root cause is that the CONFIG dictionary is empty or does not have the key 'retries'. This issue is not related to the line that raised the exception, but rather to the dictionary itself. The script is crashing because it is trying to access a dictionary key that does not exist. The CONFIG dictionary is empty or does not have the key 'retries'. This issue is not related to the line that raised the exception, but rather to the dictionary itself.",
+      "note": "The script is crashing because it is trying to access a dictionary key that does not exist. Specific | scratch=['trace_cfg.py']",
+      "peak": 2309,
+      "input": 2309,
+      "output": 141,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T21:59:05+00:00",
+      "end": "2026-10-19T21:59:30+00:00",
+      "s": 25.2,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[a498e9f983] The script is crashing because it is trying to access a dictionary key that does not exist. Specifically, the script is attempting to access the key 'retries' in the CONFIG dictionary, but the dictionary does not contain this key. The real root cause is that the CONFIG dictionary is empty or does not have the key 'retries'. This issue is not related to the line that raised the exception, but rather to the structure of the CONFIG dictionary. To fix this, you should ensure that the CONFIG dictionary contains the key 'retries' with a valid value before trying to access it.",
+      "note": "The script is crashing because it is trying to access a dictionary key that does not exist. Specific | scratch=['trace_cfg.py']",
+      "peak": 2309,
+      "input": 2309,
+      "output": 119,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 220.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T21:59:30+00:00",
+      "end": "2026-10-19T21:59:53+00:00",
+      "s": 23.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[d42faae95d] The script is crashing because it is trying to access a dictionary key that does not exist. Specifically, the script is attempting to access the key 'retries' in the CONFIG dictionary, but the dictionary does not contain this key. The real root cause is that the CONFIG dictionary is empty or does not have the key 'retries'. This issue is not related to the line that raised the exception, but rather to the structure of the CONFIG dictionary. To fix this, you should ensure that the CONFIG dictionary contains the key 'retries' with a valid value before trying to access it.",
+      "note": "The script is crashing because it is trying to access a dictionary key that does not exist. Specific | scratch=['trace_cfg.py']",
+      "peak": 2309,
+      "input": 2309,
+      "output": 119,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 220.0
+     }
+    ]
+   },
+   "hard_long_summary": {
+    "verified": "3/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 18.3,
+     "p50": 19.8,
+     "p95": 20.0,
+     "max": 20.0,
+     "mean": 19.4
+    },
+    "peak": 1348,
+    "input": 1348,
+    "output": 53,
+    "timeout_s": 100.0,
+    "notes": [],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T21:59:54+00:00",
+      "end": "2026-10-19T22:00:14+00:00",
+      "s": 20.0,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[64bbc9b620] The key decisions in the weekly engineering notes include:\n\n- The cache now runs on Redis.\n- The request timeout was increased from 5 seconds to 12 seconds.\n- Retries use exponential backoff with jitter.\n- The legacy admin page was removed.",
+      "note": "The key decisions in the weekly engineering notes include:  - The cache now runs on Redis. - The req",
+      "peak": 1348,
+      "input": 1348,
+      "output": 53,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 100.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T22:00:14+00:00",
+      "end": "2026-10-19T22:00:32+00:00",
+      "s": 18.3,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[c2d06e329e] The key decisions in the weekly engineering notes include:\n\n- The cache now runs on Redis.\n- The request timeout was increased from 5 seconds to 12 seconds.\n- Retries use exponential backoff with jitter.\n- The legacy admin page was removed.",
+      "note": "The key decisions in the weekly engineering notes include:  - The cache now runs on Redis. - The req",
+      "peak": 1348,
+      "input": 1348,
+      "output": 53,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 100.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T22:00:32+00:00",
+      "end": "2026-10-19T22:00:52+00:00",
+      "s": 19.8,
+      "ok": true,
+      "verified": true,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[f7701800bb] The key decisions in the weekly engineering notes include:\n\n- The cache now runs on Redis.\n- The request timeout was increased from 5 seconds to 12 seconds.\n- Retries use exponential backoff with jitter.\n- The legacy admin page was removed.",
+      "note": "The key decisions in the weekly engineering notes include:  - The cache now runs on Redis. - The req",
+      "peak": 1348,
+      "input": 1348,
+      "output": 53,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 100.0
+     }
+    ]
+   },
+   "hard_compare_functions": {
+    "verified": "0/3",
+    "ran": "3/3",
+    "status": "valid",
+    "infra_runs": 0,
+    "s": {
+     "min": 16.3,
+     "p50": 16.6,
+     "p95": 16.9,
+     "max": 16.9,
+     "mean": 16.6
+    },
+    "peak": 1600,
+    "input": 1600,
+    "output": 195,
+    "timeout_s": 60.0,
+    "notes": [
+     "The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity.   **Output:** - ` | scratch=['dedupe.py']"
+    ],
+    "runs": [
+     {
+      "run": 1,
+      "start": "2026-10-19T22:00:52+00:00",
+      "end": "2026-10-19T22:01:09+00:00",
+      "s": 16.9,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[a3474d50ef] The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity. \n\n**Output:**\n- `dedupe_a` returns a list of unique elements, preserving the order of the original list.\n- `dedupe_b` returns a list of unique elements, but it does not preserve the order of the original list.\n\n**Complexity:**\n- Both functions have a time complexity of O(n), where n is the length of the input list `xs`.\n- `dedupe_a` has a space complexity of O(n) due to the additional list `out` used to store the unique elements.\n- `dedupe_b` has a space complexity of O(n) due to the additional list `set(xs)` used to store the unique elements.\n\nIn summary, `dedupe_a` is more flexible in terms of preserving the original order, while `dedupe_b` is simpler and more straightforward in terms of functionality.",
+      "note": "The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity.   **Output:** - ` | scratch=['dedupe.py']",
+      "peak": 1600,
+      "input": 1600,
+      "output": 195,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 2,
+      "start": "2026-10-19T22:01:09+00:00",
+      "end": "2026-10-19T22:01:26+00:00",
+      "s": 16.6,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[03f7fe1662] The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity. \n\n**Output:**\n- `dedupe_a` returns a list of unique elements, preserving the order of the original list.\n- `dedupe_b` returns a list of unique elements, but it does not preserve the order of the original list.\n\n**Complexity:**\n- Both functions have a time complexity of O(n), where n is the length of the input list `xs`.\n- `dedupe_a` has a space complexity of O(n) due to the additional list `out` used to store the unique elements.\n- `dedupe_b` has a space complexity of O(n) due to the additional list `set(xs)` used to store the unique elements.\n\nIn summary, `dedupe_a` is more flexible in terms of preserving the original order, while `dedupe_b` is simpler and more straightforward in terms of functionality.",
+      "note": "The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity.   **Output:** - ` | scratch=['dedupe.py']",
+      "peak": 1600,
+      "input": 1600,
+      "output": 195,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     },
+     {
+      "run": 3,
+      "start": "2026-10-19T22:01:27+00:00",
+      "end": "2026-10-19T22:01:43+00:00",
+      "s": 16.3,
+      "ok": true,
+      "verified": false,
+      "status": "valid",
+      "dispatched": true,
+      "error": "[b173847bca] The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity. \n\n**Output:**\n- `dedupe_a` returns a list of unique elements, preserving the order of the original list.\n- `dedupe_b` returns a list of unique elements, but it does not preserve the order of the original list.\n\n**Complexity:**\n- Both functions have a time complexity of O(n), where n is the length of the input list `xs`.\n- `dedupe_a` has a space complexity of O(n) due to the additional list `out` used to store the unique elements.\n- `dedupe_b` has a space complexity of O(n) due to the additional list `set(xs)` used to store the unique elements.\n\nIn summary, `dedupe_a` is more flexible in terms of preserving the original order, while `dedupe_b` is simpler and more straightforward in terms of functionality.",
+      "note": "The two functions `dedupe_a` and `dedupe_b` differ in their output and complexity.   **Output:** - ` | scratch=['dedupe.py']",
+      "peak": 1600,
+      "input": 1600,
+      "output": 195,
+      "trail_tools": [
+       "read_file"
+      ],
+      "timeout_s": 60.0
+     }
+    ]
+   }
+  }
+ },
+ "env": {
+  "OLLAMA_MAX_LOADED_MODELS": "1",
+  "OLLAMA_NUM_PARALLEL": "1",
+  "OLLAMA_KEEP_ALIVE": "30m",
+  "OLLAMA_FLASH_ATTENTION": "1",
+  "OLLAMA_KV_CACHE_TYPE": "q8_0"
+ },
+ "task_timeout": {
+  "task_timeout_s": 150.0,
+  "source": "bench default"
+ },
+ "model_params": {
+  "builder": "1.5B",
+  "thinker": "1.5B"
+ },
+ "hardware": {
+  "samples": 101,
+  "psutil": true,
+  "cpu_pct": {
+   "min": 0.0,
+   "avg": 37.8,
+   "max": 60.1
+  },
+  "ram_pct": {
+   "min": 75.4,
+   "avg": 78.6,
+   "max": 82.0
+  },
+  "gpu_util_pct": {
+   "min": 0.0,
+   "avg": 22.5,
+   "max": 97.0
+  },
+  "vram_used_mib": {
+   "min": 775.0,
+   "avg": 3558.8,
+   "max": 6636.0
+  },
+  "gpu_temp_c": {
+   "min": 51.0,
+   "avg": 58.8,
+   "max": 74.0
+  },
+  "gpu_power_w": {
+   "min": 1.7,
+   "avg": 25.9,
+   "max": 83.5
+  },
+  "ollama_ram_mib": {
+   "min": 51.7,
+   "avg": 52.9,
+   "max": 54.5
+  },
+  "vram_total_mib": 8188.0,
+  "processor_split": {
+   "100% GPU": 76
+  },
+  "max_cpu_share_pct": 0.0
+ },
+ "hardware_samples": [
+  {
+   "t": 1792446955.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 7.44,
+   "cpu_pct": 0.0,
+   "ram_pct": 77.8,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446958.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 2.14,
+   "cpu_pct": 31.5,
+   "ram_pct": 78.0,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446961.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.88,
+   "cpu_pct": 23.8,
+   "ram_pct": 77.8,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446965.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.79,
+   "cpu_pct": 33.3,
+   "ram_pct": 77.9,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446968.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 31.3,
+   "ram_pct": 78.1,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446971.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.7,
+   "cpu_pct": 47.5,
+   "ram_pct": 78.2,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446975.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2500.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 1.7,
+   "cpu_pct": 43.6,
+   "ram_pct": 77.9,
+   "ollama_ram_mib": 51.7,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446978.7,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 64.55,
+   "cpu_pct": 46.2,
+   "ram_pct": 78.1,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446981.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 21.39,
+   "cpu_pct": 27.5,
+   "ram_pct": 78.0,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446985.2,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 65.0,
+   "gpu_power_w": 68.01,
+   "cpu_pct": 32.7,
+   "ram_pct": 77.7,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446988.4,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 69.3,
+   "cpu_pct": 40.8,
+   "ram_pct": 77.8,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446991.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 6.26,
+   "cpu_pct": 28.7,
+   "ram_pct": 77.8,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446994.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 26.1,
+   "ram_pct": 78.0,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792446998.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.83,
+   "cpu_pct": 27.1,
+   "ram_pct": 78.0,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447001.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2506.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 2.08,
+   "cpu_pct": 39.4,
+   "ram_pct": 78.1,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447005.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 48.1,
+   "ram_pct": 75.8,
+   "ollama_ram_mib": 53.4,
+   "ollama": []
+  },
+  {
+   "t": 1792447009.0,
+   "gpu_util_pct": 34.0,
+   "vram_used_mib": 5754.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 19.66,
+   "cpu_pct": 56.2,
+   "ram_pct": 79.1,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447012.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 786.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 26.42,
+   "cpu_pct": 47.9,
+   "ram_pct": 76.8,
+   "ollama_ram_mib": 53.6,
+   "ollama": []
+  },
+  {
+   "t": 1792447016.1,
+   "gpu_util_pct": 24.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 62.0,
+   "gpu_power_w": 25.95,
+   "cpu_pct": 33.9,
+   "ram_pct": 75.9,
+   "ollama_ram_mib": 52.9,
+   "ollama": []
+  },
+  {
+   "t": 1792447019.6,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 6396.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 25.23,
+   "cpu_pct": 27.5,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447022.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 21.58,
+   "cpu_pct": 40.5,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447026.2,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 76.96,
+   "cpu_pct": 35.4,
+   "ram_pct": 80.0,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447029.6,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 76.88,
+   "cpu_pct": 33.2,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447033.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 24.13,
+   "cpu_pct": 30.5,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447036.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 1.76,
+   "cpu_pct": 59.1,
+   "ram_pct": 81.1,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447040.2,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 71.52,
+   "cpu_pct": 42.3,
+   "ram_pct": 82.0,
+   "ollama_ram_mib": 51.8,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447043.7,
+   "gpu_util_pct": 5.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 21.76,
+   "cpu_pct": 42.1,
+   "ram_pct": 76.9,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447046.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 21.68,
+   "cpu_pct": 31.4,
+   "ram_pct": 77.1,
+   "ollama_ram_mib": 53.7,
+   "ollama": []
+  },
+  {
+   "t": 1792447050.4,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 76.48,
+   "cpu_pct": 29.1,
+   "ram_pct": 80.1,
+   "ollama_ram_mib": 53.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447053.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 21.84,
+   "cpu_pct": 31.8,
+   "ram_pct": 76.2,
+   "ollama_ram_mib": 53.5,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447057.0,
+   "gpu_util_pct": 22.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 24.64,
+   "cpu_pct": 32.1,
+   "ram_pct": 77.2,
+   "ollama_ram_mib": 53.5,
+   "ollama": []
+  },
+  {
+   "t": 1792447060.5,
+   "gpu_util_pct": 90.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 69.03,
+   "cpu_pct": 34.3,
+   "ram_pct": 80.4,
+   "ollama_ram_mib": 52.8,
+   "ollama": []
+  },
+  {
+   "t": 1792447063.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2486.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 19.29,
+   "cpu_pct": 31.2,
+   "ram_pct": 78.4,
+   "ollama_ram_mib": 54.1,
+   "ollama": []
+  },
+  {
+   "t": 1792447067.1,
+   "gpu_util_pct": 54.0,
+   "vram_used_mib": 4222.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 26.0,
+   "cpu_pct": 29.0,
+   "ram_pct": 79.0,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447070.6,
+   "gpu_util_pct": 93.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 71.28,
+   "cpu_pct": 38.9,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447073.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 22.07,
+   "cpu_pct": 34.1,
+   "ram_pct": 79.9,
+   "ollama_ram_mib": 53.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447077.2,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 68.43,
+   "cpu_pct": 43.6,
+   "ram_pct": 80.2,
+   "ollama_ram_mib": 53.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447080.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 22.18,
+   "cpu_pct": 45.5,
+   "ram_pct": 77.0,
+   "ollama_ram_mib": 53.2,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447084.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 60.0,
+   "gpu_power_w": 21.75,
+   "cpu_pct": 35.7,
+   "ram_pct": 77.1,
+   "ollama_ram_mib": 53.6,
+   "ollama": []
+  },
+  {
+   "t": 1792447087.7,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 74.0,
+   "gpu_power_w": 75.98,
+   "cpu_pct": 27.4,
+   "ram_pct": 79.7,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447091.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 20.01,
+   "cpu_pct": 36.2,
+   "ram_pct": 79.9,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447094.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 1.74,
+   "cpu_pct": 60.1,
+   "ram_pct": 76.9,
+   "ollama_ram_mib": 52.6,
+   "ollama": []
+  },
+  {
+   "t": 1792447098.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 64.0,
+   "gpu_power_w": 45.12,
+   "cpu_pct": 38.0,
+   "ram_pct": 78.0,
+   "ollama_ram_mib": 52.7,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447101.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 18.33,
+   "cpu_pct": 24.7,
+   "ram_pct": 75.4,
+   "ollama_ram_mib": 53.5,
+   "ollama": []
+  },
+  {
+   "t": 1792447105.3,
+   "gpu_util_pct": 35.0,
+   "vram_used_mib": 6396.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 24.03,
+   "cpu_pct": 35.1,
+   "ram_pct": 79.2,
+   "ollama_ram_mib": 53.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447108.8,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 71.26,
+   "cpu_pct": 52.6,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 53.0,
+   "ollama": []
+  },
+  {
+   "t": 1792447112.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2282.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 19.52,
+   "cpu_pct": 36.9,
+   "ram_pct": 77.3,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447115.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 22.39,
+   "cpu_pct": 29.5,
+   "ram_pct": 77.5,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447119.0,
+   "gpu_util_pct": 1.0,
+   "vram_used_mib": 796.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 18.42,
+   "cpu_pct": 48.9,
+   "ram_pct": 77.1,
+   "ollama_ram_mib": 53.3,
+   "ollama": []
+  },
+  {
+   "t": 1792447122.5,
+   "gpu_util_pct": 83.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 81.83,
+   "cpu_pct": 27.7,
+   "ram_pct": 80.4,
+   "ollama_ram_mib": 53.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447125.9,
+   "gpu_util_pct": 96.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 73.0,
+   "gpu_power_w": 72.72,
+   "cpu_pct": 35.8,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 53.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447129.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 59.0,
+   "gpu_power_w": 18.73,
+   "cpu_pct": 38.8,
+   "ram_pct": 80.7,
+   "ollama_ram_mib": 53.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447133.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 4.64,
+   "cpu_pct": 53.7,
+   "ram_pct": 80.9,
+   "ollama_ram_mib": 53.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447136.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 2.76,
+   "cpu_pct": 41.3,
+   "ram_pct": 77.4,
+   "ollama_ram_mib": 53.3,
+   "ollama": []
+  },
+  {
+   "t": 1792447140.1,
+   "gpu_util_pct": 38.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 67.09,
+   "cpu_pct": 36.5,
+   "ram_pct": 79.0,
+   "ollama_ram_mib": 53.4,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447143.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 18.16,
+   "cpu_pct": 38.6,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 53.4,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447146.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 4.81,
+   "cpu_pct": 33.1,
+   "ram_pct": 78.6,
+   "ollama_ram_mib": 53.4,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447149.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.84,
+   "cpu_pct": 23.7,
+   "ram_pct": 78.6,
+   "ollama_ram_mib": 53.4,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447153.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 54.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 30.2,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447157.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.96,
+   "cpu_pct": 44.1,
+   "ram_pct": 78.4,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447160.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.78,
+   "cpu_pct": 48.7,
+   "ram_pct": 78.5,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447163.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 1.87,
+   "cpu_pct": 38.5,
+   "ram_pct": 78.5,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447167.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 37.52,
+   "cpu_pct": 42.3,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447170.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 10.52,
+   "cpu_pct": 29.6,
+   "ram_pct": 78.4,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447174.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 32.3,
+   "ram_pct": 78.4,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447177.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.73,
+   "cpu_pct": 27.1,
+   "ram_pct": 78.3,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447180.6,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.92,
+   "cpu_pct": 40.8,
+   "ram_pct": 78.6,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447183.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.77,
+   "cpu_pct": 47.8,
+   "ram_pct": 78.9,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447187.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 1.82,
+   "cpu_pct": 41.6,
+   "ram_pct": 78.6,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447190.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 23.92,
+   "cpu_pct": 46.9,
+   "ram_pct": 78.8,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447194.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 28.3,
+   "ram_pct": 78.4,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447197.5,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 2.07,
+   "cpu_pct": 31.2,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447200.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 51.0,
+   "gpu_power_w": 1.89,
+   "cpu_pct": 44.8,
+   "ram_pct": 78.7,
+   "ollama_ram_mib": 52.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447204.5,
+   "gpu_util_pct": 17.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 10.8,
+   "cpu_pct": 43.0,
+   "ram_pct": 77.2,
+   "ollama_ram_mib": 52.9,
+   "ollama": []
+  },
+  {
+   "t": 1792447207.9,
+   "gpu_util_pct": 68.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 66.0,
+   "gpu_power_w": 30.88,
+   "cpu_pct": 42.1,
+   "ram_pct": 80.5,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447211.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 18.45,
+   "cpu_pct": 52.0,
+   "ram_pct": 77.6,
+   "ollama_ram_mib": 52.9,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447215.4,
+   "gpu_util_pct": 6.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 22.17,
+   "cpu_pct": 50.3,
+   "ram_pct": 76.1,
+   "ollama_ram_mib": 52.9,
+   "ollama": []
+  },
+  {
+   "t": 1792447218.9,
+   "gpu_util_pct": 80.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 46.24,
+   "cpu_pct": 35.6,
+   "ram_pct": 80.1,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447222.4,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 19.45,
+   "cpu_pct": 45.7,
+   "ram_pct": 80.0,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447225.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.8,
+   "cpu_pct": 37.4,
+   "ram_pct": 80.1,
+   "ollama_ram_mib": 53.0,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447229.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.99,
+   "cpu_pct": 45.6,
+   "ram_pct": 76.6,
+   "ollama_ram_mib": 53.3,
+   "ollama": []
+  },
+  {
+   "t": 1792447233.0,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 40.94,
+   "cpu_pct": 37.5,
+   "ram_pct": 78.1,
+   "ollama_ram_mib": 53.3,
+   "ollama": []
+  },
+  {
+   "t": 1792447236.6,
+   "gpu_util_pct": 37.0,
+   "vram_used_mib": 4222.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 23.82,
+   "cpu_pct": 35.3,
+   "ram_pct": 79.0,
+   "ollama_ram_mib": 53.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447240.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 23.99,
+   "cpu_pct": 45.7,
+   "ram_pct": 80.2,
+   "ollama_ram_mib": 53.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447243.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 53.0,
+   "gpu_power_w": 2.27,
+   "cpu_pct": 36.7,
+   "ram_pct": 80.3,
+   "ollama_ram_mib": 53.2,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447247.1,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 52.0,
+   "gpu_power_w": 1.85,
+   "cpu_pct": 42.0,
+   "ram_pct": 80.2,
+   "ollama_ram_mib": 52.9,
+   "ollama": []
+  },
+  {
+   "t": 1792447250.8,
+   "gpu_util_pct": 46.0,
+   "vram_used_mib": 2486.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 18.63,
+   "cpu_pct": 46.9,
+   "ram_pct": 78.5,
+   "ollama_ram_mib": 54.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447254.2,
+   "gpu_util_pct": 4.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 19.05,
+   "cpu_pct": 31.2,
+   "ram_pct": 76.3,
+   "ollama_ram_mib": 53.6,
+   "ollama": []
+  },
+  {
+   "t": 1792447257.7,
+   "gpu_util_pct": 97.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 70.0,
+   "gpu_power_w": 83.47,
+   "cpu_pct": 31.6,
+   "ram_pct": 80.0,
+   "ollama_ram_mib": 53.6,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447261.3,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6636.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 20.7,
+   "cpu_pct": 52.5,
+   "ram_pct": 80.1,
+   "ollama_ram_mib": 53.6,
+   "ollama": []
+  },
+  {
+   "t": 1792447264.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 1804.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 55.0,
+   "gpu_power_w": 18.01,
+   "cpu_pct": 36.3,
+   "ram_pct": 77.8,
+   "ollama_ram_mib": 52.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447268.2,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 21.32,
+   "cpu_pct": 28.3,
+   "ram_pct": 78.5,
+   "ollama_ram_mib": 52.8,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447271.6,
+   "gpu_util_pct": 18.0,
+   "vram_used_mib": 868.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 56.0,
+   "gpu_power_w": 19.44,
+   "cpu_pct": 30.1,
+   "ram_pct": 77.0,
+   "ollama_ram_mib": 54.5,
+   "ollama": []
+  },
+  {
+   "t": 1792447275.3,
+   "gpu_util_pct": 52.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 71.0,
+   "gpu_power_w": 69.78,
+   "cpu_pct": 47.8,
+   "ram_pct": 80.0,
+   "ollama_ram_mib": 52.3,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447278.9,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6394.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 19.48,
+   "cpu_pct": 47.4,
+   "ram_pct": 79.8,
+   "ollama_ram_mib": 53.9,
+   "ollama": []
+  },
+  {
+   "t": 1792447282.5,
+   "gpu_util_pct": 91.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 68.0,
+   "gpu_power_w": 73.16,
+   "cpu_pct": 36.7,
+   "ram_pct": 78.3,
+   "ollama_ram_mib": 54.1,
+   "ollama": [
+    {
+     "model": "ts-qwen2-5-1-5b-32768:latest",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447285.8,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 57.0,
+   "gpu_power_w": 19.64,
+   "cpu_pct": 31.6,
+   "ram_pct": 78.1,
+   "ollama_ram_mib": 54.4,
+   "ollama": []
+  },
+  {
+   "t": 1792447289.2,
+   "gpu_util_pct": 25.0,
+   "vram_used_mib": 5754.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 58.0,
+   "gpu_power_w": 22.3,
+   "cpu_pct": 30.5,
+   "ram_pct": 79.4,
+   "ollama_ram_mib": 53.5,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447292.7,
+   "gpu_util_pct": 0.0,
+   "vram_used_mib": 6634.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 61.0,
+   "gpu_power_w": 24.4,
+   "cpu_pct": 32.1,
+   "ram_pct": 80.0,
+   "ollama_ram_mib": 53.1,
+   "ollama": [
+    {
+     "model": "hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K",
+     "processor": "100% GPU",
+     "cpu_share_pct": 0.0
+    }
+   ]
+  },
+  {
+   "t": 1792447296.4,
+   "gpu_util_pct": 95.0,
+   "vram_used_mib": 775.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 69.0,
+   "gpu_power_w": 68.81,
+   "cpu_pct": 57.9,
+   "ram_pct": 76.3,
+   "ollama_ram_mib": 53.8,
+   "ollama": []
+  },
+  {
+   "t": 1792447300.1,
+   "gpu_util_pct": 94.0,
+   "vram_used_mib": 2504.0,
+   "vram_total_mib": 8188.0,
+   "gpu_temp_c": 72.0,
+   "gpu_power_w": 76.55,
+   "cpu_pct": 37.8,
+   "ram_pct": 78.6,
+   "ollama_ram_mib": 53.3,
+   "ollama": []
+  }
+ ],
+ "meta": {
+  "endpoint": "http://localhost:11434/v1",
+  "temperature": 0.0,
+  "temperature_omitted": [],
+  "max_tokens": 2048,
+  "builder": "ts-qwen2-5-1-5b-32768:latest",
+  "thinker": "ts-qwen2-5-1-5b-32768:latest",
+  "git_sha": "c1734c7"
+ }
+}
