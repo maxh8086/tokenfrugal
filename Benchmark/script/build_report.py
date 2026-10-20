@@ -178,6 +178,40 @@ def legend_html():
             + "".join(f"<li>{html.escape(l)}</li>" for l in items) + "</ul></details>")
 
 
+def _coding():
+    """Latest coding (L1-L6, realworld) run per model from results/coding/*.json; a complete run beats a newer partial one."""
+    latest = {}
+    for p in sorted((B / "results" / "coding").glob("*.json")):
+        m = re.match(r"\d{8}-\d{6}-(c\d+|t\d+)-coding-(.+)\.json$", p.name)
+        if not m:
+            continue
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        cases = d.get("results", {}).get("realworld", {})
+        if not cases:
+            continue
+        slug = m.group(2)
+        complete = len(cases) >= 6
+        if slug in latest and latest[slug]["complete"] and not complete:
+            continue
+        ok = ran = 0
+        means = []
+        row = {"model": slug, "suite": m.group(1), "n": d.get("n"), "complete": complete, "cases": {}}
+        for c, v in cases.items():
+            a, _, b = str(v.get("verified", "0/0")).partition("/")
+            ok += int(a or 0)
+            ran += int(b or 0)
+            row["cases"][c] = str(v.get("verified", ""))
+            if (v.get("s") or {}).get("mean") is not None:
+                means.append(v["s"]["mean"])
+        row.update(ok=ok, ran=ran, pct=round(100 * ok / ran) if ran else None,
+                   mean_s=round(sum(means) / len(means), 1) if means else None)
+        latest[slug] = row
+    return sorted(latest.values(), key=lambda r: r["model"])
+
+
 HTML = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Benchmark explorer</title>
 <style>
@@ -217,8 +251,9 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <div id="n"></div>
 <div class="w"><table id="t"></table></div>
 <details open><summary>Charts (linked to the filters and table)</summary><div id="ch" class="ch"></div></details>
+<details open id="cdx"><summary>Coding (L1–L6, realworld suite)</summary><p class="mut">Separate suite from the table above: runs live in <code>results/coding/</code> and are not merged into benchmark.csv. Latest complete run per model; partial runs are marked.</p><div id="cd"></div></details>
 <script>
-const D=__DATA__,C=__CASES__,REQ=__REQ__;let sk="composite",sd=-1;
+const D=__DATA__,C=__CASES__,REQ=__REQ__,CD=__CODING__;let sk="composite",sd=-1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
@@ -362,13 +397,26 @@ const pick=e=>{const t=e.target.closest("[data-sk]");if(!t)return;const k=t.data
 // Inside the dashboard the explorer is an auto-sized iframe (scrolling="no"), so scroll the host page to the frame's top instead
 const toTop=()=>{const f=window.frameElement;if(!f){window.scrollTo(0,0);return}const p=window.parent;p.scrollTo(0,Math.max(0,p.scrollY+f.getBoundingClientRect().top-8))};
 $("ch").addEventListener("click",pick);$("n").addEventListener("click",pick);
+function renderCoding(){
+ if(!CD.length){$("cd").innerHTML='<p class="mut">No coding runs yet.</p>';return}
+ const cols=[...new Set(CD.flatMap(r=>Object.keys(r.cases)))].sort();
+ const lab=c=>(c.split("_")[1]||c).toUpperCase();
+ const rows=[...CD].sort((a,b)=>(b.pct??-1)-(a.pct??-1)||(a.mean_s??1e9)-(b.mean_s??1e9));
+ const tbl=`<div class="w"><table><tr><th>Model</th><th>Suite</th><th>Runs</th><th>Passed</th><th>Pass rate</th><th>Mean s/case</th>${cols.map(c=>`<th title="${esc(c)}">${lab(c)}</th>`).join("")}</tr>`
+  +rows.map(r=>`<tr><td title="${esc(r.model)}"><b>${esc(sn(r.model))}</b>${r.complete?"":" <i>(partial)</i>"}</td><td>${esc(r.suite)}</td><td>${r.n==null?"·":r.n}</td><td>${r.ok}/${r.ran}</td><td>${r.pct==null?"·":r.pct+"%"}</td><td>${r.mean_s==null?"·":r.mean_s+" s"}</td>`
+  +cols.map(c=>{const v=r.cases[c]||"";const [a,b]=v.split("/").map(Number);const cls=!b?"":a===b?"g":a===0?"r":"y";return`<td class="${cls}">${v||"·"}</td>`}).join("")+"</tr>").join("")+"</table></div>";
+ const bars=rows.map(r=>`<div><span title="${esc(r.model)}">${esc(short(sn(r.model),40))}</span> <span class="bar" style="width:${(r.pct||0)*3}px"></span> ${r.pct==null?"·":r.pct+"%"}</div>`).join("");
+ $("cd").innerHTML=tbl+box("Coding pass rate by model",bars,"Share of coding verifications passed across the L1–L6 cases, latest complete run per model.");
+}
+renderCoding();
 document.querySelectorAll("input,select").forEach(e=>e.oninput=draw);draw();
 </script>"""
 (B / "explorer.html").write_text(
     HTML.replace("__ROLES__", legend_html() + roles_html())
         .replace("__DATA__", json.dumps(rows))
         .replace("__CASES__", json.dumps(CASES))
-        .replace("__REQ__", json.dumps(list(REQUIRED_TOOL_CASES))),
+        .replace("__REQ__", json.dumps(list(REQUIRED_TOOL_CASES)))
+        .replace("__CODING__", json.dumps(_coding())),
     encoding="utf-8")
 PAGE = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TokenFrugal benchmark</title>
