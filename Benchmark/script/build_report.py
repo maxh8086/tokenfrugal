@@ -41,6 +41,7 @@ if _args.run is not None:
         if _rc:
             raise SystemExit(f"run_benchmark failed for {_m} (exit {_rc}); report not rebuilt")
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # `python -I` drops the script dir from sys.path
 from ranking import *  # noqa
 from ranking import B, cloud_reference, _status, _sort_role, _role_agg, _load, _local, _cands, _max_tps
 AGENTS = B.parent / "router" / "tf-roles.yaml"
