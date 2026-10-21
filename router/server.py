@@ -256,10 +256,13 @@ async def resume_task(task_id: str) -> str:
 
 @mcp.tool()
 def list_roles() -> str:
-    """List roles with model, docker profile, compose backends and tool allowlist."""
+    """List roles with model, docker profile, compose backends and tool allowlist, then teams with their lead and orchestrator."""
     rows = [f"{r['role']}: {r['model']} | {r['profile'] or '-'} | {','.join(r['backends']) or '-'} | "
             f"{','.join(r['tools']) or 'all'}" for r in events.roles_rows(CFG)]
-    return "\n".join(["role: model | docker profile | compose backends | tools", *rows])
+    teams = [f"team {n}: lead {t['lead']} | {t['description']} | roles {', '.join(t['roles'])}"
+             for n, t in CFG["teams"].items()]
+    return "\n".join(["role: model | docker profile | compose backends | tools", *rows,
+                      "", f"orchestrator: {CFG['orchestrator']} (reviews each team lead's result)", *teams])
 
 
 if __name__ == "__main__":

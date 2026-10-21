@@ -12,8 +12,9 @@ This file holds the working handoff notes. Closed items are removed once verifie
 - `orchestration:` in the yaml sets the orchestrator (`claude-sonnet-5-5`) and the default team lead (`claude-haiku-5-5`). A team can set its own `lead:`.
 - The dashboard (`scripts/tf_roles_ui.py`, Teams box) saves picks to `router/tf-roles_teams.json` (`TOKENFRUGAL_TF_ROLES_TEAMS_FILE` overrides the path). It stores only differences from the yaml.
 - `router/config.py`: `team_of(role, cfg)`, `lead_for(team, cfg)`, `cfg["orchestrator"]`.
-- Not built: Haiku choosing a team and role at run time. The lead and orchestrator are cloud models run by Claude Code, so the router can record them but cannot call them. Routing by lead needs a model-driven step outside `dispatch_task`.
-- Open question: the global CLAUDE.md names `claude-haiku-4-5`, while the model list here uses `claude-haiku-5-5`. The yaml uses 5-5.
+- Visibility, not routing: `list_roles` prints each team's lead, description and roles, and the orchestrator. `CLAUDE.md` and `AGENTS.md` describe the same. Any MCP client, Codex included, can read the lead from there.
+- Not built: Haiku choosing a team and role at run time. The lead and orchestrator are cloud models run by the client, so the router records them but does not call them.
+- Model: `claude-haiku-5-5` is the latest Haiku and is used everywhere in the repo. The global CLAUDE.md still names `claude-haiku-4-5` and should be updated to 5-5.
 
 ---
 

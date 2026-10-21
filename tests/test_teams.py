@@ -32,6 +32,16 @@ class TeamPartition(unittest.TestCase):
         self.assertEqual(teams, {"ui-ux"})
 
 
+class TeamListing(unittest.TestCase):
+    def test_list_roles_names_orchestrator_and_each_lead(self):
+        from router import server
+        text = server.list_roles()
+        cfg = config.load_tf_roles()
+        self.assertIn(f"orchestrator: {cfg['orchestrator']}", text)
+        for name, team in cfg["teams"].items():
+            self.assertIn(f"team {name}: lead {team['lead']} | {team['description']}", text)
+
+
 class TeamDefaults(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
