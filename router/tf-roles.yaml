@@ -11,45 +11,45 @@ tf_roles_models: {}
 # Slugs accepted even with no model mapping (benchmark cases dispatch to these).
 known_agents: [db-postgres-dev, db-postgres-admin, db-mysql-dev, db-mysql-admin, db-mssql-dev, db-mssql-admin, db-oracle-dev, db-oracle-admin, db-elastic-dev, db-elastic-admin, db-mongo-dev-l1, db-mongo-dev-l2, db-mongo-admin-l1, db-mongo-admin-l2, db-redis-dev-l1, db-redis-dev-l2, db-redis-dev-l3, db-redis-admin-l1, coding-l1, coding-l2, coding-l3, coding-l4, coding-l5, coding-l6, engineering-backend-architect, design-ui-designer, gis-analyst, support-docs-writer]
 roles:
-  builder:  {model: builder, profile: build,      max_steps: 12, timeout_s: 90, native: [synaptree, sandbox], tools: [read_file, write_file, edit_file, search_graph, get_code_snippet, run_tests], skills: [role-builder]}
-  data-engineer: {model: builder, profile: build-data, max_steps: 12, timeout_s: 60, tools: [read_file, list_directory], skills: [role-data]}  # pipelines and files; SQL work goes to db-* roles
-  analyzer: {model: thinker, profile: analyze,    max_steps: 10, timeout_s: 60, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep], skills: [role-analyzer]}
-  security: {model: thinker, profile: security,   max_steps: 10, timeout_s: 300, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule], skills: [security-audit]}
-  reviewer: {model: thinker, profile: analyze,    max_steps: 8, timeout_s: 60,  native: [synaptree], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep], skills: [code-review]}
-  debugger: {model: thinker, profile: debug,      max_steps: 12, timeout_s: 220, native: [synaptree], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code], skills: [role-debugger]}
-  docs:     {model: thinker, profile: docs,       max_steps: 8, timeout_s: 100,  tools: [read_file, list_directory, git_log, fetch], skills: [docs-style]}
-  designer: {model: thinker, profile: design,     max_steps: 10, timeout_s: 160, compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape], skills: [role-designer]}
-  browser:  {model: thinker, profile: browser,    max_steps: 8, timeout_s: 80,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit], skills: [role-browser]}
-  tracker:  {model: thinker, max_steps: 6, timeout_s: 60,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note], skills: [role-tracker]}
-  code-l1:  {model: builder, profile: code-l1, max_steps: 8, timeout_s: 180,  native: [sandbox], tools: [read_file, write_file, run_tests], skills: [code-l1]}
-  code-l2:  {model: builder, profile: code-l2, max_steps: 10, timeout_s: 225, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [code-l2]}
-  code-l3:  {model: builder, profile: code-l3, max_steps: 12, timeout_s: 270, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, directory_tree, run_tests], skills: [code-l3]}
-  code-l4:  {model: builder, profile: code-l4, max_steps: 12, timeout_s: 450, native: [sandbox], tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests], skills: [code-l4]}
-  code-l5:  {model: builder, profile: code-l5, max_steps: 14, timeout_s: 450, native: [sandbox], tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python], skills: [code-l5]}
-  code-l6:  {model: builder, profile: code-l6, max_steps: 14, timeout_s: 450, native: [synaptree, sandbox], tools: [search_graph, trace_path, get_code_snippet, read_file, edit_file, run_tests], skills: [code-l6]}
-  github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read]}  # read-only; create/close/merge PRs stay with Haiku
-  github-actions-read: {model: thinker, profile: github, max_steps: 8, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read]}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
-  devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops]}
-  finance:  {model: thinker, profile: docs,       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown], skills: [role-finance]}
-  research: {model: thinker,                       max_steps: 8, timeout_s: 60,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links], skills: [role-research]}
-  db-postgres-dev: {model: builder, profile: db-postgres-dev, max_steps: 10, compose: [db-postgres], tools: [execute_sql, search_objects], skills: [db-dev]}
-  db-postgres-admin: {model: thinker, profile: db-postgres-admin, max_steps: 8, compose: [db-postgres], tools: [execute_sql, search_objects], skills: [db-admin]}
-  db-mysql-dev: {model: builder, profile: db-mysql-dev, max_steps: 10, compose: [db-mysql], tools: [execute_sql, search_objects], skills: [db-dev]}
-  db-mysql-admin: {model: thinker, profile: db-mysql-admin, max_steps: 8, compose: [db-mysql], tools: [execute_sql, search_objects], skills: [db-admin]}
-  db-mssql-dev: {model: builder, profile: db-mssql-dev, max_steps: 10, compose: [db-mssql], tools: [execute_sql, search_objects], skills: [db-dev]}
-  db-mssql-admin: {model: thinker, profile: db-mssql-admin, max_steps: 8, compose: [db-mssql], tools: [execute_sql, search_objects], skills: [db-admin]}
-  db-oracle-dev: {model: builder, profile: db-oracle-dev, max_steps: 10, tools: [execute_sql, search_objects], skills: [db-dev]}
-  db-oracle-admin: {model: thinker, profile: db-oracle-admin, max_steps: 8, tools: [execute_sql, search_objects], skills: [db-admin]}
-  db-elastic-dev: {model: builder, profile: db-elastic-dev, max_steps: 10, compose: [db-elastic], tools: [esql, get_mappings, list_indices, search], skills: [db-dev]}
-  db-elastic-admin: {model: thinker, profile: db-elastic-admin, max_steps: 8, compose: [db-elastic], tools: [esql, get_mappings, get_shards, list_indices, search], skills: [db-admin]}
-  db-mongo-dev-l1: {model: builder, profile: db-mongo-dev-l1, max_steps: 10, compose: [db-mongo], tools: [find, aggregate, count, collection-schema, explain, list-collections], skills: [db-dev]}
-  db-mongo-dev-l2: {model: builder, profile: db-mongo-dev-l2, max_steps: 10, compose: [db-mongo], tools: [insert-many, update-many, create-collection, create-index, find, collection-schema], skills: [db-dev]}
-  db-mongo-admin-l1: {model: thinker, profile: db-mongo-admin-l1, max_steps: 8, compose: [db-mongo], tools: [list-databases, list-collections, collection-schema, collection-indexes, db-stats, collection-storage-size], skills: [db-admin]}
-  db-mongo-admin-l2: {model: thinker, profile: db-mongo-admin-l2, max_steps: 8, compose: [db-mongo], tools: [explain, find, aggregate, count, mongodb-logs, collection-indexes], skills: [db-admin]}
-  db-redis-dev-l1: {model: builder, profile: db-redis-dev-l1, max_steps: 10, compose: [db-redis], tools: [get, set, hgetall, hset, lrange, smembers], skills: [db-dev]}
-  db-redis-dev-l2: {model: builder, profile: db-redis-dev-l2, max_steps: 10, compose: [db-redis], tools: [lpush, rpush, sadd, expire, json_get, json_set], skills: [db-dev]}
-  db-redis-dev-l3: {model: builder, profile: db-redis-dev-l3, max_steps: 10, compose: [db-redis], tools: [create_vector_index_hash, set_vector_in_hash, hybrid_search, search_redis_documents, get_indexed_keys_number, scan_keys], skills: [db-dev]}
-  db-redis-admin-l1: {model: thinker, profile: db-redis-admin-l1, max_steps: 8, compose: [db-redis], tools: [info, dbsize, client_list, scan_keys, get_indexes, get_index_info], skills: [db-admin]}
+  builder:  {model: builder, profile: build,      max_steps: 12, timeout_s: 90, native: [synaptree, sandbox], tools: [read_file, write_file, edit_file, search_graph, get_code_snippet, run_tests], skills: [role-builder], improve: gated}
+  data-engineer: {model: builder, profile: build-data, max_steps: 12, timeout_s: 60, tools: [read_file, list_directory], skills: [role-data], improve: gated}  # pipelines and files; SQL work goes to db-* roles
+  analyzer: {model: thinker, profile: analyze,    max_steps: 10, timeout_s: 60, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep], skills: [role-analyzer], improve: gated}
+  security: {model: thinker, profile: security,   max_steps: 10, timeout_s: 300, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule], skills: [security-audit], improve: gated}
+  reviewer: {model: thinker, profile: analyze,    max_steps: 8, timeout_s: 60,  native: [synaptree], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep], skills: [code-review], improve: gated}
+  debugger: {model: thinker, profile: debug,      max_steps: 12, timeout_s: 220, native: [synaptree], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code], skills: [role-debugger], improve: gated}
+  docs:     {model: thinker, profile: docs,       max_steps: 8, timeout_s: 100,  tools: [read_file, list_directory, git_log, fetch], skills: [docs-style], improve: gated}
+  designer: {model: thinker, profile: design,     max_steps: 10, timeout_s: 160, compose: [penpot-mcp], tools: [high_level_overview, penpot_api_info, execute_code, export_shape], skills: [role-designer], improve: gated}
+  browser:  {model: thinker, profile: browser,    max_steps: 8, timeout_s: 80,  tools: [navigate_page, take_snapshot, take_screenshot, list_console_messages, list_network_requests, lighthouse_audit], skills: [role-browser], improve: gated}
+  tracker:  {model: thinker, max_steps: 6, timeout_s: 60,  compose: [neo4j], native: [plan], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note], skills: [role-tracker], improve: gated}
+  code-l1:  {model: builder, profile: code-l1, max_steps: 8, timeout_s: 180,  native: [sandbox], tools: [read_file, write_file, run_tests], skills: [code-l1], improve: gated}
+  code-l2:  {model: builder, profile: code-l2, max_steps: 10, timeout_s: 225, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [code-l2], improve: gated}
+  code-l3:  {model: builder, profile: code-l3, max_steps: 12, timeout_s: 270, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, directory_tree, run_tests], skills: [code-l3], improve: gated}
+  code-l4:  {model: builder, profile: code-l4, max_steps: 12, timeout_s: 450, native: [sandbox], tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests], skills: [code-l4], improve: gated}
+  code-l5:  {model: builder, profile: code-l5, max_steps: 14, timeout_s: 450, native: [sandbox], tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python], skills: [code-l5], improve: gated}
+  code-l6:  {model: builder, profile: code-l6, max_steps: 14, timeout_s: 450, native: [synaptree, sandbox], tools: [search_graph, trace_path, get_code_snippet, read_file, edit_file, run_tests], skills: [code-l6], improve: gated}
+  github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read], improve: gated}  # read-only; create/close/merge PRs stay with Haiku
+  github-actions-read: {model: thinker, profile: github, max_steps: 8, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read], improve: gated}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
+  devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops], improve: gated}
+  finance:  {model: thinker, profile: docs,       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown], skills: [role-finance], improve: gated}
+  research: {model: thinker,                       max_steps: 8, timeout_s: 60,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links], skills: [role-research], improve: gated}
+  db-postgres-dev: {model: builder, profile: db-postgres-dev, max_steps: 10, compose: [db-postgres], tools: [execute_sql, search_objects], skills: [db-dev], improve: gated}
+  db-postgres-admin: {model: thinker, profile: db-postgres-admin, max_steps: 8, compose: [db-postgres], tools: [execute_sql, search_objects], skills: [db-admin], improve: gated}
+  db-mysql-dev: {model: builder, profile: db-mysql-dev, max_steps: 10, compose: [db-mysql], tools: [execute_sql, search_objects], skills: [db-dev], improve: gated}
+  db-mysql-admin: {model: thinker, profile: db-mysql-admin, max_steps: 8, compose: [db-mysql], tools: [execute_sql, search_objects], skills: [db-admin], improve: gated}
+  db-mssql-dev: {model: builder, profile: db-mssql-dev, max_steps: 10, compose: [db-mssql], tools: [execute_sql, search_objects], skills: [db-dev], improve: gated}
+  db-mssql-admin: {model: thinker, profile: db-mssql-admin, max_steps: 8, compose: [db-mssql], tools: [execute_sql, search_objects], skills: [db-admin], improve: gated}
+  db-oracle-dev: {model: builder, profile: db-oracle-dev, max_steps: 10, tools: [execute_sql, search_objects], skills: [db-dev], improve: gated}
+  db-oracle-admin: {model: thinker, profile: db-oracle-admin, max_steps: 8, tools: [execute_sql, search_objects], skills: [db-admin], improve: gated}
+  db-elastic-dev: {model: builder, profile: db-elastic-dev, max_steps: 10, compose: [db-elastic], tools: [esql, get_mappings, list_indices, search], skills: [db-dev], improve: gated}
+  db-elastic-admin: {model: thinker, profile: db-elastic-admin, max_steps: 8, compose: [db-elastic], tools: [esql, get_mappings, get_shards, list_indices, search], skills: [db-admin], improve: gated}
+  db-mongo-dev-l1: {model: builder, profile: db-mongo-dev-l1, max_steps: 10, compose: [db-mongo], tools: [find, aggregate, count, collection-schema, explain, list-collections], skills: [db-dev], improve: gated}
+  db-mongo-dev-l2: {model: builder, profile: db-mongo-dev-l2, max_steps: 10, compose: [db-mongo], tools: [insert-many, update-many, create-collection, create-index, find, collection-schema], skills: [db-dev], improve: gated}
+  db-mongo-admin-l1: {model: thinker, profile: db-mongo-admin-l1, max_steps: 8, compose: [db-mongo], tools: [list-databases, list-collections, collection-schema, collection-indexes, db-stats, collection-storage-size], skills: [db-admin], improve: gated}
+  db-mongo-admin-l2: {model: thinker, profile: db-mongo-admin-l2, max_steps: 8, compose: [db-mongo], tools: [explain, find, aggregate, count, mongodb-logs, collection-indexes], skills: [db-admin], improve: gated}
+  db-redis-dev-l1: {model: builder, profile: db-redis-dev-l1, max_steps: 10, compose: [db-redis], tools: [get, set, hgetall, hset, lrange, smembers], skills: [db-dev], improve: gated}
+  db-redis-dev-l2: {model: builder, profile: db-redis-dev-l2, max_steps: 10, compose: [db-redis], tools: [lpush, rpush, sadd, expire, json_get, json_set], skills: [db-dev], improve: gated}
+  db-redis-dev-l3: {model: builder, profile: db-redis-dev-l3, max_steps: 10, compose: [db-redis], tools: [create_vector_index_hash, set_vector_in_hash, hybrid_search, search_redis_documents, get_indexed_keys_number, scan_keys], skills: [db-dev], improve: gated}
+  db-redis-admin-l1: {model: thinker, profile: db-redis-admin-l1, max_steps: 8, compose: [db-redis], tools: [info, dbsize, client_list, scan_keys, get_indexes, get_index_info], skills: [db-admin], improve: gated}
   # db-oracle-*: wired and unit-tested only, no scratch container (unverified live)
 tf_roles_skills:
   project-management-project-shepherd: [planning]
@@ -200,3 +200,27 @@ members:
     [macos-spatial-metal-engineer, terminal-integration-specialist, visionos-spatial-engineer, xr-cockpit-interaction-specialist, xr-immersive-developer, xr-interface-architect]
   specialized:
     [accounts-payable-agent, agentic-identity-trust, agents-orchestrator, automation-governance-architect, business-strategist, change-management-consultant, chief-financial-officer, corporate-training-designer, customer-service, customer-success-manager, data-consolidation-agent, data-privacy-officer, esg-sustainability-officer, government-digital-presales-consultant, grant-writer, healthcare-aging-parent-care-companion, healthcare-customer-service, healthcare-marketing-compliance, hospitality-guest-services, hr-onboarding, identity-graph-operator, language-translator, legal-billing-time-tracking, legal-client-intake, legal-document-review, loan-officer-assistant, lsp-index-engineer, ma-integration-manager, medical-billing-coding-specialist, operations-manager, organizational-psychologist, agentl-growth-mentor, real-estate-buyer-seller, recruitment-specialist, report-distribution-agent, resume-tailor, retail-customer-returns, sales-data-extraction-agent, sales-outreach, study-abroad-advisor, supply-chain-strategist, zk-steward]
+
+# UI roles, defined but NOT dispatchable yet. No model is assigned: each role gets a model
+# only after it passes its own test. To activate one, move its entry under `roles:` and add
+# `model: <logical name>` once the model is chosen.
+pending_roles:
+  ui-components: {profile: build,   max_steps: 12, timeout_s: 120, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [role-ui-builder], improve: gated}   # shadcn/Radix components
+  ui-layout:     {profile: build,   max_steps: 12, timeout_s: 120, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                  # Tailwind grids, responsive layout
+  ui-polish:     {profile: build,   max_steps: 10, timeout_s: 120, native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                                 # spacing, shadows, card details
+  ui-style:      {profile: build,   max_steps: 10, timeout_s: 120, native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                                 # the single chosen aesthetic
+  ui-motion:     {profile: build,   max_steps: 12, timeout_s: 150, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                  # GSAP motion, only when the spec asks
+  ui-patch:      {profile: build,   max_steps: 8,  timeout_s: 90,  native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                                 # diff-only fixes from a review
+  ui-tokens:     {profile: build,   max_steps: 10, timeout_s: 90,  native: [sandbox], tools: [read_file, write_file, edit_file], skills: [role-ui-tokens], improve: gated}                                  # CSS variables and tokens file
+  ui-tokens-check: {profile: analyze, max_steps: 8, timeout_s: 60, native: [synaptree], tools: [read_file, search_graph, ast-grep], skills: [role-ui-tokens], improve: gated}                             # read-only: raw values outside tokens
+  ui-a11y-check: {profile: analyze, max_steps: 8, timeout_s: 60,  native: [synaptree], tools: [read_file, search_graph, ast-grep], skills: [role-ui-a11y], improve: gated}                                 # read-only accessibility audit of code
+  ui-review-lighthouse: {profile: browser, max_steps: 8, timeout_s: 80, tools: [navigate_page, lighthouse_audit], skills: [role-ui-review], improve: gated}                                              # scores and failing audits
+  ui-review-console: {profile: browser, max_steps: 8, timeout_s: 80, tools: [navigate_page, take_snapshot, list_console_messages], skills: [role-ui-review], improve: gated}                                   # runtime errors and DOM checks
+  ui-vision-review: {profile: browser, max_steps: 6, timeout_s: 120, tools: [navigate_page, take_screenshot], skills: [role-ui-review], improve: gated}                                                       # screenshot critique (needs a vision model before activation)
+
+# Self-improvement gate (scripts/role_improve.py). A role may propose a diff to its own skill files.
+# Nothing is applied automatically: only 'python -m scripts.role_improve approve <id>' applies one.
+self_improve:
+  enabled: true
+  gate: approval
+  scope: [skills]
