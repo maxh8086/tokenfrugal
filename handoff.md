@@ -44,6 +44,12 @@ Tool overlap only, different skill (keep; not duplicates):
 - `ui-review-console` and `ui-review-lighthouse` vs the active `browser` role: different skills (`role-ui-review`, `role-browser`). Note that `browser` already exposes the same tools, so these only stay separate because of their skill.
 - `builder` vs `devops`, `reviewer` vs `analyzer`: already listed in scope item 4. Different skills, so these are not duplicates under this rule. Item 4 still needs a clear job for each.
 
+**UI role tests (pending; no model run yet, waiting for the user's confirmation)**
+- `scripts/ui_role_check.py`: offline structure check for the 10 `ui-` pending roles. Passes: no model key, gated, skill sections present. Tests: `tests/test_ui_role_check.py`.
+- `scripts/ui_role_smoke.py`: live smoke. Without `--confirm` it prints a plan and makes no model call. Needs `--model` and `CC_WORKSPACE`. Results go to their own file, `Benchmark/results/ui_roles.csv`.
+- `Benchmark/results/benchmark.csv` is NOT touched. Merge UI results into it only after the UI roles are final, and only after the user says so.
+- Pending: final UI role changes, then the live run, then the merge. Model assignment waits for passing results.
+
 **Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
 - Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
 - Skill: `router/skills/role-ui-webapp-test/SKILL.md`. Activation waits for the user's go-ahead and a passing test.
