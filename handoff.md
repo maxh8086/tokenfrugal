@@ -62,6 +62,7 @@ Tool overlap only, different skill (keep; not duplicates):
 - `scripts/ui_role_smoke.py`: live smoke. Without `--confirm` it prints a plan and makes no model call. Needs `--model` and `CC_WORKSPACE`. Results go to their own file, `Benchmark/results/ui_roles.csv`.
 - `Benchmark/results/benchmark.csv` is NOT touched. Merge UI results into it only after the UI roles are final, and only after the user says so.
 - Pending: final UI role changes, then the live run, then the merge. Model assignment waits for passing results.
+- Later cleanup (not started): remove the taste-skill design skills from Claude, and keep ui-ux-pro-max as the design skill. Do this only after the UI role tests have run on all models and the results are in `Benchmark/results/ui_roles.csv`. Before removing anything, check which roles or skills reference taste-skill.
 
 **Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
 - Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
