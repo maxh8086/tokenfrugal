@@ -171,6 +171,10 @@ TF_ROLES_MODELS_FILE = _tf_roles_file("TOKENFRUGAL_TF_ROLES_MODELS_FILE", "tf-ro
 TF_ROLES_MCPS_FILE = _tf_roles_file("TOKENFRUGAL_TF_ROLES_MCPS_FILE", "tf-roles_mcps.json", _LEGACY_MCPS_FILES)
 
 
+# Team lead and orchestrator picks from the dashboard. Team membership is fixed in tf-roles.yaml, never here.
+TF_ROLES_TEAMS_FILE = _tf_roles_file("TOKENFRUGAL_TF_ROLES_TEAMS_FILE", "tf-roles_teams.json", ())
+
+
 def load_catalog() -> dict:
     cat = yaml.safe_load((Path(__file__).parent / "mcp_catalog.yaml").read_text(encoding="utf-8"))
     imported = claude_import.load()  # MCPs added from Claude `mcpServers` JSON; built-in names win
@@ -227,7 +231,40 @@ def load_tf_roles() -> dict:
     cfg["role_models"] = {k: v for k, v in (_overrides.get("role_models") or {}).items() if isinstance(v, str) and v.strip()}
     # Role -> MCP names from the dashboard Configuration tab; an agent_mcps entry for one agent still wins.
     cfg["role_mcps"] = {k: [n for n in v if isinstance(n, str)] for k, v in (_overrides.get("role_mcps") or {}).items() if isinstance(v, list)}
+    cfg.update(_load_teams(cfg))
     return cfg
+
+
+def _load_teams(cfg: dict) -> dict:
+    """Teams from tf-roles.yaml with the lead and orchestrator chosen in the dashboard applied on top."""
+    orch = cfg.get("orchestration") or {}
+    try:
+        pick = json.loads(TF_ROLES_TEAMS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pick = {}
+    if not isinstance(pick, dict):
+        pick = {}
+    default_lead = pick.get("team_lead") or orch.get("team_lead")
+    leads = {k: v for k, v in (pick.get("leads") or {}).items() if isinstance(v, str) and v.strip()}
+    teams = {}
+    for name, team in (cfg.get("teams") or {}).items():
+        lead = leads.get(name) or team.get("lead") or default_lead
+        teams[name] = {"roles": list(team.get("roles") or []), "lead": lead}
+    return {
+        "orchestrator": pick.get("orchestrator") or orch.get("orchestrator"),
+        "teams": teams,
+        "team_of_role": {r: name for name, t in teams.items() for r in t["roles"]},
+    }
+
+
+def team_of(role: str, cfg: dict) -> str | None:
+    """Team that a role belongs to (fixed per role), or None when the role is in no team."""
+    return cfg.get("team_of_role", {}).get(role)
+
+
+def lead_for(team: str, cfg: dict) -> str | None:
+    """Team lead model for a team; the orchestrator reviews the lead's result."""
+    return cfg.get("teams", {}).get(team, {}).get("lead")
 
 
 load_agents = load_tf_roles  # pre-rename name, kept for callers
