@@ -5,6 +5,18 @@ Last updated: 2026-10-21
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
+## Teams and team leads (built 2026-10-21, recorded only; not used for routing)
+
+- Teams are in `teams:` in `router/tf-roles.yaml`. Membership is fixed per role. Every role in `roles:` and `pending_roles:` is in exactly one team (`tests/test_teams.py` checks this).
+- Teams: `ui-ux` (all `ui-*` roles plus `designer`, `browser`), `development` (coding, builder, reviewer, debugger, analyzer, db-*-dev), `ops` (devops, tracker, github-read, github-actions-read, db-*-admin), `security` (security), `research` (research, finance, docs). The `security` and `research` teams are my own grouping; the request named only UI-UX, Development and Ops. Confirm or merge them.
+- `orchestration:` in the yaml sets the orchestrator (`claude-sonnet-5-5`) and the default team lead (`claude-haiku-5-5`). A team can set its own `lead:`.
+- The dashboard (`scripts/tf_roles_ui.py`, Teams box) saves picks to `router/tf-roles_teams.json` (`TOKENFRUGAL_TF_ROLES_TEAMS_FILE` overrides the path). It stores only differences from the yaml.
+- `router/config.py`: `team_of(role, cfg)`, `lead_for(team, cfg)`, `cfg["orchestrator"]`.
+- Not built: Haiku choosing a team and role at run time. The lead and orchestrator are cloud models run by Claude Code, so the router can record them but cannot call them. Routing by lead needs a model-driven step outside `dispatch_task`.
+- Open question: the global CLAUDE.md names `claude-haiku-4-5`, while the model list here uses `claude-haiku-5-5`. The yaml uses 5-5.
+
+---
+
 ## Role improvement scope and self-improvement gate (open, 2026-10-21)
 
 **Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
