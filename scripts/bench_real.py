@@ -185,9 +185,11 @@ def container_logs(since):
     return tail.encode("utf-8")[-LOG_CAP_BYTES:].decode("utf-8", "replace")
 
 
-def classify(ran, error, uses_synaptree, container_bad):
+def classify(ran, error, uses_synaptree, container_bad, tool_missing=False):
     """Status of one repeat (rules in the module comment above)."""
     if uses_synaptree and container_bad:
+        return "infra"
+    if tool_missing:  # the required tool was never offered: the server failed to start, not the model
         return "infra"
     if not ran and "unknown agent" in error:
         return "infra"  # router rejected the slug: harness/config fault, not the model
@@ -223,17 +225,20 @@ def cases():
     def c_fix(_):
         return _py("from calc import add, mul\nassert add(2,3)==5 and mul(2,3)==6")
 
-    def s_tests():
+    def s_stack():
         _seed("stack.py", "class Stack:\n    def __init__(self):\n        self.items = []\n\n"
               "    def push(self, x):\n        self.items.append(x)\n\n"
               "    def pop(self):\n        return self.items.pop()\n\n"
               "    def __len__(self):\n        return len(self.items)\n")
+
+    def s_tests():
+        s_stack()
         (SCRATCH / "test_stack.py").unlink(missing_ok=True)
 
     def c_tests(_):
         f = SCRATCH / "test_stack.py"
         if not f.exists():
-            return False, "no test file written"
+            return False, "test_stack.py not written (no write_file call produced it)"
         p = subprocess.run([sys.executable, "-m", "unittest", "test_stack", "-q"], cwd=SCRATCH,
                            capture_output=True, text=True, timeout=60)
         text = f.read_text(encoding="utf-8")
@@ -292,7 +297,7 @@ def cases():
          _has("router/config.py", "router\\config.py")),
         ("role_data", "gis-analyst", s_files,
          f"List the files in {WS} with list_directory and name them.", _has("calc.py", "stack.py")),
-        ("role_docs", "engineering-technical-writer", s_tests,
+        ("role_docs", "engineering-technical-writer", s_stack,
          f"Read {WS}/stack.py and describe its public methods in two sentences.", _all_has("push", "pop")),
         ("role_security", "security-auditor", s_secret,
          f"Read {WS}/secret.py and list any hard-coded secrets.", _all_has("fake-key-7d41c9e0b2a6", "hunter2")),
@@ -304,7 +309,7 @@ def cases():
         ("role_tracker", "project-management-project-shepherd", _none,
          "Call plan_status and report the numbers.", _tracker_ok),
         ("role_research", "support-docs-writer", _none,
-         "Use crawl_markdown on https://example.com and report the page heading.", _has("example domain", "documentation examples")),
+         "Use crawl_markdown on https://example.com and quote the first sentence of the page verbatim.", _has("example domain", "documentation examples")),
     ]
 
 
@@ -354,7 +359,8 @@ def hard_cases():
             "Retries use exponential backoff with jitter. The legacy admin page was removed.\n")
 
     def c_summary(a):
-        sentences = [s for s in re.split(r"[.!?](?=\s|$)", a) if s.strip()]
+        body = re.sub(r"(?m)(?:(?<=\s)|^)\d+[.)](?=\s)|^\s*[-*]\s+", "", a)  # list markers are not sentence ends
+        sentences = [s for s in re.split(r"[.!?](?=\s|$)", body) if s.strip()]
         ok, note = _groups(("redis",), ("12", "twelve"), ("backoff", "back-off", "back off"), ("admin",))(a)
         return (ok and len(sentences) <= 5 and len(a) <= 900, note)
 
@@ -448,7 +454,8 @@ def coding_cases():
               "    def test_old_gone(self):\n        self.assertFalse(hasattr(calc, 'calc_avg'))\n"
               "    def test_cli(self):\n        self.assertEqual(cli.run([2, 4]), 3)\n"
               "    def test_report(self):\n        self.assertEqual(report.summary([2, 4]), 'avg=3.0')\n"},
-             "Rename calc_avg to mean everywhere (definition and every caller in all files)."),
+             "Rename calc_avg to mean everywhere (definition and every caller in all files). "
+             f"The ast-grep tool sees this same folder as {WS.replace('/workspace/', '/src/', 1)} (pass that as its dir)."),
         case("code_l5_median", "coding-l5",
              {"stats.py": "def median(xs):\n    xs = sorted(xs)\n    return xs[len(xs) // 2]\n\n\n"
                           "def spread(xs):\n    return max(xs) - min(xs)\n"},
@@ -534,7 +541,8 @@ async def run(n, timed, ok, failure_mode, stats):
             if not ran or container_bad:  # capture the container after a failed repeat; a synaptree case is infra if it went down or restarted
                 state = container_state()
                 container_bad = container_bad or (uses and (not state.get("Running") or state.get("StartedAt") != pre.get("StartedAt")))
-            status = classify(ran, r, uses, container_bad)
+            tool_missing = bool(req) and not tools  # no tool call at all where one was required: the server offered none
+            status = classify(ran, r, uses, container_bad, tool_missing)
             m = re.match(r"\[([^\]]+)\]", r)
             u = loop.DONE.get(m.group(1), {}) if m else {}
             rec = {"run": i + 1, "start": start, "end": end, "s": round(dt, 1), "ok": ran, "verified": bool(good),

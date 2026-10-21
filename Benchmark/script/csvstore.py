@@ -9,6 +9,7 @@ Rules, so a run's data can never be silently lost or misaligned:
 """
 import csv
 import json
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -58,6 +59,20 @@ def log_run(log_path, rec, status="ok"):
         f.write(json.dumps(line, ensure_ascii=False) + "\n")
 
 
+_FRAC = re.compile(r"^\d+/\d+$")
+
+
+def excel_safe(v):
+    """Prefix n/m cells with an apostrophe so Excel keeps them as text, not dates."""
+    v = "" if v is None else str(v)
+    return "'" + v if _FRAC.match(v) else v
+
+
+def unquote(v):
+    """Strip the Excel apostrophe before parsing a cell."""
+    return "" if v is None else str(v).lstrip("'")
+
+
 def append_row(dst, cols, rec, log_path=None):
     """Validate, back up, then rewrite `dst` with `rec` appended. Returns the backup path (or None)."""
     dst = Path(dst)
@@ -75,6 +90,6 @@ def append_row(dst, cols, rec, log_path=None):
         w = csv.DictWriter(f, fieldnames=cols, restval="")
         w.writeheader()
         w.writerows(old)
-        w.writerow(rec)
+        w.writerow({k: excel_safe(v) for k, v in rec.items()})
     tmp.replace(dst)
     return backup

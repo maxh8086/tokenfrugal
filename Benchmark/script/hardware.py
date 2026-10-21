@@ -4,9 +4,11 @@
 """
 import json
 import platform
+import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 
 
 def _run(cmd):
@@ -14,6 +16,18 @@ def _run(cmd):
         return subprocess.run(cmd, capture_output=True, text=True, timeout=15).stdout.strip()
     except Exception:
         return ""
+
+
+def _ollama_version():
+    """One version string, never the CLI's multi-line output. The running server is asked first; if it is down,
+    the first version number in `ollama --version` is used (that is the client's version)."""
+    try:
+        with urllib.request.urlopen("http://localhost:11434/api/version", timeout=3) as r:
+            return json.load(r)["version"]
+    except Exception:
+        pass
+    m = re.search(r"\d+\.\d+\.\d+\S*", _run(["ollama", "--version"]))
+    return m.group(0) if m else ""
 
 
 def info():
@@ -32,7 +46,7 @@ def info():
         if lines:
             name, mem = [x.strip() for x in lines[0].split(",")]
             d["gpu"], d["vram_gb"] = name, round(float(mem) / 1024)
-    d["ollama"] = _run(["ollama", "--version"])
+    d["ollama"] = _ollama_version()
     d["id"] = f"{d['gpu'] or 'cpu-only'} {d['vram_gb'] or ''}GB".replace(" GB", "").strip()
     return d
 

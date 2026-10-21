@@ -23,6 +23,7 @@ servers:
       remote: {}
       volumes:
       - '{{ast-grep.path|volume-target}}:/src'
+      - __WORKSPACE__:/workspace:ro
       disableNetwork: true
       tools:
       - name: ast-grep

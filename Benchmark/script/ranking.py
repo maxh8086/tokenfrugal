@@ -34,15 +34,54 @@ def _load(name):
     return list(csv.DictReader(_path.open(encoding="utf-8")))
 
 
-# benchmark.csv is the source of truth (one row per raw run log in results/raw/).
+# The per-test detail files are the source of truth: one row per (run, model, case), with `superseded=yes`
+# on older rows. benchmark.csv is only a summary and is not read here. Each run becomes one wide row.
 # Excluded from the report: diagnostic runs (probe, browser-longlived) and the cloud Haiku baseline,
 # which stays out of the ranking. Runs where every case hit an infra failure have no valid score.
 EXCLUDE_TAGS = {"probe-qwen-tracker-browser", "browser-longlived", "haiku-baseline"}
-rows = [r for r in _load("benchmark.csv") if r.get("model") not in EXCLUDE_TAGS] + _load("cloud.csv")  # cloud rows are shown, never ranked (_local)
+
+
+def _live(name):
+    """Rows of a detail file that were not superseded by a newer run."""
+    return [r for r in _load(name) if not (r.get("superseded") or "").strip()]
+
+
+def _detail_runs():
+    """One wide row per run, from builder.csv (builder cases) and thinker.csv (thinker cases), joined on run_id."""
+    runs = {}
+    for fname, role in (("builder.csv", "builder"), ("thinker.csv", "thinker")):
+        for r in _live(fname):
+            g = runs.setdefault(r["run_id"], {"date": r["date"], "git": "", "cases": {}, "s": [], "out": 0.0,
+                                               "infra": 0.0, "valid": 0, "ran": 0, "builder_model": "", "thinker_model": ""})
+            g[f"{role}_model"] = r["model"]
+            g["git"] = g["git"] or r.get("git_sha", "")
+            g["cases"][r["case"]] = r["verified"].lstrip("'")
+            if r.get("s_p50"):
+                g["s"].append(float(r["s_p50"]))
+            g["out"] += float(r.get("output") or 0)
+            g["infra"] += float(r.get("infra_cases") or 0)
+            g["valid"] += r.get("status") == "valid"
+            g["ran"] += (r.get("ran") or "0").split("/")[0] not in ("", "0")  # cases with at least one attempt ran
+    out = []
+    for run_id, g in runs.items():
+        if g["builder_model"] in EXCLUDE_TAGS or g["thinker_model"] in EXCLUDE_TAGS:
+            continue
+        a = sum(int(v.split("/")[0]) for v in g["cases"].values() if "/" in v)
+        n = sum(int(v.split("/")[1]) for v in g["cases"].values() if "/" in v)
+        row = {"model": g["builder_model"] or g["thinker_model"], "date": g["date"], "params": "", "git_sha": g["git"],
+               "harness_version": "", "shared_system_memory_gb": "", "total_s": "", "run_id": run_id,
+               "builder_model": g["builder_model"] or g["thinker_model"], "thinker_model": g["thinker_model"],
+               "score": str(a), "max": str(n), "ran": str(g["ran"]), "valid_cases": str(g["valid"]),
+               "mean_s_per_case": f"{sum(g['s']) / len(g['s']):.2f}" if g["s"] else "",
+               "tokens_out_per_run": f"{g['out']:g}", "infra_cases": f"{g['infra']:g}"}
+        for c in CASES:
+            row[c] = g["cases"].get(c, "")
+        out.append(row)
+    return out
+
+
+rows = [r for r in _detail_runs() + _load("cloud.csv")]  # cloud rows are shown, never ranked (_local)
 rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
-missing = [c for c in CASES if c not in rows[0]]
-if missing:
-    raise SystemExit(f"benchmark CSVs are missing case columns: {missing}")
 
 
 def num(r, k):
@@ -69,7 +108,7 @@ def params_b(p, model=""):
 
 def case_frac(r, c):
     try:
-        a, n = r[c].split("/")
+        a, n = r[c].lstrip("'").split("/")  # benchmark.csv stores n/m with a leading apostrophe for Excel
         return int(a) / int(n)
     except Exception:
         return None
@@ -110,7 +149,7 @@ def subtotal(r, cases):
     a = n = 0
     for c in cases:
         try:
-            x, y = r[c].split("/")
+            x, y = r[c].lstrip("'").split("/")
             a, n = a + int(x), n + int(y)
         except Exception:
             pass
@@ -226,9 +265,6 @@ def _status(m):
     return "red"
 
 
-_STATUS_ORDER = {"green": 0, "amber": 1, "red": 2}
-
-
 def role_score(m, fast, slow):
     """Role recommendation score 0-1: 0.6 x pass rate on the role's own cases + 0.4 x speed, speed from the model's
     mean seconds per case on a log scale between the fastest and slowest model in the role."""
@@ -237,12 +273,13 @@ def role_score(m, fast, slow):
 
 
 def _sort_role(agg):
-    """Status first (green, amber, red), then role score, then more evidence. Each role is ranked on its own cases only."""
+    """Rank by role score alone (0.6 x pass rate + 0.4 x speed), then more evidence. Status is a label, not a sort key.
+    Each role is ranked on its own cases only."""
     means = [sum(m["s"]) / len(m["s"]) for m in agg.values() if m["s"]]
     fast, slow = min(means, default=0), max(means, default=0)
     for m in agg.values():
         m["score"] = round(role_score(m, fast, slow), 3)
-    return sorted(agg.items(), key=lambda kv: (_STATUS_ORDER[_status(kv[1])], -kv[1]["score"], -kv[1]["n"]))
+    return sorted(agg.items(), key=lambda kv: (-kv[1]["score"], -kv[1]["n"]))
 
 
 def cloud_reference(cases):
@@ -325,7 +362,7 @@ def hard_results(directory=None):
             if not r:
                 continue
             try:
-                v, n = (int(x) for x in str(r["verified"]).split("/"))
+                v, n = (int(x) for x in str(r["verified"]).lstrip("'").split("/"))
             except ValueError:
                 continue
             cases[c] = (v, n)
@@ -338,6 +375,13 @@ def hard_results(directory=None):
     return out
 
 
+def _hard_mark(a, n):
+    """Colour mark plus verified count for one hard case, e.g. '🟨 2/3'."""
+    a, n = int(a), int(n)
+    mark = "🟩" if n and a == n else "🟨" if a > 0 else "🟥"
+    return f"{mark} {a}/{n}"
+
+
 def hard_md(results=None):
     """Markdown table of the hard suite, best first."""
     res = hard_results() if results is None else results
@@ -346,6 +390,6 @@ def hard_md(results=None):
     short = [c.replace("hard_", "") for c in HARD_CASES]
     lines = ["| Model | Hard score | " + " | ".join(short) + " | median s/case |", "|---|---|" + "---|" * len(short) + "---|"]
     for m, r in sorted(res.items(), key=lambda kv: (-kv[1]["a"] / max(kv[1]["n"], 1), kv[1]["s"] or 1e9)):
-        cells = [f"{r['cases'][c][0]}/{r['cases'][c][1]}" if c in r["cases"] else "·" for c in HARD_CASES]
+        cells = [_hard_mark(*r["cases"][c]) if c in r["cases"] else "·" for c in HARD_CASES]
         lines.append(f"| `{m}` | {r['a']}/{r['n']} | " + " | ".join(cells) + f" | {r['s']:.0f} |")
     return "\n".join(lines)
