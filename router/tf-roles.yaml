@@ -206,11 +206,8 @@ members:
 # `model: <logical name>` once the model is chosen.
 pending_roles:
   ui-components: {profile: build,   max_steps: 12, timeout_s: 120, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [role-ui-builder], improve: gated}   # shadcn/Radix components
-  ui-layout:     {profile: build,   max_steps: 12, timeout_s: 120, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                  # Tailwind grids, responsive layout
-  ui-polish:     {profile: build,   max_steps: 10, timeout_s: 120, native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                                 # spacing, shadows, card details
-  ui-style:      {profile: build,   max_steps: 10, timeout_s: 120, native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                                 # the single chosen aesthetic
-  ui-motion:     {profile: build,   max_steps: 12, timeout_s: 150, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                  # GSAP motion, only when the spec asks
-  ui-patch:      {profile: build,   max_steps: 8,  timeout_s: 90,  native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}                                 # diff-only fixes from a review
+  ui-layout:     {profile: build,   max_steps: 12, timeout_s: 150, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}   # Tailwind grids, responsive layout, motion when the spec asks
+  ui-polish:     {profile: build,   max_steps: 10, timeout_s: 120, native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}   # spacing, shadows, the chosen aesthetic, diff-only fixes from a review
   ui-tokens:     {profile: build,   max_steps: 10, timeout_s: 90,  native: [sandbox], tools: [read_file, write_file, edit_file], skills: [role-ui-tokens], improve: gated}                                  # CSS variables and tokens file
   ui-tokens-check: {profile: analyze, max_steps: 8, timeout_s: 60, native: [synaptree], tools: [read_file, search_graph, ast-grep], skills: [role-ui-tokens], improve: gated}                             # read-only: raw values outside tokens
   ui-a11y-check: {profile: analyze, max_steps: 8, timeout_s: 60,  native: [synaptree], tools: [read_file, search_graph, ast-grep], skills: [role-ui-a11y], improve: gated}                                 # read-only accessibility audit of code
