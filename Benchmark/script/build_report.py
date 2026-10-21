@@ -51,21 +51,20 @@ def role_rank(cases, top=5):
     """Every local model on one role's cases, compared across all its runs, with a status dot.
     The first `top` rows show by default; the rest sit in a collapsed <details> block."""
     ranked = _sort_role(_role_agg(cases))
-    head = ["| | # | Model | Latest run | Code (git) | Runs | Runs fully passing | Role score | % | Recommendation score | Infra runs | Shared memory GB | s/case | t/s (info) | Pull command |",
-            "|:-:|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|"]
+    head = ["| | # | Model | Latest run | Runs | Score | % | Rank | Shared memory GB | s/case | t/s (info) |",
+            "|:-:|--:|---|---|--:|--:|--:|--:|--:|--:|--:|"]
 
     def row(i, name, m):
         tps = f"{sum(m['t']) / len(m['t']):.1f}" if m["t"] else ""
         spc = f"{sum(m['s']) / len(m['s']):.1f}" if m["s"] else ""
-        sha = ", ".join(f"`{g}`" for g in sorted(m["g"]) if g)
-        return (f"| {DOT[_status(m)]} | {i} | `{name}` | {m['d']} | {sha} | {m['runs']} | {m['full']}/{m['runs']} "
-                f"| {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {round(100 * m['score'])} | {m['infra']} | {m['shared']:g} | {spc} | {tps} | `{m['pull']}` |")
+        return (f"| {DOT[_status(m)]} | {i} | `{name}` | {m['d']} | {m['runs']} "
+                f"| {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {round(100 * m['score'])} | {m['shared']:g} | {spc} | {tps} |")
 
     o = head + [row(i, n, m) for i, (n, m) in enumerate(ranked[:top], 1)]
     ref = cloud_reference(cases)
     if ref:
         a, n = ref[1]["a"], ref[1]["n"]
-        o.append(f"| ☁️ | ref | `{ref[0]}` (cloud reference, not ranked) | | | | | {a}/{n} | {round(100 * a / n)} | 100 | | | | | |")
+        o.append(f"| ☁️ | ref | `{ref[0]}` (cloud reference, not ranked) | | | {a}/{n} | {round(100 * a / n)} | 100 | | | |")
     rest = ranked[top:]
     if rest:
         o += ["", f"<details><summary>Show the other {len(rest)} models</summary>", "", *head,
@@ -132,28 +131,6 @@ _{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` a
 {RANK_LEGEND_MD}
 
 {md_table()}
-
-### Best model per role (local models, top 5 each)
-
-Each role is ranked only on its own cases, because one model is pinned to both roles in a run. Each model is compared across all of its runs, so `Runs fully passing` shows how consistent it is; the `Code (git)` column shows the commits that produced those runs. Results change as the router and harness change, so re-run a model after significant changes before trusting its place. Ties go to the model with more evidence, then the faster one. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
-
-**Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
-
-{role_rank(BUILDER_CASES)}
-
-**Thinker** (cases: {", ".join(f"`{c}`" for c in THINKER_CASES)})
-
-{role_rank(THINKER_CASES)}
-
-Charts, filters, the legend and the roles table are in [explorer.html](explorer.html).
-
-### Builder cases (code and file edits: needs write/edit tools)
-
-{heatmap(BUILDER_CASES)}
-
-### Thinker cases (read, analyse, browse: needs read/graph/browser tools)
-
-{heatmap(THINKER_CASES)}
 <!-- END:auto -->"""
 
 p = B / "Benchmark.md"
@@ -457,8 +434,8 @@ const tie=(x,y)=>(y.pct-x.pct)||((x.s||1e9)-(y.s||1e9));
 const mmss=t=>t?Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0"):"";
 const mark=(r,c)=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(!m)return"·";const f=+m[1]/+m[2];let s=f===1?"🟩":f>0?"🟨":"🟥";if(f===0&&r.req.includes(c))s+="⚠";return s};
 const S={sort:{},f:{}};
-const DEF={rank:"10",rb:"5",rt:"5",hb:"10",ht:"10"};
-const TOPS={rank:[5,10,20,0],rb:[3,5,10,0],rt:[3,5,10,0],hb:[5,10,20,0],ht:[5,10,20,0]};
+const DEF={rank:"10",rb:"5",rt:"5",hc:"10"};
+const TOPS={rank:[5,10,20,0],rb:[3,5,10,0],rt:[3,5,10,0],hc:[5,10,20,0]};
 function bar(id){
  const f=S.f[id]={q:"",size:"",days:"",top:DEF[id]};
  const b=$(id+"-bar");
@@ -516,29 +493,27 @@ function draw(id){
   const cs=id==="rb"?BC:TC;
   const agg={};
   R.forEach(r=>{const[a,n]=cnt(r,cs);if(!n||r.model.startsWith("claude-"))return;
-   const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,g:new Set,h:new Set,r});
-   m.a+=a;m.n+=n;m.runs++;if(r.day>m.day)m.day=r.day;m.g.add(r.git);m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
+   const m=agg[r.model]||(agg[r.model]={model:r.model,a:0,n:0,runs:0,ss:[],day:r.day,h:new Set,r});
+   m.a+=a;m.n+=n;m.runs++;if(r.day>m.day)m.day=r.day;m.h.add(r.harness);if(r.s)m.ss.push(r.s)});
   const L=Object.values(agg).map(m=>({...m,pct:Math.round(100*m.a/m.n),s:m.ss.length?m.ss.reduce((x,y)=>x+y)/m.ss.length:0}));
   L.sort((x,y)=>(y.a/y.n-x.a/x.n)||(y.n-x.n)||((x.s||1e9)-(y.s||1e9)));
   const rc=[{k:"n",l:"#",f:(m,i)=>i+1},
    {k:"model",l:"Model",str:1,v:m=>m.model.toLowerCase(),f:m=>code(m.model)},
    {k:"day",l:"Date",str:1,v:m=>m.day,f:m=>m.day},
-   {k:"g",l:"Code (git)",f:m=>[...m.g].filter(Boolean).map(code).join(", ")},
    {k:"h",l:"Harness",f:m=>[...m.h].filter(Boolean).join(", ")||"-"},
-   {k:"a",l:"Role score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
+   {k:"a",l:"Score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
    {k:"pct",l:"%",v:m=>m.pct,f:m=>m.pct},
    {k:"runs",l:"Runs",v:m=>m.runs,f:m=>m.runs},
    {k:"tps",l:"t/s (info)",v:m=>m.tps||-1,f:m=>m.tps==null?"":m.tps.toFixed(1)},
    {k:"s",l:"s/case",v:m=>m.s||1e9,f:m=>m.s?m.s.toFixed(1):""},
-   {k:"sh",l:"Shared memory GB",f:m=>m.r.shared||""},
-   {k:"pull",l:"Pull command",f:m=>code(m.r.pull)}];
+   {k:"sh",l:"Shared memory GB",f:m=>m.r.shared||""}];
   const[k,d]=S.sort[id]||[],c=rc.find(c=>c.k===k);
   let V=c&&c.v?[...L].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*d}):L;
   V=[...V].sort((x,y)=>y.model.startsWith("claude-")-x.model.startsWith("claude-"));
   const all=V.length;V=topN(V,top,m=>m.model);
   render(id,rc,V,id);note(id,V.length,all,"local models");
  }else{
-  const cs=id==="hb"?BC:TC;
+  const cs=BC.concat(TC);
   const hc=[{k:"model",l:"Run",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model.slice(0,44))+" <small>"+r.day+"</small>"},
    {k:"pct",l:"%",v:r=>frac(r,cs),f:r=>sub(r,cs)}]
    .concat(cs.map(c=>({k:c,l:c.replace(/_/g," "),v:r=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");return m?+m[1]/+m[2]:-1},f:r=>mark(r,c)})));
@@ -546,7 +521,7 @@ function draw(id){
   render(id,hc,V,id);note(id,V.length,R.length,"runs");
  }
 }
-["rank","rb","rt","hb","ht"].forEach(id=>{bar(id);draw(id)});
+["rank","rb","rt","hc"].forEach(id=>{bar(id);draw(id)});
 el.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
 </script>"""
 def _data():
@@ -557,7 +532,7 @@ def _data():
                     "tot": num(r, "total_s"), "comp": r["composite"], "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
                     "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
                     "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
-                    "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "") for c in CASES}})
+                    "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "").lstrip("'") for c in CASES}})
     return out
 
 
@@ -573,7 +548,7 @@ DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchm
 
 ### Best model per role (local models, top 5 each)
 
-Each role is ranked only on its own cases. Each model is compared across all of its runs in the filtered set; `Runs fully passing` in the recommendation table shows how consistent it is, and `Code (git)` shows the commits that produced those runs. Ties go to more evidence, then the faster model. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+Each role is ranked only on its own cases, because one model is pinned to both roles in a run. Each model is compared across all of its runs in the filtered set. `Runs` shows how many runs it has. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
 
 **Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
 
@@ -609,19 +584,12 @@ Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function 
 
 {hard_md()}
 
-Charts, the legend and the roles table are in [explorer.html](explorer.html).
+### Case results (builder and thinker cases together)
 
-### Builder cases (code and file edits: needs write/edit tools)
+<div id="hc-bar"></div>
 
-<div id="hb-bar"></div>
+<div id="hc"></div>
 
-<div id="hb"></div>
-
-### Thinker cases (read, analyse, browse: needs read/graph/browser tools)
-
-<div id="ht-bar"></div>
-
-<div id="ht"></div>
 """
 (B / "index.html").write_text(
     PAGE.replace("__GH__", "https://github.com/maxh8086/tokenfrugal/blob/main/Benchmark")

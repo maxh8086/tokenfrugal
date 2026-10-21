@@ -1,11 +1,12 @@
 """Benchmark local models on this machine and append the result to Benchmark/results/benchmark.csv.
 
     python Benchmark/script/run_benchmark.py <builder-model> [thinker-model] [--n 2] [--tag NAME]
-    python Benchmark/script/run_benchmark.py --from-json bench/<stamp>-<tag>.json
+    python Benchmark/script/run_benchmark.py --from-json bench/<stamp>-<tag>.json [--hard-json F] [--coding-json F]
 
-Step 1 runs scripts.bench (16 real-world cases, output verified), step 2 flattens the JSON into
-one CSV row. The CSV is the source of truth; run build_report.py afterwards,
-then have a cloud model review the CSV and update Observations in Benchmark.md (see README.md).
+Step 1 runs scripts.bench (16 real-world cases, output verified), step 2 runs the hard thinker suite
+(5 cases) and, with --coding, the L1-L6 coding suite, all before anything is written. Step 3 writes each test's rows to its own
+detail file (builder.csv, coder.csv, thinker.csv, hard_test.csv) and then rebuilds the model's summary row in
+benchmark.csv. Layout and rules: Benchmark/results/LAYOUT.md; the registry is store.TESTS.
 """
 import argparse
 import json
@@ -13,6 +14,7 @@ import os
 import socket
 import subprocess
 import sys
+import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -27,6 +29,7 @@ import bench_csv  # noqa: E402
 import csvstore  # noqa: E402
 import hardware  # noqa: E402
 import modelinfo  # noqa: E402
+import store  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument("builder", nargs="?")
@@ -39,7 +42,11 @@ ap.add_argument("--api-key-env", help="name of the env var holding the endpoint 
 ap.add_argument("--no-hard", action="store_true", help="skip the hard thinker suite that normally follows the 48-case run")
 ap.add_argument("--coding", action="store_true", help="after the run, also run the L1-L6 coding suite (sandbox run_tests; needs Docker)")
 ap.add_argument("--from-json", help="skip the run and import an existing bench JSON")
+ap.add_argument("--hard-json", help="import this suite JSON instead of running the suite (needs --from-json)")
+ap.add_argument("--coding-json", help="import this suite JSON instead of running the suite (needs --from-json)")
 a = ap.parse_args()
+if (a.hard_json or a.coding_json) and not a.from_json:
+    ap.error("--hard-json and --coding-json need --from-json")
 
 # Bump when cases, scoring or router/harness behaviour change; rows with different values are not comparable.
 HARNESS_VERSION = "1"
@@ -47,14 +54,23 @@ HARNESS_VERSION = "1"
 LOOP_VERSION = "2"
 LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
-EXTRA = ["model", "params", "score", "max", "ran", "mean_s_per_case"]
-META = ["date", "endpoint", "temperature", "max_tokens", "builder_model", "thinker_model", "git_sha", "harness_version", "loop_version", "failure_kind", "n",
-        "context_used_peak_tokens", "tokens_in_per_run", "tokens_out_per_run",
-        "compression_level", "model_file_size_gb", "context_window_tokens", "model_max_context_tokens", "gpu_memory_used_gb", "shared_system_memory_gb", "peak_model_ram_gb",
-        "valid_cases", "infra_cases", "mean_s_valid", "total_s",
-        "os", "cpu", "cores", "ram_gb", "gpu", "vram_gb", "ollama_version", "hardware_id"]
-HARD_COLS = ["hard_key", "hard_score", "hard_max", "hard_median_s", "hard_multifile_bug", "hard_two_vulns", "hard_ambiguous_trace",
-             "hard_long_summary", "hard_compare_functions", "hard_source_file", "hard_git_sha"]
+SUITE_DIR = HERE.parent / "results" / "raw" / "suites"  # suite JSONs written by run_suite(); a subfolder, so raw/*.json globs are unaffected
+
+
+def run_suite(suite, out_dir, tag, env, n):
+    """Run one suite (hard or coding) through scripts.bench. Returns the JSON it wrote in this run, or None (WARNING printed)."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    started = time.time()
+    proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(n), "--tag", tag],
+                          cwd=ROOT, env={**env, "BENCH_SUITE": suite, "BENCH_OUT_DIR": str(out_dir)}, check=False)
+    if proc.returncode != 0:
+        print(f"WARNING: {suite} suite exited {proc.returncode}; its {suite}_* columns are left blank")
+        return None
+    hits = sorted((p for p in out_dir.glob(f"*-{tag}.json") if p.stat().st_mtime >= started - 1), key=lambda p: p.stat().st_mtime)
+    if not hits:
+        print(f"WARNING: {suite} suite wrote no JSON for tag {tag} in {out_dir}; its {suite}_* columns are left blank")
+        return None
+    return hits[-1]
 
 
 def run_cmd(cmd):
@@ -268,13 +284,26 @@ else:
                 print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
                       f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
                       "analyzer: cases 1-7 and 9) are unreliable.")
-                sys.exit(f"not appended to CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
+                sys.exit(f"nothing written to the CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
                          f"--from-json once the synaptree container is stable.")
-            sys.exit(f"bench exited with code {proc.returncode}; not appended to CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
+            sys.exit(f"bench exited with code {proc.returncode}; nothing written to the CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
         hits = sorted(raw.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
         if not hits:
             sys.exit(f"bench wrote no result file for tag {tag}")
         src = hits[-1]
+
+# Suites run before anything is written, so all four tests are written and summarised together.
+hard_src = coding_src = None
+if not a.from_json:
+    hard_tag = ("hard-" + thinker.replace(":", "-").replace("/", "-"))[:50]
+    code_tag = ("coding-" + a.builder.replace(":", "-").replace("/", "-"))[:50]
+    if not a.no_hard and not no_tools:
+        hard_src = run_suite("hard", SUITE_DIR, hard_tag, env, a.n)
+    if a.coding and not no_tools:
+        coding_src = run_suite("coding", SUITE_DIR, code_tag, env, a.n)
+else:
+    hard_src = Path(a.hard_json) if a.hard_json else None
+    coding_src = Path(a.coding_json) if a.coding_json else None
 
 data = json.loads(src.read_text(encoding="utf-8"))
 out = bench_csv.rows(data)
@@ -292,8 +321,6 @@ endpoint = meta.get("endpoint") or a.endpoint or ""
 if endpoint and not any(h in endpoint for h in LOCAL):
     hw = "cloud:" + endpoint.split("//")[-1].split("/")[0]  # not this machine's GPU
 real = data["results"]["realworld"]
-labels = [label for _, label, _ in bench_csv.LAYOUT]
-peaks = {label: real.get(cid, {}).get("peak", "") for cid, label, _ in bench_csv.LAYOUT}
 done = [real[cid] for cid, _, _ in bench_csv.LAYOUT if cid in real]
 temp = "omitted (rejected by model)" if meta.get("temperature_omitted") else meta.get("temperature", "")
 stamp = data.get("stamp", "")
@@ -304,7 +331,6 @@ def _peak_ram(d):
 
 
 rec = {"model": row[0], "params": row[1], "score": score, "max": mx, "ran": ran, "mean_s_per_case": row[4],
-       **dict(zip(labels, row[5:])),
        "date": date, "endpoint": endpoint, "temperature": temp, "max_tokens": meta.get("max_tokens", ""),
        "builder_model": meta.get("builder", ""), "thinker_model": meta.get("thinker", ""),
        "git_sha": meta.get("git_sha", ""), "harness_version": HARNESS_VERSION, "loop_version": LOOP_VERSION,
@@ -314,41 +340,54 @@ rec = {"model": row[0], "params": row[1], "score": score, "max": mx, "ran": ran,
        "tokens_out_per_run": sum(c.get("output", 0) for c in done),
        "peak_model_ram_gb": _peak_ram(data),
        "os": hwi["os"], "cpu": hwi["cpu"], "cores": hwi["cores"] or "", "ram_gb": hwi["ram_gb"] or "",
-       "gpu": hwi["gpu"], "vram_gb": hwi["vram_gb"] or "", "ollama_version": hwi["ollama"], "hardware_id": hw,
-       **{f"context_used_{k}": v for k, v in peaks.items()}}
+       "gpu": hwi["gpu"], "vram_gb": hwi["vram_gb"] or "", "ollama_version": hwi["ollama"], "hardware_id": hw}
 # valid_cases / infra_cases / mean_s_valid: see bench_csv.status_scores (infra cases excluded from validity and mean)
 rec["valid_cases"], rec["infra_cases"], rec["mean_s_valid"] = bench_csv.status_scores(real)
 rec["valid_cases"] -= sum(c.get("status") == "no-tools" for c in real.values())  # never ran: not a valid case
 rec["total_s"] = bench_csv.total_seconds(real)  # elapsed time of all repeats, timeouts and infra included
 mi = modelinfo.info(meta.get("builder") or row[0], endpoint, rec["context_used_peak_tokens"])
 rec.update(mi)
-cols = EXTRA + labels + META + [f"context_used_{k}" for k in labels] + ["raw_json"] + HARD_COLS
-dst = Path(a.csv)
 rec["raw_json"] = src.name
+
+# Every test in store.TESTS gets its rows from the file that ran its suite. All rows share the realworld stamp as
+# run_id, so summarize() sees one run. A missing suite file gives no rows: that test's score stays blank.
+dst = Path(a.csv)
+results_dir = dst.parent
+sources = {"realworld": src, "hard": hard_src, "coding": coding_src}
+run_cols = {k: rec[k] for k in store.RUN_COLS if k in rec and k not in ("score", "max", "mean_s_per_case")}
+new_rows = []
+for name, t in store.TESTS.items():
+    jp = sources.get(t["suite"])
+    if jp is None:
+        print(f"{name}: suite {t['suite']} not run; no rows written")
+        continue
+    model = rec["builder_model"] if t["role"] == "builder" else rec["thinker_model"]
+    new_rows += store.suite_detail(jp, t["role"], t["suite"], t["cases"], run_id=stamp, model=model, run_cols=run_cols)
 try:
-    backup = csvstore.append_row(dst, cols, rec, HERE.parent / "results" / "runs.jsonl")
+    for file_name, rows in store.route(new_rows).items():
+        backup, marked = store.publish_detail(results_dir / file_name, rows)
+        print(f"{file_name}: {len(rows)} rows written, {marked} older run(s) marked superseded"
+              + (f", backup: {backup}" if backup else ""))
+    summary = store.summarize({"builder": rec["builder_model"], "thinker": rec["thinker_model"]},
+                              store.load_details(results_dir))
+    config = {
+        "model": rec["model"], "params": rec["params"], "endpoint": endpoint, "temperature": temp,
+        "harness_version": HARNESS_VERSION, "loop_version": LOOP_VERSION, "compression_level": mi.get("compression_level", ""),
+        "valid_cases": rec["valid_cases"], "ran": ran,
+        "context_used_peak_tokens": rec["context_used_peak_tokens"],
+        "gpu_memory_capacity": hwi["vram_gb"] or "", "gpu_memory_used_gb": mi.get("gpu_memory_used_gb", ""),
+        "system_ram_gb": hwi["ram_gb"] or "", "shared_system_memory_capacity_gb": mi.get("shared_system_memory_gb", ""),
+        "shared_system_memory_used_gb": mi.get("shared_system_memory_gb", ""),  # same source, per user decision
+        "peak_model_ram_gb": rec["peak_model_ram_gb"],
+        "raw_json": src.name, "builder_model": rec["builder_model"], "thinker_model": rec["thinker_model"],
+    }
+    backup, _ = store.upsert_summary(dst, summary, config)
 except csvstore.CsvSchemaError as e:
-    sys.exit(f"CSV NOT WRITTEN (run kept in results/runs.jsonl and {src}): {e}")
+    sys.exit(f"CSV NOT WRITTEN (summary unchanged; detail rows may be in {results_dir}; run kept in {src}): {e}")
+csvstore.log_run(results_dir / "runs.jsonl", rec)
 if backup:
     print(f"backup: {backup}")
-print(f"appended {rec['model']}: {score}/{mx} verified, {rec['mean_s_per_case']} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
-
-if not a.from_json and not a.no_hard and not no_tools:
-    # Hard thinker suite (5 cases): reported next to the 48-case score, never written to benchmark.csv.
-    hard_dir = HERE.parent / "results" / "hard"
-    hard_dir.mkdir(parents=True, exist_ok=True)
-    hard_env = {**env, "BENCH_SUITE": "hard", "BENCH_OUT_DIR": str(hard_dir)}
-    hard_tag = ("hard-" + thinker.replace(":", "-").replace("/", "-"))[:50]
-    hp = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", hard_tag],
-                        cwd=ROOT, env=hard_env, check=False)
-    print(f"hard suite {'done' if hp.returncode == 0 else f'exited {hp.returncode}'}: results in {hard_dir}")
-
-if a.coding and not a.from_json and not no_tools:
-    # L1-L6 coding suite (6 cases, one role/profile per level): reported separately, never written to benchmark.csv.
-    code_dir = HERE.parent / "results" / "coding"
-    code_dir.mkdir(parents=True, exist_ok=True)
-    code_env = {**env, "BENCH_SUITE": "coding", "BENCH_OUT_DIR": str(code_dir)}
-    code_tag = ("coding-" + a.builder.replace(":", "-").replace("/", "-"))[:50]
-    cp = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", code_tag],
-                        cwd=ROOT, env=code_env, check=False)
-    print(f"coding suite {'done' if cp.returncode == 0 else f'exited {cp.returncode}'}: results in {code_dir}")
+print(f"summary {rec['model']}: total {summary['total_score'] or 'blank'}, median {summary['median_s'] or 'blank'} s, "
+      f"{summary['mean_s_per_case'] or 'blank'} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
+for name, t in store.TESTS.items():
+    print(f"{name}: {summary[t['score']] or 'blank'} ({sources.get(t['suite']) or 'not run'})")
