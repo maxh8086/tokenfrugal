@@ -30,9 +30,10 @@ This file holds the working handoff notes. Closed items are removed once verifie
 
 Rule: two roles are duplicates only when they share both the skill set and the tool set. Tool overlap alone is not enough, because a role's skill sets its behaviour. Checked 2026-10-21 against every entry in `roles:` and `pending_roles:`.
 
-Same skill and same tools (remove or merge):
-- `ui-layout` and `ui-motion`: both `role-ui-builder`, identical tools. Candidate: keep one, and make motion a section of it.
-- `ui-polish`, `ui-style` and `ui-patch`: both `role-ui-builder`, identical tools. Candidate: keep `ui-patch` (diff-only fixes) and fold the rest into it, or keep one general UI builder.
+Same skill and same tools (merged 2026-10-21):
+- `ui-motion` folded into `ui-layout`. `ui-layout` keeps the layout tools and does motion only when the spec asks.
+- `ui-style` and `ui-patch` folded into `ui-polish`. `ui-polish` covers spacing, the chosen aesthetic, and diff-only review fixes.
+- Both merged roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model. The skill is `role-ui-builder`.
 
 Same skill and same tools, but a different engine per role (keep; not duplicates):
 - `db-{postgres,mysql,mssql,oracle}-dev` share `db-dev` and one tool list. Each has its own profile and compose stack.
