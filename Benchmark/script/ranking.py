@@ -340,38 +340,40 @@ def role_pick(cases):
     return [n for n, _ in greens], (fast_name if fast_name != top_name else None), []
 
 
-# Hard thinker suite: separate from the 48-case standard. One JSON per run in results/hard/; the newest per model wins.
+# Hard thinker suite: separate from the 48-case standard. Detail rows live in results/hard_test.csv (store.py).
 HARD_CASES = ["hard_multifile_bug", "hard_two_vulns", "hard_ambiguous_trace", "hard_long_summary", "hard_compare_functions"]
+HARD_FILE = B / "results" / "hard_test.csv"
 
 
-def hard_results(directory=None):
-    """{thinker model: {"cases": {case: (verified, n)}, "a": verified total, "n": runs total, "s": median s/run}}.
-    Reads results/hard/*.json (meta.thinker names the model); a model re-run later replaces its older result."""
-    d = Path(directory) if directory else B / "results" / "hard"
+def hard_results(path=None):
+    """{thinker model: {"cases": {case: (verified, n)}, "a": verified total, "n": runs total, "s": median s/case}}.
+    Per model and case the newest non-superseded row counts (run_id is a timestamp, so string order is time order)."""
+    newest = {}                                 # (model, case) -> row
+    try:
+        with open(path or HARD_FILE, encoding="utf-8", newline="") as fh:
+            for r in csv.DictReader(fh):
+                if r["superseded"] == "yes" or r["case"] not in HARD_CASES:
+                    continue
+                key = (r["model"], r["case"])
+                if key not in newest or r["run_id"] > newest[key]["run_id"]:
+                    newest[key] = r
+    except OSError:
+        return {}
     out = {}
-    for f in sorted(d.glob("*.json")):          # filenames start with a timestamp, so later files overwrite earlier ones
+    for (model, case), r in newest.items():
         try:
-            data = json.loads(f.read_text(encoding="utf-8"))
-            model = data["meta"]["thinker"]
-            res = data["results"]["realworld"]
-        except (OSError, ValueError, KeyError):
+            v, n = (int(x) for x in r["verified"].lstrip("'").split("/"))
+        except ValueError:
             continue
-        cases, secs = {}, []
-        for c in HARD_CASES:
-            r = res.get(c)
-            if not r:
-                continue
-            try:
-                v, n = (int(x) for x in str(r["verified"]).lstrip("'").split("/"))
-            except ValueError:
-                continue
-            cases[c] = (v, n)
-            if r.get("s", {}).get("p50"):
-                secs.append(float(r["s"]["p50"]))
-        if cases:
-            secs.sort()
-            out[model] = {"cases": cases, "a": sum(v for v, _ in cases.values()), "n": sum(n for _, n in cases.values()),
-                          "s": secs[len(secs) // 2] if secs else 0.0}
+        m = out.setdefault(model, {"cases": {}, "secs": []})
+        m["cases"][case] = (v, n)
+        if r["s_p50"]:
+            m["secs"].append(float(r["s_p50"]))
+    for m in out.values():
+        secs = sorted(m.pop("secs"))
+        m["a"] = sum(v for v, _ in m["cases"].values())
+        m["n"] = sum(n for _, n in m["cases"].values())
+        m["s"] = secs[len(secs) // 2] if secs else 0.0
     return out
 
 
