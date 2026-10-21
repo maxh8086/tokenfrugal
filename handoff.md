@@ -26,11 +26,22 @@ This file holds the working handoff notes. Closed items are removed once verifie
 - `python -m scripts.role_improve approve <id>` runs `git apply --check`, then applies. Only a person runs this; no role can.
 - `list`, `show`, and `reject` manage the queue. Tests: `tests/test_role_improve.py` (8 tests).
 
-**Duplicate roles (removal candidates, not removed; needs user approval before any entry is deleted)**
-- `ui-tokens-check` and `ui-a11y-check`: same profile, native server and tools; they differ only by skill. Candidate: one read-only audit role with two skill sections.
-- `ui-review-console` and `ui-review-lighthouse`: the active `browser` role already lists `take_snapshot`, `list_console_messages`, and `lighthouse_audit`. Candidate: remove both and use `browser`.
-- `ui-layout`, `ui-polish`, and `ui-style`: near-identical tool lists under `role-ui-builder`. Candidate: merge into `ui-components` or one general UI builder.
-- Active pair, already in item 4: `builder` vs `devops`, `reviewer` vs `analyzer`.
+**Duplicate roles (removal candidates; nothing removed; each removal needs user approval)**
+
+Rule: two roles are duplicates only when they share both the skill set and the tool set. Tool overlap alone is not enough, because a role's skill sets its behaviour. Checked 2026-10-21 against every entry in `roles:` and `pending_roles:`.
+
+Same skill and same tools (remove or merge):
+- `ui-layout` and `ui-motion`: both `role-ui-builder`, identical tools. Candidate: keep one, and make motion a section of it.
+- `ui-polish`, `ui-style` and `ui-patch`: both `role-ui-builder`, identical tools. Candidate: keep `ui-patch` (diff-only fixes) and fold the rest into it, or keep one general UI builder.
+
+Same skill and same tools, but a different engine per role (keep; not duplicates):
+- `db-{postgres,mysql,mssql,oracle}-dev` share `db-dev` and one tool list. Each has its own profile and compose stack.
+- `db-{postgres,mysql,mssql,oracle}-admin` share `db-admin` and one tool list. Each has its own profile and compose stack.
+
+Tool overlap only, different skill (keep; not duplicates):
+- `ui-tokens-check` and `ui-a11y-check`: different skills (`role-ui-tokens`, `role-ui-a11y`).
+- `ui-review-console` and `ui-review-lighthouse` vs the active `browser` role: different skills (`role-ui-review`, `role-browser`). Note that `browser` already exposes the same tools, so these only stay separate because of their skill.
+- `builder` vs `devops`, `reviewer` vs `analyzer`: already listed in scope item 4. Different skills, so these are not duplicates under this rule. Item 4 still needs a clear job for each.
 
 **Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
 - Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
