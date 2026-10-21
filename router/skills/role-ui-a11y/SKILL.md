@@ -5,6 +5,9 @@ description: Read-only accessibility audit of UI code. Report issues with file a
 
 # UI accessibility check
 
+Use only the section that matches your role name.
+
+## ui-a11y-check
 Read-only. Do not edit files.
 
 Check each component file for:
