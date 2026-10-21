@@ -1,0 +1,1015 @@
+== coding: code_l4_rename
+tokenfrugal: 'persona_mcps.json' is deprecated; rename to tf-roles (persona_* name). (fallback removed after 2027-03-31)
+params builder claude-haiku-5-5: not reported by endpoint
+params thinker claude-haiku-5-5: not reported by endpoint
+== realworld
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 158.8358ms
+- Using images:
+  - mcp/ast-grep@sha256:5fc3f2e9dcf2c019e92662f608b8d89e12134ed6d91e6f5461de6efd506a1e72
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/ast-grep mcp/filesystem]
+> Images verified in 1.674351s
+> Images pulled in 48.398ms
+- Those servers are enabled: ts-fs-rw, ast-grep
+- Listing MCP tools...
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > ast-grep: (1 tools)
+  > ts-fs-rw: (11 tools)
+> 12 tools listed in 1.2040155s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 3.3446429s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                                                                             │
+│                        ▄▀▀ ▄▀█ █▀▀ ▀█▀ █▀▄▀█ █▀▀ █▀█                        │
+│                        █▀  █▀█ ▄▄█  █  █ ▀ █ █▄▄ █▀▀                        │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│                                FastMCP 4.1.0                                │
+│                            https://gofastmcp.com                            │
+│                                                                             │
+│                 🖥  Server:      sandbox, 4.1.0                              │
+│                 🚀 Deploy free: https://horizon.prefect.io                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         🎉 Update available: 4.1.2                          │
+│                     Run: pip install --upgrade fastmcp                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+[10/21/26 07:50:17] INFO     Starting MCP server 'sandbox'     transport.py:241
+                             with transport 'stdio'                            
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 842.7735ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 980.2254ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 941.4888ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 891.4251ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 820.4828ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 902.2571ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.3513931s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 991.0496ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.1533698s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 908.1192ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+- Client disconnected mcp@0.1.0, releasing containers
+  realworld/code_l4_rename #1  41.1s valid ran=True verified=True 
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 186.7525ms
+- Using images:
+  - mcp/ast-grep@sha256:5fc3f2e9dcf2c019e92662f608b8d89e12134ed6d91e6f5461de6efd506a1e72
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/ast-grep mcp/filesystem]
+> Images verified in 1.647132s
+> Images pulled in 54.4458ms
+- Those servers are enabled: ts-fs-rw, ast-grep
+- Listing MCP tools...
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > ast-grep: (1 tools)
+  > ts-fs-rw: (11 tools)
+> 12 tools listed in 1.0684872s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 3.1778735s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                                                                             │
+│                        ▄▀▀ ▄▀█ █▀▀ ▀█▀ █▀▄▀█ █▀▀ █▀█                        │
+│                        █▀  █▀█ ▄▄█  █  █ ▀ █ █▄▄ █▀▀                        │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│                                FastMCP 4.1.0                                │
+│                            https://gofastmcp.com                            │
+│                                                                             │
+│                 🖥  Server:      sandbox, 4.1.0                              │
+│                 🚀 Deploy free: https://horizon.prefect.io                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         🎉 Update available: 4.1.2                          │
+│                     Run: pip install --upgrade fastmcp                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+[10/21/26 07:51:00] INFO     Starting MCP server 'sandbox'     transport.py:241
+                             with transport 'stdio'                            
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.0298744s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 848.0987ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 823.6837ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 892.722ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 975.0505ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.0866567s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.041893s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.0472956s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 897.3684ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+- Client disconnected mcp@0.1.0, releasing containers
+  realworld/code_l4_rename #2  35.7s valid ran=True verified=True 
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 176.0888ms
+- Using images:
+  - mcp/ast-grep@sha256:5fc3f2e9dcf2c019e92662f608b8d89e12134ed6d91e6f5461de6efd506a1e72
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/ast-grep mcp/filesystem]
+> Images verified in 1.5842763s
+> Images pulled in 59.6951ms
+- Those servers are enabled: ts-fs-rw, ast-grep
+- Listing MCP tools...
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > ast-grep: (1 tools)
+  > ts-fs-rw: (11 tools)
+> 12 tools listed in 1.1629237s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 3.2205918s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                                                                             │
+│                        ▄▀▀ ▄▀█ █▀▀ ▀█▀ █▀▄▀█ █▀▀ █▀█                        │
+│                        █▀  █▀█ ▄▄█  █  █ ▀ █ █▄▄ █▀▀                        │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│                                FastMCP 4.1.0                                │
+│                            https://gofastmcp.com                            │
+│                                                                             │
+│                 🖥  Server:      sandbox, 4.1.0                              │
+│                 🚀 Deploy free: https://horizon.prefect.io                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         🎉 Update available: 4.1.2                          │
+│                     Run: pip install --upgrade fastmcp                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+[10/21/26 07:51:37] INFO     Starting MCP server 'sandbox'     transport.py:241
+                             with transport 'stdio'                            
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.0717136s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 918.8468ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 920.0494ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool search_files with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool search_files took: 1.0482339s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.0788133s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.2001469s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.0233685s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.1482198s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 989.6011ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool edit_file with arguments: object with 2 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool edit_file took: 1.1297487s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool ast-grep with arguments: object with 2 field(s)
+  - Running mcp/ast-grep with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ast-grep -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/src:rw]
+  > Calling tool ast-grep took: 848.9743ms
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+- Client disconnected mcp@0.1.0, releasing containers
+  realworld/code_l4_rename #3  43.2s valid ran=True verified=True 
+== realworld done in 126s
+wrote C:\Users\vaibh\Downloads\Projects\tokenfrugal\Benchmark\results\tracker\retest\20261021-075010-retest2-coding.md
+CODING_EXIT=0
+== hard: hard_long_summary
+tokenfrugal: 'persona_mcps.json' is deprecated; rename to tf-roles (persona_* name). (fallback removed after 2027-03-31)
+params builder claude-haiku-5-5: not reported by endpoint
+params thinker claude-haiku-5-5: not reported by endpoint
+== realworld
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 172.4968ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.6807552s
+> Images pulled in 58.3396ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > ts-fs-rw: (11 tools)
+> 11 tools listed in 1.0453157s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 3.1757989s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 182.2996ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  - mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+  - mcp/mcp-code-interpreter@sha256:d6ce03d191c78b8e1b76eb861759c005469fc05606c7d8cc4fe64355a24550a9
+  - mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f
+- Verifying images [mcp/filesystem mcp/git mcp/mcp-code-interpreter mcp/sequentialthinking]
+> Images verified in 2.6478277s
+> Images pulled in 78.6233ms
+- Those servers are enabled: mcp-code-interpreter, sequentialthinking, ts-fs-ro, ts-git
+- Listing MCP tools...
+  - Running mcp/sequentialthinking with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=sequentialthinking -l docker-mcp-transport=stdio]
+  - Running mcp/git with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-git -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-ro -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro] and command [/workspace]
+  - Running mcp/mcp-code-interpreter with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=mcp-code-interpreter -l docker-mcp-transport=stdio -v notebooks:/app/notebooks]
+  > ts-fs-ro: (4 tools)
+  > sequentialthinking: (1 tools)
+  > ts-git: (6 tools)
+  > mcp-code-interpreter: (1 tools)
+> 12 tools listed in 4.8271309s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Starting OAuth provider loops...
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 7.9978869s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 169.4832ms
+- Using images:
+  - mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  - mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+- Verifying images [mcp/fetch mcp/filesystem mcp/git]
+> Images verified in 2.5199189s
+> Images pulled in 78.9988ms
+- Those servers are enabled: fetch, ts-fs-ro, ts-git
+- Listing MCP tools...
+  - Running mcp/fetch with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=fetch -l docker-mcp-transport=stdio]
+  - Running mcp/git with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-git -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-ro -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro] and command [/workspace]
+  > ts-fs-ro: (4 tools)
+  > ts-git: (6 tools)
+  > fetch: (1 tools) (1 prompts)
+> 11 tools listed in 2.9979782s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 6.049036s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.1902443s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/hard_long_summary #1  24.0s valid ran=True verified=False Key decisions, per the notes:  - The cache now runs on Redis. - The request timeout went from 5 seco | scratch=['notes.txt']
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 189.7195ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.7330516s
+> Images pulled in 51.4446ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > ts-fs-rw: (11 tools)
+> 11 tools listed in 1.1751076s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 3.3706346s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 188.9916ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  - mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+  - mcp/mcp-code-interpreter@sha256:d6ce03d191c78b8e1b76eb861759c005469fc05606c7d8cc4fe64355a24550a9
+  - mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f
+- Verifying images [mcp/filesystem mcp/git mcp/mcp-code-interpreter mcp/sequentialthinking]
+> Images verified in 2.5482513s
+> Images pulled in 114.8634ms
+- Those servers are enabled: mcp-code-interpreter, sequentialthinking, ts-fs-ro, ts-git
+- Listing MCP tools...
+  - Running mcp/sequentialthinking with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=sequentialthinking -l docker-mcp-transport=stdio]
+  - Running mcp/git with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-git -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-ro -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro] and command [/workspace]
+  - Running mcp/mcp-code-interpreter with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=mcp-code-interpreter -l docker-mcp-transport=stdio -v notebooks:/app/notebooks]
+  > ts-fs-ro: (4 tools)
+  > sequentialthinking: (1 tools)
+  > ts-git: (6 tools)
+  > mcp-code-interpreter: (1 tools)
+> 12 tools listed in 5.7569294s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 8.935645s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 195.2076ms
+- Using images:
+  - mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  - mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+- Verifying images [mcp/fetch mcp/filesystem mcp/git]
+> Images verified in 2.5346848s
+> Images pulled in 66.0742ms
+- Those servers are enabled: fetch, ts-fs-ro, ts-git
+- Listing MCP tools...
+  - Running mcp/fetch with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=fetch -l docker-mcp-transport=stdio]
+  - Running mcp/git with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-git -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-ro -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro] and command [/workspace]
+  > ts-fs-ro: (4 tools)
+  > ts-git: (6 tools)
+  > fetch: (1 tools) (1 prompts)
+> 11 tools listed in 2.8564457s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 5.8835573s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.0722643s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/hard_long_summary #2  23.0s valid ran=True verified=True 
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 205.0927ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+- Verifying images [mcp/filesystem]
+> Images verified in 1.7012013s
+> Images pulled in 63.6653ms
+- Those servers are enabled: ts-fs-rw
+- Listing MCP tools...
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > ts-fs-rw: (11 tools)
+> 11 tools listed in 1.0944386s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 3.2896297s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 162.7982ms
+- Using images:
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  - mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+  - mcp/mcp-code-interpreter@sha256:d6ce03d191c78b8e1b76eb861759c005469fc05606c7d8cc4fe64355a24550a9
+  - mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f
+- Verifying images [mcp/filesystem mcp/git mcp/mcp-code-interpreter mcp/sequentialthinking]
+> Images verified in 2.6027884s
+> Images pulled in 90.6226ms
+- Those servers are enabled: mcp-code-interpreter, sequentialthinking, ts-fs-ro, ts-git
+- Listing MCP tools...
+  - Running mcp/sequentialthinking with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=sequentialthinking -l docker-mcp-transport=stdio]
+  - Running mcp/git with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-git -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro]
+  - Running mcp/mcp-code-interpreter with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=mcp-code-interpreter -l docker-mcp-transport=stdio -v notebooks:/app/notebooks]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-ro -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro] and command [/workspace]
+  > ts-fs-ro: (4 tools)
+  > sequentialthinking: (1 tools)
+  > ts-git: (6 tools)
+  > mcp-code-interpreter: (1 tools)
+> 12 tools listed in 5.7347807s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 8.8798151s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+- Reading profile configuration...
+Warning: Failed to fetch secrets from secrets engine: Post "http://localhost/resolver.v1.ResolverService/GetSecrets": dial unix C:\Users\vaibh\AppData\Local\docker-secrets-engine\engine.sock: connect: An invalid argument was supplied.
+  - Loading 1 catalog(s) for dynamic tools
+    - Processing catalog 'mcp/docker-mcp-catalog:latest' with 314 servers
+  - Total servers loaded from all catalogs: 314
+- Configuration read in 181.7039ms
+- Using images:
+  - mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3
+  - mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+  - mcp/git@sha256:ad6af958e79466a14b895891e772fdda28fdc12c06fff4a70637b66773303a2c
+- Verifying images [mcp/fetch mcp/filesystem mcp/git]
+> Images verified in 2.637254s
+> Images pulled in 74.1992ms
+- Those servers are enabled: fetch, ts-fs-ro, ts-git
+- Listing MCP tools...
+  - Running mcp/fetch with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=fetch -l docker-mcp-transport=stdio]
+  - Running mcp/git with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-git -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro]
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-ro -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:ro] and command [/workspace]
+  > ts-fs-ro: (4 tools)
+  > ts-git: (6 tools)
+  > fetch: (1 tools) (1 prompts)
+> 11 tools listed in 2.9580815s
+- Adding internal tools (dynamic-tools feature enabled)
+  > mcp-find: tool for finding MCP servers in the catalog
+  > mcp-add: tool for adding MCP servers to the registry
+  > mcp-remove: tool for removing MCP servers from the registry
+  > code-mode: write code that calls other MCPs directly
+  > mcp-exec: execute tools that exist in the current session
+  > mcp-config-set: tool for setting configuration values for MCP servers
+  > mcp-create-profile: tool for creating or updating profiles with current gateway state
+  > mcp-activate-profile: tool for activating saved profiles
+  > mcp-discover: prompt for learning about dynamic server management
+- Starting OAuth notification monitor
+- Starting OAuth provider loops...
+- Connecting to OAuth notification stream at http://localhost/notify/notifications/channel/external-oauth
+- Failed to connect to OAuth notifications: Get "http://localhost/notify/notifications/channel/external-oauth": dial unix \\.\pipe\dockerBackendApiServer: connect: No connection could be made because the target machine actively refused it.
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Using credential helper: docker-credential-desktop
+- Watching for configuration updates...
+> Initialized in 6.0867446s
+> Start stdio server
+- Client initialized mcp@0.1.0 
+- Current working directory: C:\Users\vaibh\Downloads\Projects\tokenfrugal
+- Initialize request:
+  {
+    "capabilities": {
+      "roots": {}
+    },
+    "clientInfo": {
+      "name": "mcp",
+      "version": "0.1.0"
+    },
+    "protocolVersion": "2025-11-25"
+  }
+  - Scanning tool call arguments for secrets...
+  > No secret found in arguments.
+  - Calling tool read_file with arguments: object with 1 field(s)
+  - Running mcp/filesystem with [run --rm -i --init --security-opt no-new-privileges --cpus 4 --memory 2Gb --pull never -l docker-mcp=true -l docker-mcp-tool-type=mcp -l docker-mcp-name=ts-fs-rw -l docker-mcp-transport=stdio --network none -v c:/users/vaibh/downloads/projects:/workspace:rw] and command [/workspace]
+  > Calling tool read_file took: 1.0429735s
+  - Scanning tool call response for secrets...
+  > No secret found in response.
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+- Client disconnected mcp@0.1.0, releasing containers
+- Client disconnected mcp@0.1.0, releasing containers
+> Stop watching for updates
+  realworld/hard_long_summary #3  24.3s valid ran=True verified=True 
+== realworld done in 72s
+wrote C:\Users\vaibh\Downloads\Projects\tokenfrugal\Benchmark\results\tracker\retest\20261021-075221-retest2-hard.md
+HARD_EXIT=0
+RETEST_DONE

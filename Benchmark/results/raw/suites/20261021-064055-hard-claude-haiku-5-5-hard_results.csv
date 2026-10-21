@@ -1,0 +1,6 @@
+model,case,verified,ran,status,median_s,notes
+hard-claude-haiku-5-5,hard_multifile_bug,3/3,3/3,valid,67.9,
+hard-claude-haiku-5-5,hard_two_vulns,2/3,3/3,valid,16.4,**Security review: `/workspace/tokenfrugal/bench/scratch/api.py`** | scratch=['api.py']
+hard-claude-haiku-5-5,hard_ambiguous_trace,3/3,3/3,valid,50.6,
+hard-claude-haiku-5-5,hard_long_summary,0/3,3/3,valid,17.9,"Key decisions (from notes.txt):  - The cache now runs on Redis. - The request timeout went from 5 se | scratch=['notes.txt'] | Key decisions, from the file's last line: 1. The cache now runs on Redis. 2. The request timeout wen | scratch=['notes.txt'] | The notes record four key decisions:  1. The cache now runs on Redis. 2. The request timeout went fr | scratch=['notes.txt']"
+hard-claude-haiku-5-5,hard_compare_functions,2/3,3/3,valid,16.7,**Summary: `dedupe_a` vs `dedupe_b` in `/workspace/tokenfrugal/bench/scratch/dedupe.py`**  **Output  | scratch=['dedupe.py']

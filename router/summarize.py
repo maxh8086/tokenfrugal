@@ -27,6 +27,7 @@ def hard_trim(text: str, limit: int = SUMMARY_MAX_TOKENS) -> str:
 def summarize(model: str, text: str, task: str) -> str:
     if tokens(text) <= SUMMARY_MAX_TOKENS:  # short answers are already the summary; a model pass only corrupts them
         return text
+    source = text
     for _ in range(2):
         kw = {"model": model, "max_tokens": SUMMARY_MAX_TOKENS,
               "messages": [{"role": "system", "content":
@@ -39,7 +40,10 @@ def summarize(model: str, text: str, task: str) -> str:
             if "temperature" not in str(e):
                 raise
             r = _client.chat.completions.create(**kw)
-        text = (r.choices[0].message.content or "").strip() or text
+        summary = (r.choices[0].message.content or "").strip()
+        if r.choices[0].finish_reason == "length" or tokens(summary) < SUMMARY_MIN_TOKENS:  # cut off or too thin: keep the detail
+            return hard_trim(source)
+        text = summary
         if tokens(text) <= SUMMARY_MAX_TOKENS:
             return text
     return hard_trim(text)
