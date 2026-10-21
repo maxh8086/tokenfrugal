@@ -226,14 +226,19 @@ orchestration:
   team_lead: claude-haiku-5-5       # default lead for every team that does not set its own
 teams:
   ui-ux:
+    description: UI and UX work. Layout, components, design tokens, accessibility checks, visual and console review, webapp tests.
     roles: [designer, browser, ui-components, ui-layout, ui-polish, ui-tokens, ui-tokens-check, ui-a11y-check, ui-review-lighthouse, ui-review-console, ui-vision-review, ui-webapp-test]
   development:
+    description: Coding and development. Writing and reviewing code, debugging, analysis, data engineering and database development.
     roles: [builder, data-engineer, analyzer, reviewer, debugger, code-l1, code-l2, code-l3, code-l4, code-l5, code-l6, db-postgres-dev, db-mysql-dev, db-mssql-dev, db-oracle-dev, db-elastic-dev, db-mongo-dev-l1, db-mongo-dev-l2, db-redis-dev-l1, db-redis-dev-l2, db-redis-dev-l3]
   ops:
+    description: Operations. Devops, task tracking, GitHub read-only access, and database administration.
     roles: [devops, tracker, github-read, github-actions-read, db-postgres-admin, db-mysql-admin, db-mssql-admin, db-oracle-admin, db-elastic-admin, db-mongo-admin-l1, db-mongo-admin-l2, db-redis-admin-l1]
   security:
+    description: Security audits and reviews.
     roles: [security]
   research:
+    description: Research, finance analysis and documentation.
     roles: [research, finance, docs]
 
 # Self-improvement gate (scripts/role_improve.py). A role may propose a diff to its own skill files.

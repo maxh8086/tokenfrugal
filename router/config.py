@@ -249,7 +249,7 @@ def _load_teams(cfg: dict) -> dict:
     teams = {}
     for name, team in (cfg.get("teams") or {}).items():
         lead = leads.get(name) or team.get("lead") or default_lead
-        teams[name] = {"roles": list(team.get("roles") or []), "lead": lead}
+        teams[name] = {"roles": list(team.get("roles") or []), "lead": lead, "description": team.get("description") or ""}
     return {
         "orchestrator": pick.get("orchestrator") or orch.get("orchestrator"),
         "teams": teams,
