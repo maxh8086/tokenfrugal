@@ -5,6 +5,28 @@ Last updated: 2026-10-21
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
+## Role improvement scope and self-improvement gate (open, 2026-10-21)
+
+**Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
+
+**Scope of improvement (existing roles)**
+1. Fix `tests/test_role_timeout.py::test_non_coding_values_by_agent`. `security-auditor` expects 160s, but the `security` role resolves to 300s (SonarQube compose). Decide which value is right, then fix the config or the test. Needs a user decision.
+2. Rewrite the two tests in `tests/test_ranking_hard.py`. They write JSON, but `Benchmark/script/ranking.py` reads `Benchmark/results/hard_test.csv`. Update them to write CSV.
+3. Set explicit `timeout_s` on `github-read`, `github-actions-read`, `devops`, and `finance`. They currently fall back to `TASK_TIMEOUT` in `router/loop.py`.
+4. Clarify overlapping roles. `builder` vs `devops` both write files on the builder model. `reviewer` vs `analyzer` share the `analyze` profile and near-identical tools. Define one job for each.
+5. Check every `tools:` name against its profile in `profiles/*.yaml`. Activate no role before this check passes.
+6. Bring role skills up to the `code-l1` pattern: numbered steps, an explicit output format, and a stop condition. Current role skills are 18–20 lines.
+7. Verify the `synaptree` native server is wired for every role that lists it.
+8. Create a live smoke test per role only after the user confirms. Each role gets its model only after its test passes.
+
+**Self-improvement gate (built 2026-10-21, not yet used on a live role)**
+- Each role carries `improve: gated` in `router/tf-roles.yaml` (51 roles, active and pending). A role without that flag is refused.
+- Scope is one top-level `self_improve:` block: `enabled: true`, `gate: approval`, `scope: [skills]`. Proposals may touch only that role's own `router/skills/<name>/SKILL.md` files. Limits (`timeout_s`, `max_steps`, `tools`) are not yet in scope.
+- `python -m scripts.role_improve propose <role> <diff_file> --reason "..."` stores a proposal in `router/improvements/proposals.json`. Nothing is written to the repo.
+- `python -m scripts.role_improve approve <id>` runs `git apply --check`, then applies. Only a person runs this; no role can.
+- `list`, `show`, and `reject` manage the queue. Tests: `tests/test_role_improve.py` (8 tests).
+
+---
 ## Haiku 80/81 done; local model queue ready to start (open, 2026-10-21, read first)
 
 **Progress**
