@@ -26,6 +26,16 @@ This file holds the working handoff notes. Closed items are removed once verifie
 - `python -m scripts.role_improve approve <id>` runs `git apply --check`, then applies. Only a person runs this; no role can.
 - `list`, `show`, and `reject` manage the queue. Tests: `tests/test_role_improve.py` (8 tests).
 
+**Duplicate roles (removal candidates, not removed; needs user approval before any entry is deleted)**
+- `ui-tokens-check` and `ui-a11y-check`: same profile, native server and tools; they differ only by skill. Candidate: one read-only audit role with two skill sections.
+- `ui-review-console` and `ui-review-lighthouse`: the active `browser` role already lists `take_snapshot`, `list_console_messages`, and `lighthouse_audit`. Candidate: remove both and use `browser`.
+- `ui-layout`, `ui-polish`, and `ui-style`: near-identical tool lists under `role-ui-builder`. Candidate: merge into `ui-components` or one general UI builder.
+- Active pair, already in item 4: `builder` vs `devops`, `reviewer` vs `analyzer`.
+
+**Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
+- Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
+- Skill: `router/skills/role-ui-webapp-test/SKILL.md`. Activation waits for the user's go-ahead and a passing test.
+
 ---
 ## Haiku 80/81 done; local model queue ready to start (open, 2026-10-21, read first)
 
