@@ -10,8 +10,8 @@ This file holds the working handoff notes. Closed items are removed once verifie
 **Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
 
 **Scope of improvement (existing roles)**
-1. Fix `tests/test_role_timeout.py::test_non_coding_values_by_agent`. `security-auditor` expects 160s, but the `security` role resolves to 300s (SonarQube compose). Decide which value is right, then fix the config or the test. Needs a user decision.
-2. Rewrite the two tests in `tests/test_ranking_hard.py`. They write JSON, but `Benchmark/script/ranking.py` reads `Benchmark/results/hard_test.csv`. Update them to write CSV.
+1. **Open, needs user decision.** `tests/test_role_timeout.py::test_non_coding_values_by_agent` fails with `300 != 160 : security-auditor`. The test expects 160s. The `security` role resolves to 300s because it runs the SonarQube compose stack. Decide which value is right, then fix the config or the test. Re-checked 2026-10-21.
+2. **Open, test is stale.** Two tests in `tests/test_ranking_hard.py` fail: `test_latest_run_wins_and_bad_files_skipped` (`[] != ['m1']`) and `test_md_empty_and_filled` (`'| m2 | 2/3 |' not found`). Both write JSON, but `Benchmark/script/ranking.py` `hard_results` reads `Benchmark/results/hard_test.csv`. Rewrite the fixtures to write CSV. Re-checked 2026-10-21.
 3. Set explicit `timeout_s` on `github-read`, `github-actions-read`, `devops`, and `finance`. They currently fall back to `TASK_TIMEOUT` in `router/loop.py`.
 4. Clarify overlapping roles. `builder` vs `devops` both write files on the builder model. `reviewer` vs `analyzer` share the `analyze` profile and near-identical tools. Define one job for each.
 5. Check every `tools:` name against its profile in `profiles/*.yaml`. Activate no role before this check passes.
