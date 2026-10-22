@@ -32,7 +32,7 @@ for ((i = 0; i < n; i++)); do
   if (( i % 3 == 0 )); then echo "=== batch $(printf %02d $((i / 3 + 1))) start $(date -Is)" >> "$LOG"; fi
   safe=$(echo "$m" | sed 's/[^A-Za-z0-9._-]/_/g')
   echo "--- [$((i + 1))/$n] $m start $(date -Is)" >> "$LOG"
-  "$PY" -I Benchmark/script/run_benchmark.py "$m" "$m" --coding </dev/null > "$T/logs/$safe.log" 2>&1
+  "$PY" -I Benchmark/script/run_benchmark.py --model "$m" --role builder,thinker,hard,coding </dev/null > "$T/logs/$safe.log" 2>&1
   echo "--- [$((i + 1))/$n] $m exit=$? $(date -Is)" >> "$LOG"
   if (( i % 3 == 2 || i == n - 1 )); then
     clean_hard

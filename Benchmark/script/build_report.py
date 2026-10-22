@@ -582,7 +582,7 @@ Each model is compared across all of its runs. The dot shows how far to trust it
 
 ### Hard thinker suite (5 harder cases, separate from the 48-case score)
 
-Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function comparison, each run n times (`a/b` = verified runs). Run automatically after the standard benchmark (`run_benchmark.py --no-hard` skips it). Results live in `results/hard_test.csv` and are joined to the models above by name; they do not change the ranking.
+Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function comparison, each run n times (`a/b` = verified runs). Run automatically after the standard benchmark (`run_benchmark.py --role builder,thinker` skips it). Results live in `results/hard_test.csv` and are joined to the models above by name; they do not change the ranking.
 
 {hard_md()}
 

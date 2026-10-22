@@ -53,7 +53,7 @@ def child_cmd(m, args):
         else:
             code = "print('ok', flush=True)"
         return [sys.executable, "-c", code]
-    return [PY, "-I", str(ROOT / "Benchmark" / "script" / "run_benchmark.py"), m, m, "--coding"]
+    return [PY, "-I", str(ROOT / "Benchmark" / "script" / "run_benchmark.py"), "--model", m, "--role", "builder,thinker,hard,coding"]
 
 
 def tail_lines(path):

@@ -17,7 +17,7 @@ To resume after a stop, make a new list containing only the models that have no 
 ## Per-model steps (what `queue_watch.py` does)
 
 1. Preflight inside `run_benchmark.py`: Ollama reachable (`/api/version`), `LOCAL_LLM_TEMPERATURE` is 0.0, ts-mcp containers up (self-heals with `scripts/mcp_up.ps1`), synaptree containers up (`docker start`).
-2. Child: `python -I Benchmark/script/run_benchmark.py <m> <m> --coding`, stdin null, stdout and stderr both to `logs/<safe>.log` (`safe` = tag with characters outside `[A-Za-z0-9._-]` replaced by `_`).
+2. Child: `python -I Benchmark/script/run_benchmark.py --model <m> --role builder,thinker,hard,coding`, stdin null, stdout and stderr both to `logs/<safe>.log` (`safe` = tag with characters outside `[A-Za-z0-9._-]` replaced by `_`).
 3. Poll every 30 s. Stall if:
    - `a` log mtime older than 900 s (idle);
    - `b` `== realworld done` seen and no `wrote` after it for 300 s;

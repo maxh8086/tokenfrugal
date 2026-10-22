@@ -1,12 +1,15 @@
 """Benchmark local models on this machine and append the result to Benchmark/results/benchmark.csv.
 
-    python Benchmark/script/run_benchmark.py <builder-model> [thinker-model] [--n 2] [--tag NAME]
-    python Benchmark/script/run_benchmark.py --from-json bench/<stamp>-<tag>.json [--hard-json F] [--coding-json F]
+    python Benchmark/script/run_benchmark.py --model <tag> --role builder,thinker,hard,coding [--metadata] [--n 3] [--tag NAME]
+    python Benchmark/script/run_benchmark.py --model <tag> --role builder --from-json bench/<stamp>-<tag>.json
+    python Benchmark/script/run_benchmark.py --model <tag> --metadata
 
-Step 1 runs scripts.bench (16 real-world cases, output verified), step 2 runs the hard thinker suite
-(5 cases) and, with --coding, the L1-L6 coding suite, all before anything is written. Step 3 writes each test's rows to its own
-detail file (builder.csv, coder.csv, thinker.csv, hard_test.csv) and then rebuilds the model's summary row in
-benchmark.csv. Layout and rules: Benchmark/results/LAYOUT.md; the registry is store.TESTS.
+--model is used as both builder and thinker. --role takes a comma-separated list of builder, thinker, hard, coding
+(store.TESTS). builder and thinker come from one realworld run (scripts.bench, 16 cases); hard is the 5-case thinker
+suite; coding is the L1-L6 suite (needs Docker). All requested suites run before anything is written. Each test writes
+its rows to its own detail file (builder.csv, coder.csv, thinker.csv, hard_test.csv), then the model's summary row is
+rebuilt in benchmark.csv. --metadata refreshes hardware, model-info and params columns; it runs on its own or with roles,
+and is on by default when all four roles are run. Layout and rules: Benchmark/results/LAYOUT.md.
 """
 import argparse
 import json
@@ -32,30 +35,31 @@ import hardware  # noqa: E402
 import modelinfo  # noqa: E402
 import store  # noqa: E402
 
+ALL_ROLES = ("builder", "thinker", "hard", "coding")
+
 ap = argparse.ArgumentParser()
-ap.add_argument("builder", nargs="?")
-ap.add_argument("thinker", nargs="?")
+ap.add_argument("--model", required=True, help="model tag, used as both builder and thinker")
+ap.add_argument("--role", help=f"comma-separated list of: {', '.join(ALL_ROLES)} (store.TESTS)")
+ap.add_argument("--metadata", action="store_true",
+                help="refresh the hardware, model-info and Ollama params columns. Alone: runs no suite and keeps all scores. "
+                     "Defaults on when all four roles are run")
+ap.add_argument("--from-json", help="import this realworld JSON instead of running it (needs builder or thinker in --role)")
 ap.add_argument("--n", type=int, default=3)
 ap.add_argument("--tag")
 ap.add_argument("--csv", default=str(HERE.parent / "results" / "benchmark.csv"))
 ap.add_argument("--endpoint", help="OpenAI-compatible base URL (default: TOKENFRUGAL_LLM_URL / local Ollama)")
 ap.add_argument("--api-key-env", help="name of the env var holding the endpoint API key (value is never printed)")
-ap.add_argument("--no-hard", action="store_true", help="skip the hard thinker suite that normally follows the 48-case run")
-ap.add_argument("--coding", action="store_true", help="after the run, also run the L1-L6 coding suite (sandbox run_tests; needs Docker)")
-ap.add_argument("--from-json", help="skip the run and import an existing bench JSON")
-ap.add_argument("--hard-json", help="import this suite JSON instead of running the suite (needs --from-json)")
-ap.add_argument("--coding-json", help="import this suite JSON instead of running the suite (needs --from-json)")
-ap.add_argument("--role", choices=["builder", "thinker", "hard", "coding"],
-                help="run and write only this test (store.TESTS). builder/thinker run the realworld suite; hard/coding run only their own suite and reuse the model's existing benchmark.csv row for config")
-ap.add_argument("--metadata", action="store_true",
-                help="refresh the hardware, model-info and Ollama params columns. Alone: runs no suite and keeps all scores. With --role hard/coding: refreshes after the role's rows are written")
 a = ap.parse_args()
-if a.role and a.from_json:
-    ap.error("--role cannot be combined with --from-json")
-if a.metadata and not a.role and (a.from_json or a.no_hard or a.coding):
-    ap.error("--metadata alone runs no suite; do not combine it with --from-json, --no-hard or --coding")
-if (a.hard_json or a.coding_json) and not a.from_json:
-    ap.error("--hard-json and --coding-json need --from-json")
+roles = list(dict.fromkeys(r for r in (a.role or "").split(",") if r))
+for r in roles:
+    if r not in ALL_ROLES:
+        ap.error(f"unknown role {r!r}; choose from {', '.join(ALL_ROLES)}")
+if not roles and not a.metadata:
+    ap.error("nothing to run: pass --role and/or --metadata")
+if a.from_json and not set(roles) & {"builder", "thinker"}:
+    ap.error("--from-json is the realworld JSON, so --role must include builder or thinker")
+metadata_on = a.metadata or set(roles) == set(ALL_ROLES)
+builder = thinker = a.model
 
 # Bump when cases, scoring or router/harness behaviour change; rows with different values are not comparable.
 HARNESS_VERSION = "1"
@@ -318,22 +322,19 @@ def metadata_fields(builder, endpoint, ctx, current_params):
             "gpu_memory_capacity": hwi["vram_gb"] or "", "system_ram_gb": hwi["ram_gb"] or "", **mi}
 
 
-if a.metadata and not a.role:
+if not roles:
     # Standalone metadata: reads hardware, model info and Ollama params; no suite runs and no score is touched.
-    if not a.builder:
-        ap.error("builder model is required with --metadata")
-    thinker = a.thinker or a.builder
     dst = Path(a.csv)
     results_dir = dst.parent
     endpoint = a.endpoint or os.environ.get("TOKENFRUGAL_LLM_URL") or "http://localhost:11434/v1"
     try:
         existing = [r for r in store._read(dst, store.SUMMARY_COLS)
-                    if r["builder_model"] == a.builder and r["thinker_model"] == thinker]
+                    if r["builder_model"] == builder and r["thinker_model"] == thinker]
         if not existing:
-            sys.exit(f"no benchmark.csv row for {a.builder} / {thinker}; run the roles first")
+            sys.exit(f"no benchmark.csv row for {builder} / {thinker}; run the roles first")
         config = dict(existing[-1])
-        config.update(metadata_fields(a.builder, endpoint, config.get("context_used_peak_tokens", ""), config.get("params", "")))
-        summary = store.summarize({"builder": a.builder, "thinker": thinker}, store.load_details(results_dir))
+        config.update(metadata_fields(builder, endpoint, config.get("context_used_peak_tokens", ""), config.get("params", "")))
+        summary = store.summarize({"builder": builder, "thinker": thinker}, store.load_details(results_dir))
         backup, _ = store.upsert_summary(dst, summary, config)
     except csvstore.CsvSchemaError as e:
         sys.exit(f"CSV NOT WRITTEN (nothing changed): {e}")
@@ -343,105 +344,110 @@ if a.metadata and not a.role:
         print(f"backup: {backup}")
     sys.exit(0)
 
+rw_roles = [r for r in roles if r in ("builder", "thinker")]
+suite_roles = [r for r in roles if r in ("hard", "coding")]
+tag = a.tag or "full-" + f"{builder}+{thinker}".replace(":", "-").replace("/", "-")[:60]
+raw = HERE.parent / "results" / "raw"
+raw.mkdir(parents=True, exist_ok=True)
+endpoint = a.endpoint or os.environ.get("TOKENFRUGAL_LLM_URL") or "http://localhost:11434/v1"
+env = {**os.environ, "PYTHONPATH": str(ROOT), "PYTHONIOENCODING": "utf-8", "BENCH_OUT_DIR": str(raw),
+       "CC_WORKSPACE": ROOT.parent.as_posix(), "TOKENFRUGAL_MODEL_BUILDER": builder, "TOKENFRUGAL_MODEL_THINKER": thinker}
+if a.endpoint:
+    env["TOKENFRUGAL_LLM_URL"] = a.endpoint
+if a.api_key_env:
+    key = os.environ.get(a.api_key_env)
+    if not key:
+        sys.exit(f"{a.api_key_env} is not set in your shell")
+    env["TOKENFRUGAL_LLM_API_KEY"] = key
+key = env.get("TOKENFRUGAL_LLM_API_KEY") or os.environ.get("TOKENFRUGAL_LLM_API_KEY")
+if rw_roles and set(rw_roles) != {"builder", "thinker"}:
+    # realworld run limited to the cases of the requested realworld roles
+    env["BENCH_CASES"] = ",".join(dict.fromkeys(c for r in rw_roles for c in store.TESTS[r]["cases"]))
+suite_env = {k: v for k, v in env.items() if k != "BENCH_CASES"}  # each suite selects its own cases
+
+preflight(endpoint, key, [builder, thinker])
 no_tools = {}  # model -> error text, for models the endpoint refuses tools to; their runs are skipped
+print("tool support")
+for m in dict.fromkeys([builder, thinker]):
+    state, text = tool_support(endpoint, key, m)
+    if state == "no-tools":
+        no_tools[m] = text
+    label = {"ok": "PASS", "no-tools": "NO-TOOLS", "error": "WARN"}[state]
+    print(f"  {label}  {m}" + ("" if state == "ok" else f"  -> {text}"))
+
+src = None
 if a.from_json:
     src = Path(a.from_json)
-else:
-    if not a.builder:
-        ap.error("builder model is required unless --from-json is given")
-    thinker = a.thinker or a.builder
-    tag = a.tag or "full-" + f"{a.builder}+{thinker}".replace(":", "-").replace("/", "-")[:60]
-    raw = HERE.parent / "results" / "raw"
-    raw.mkdir(parents=True, exist_ok=True)
-    env = {**os.environ, "PYTHONPATH": str(ROOT), "PYTHONIOENCODING": "utf-8", "BENCH_OUT_DIR": str(raw),
-           "CC_WORKSPACE": ROOT.parent.as_posix(), "TOKENFRUGAL_MODEL_BUILDER": a.builder, "TOKENFRUGAL_MODEL_THINKER": thinker}
-    if a.role in ("builder", "thinker"):
-        env["BENCH_CASES"] = ",".join(store.TESTS[a.role]["cases"])  # realworld run limited to this role's cases
-    if a.endpoint:
-        env["TOKENFRUGAL_LLM_URL"] = a.endpoint
-    if a.api_key_env:
-        key = os.environ.get(a.api_key_env)
-        if not key:
-            sys.exit(f"{a.api_key_env} is not set in your shell")
-        env["TOKENFRUGAL_LLM_API_KEY"] = key
-    endpoint = a.endpoint or os.environ.get("TOKENFRUGAL_LLM_URL") or "http://localhost:11434/v1"
-    key = env.get("TOKENFRUGAL_LLM_API_KEY") or os.environ.get("TOKENFRUGAL_LLM_API_KEY")
-    preflight(endpoint, key, [a.builder, thinker])
-    print("tool support")
-    for m in dict.fromkeys([a.builder, thinker]):
-        state, text = tool_support(endpoint, key, m)
-        if state == "no-tools":
-            no_tools[m] = text
-        label = {"ok": "PASS", "no-tools": "NO-TOOLS", "error": "WARN"}[state]
-        print(f"  {label}  {m}" + ("" if state == "ok" else f"  -> {text}"))
-    if no_tools:
-        src = write_no_tools_raw(raw, tag, a.n, a.builder, thinker, endpoint, no_tools)
-        print(f"skipping the runs (no tool support); recorded as no-tools in {src}")
-    elif a.role in ("hard", "coding"):
-        src = None  # suite-only run: the realworld JSON is not needed
-    else:
-        before = synaptree_state()
-        proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
-                              cwd=ROOT, env=env, check=False)
-        after = synaptree_state()
-        if before is None or after is None:
-            print("WARNING: docker could not report the synaptree container state (3 tries each); the restart check is skipped for this run")
-        verdict = run_verdict(before, after, proc.returncode)
-        if verdict:
-            if synaptree_changed(before, after):
-                print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
-                      f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
-                      "analyzer: cases 1-7 and 9) are unreliable.")
-                sys.exit(f"nothing written to the CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
-                         f"--from-json once the synaptree container is stable.")
-            sys.exit(f"bench exited with code {proc.returncode}; nothing written to the CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
-        hits = sorted(raw.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
-        if not hits:
-            sys.exit(f"bench wrote no result file for tag {tag}")
-        src = hits[-1]
+elif no_tools:
+    if rw_roles:
+        src = write_no_tools_raw(raw, tag, a.n, builder, thinker, endpoint, no_tools)
+        print(f"skipping the realworld runs (no tool support); recorded as no-tools in {src}")
+elif rw_roles:
+    before = synaptree_state()
+    proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
+                          cwd=ROOT, env=env, check=False)
+    after = synaptree_state()
+    if before is None or after is None:
+        print("WARNING: docker could not report the synaptree container state (3 tries each); the restart check is skipped for this run")
+    verdict = run_verdict(before, after, proc.returncode)
+    if verdict:
+        if synaptree_changed(before, after):
+            print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
+                  f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
+                  "analyzer: cases 1-7 and 9) are unreliable.")
+            sys.exit(f"nothing written to the CSV. Raw JSON kept in {raw} (tag {tag}); review it, then import with "
+                     f"--from-json once the synaptree container is stable.")
+        sys.exit(f"bench exited with code {proc.returncode}; nothing written to the CSV. Raw JSON (if any) kept in {raw} (tag {tag}).")
+    hits = sorted(raw.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
+    if not hits:
+        sys.exit(f"bench wrote no result file for tag {tag}")
+    src = hits[-1]
 
-# Suites run before anything is written, so all four tests are written and summarised together.
+# Suites run before anything is written, so every requested test is written and summarised together.
 hard_src = coding_src = None
-if not a.from_json:
-    hard_tag = ("hard-" + thinker.replace(":", "-").replace("/", "-"))[:50]
-    code_tag = ("coding-" + a.builder.replace(":", "-").replace("/", "-"))[:50]
-    if not a.no_hard and not no_tools and a.role in (None, "hard"):
-        hard_src = run_suite("hard", SUITE_DIR, hard_tag, env, a.n)
-    if a.coding and not no_tools and a.role in (None, "coding"):
-        coding_src = run_suite("coding", SUITE_DIR, code_tag, env, a.n)
+if no_tools and suite_roles:
+    print(f"suites {', '.join(suite_roles)} skipped: the model has no tool support")
 else:
-    hard_src = Path(a.hard_json) if a.hard_json else None
-    coding_src = Path(a.coding_json) if a.coding_json else None
+    hard_tag = ("hard-" + thinker.replace(":", "-").replace("/", "-"))[:50]
+    code_tag = ("coding-" + builder.replace(":", "-").replace("/", "-"))[:50]
+    if "hard" in suite_roles:
+        hard_src = run_suite("hard", SUITE_DIR, hard_tag, suite_env, a.n)
+    if "coding" in suite_roles:
+        coding_src = run_suite("coding", SUITE_DIR, code_tag, suite_env, a.n)
 
-if a.role in ("hard", "coding"):
+if not rw_roles:
     # Suite-only path: no realworld summary is built, so the model's existing benchmark.csv row supplies the config.
-    if no_tools:
-        sys.exit(f"{a.role} not run: the model has no tool support")
-    suite_src = hard_src if a.role == "hard" else coding_src
-    if suite_src is None:
-        sys.exit(f"{a.role} suite did not run; nothing written")
     dst = Path(a.csv)
     results_dir = dst.parent
-    t = store.TESTS[a.role]
-    model = thinker if a.role == "hard" else a.builder
-    rows = store.suite_detail(suite_src, t["role"], t["suite"], t["cases"], model=model)
-    for file_name, file_rows in store.route(rows).items():
-        backup, marked = store.publish_detail(results_dir / file_name, file_rows)
-        print(f"{file_name}: {len(file_rows)} rows written, {marked} older run(s) marked superseded"
-              + (f", backup: {backup}" if backup else ""))
-    summary = store.summarize({"builder": a.builder, "thinker": thinker}, store.load_details(results_dir))
+    suite_src = {"hard": hard_src, "coding": coding_src}
+    rows = []
+    for r in suite_roles:
+        t = store.TESTS[r]
+        if suite_src[r] is None:
+            print(f"{r}: suite did not run; no rows written")
+            continue
+        rows += store.suite_detail(suite_src[r], t["role"], t["suite"], t["cases"], model=thinker if r == "hard" else builder)
+    if not rows:
+        sys.exit("no suite produced rows; nothing written")
     try:
+        for file_name, file_rows in store.route(rows).items():
+            backup, marked = store.publish_detail(results_dir / file_name, file_rows)
+            print(f"{file_name}: {len(file_rows)} rows written, {marked} older run(s) marked superseded"
+                  + (f", backup: {backup}" if backup else ""))
+        summary = store.summarize({"builder": builder, "thinker": thinker}, store.load_details(results_dir))
         existing = [r for r in store._read(dst, store.SUMMARY_COLS)
-                    if r["builder_model"] == a.builder and r["thinker_model"] == thinker]
+                    if r["builder_model"] == builder and r["thinker_model"] == thinker]
         if not existing:
-            sys.exit(f"no benchmark.csv row for {a.builder} / {thinker}; run the realworld roles first (--role builder)")
+            sys.exit(f"no benchmark.csv row for {builder} / {thinker}; run the realworld roles first (--role builder)")
         config = dict(existing[-1])
-        if a.metadata:
-            config.update(metadata_fields(a.builder, endpoint, config.get("context_used_peak_tokens", ""), config.get("params", "")))
+        if metadata_on:
+            config.update(metadata_fields(builder, endpoint, config.get("context_used_peak_tokens", ""), config.get("params", "")))
         backup, _ = store.upsert_summary(dst, summary, config)
     except csvstore.CsvSchemaError as e:
         sys.exit(f"CSV NOT WRITTEN (summary unchanged; detail rows may be in {results_dir}): {e}")
-    print(f"{a.role} only: {t['score']} {summary[t['score']] or 'blank'}, total {summary['total_score'] or 'blank'} -> {dst}")
+    for r in suite_roles:
+        t = store.TESTS[r]
+        print(f"{r} only: {t['score']} {summary[t['score']] or 'blank'}, total {summary['total_score'] or 'blank'} -> {dst}")
     if backup:
         print(f"backup: {backup}")
     sys.exit(0)
@@ -498,7 +504,7 @@ sources = {"realworld": src, "hard": hard_src, "coding": coding_src}
 run_cols = {k: rec[k] for k in store.RUN_COLS if k in rec and k not in ("score", "max", "mean_s_per_case")}
 new_rows = []
 for name, t in store.TESTS.items():
-    if a.role and name != a.role:
+    if name not in roles:
         continue
     jp = sources.get(t["suite"])
     if jp is None:
@@ -533,4 +539,5 @@ if backup:
 print(f"summary {rec['model']}: total {summary['total_score'] or 'blank'}, median {summary['median_s'] or 'blank'} s, "
       f"{summary['mean_s_per_case'] or 'blank'} s/case, peak ctx {rec['context_used_peak_tokens']} tokens on {hw} -> {dst}")
 for name, t in store.TESTS.items():
-    print(f"{name}: {summary[t['score']] or 'blank'} ({sources.get(t['suite']) or 'not run'})")
+    if name in roles:
+        print(f"{name}: {summary[t['score']] or 'blank'} ({sources.get(t['suite']) or 'not run'})")
