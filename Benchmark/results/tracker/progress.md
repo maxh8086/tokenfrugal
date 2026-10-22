@@ -3,7 +3,7 @@
 Updated: 2026-10-21 17:58 IST
 
 ## Current stage
-Local queue RESUMED at 11:01:53 from `queue_resume.lst` (27 models, models 6 to 32 of queue.lst), batches of 3, `--coding`.
+Local queue RESUMED at 11:01:53 from `queue_resume.lst` (27 models, models 6 to 32 of queue.lst), batches of 3, `--model <m> --role builder,thinker,hard,coding`.
 - Haiku stage: COMPLETE at 80/81 (published to benchmark.csv). `hard_long_summary` 2/3 kept as a real test.
 - Crash fixed 10:59: `scripts/bench.py` line 269 uses `(v['s'] or {})`. Uncommitted.
 - gemma-3-12b is queued separately (`queue_gemma3.lst`), to run after ALL_DONE.
