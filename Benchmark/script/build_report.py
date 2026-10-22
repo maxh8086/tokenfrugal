@@ -43,6 +43,8 @@ if _args.run is not None:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # `python -I` drops the script dir from sys.path
 from ranking import *  # noqa
+if not ollama_up():
+    print("WARNING: Ollama not reachable at localhost:11434; ts- origin rows will read 'Local build (source not recorded)'. Start Ollama and rerun.")
 from ranking import B, cloud_reference, _status, _sort_role, _role_agg, _load, _local, _cands, _max_tps
 AGENTS = B.parent / "router" / "tf-roles.yaml"
 
@@ -600,6 +602,10 @@ Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function 
         .replace("__TC__", json.dumps(THINKER_CASES)),
     encoding="utf-8")
 print(f"updated explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # run_queue.sh uses python -I, which skips the script dir
+import clean_outputs
+clean_outputs.run()
 
 
 if _args.update != "no":

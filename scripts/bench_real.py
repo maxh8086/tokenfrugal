@@ -7,6 +7,8 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from datetime import datetime, timezone
 
 from router import loop, server, store
@@ -124,12 +126,21 @@ def _now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _docker(args):
-    try:
-        p = subprocess.run(["docker", *args], capture_output=True, text=True, timeout=60)
-        return p.returncode, p.stdout + p.stderr
-    except Exception as e:  # noqa: BLE001
-        return 1, str(e)
+def _docker(args, timeout=60):
+    # Output goes to a temp file, not a pipe: after a timeout a pipe can stay blocked on Windows
+    # (the Qwable hang sat in docker inspect for 88 min), so a killed docker call must not block us.
+    with tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as out:
+        try:
+            p = subprocess.Popen(["docker", *args], stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
+        except Exception as e:  # noqa: BLE001
+            return 1, str(e)
+        try:
+            rc = p.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            return 1, f"docker {args[0]} timed out after {timeout}s"
+        out.seek(0)
+        return rc, out.read()
 
 
 STALE_MCP_AGE = 900.0  # seconds; a gateway container this old outlived any case (watchdog is at most ~330s)
@@ -168,11 +179,17 @@ def sweep_stale_mcp(max_age=STALE_MCP_AGE):
 def container_state():
     """Running, ExitCode, OOMKilled, StartedAt, FinishedAt of the synaptree container.
     Running is False (with the inspect error) when the container is missing."""
-    rc, out = _docker(["inspect", "-f", "{{json .State}}", SYNAPTREE_CONTAINER])
-    try:
-        st = json.loads(out) if rc == 0 else None
-    except ValueError:
-        st = None
+    # A failed read is retried: one docker hiccup must not look like a stopped or restarted container.
+    for attempt in range(3):
+        rc, out = _docker(["inspect", "-f", "{{json .State}}", SYNAPTREE_CONTAINER])
+        try:
+            st = json.loads(out) if rc == 0 else None
+        except ValueError:
+            st = None
+        if st or "No such" in out:
+            break
+        if attempt < 2:
+            time.sleep(3)
     if not st:
         return {"Running": False, "error": out.strip()[:300]}
     return {k: st.get(k) for k in ("Running", "ExitCode", "OOMKilled", "StartedAt", "FinishedAt")}

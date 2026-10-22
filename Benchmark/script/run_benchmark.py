@@ -14,6 +14,7 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from datetime import datetime
@@ -44,7 +45,15 @@ ap.add_argument("--coding", action="store_true", help="after the run, also run t
 ap.add_argument("--from-json", help="skip the run and import an existing bench JSON")
 ap.add_argument("--hard-json", help="import this suite JSON instead of running the suite (needs --from-json)")
 ap.add_argument("--coding-json", help="import this suite JSON instead of running the suite (needs --from-json)")
+ap.add_argument("--role", choices=["builder", "thinker", "hard", "coding"],
+                help="run and write only this test (store.TESTS). builder/thinker run the realworld suite; hard/coding run only their own suite and reuse the model's existing benchmark.csv row for config")
+ap.add_argument("--metadata", action="store_true",
+                help="refresh the hardware, model-info and Ollama params columns. Alone: runs no suite and keeps all scores. With --role hard/coding: refreshes after the role's rows are written")
 a = ap.parse_args()
+if a.role and a.from_json:
+    ap.error("--role cannot be combined with --from-json")
+if a.metadata and not a.role and (a.from_json or a.no_hard or a.coding):
+    ap.error("--metadata alone runs no suite; do not combine it with --from-json, --no-hard or --coding")
 if (a.hard_json or a.coding_json) and not a.from_json:
     ap.error("--hard-json and --coding-json need --from-json")
 
@@ -55,14 +64,20 @@ LOOP_VERSION = "2"
 LOCAL = ("localhost", "127.0.0.1", "[::1]", "host.docker.internal")
 PROFILES = ("analyze", "browser", "build-data", "build", "debug", "design", "docs", "security")
 SUITE_DIR = HERE.parent / "results" / "raw" / "suites"  # suite JSONs written by run_suite(); a subfolder, so raw/*.json globs are unaffected
+SUITE_TIMEOUT_S = 3 * 3600  # a hung suite (no output, dead MCP pipe) must not block the queue forever
 
 
 def run_suite(suite, out_dir, tag, env, n):
     """Run one suite (hard or coding) through scripts.bench. Returns the JSON it wrote in this run, or None (WARNING printed)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     started = time.time()
-    proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(n), "--tag", tag],
-                          cwd=ROOT, env={**env, "BENCH_SUITE": suite, "BENCH_OUT_DIR": str(out_dir)}, check=False)
+    try:
+        proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(n), "--tag", tag],
+                              cwd=ROOT, env={**env, "BENCH_SUITE": suite, "BENCH_OUT_DIR": str(out_dir)}, check=False,
+                              timeout=SUITE_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        print(f"WARNING: {suite} suite timed out after {SUITE_TIMEOUT_S}s and was stopped; its {suite}_* columns are left blank")
+        return None
     if proc.returncode != 0:
         print(f"WARNING: {suite} suite exited {proc.returncode}; its {suite}_* columns are left blank")
         return None
@@ -74,25 +89,45 @@ def run_suite(suite, out_dir, tag, env, n):
 
 
 def run_cmd(cmd):
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-        return r.returncode, r.stdout + r.stderr
-    except Exception as e:  # noqa: BLE001
-        return 1, str(e)
+    # Output goes to a temp file, not a pipe: after a timeout a pipe can stay blocked on Windows.
+    with tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as out:
+        try:
+            p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
+        except Exception as e:  # noqa: BLE001
+            return 1, str(e)
+        try:
+            rc = p.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            return 1, f"{cmd[0]} timed out after 60s"
+        out.seek(0)
+        return rc, out.read()
 
 
-def synaptree_state():
-    """(running, StartedAt) of the synaptree MCP container; (False, "") when it is missing."""
-    rc, out = run_cmd(["docker", "inspect", "-f", "{{.State.Running}} {{.State.StartedAt}}", "synaptree-synaptree-1"])
-    if rc != 0:
-        return False, ""
-    running, _, started = out.strip().partition(" ")
-    return running == "true", started
+def synaptree_state(tries=3):
+    """(running, StartedAt) of the synaptree MCP container; (False, "") when docker says it is missing.
+    None when docker could not be read: a failed read says nothing about the container, so it is retried."""
+    for k in range(tries):
+        rc, out = run_cmd(["docker", "inspect", "-f", "{{.State.Running}} {{.State.StartedAt}}", "synaptree-synaptree-1"])
+        lines = out.strip().splitlines()
+        if rc == 0 and lines:
+            running, _, started = lines[-1].partition(" ")
+            return running == "true", started
+        if "No such" in out:
+            return False, ""
+        if k + 1 < tries:
+            time.sleep(5)
+    return None
+
+
+def synaptree_changed(before, after):
+    """True only when both reads worked and show the container stopped or restarted."""
+    return before is not None and after is not None and (not after[0] or after[1] != before[1])
 
 
 def run_verdict(before, after, returncode):
     """None when the run may be appended to the CSV, else the reason it must not be."""
-    if not after[0] or after[1] != before[1]:
+    if synaptree_changed(before, after):
         return "synaptree container changed during the run"
     if returncode != 0:
         return f"bench exited with code {returncode}"
@@ -195,6 +230,12 @@ def preflight(endpoint, key, models):
             bad.append(name)
 
     print("preflight")
+    # first check: Ollama answers on localhost:11434; the report's origin column and the local models both need it
+    try:
+        ver = json.load(urllib.request.urlopen("http://localhost:11434/api/version", timeout=5)).get("version", "?")
+        check(f"ollama up (localhost:11434, v{ver})", True)
+    except Exception as e:  # noqa: BLE001
+        check("ollama up (localhost:11434)", False, f"start Ollama ({type(e).__name__}: {str(e)[:60]})")
     from router.config import LLM_TEMPERATURE
     check(f"LOCAL_LLM_TEMPERATURE = {LLM_TEMPERATURE} (benchmarks need 0.0)", LLM_TEMPERATURE == 0.0,
           "set LOCAL_LLM_TEMPERATURE=0.0 in .env (or unset it) and rerun")
@@ -211,13 +252,41 @@ def preflight(endpoint, key, models):
     shown = {p: run_cmd(["docker", "mcp", "profile", "show", p])[1] for p in PROFILES}
     wrong = [p for p, t in shown.items() if ":/workspace" in t.replace("\\", "/") and not mount_ok(t, ws)]
     check(f"profile mounts -> {ws}:/workspace", not wrong, f"python scripts/install_profiles.py --workspace {ws} (bad: {', '.join(wrong)})")
+    # ts-mcp backends the benchmark roles use (research, security, design, plan profiles); mcp_up.ps1 is idempotent
+    ts_mcp = ("crawl4ai", "searxng", "sonarqube", "penpot-mcp", "neo4j")
+    _, states = run_cmd(["docker", "ps", "-a", "--filter", "label=com.docker.compose.project=ts-mcp", "--format",
+                         '{{.Label "com.docker.compose.service"}} {{.State}}'])
+    running = {ln.split()[0] for ln in states.splitlines() if ln.split() and ln.split()[-1] == "running"}
+    down = [s for s in ts_mcp if s not in running]
+    if down:
+        print(f"  start  ts-mcp backends (down: {', '.join(down)}) via scripts/mcp_up.ps1")
+        try:  # SonarQube and Penpot can take minutes to become healthy
+            subprocess.run(["powershell", "-NoProfile", "-File", str(ROOT / "scripts" / "mcp_up.ps1")], cwd=ROOT,
+                           check=False, timeout=900)
+        except subprocess.TimeoutExpired:
+            print("  WARN   scripts/mcp_up.ps1 did not finish within 900s")
+    rc, states = run_cmd(["docker", "ps", "-a", "--filter", "label=com.docker.compose.project=ts-mcp", "--format",
+                          '{{.Label "com.docker.compose.service"}} {{.State}}'])
+    still = [s for s in ts_mcp if s not in {ln.split()[0] for ln in states.splitlines() if ln.split() and ln.split()[-1] == "running"}]
+    check("ts-mcp backends running (" + ", ".join(ts_mcp) + ")", not still, f"scripts/mcp_up.ps1 (still down: {', '.join(still)})")
     try:
         socket.create_connection(("127.0.0.1", 7697), 3).close()
         up = True
     except OSError:
         up = False
     check("neo4j plan store 127.0.0.1:7697", up, "scripts/mcp_up.ps1")
-    s_up, s_started = synaptree_state()
+    if not (synaptree_state() or (False, ""))[0]:
+        # the containers exit with the machine (reboot, low battery); start the existing ones rather than failing every model
+        print("  start  synaptree containers (were stopped)")
+        for name in ("synaptree-neo4j-1", "synaptree-synaptree-1"):
+            run_cmd(["docker", "start", name])
+        for _ in range(60):
+            try:
+                socket.create_connection(("127.0.0.1", 17687), 2).close()
+                break
+            except OSError:
+                time.sleep(2)
+    s_up, s_started = synaptree_state() or (False, "")
     check("synaptree container synaptree-synaptree-1 running" + (f" (started {s_started})" if s_up else ""), s_up,
           "docker start synaptree-synaptree-1 (or start the synaptree plugin)")
     try:
@@ -241,6 +310,39 @@ def preflight(endpoint, key, models):
     if bad:
         sys.exit(f"preflight failed: {', '.join(bad)}")
 
+def metadata_fields(builder, endpoint, ctx, current_params):
+    """Hardware, model-info and Ollama params columns for one model. Used by --metadata; a blank params read keeps the old value."""
+    hwi = hardware.info()
+    mi = modelinfo.info(builder, endpoint, ctx)
+    return {"params": bench_csv.ollama_params(builder, endpoint) or current_params,
+            "gpu_memory_capacity": hwi["vram_gb"] or "", "system_ram_gb": hwi["ram_gb"] or "", **mi}
+
+
+if a.metadata and not a.role:
+    # Standalone metadata: reads hardware, model info and Ollama params; no suite runs and no score is touched.
+    if not a.builder:
+        ap.error("builder model is required with --metadata")
+    thinker = a.thinker or a.builder
+    dst = Path(a.csv)
+    results_dir = dst.parent
+    endpoint = a.endpoint or os.environ.get("TOKENFRUGAL_LLM_URL") or "http://localhost:11434/v1"
+    try:
+        existing = [r for r in store._read(dst, store.SUMMARY_COLS)
+                    if r["builder_model"] == a.builder and r["thinker_model"] == thinker]
+        if not existing:
+            sys.exit(f"no benchmark.csv row for {a.builder} / {thinker}; run the roles first")
+        config = dict(existing[-1])
+        config.update(metadata_fields(a.builder, endpoint, config.get("context_used_peak_tokens", ""), config.get("params", "")))
+        summary = store.summarize({"builder": a.builder, "thinker": thinker}, store.load_details(results_dir))
+        backup, _ = store.upsert_summary(dst, summary, config)
+    except csvstore.CsvSchemaError as e:
+        sys.exit(f"CSV NOT WRITTEN (nothing changed): {e}")
+    print(f"metadata only: {config['model']} refreshed (params {config['params'] or 'blank'}, "
+          f"GPU {config['gpu_memory_capacity'] or 'blank'} GB, RAM {config['system_ram_gb'] or 'blank'} GB) -> {dst}")
+    if backup:
+        print(f"backup: {backup}")
+    sys.exit(0)
+
 no_tools = {}  # model -> error text, for models the endpoint refuses tools to; their runs are skipped
 if a.from_json:
     src = Path(a.from_json)
@@ -253,6 +355,8 @@ else:
     raw.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "PYTHONPATH": str(ROOT), "PYTHONIOENCODING": "utf-8", "BENCH_OUT_DIR": str(raw),
            "CC_WORKSPACE": ROOT.parent.as_posix(), "TOKENFRUGAL_MODEL_BUILDER": a.builder, "TOKENFRUGAL_MODEL_THINKER": thinker}
+    if a.role in ("builder", "thinker"):
+        env["BENCH_CASES"] = ",".join(store.TESTS[a.role]["cases"])  # realworld run limited to this role's cases
     if a.endpoint:
         env["TOKENFRUGAL_LLM_URL"] = a.endpoint
     if a.api_key_env:
@@ -273,14 +377,18 @@ else:
     if no_tools:
         src = write_no_tools_raw(raw, tag, a.n, a.builder, thinker, endpoint, no_tools)
         print(f"skipping the runs (no tool support); recorded as no-tools in {src}")
+    elif a.role in ("hard", "coding"):
+        src = None  # suite-only run: the realworld JSON is not needed
     else:
         before = synaptree_state()
         proc = subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(a.n), "--tag", tag],
                               cwd=ROOT, env=env, check=False)
         after = synaptree_state()
+        if before is None or after is None:
+            print("WARNING: docker could not report the synaptree container state (3 tries each); the restart check is skipped for this run")
         verdict = run_verdict(before, after, proc.returncode)
         if verdict:
-            if not after[0] or after[1] != before[1]:
+            if synaptree_changed(before, after):
                 print(f"WARNING: synaptree container changed during the run (StartedAt {before[1] or 'n/a'} -> "
                       f"{after[1] or 'n/a'}, running={after[0]}). synaptree-role cases (builder, reviewer, debugger, "
                       "analyzer: cases 1-7 and 9) are unreliable.")
@@ -297,13 +405,46 @@ hard_src = coding_src = None
 if not a.from_json:
     hard_tag = ("hard-" + thinker.replace(":", "-").replace("/", "-"))[:50]
     code_tag = ("coding-" + a.builder.replace(":", "-").replace("/", "-"))[:50]
-    if not a.no_hard and not no_tools:
+    if not a.no_hard and not no_tools and a.role in (None, "hard"):
         hard_src = run_suite("hard", SUITE_DIR, hard_tag, env, a.n)
-    if a.coding and not no_tools:
+    if a.coding and not no_tools and a.role in (None, "coding"):
         coding_src = run_suite("coding", SUITE_DIR, code_tag, env, a.n)
 else:
     hard_src = Path(a.hard_json) if a.hard_json else None
     coding_src = Path(a.coding_json) if a.coding_json else None
+
+if a.role in ("hard", "coding"):
+    # Suite-only path: no realworld summary is built, so the model's existing benchmark.csv row supplies the config.
+    if no_tools:
+        sys.exit(f"{a.role} not run: the model has no tool support")
+    suite_src = hard_src if a.role == "hard" else coding_src
+    if suite_src is None:
+        sys.exit(f"{a.role} suite did not run; nothing written")
+    dst = Path(a.csv)
+    results_dir = dst.parent
+    t = store.TESTS[a.role]
+    model = thinker if a.role == "hard" else a.builder
+    rows = store.suite_detail(suite_src, t["role"], t["suite"], t["cases"], model=model)
+    for file_name, file_rows in store.route(rows).items():
+        backup, marked = store.publish_detail(results_dir / file_name, file_rows)
+        print(f"{file_name}: {len(file_rows)} rows written, {marked} older run(s) marked superseded"
+              + (f", backup: {backup}" if backup else ""))
+    summary = store.summarize({"builder": a.builder, "thinker": thinker}, store.load_details(results_dir))
+    try:
+        existing = [r for r in store._read(dst, store.SUMMARY_COLS)
+                    if r["builder_model"] == a.builder and r["thinker_model"] == thinker]
+        if not existing:
+            sys.exit(f"no benchmark.csv row for {a.builder} / {thinker}; run the realworld roles first (--role builder)")
+        config = dict(existing[-1])
+        if a.metadata:
+            config.update(metadata_fields(a.builder, endpoint, config.get("context_used_peak_tokens", ""), config.get("params", "")))
+        backup, _ = store.upsert_summary(dst, summary, config)
+    except csvstore.CsvSchemaError as e:
+        sys.exit(f"CSV NOT WRITTEN (summary unchanged; detail rows may be in {results_dir}): {e}")
+    print(f"{a.role} only: {t['score']} {summary[t['score']] or 'blank'}, total {summary['total_score'] or 'blank'} -> {dst}")
+    if backup:
+        print(f"backup: {backup}")
+    sys.exit(0)
 
 data = json.loads(src.read_text(encoding="utf-8"))
 out = bench_csv.rows(data)
@@ -357,6 +498,8 @@ sources = {"realworld": src, "hard": hard_src, "coding": coding_src}
 run_cols = {k: rec[k] for k in store.RUN_COLS if k in rec and k not in ("score", "max", "mean_s_per_case")}
 new_rows = []
 for name, t in store.TESTS.items():
+    if a.role and name != a.role:
+        continue
     jp = sources.get(t["suite"])
     if jp is None:
         print(f"{name}: suite {t['suite']} not run; no rows written")
