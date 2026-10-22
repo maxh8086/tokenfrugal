@@ -5,6 +5,49 @@ Last updated: 2026-10-21
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
+## Pending decisions and designs (added 2026-10-22, nothing implemented)
+
+Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
+
+1. **Summary cap 150-300 -> 1000-1500 (agreed in principle).**
+   - Where: `router/config.py:114` (`SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS`). Text mentions to update: README.md (lines 7, 90), CLAUDE.md (line 7), docs/architecture.md (lines 7, 23), docs/technical.md (line 25), examples/example_agents.md (line 6), `router/server.py` docstring (line 165), and the labels in `docs/hld.svg`, `docs/lld-sequence.svg`, `docs/lld-modules.svg`.
+   - Impact: `summarize()` returns a reply unchanged when it is under the cap, so most replies will now pass through raw. Benchmark scores were produced at 150-300, so they are not comparable: re-run or add a note.
+   - Do not change the constant while the queue runs. Each model is a separate process that reads `config.py` at start, so models later in the queue would get the new cap.
+
+2. **Role contract template (playbook gap).** Decide before editing any role.
+   - Proposed fields per role in `router/tf-roles.yaml`: `purpose` (one sentence), `inputs` (paths or arguments the role expects), `output_format`, `stop_condition`, `checklist` (3 or more items, each tagged `deterministic` or `judgement`).
+   - Basic criteria a role must meet: every field present; each checklist item names what passes it; the matching skill file (`router/skills/<role>/SKILL.md`) states the same stop condition. Follows the `code-l1` pattern (numbered steps, output format, stop condition).
+   - Update all roles only after the benchmark finishes. Roles without a contract are not checked by the checker stage (item 3).
+
+3. **Checker stage (proof gap).** Added per role through its contract, not per model.
+   - Position: new stage in `_execute` in `router/server.py`, after `run()` and before `summarize()`.
+   - Deterministic items: tests (an accept command from the contract), lint (`router/lint.py` `check_python`), diff applies (`git apply --check`), files-changed manifest from git, not the model's claim.
+   - Judgement items: a small local model returns pass or fail with a reason per item. Model choice is open (see item 4).
+   - Failure: a diff-only correction goes back to the same role through `resume_task`, which keeps its message history. Limit one correction per task, then return `FAILED` with the checker output.
+   - Drawbacks: adds time per task, so per-role `timeout_s` must account for it. Judgement results from a 3B model are weak; treat them as advisory until measured.
+
+4. **Who is the checker (open decision).**
+   - Haiku is recorded as the team lead and Sonnet as the orchestrator in `teams:` and `orchestration:`. The router never calls them: the lead and orchestrator are cloud models run by the client. Today Haiku reviews replies by hand, in the client, as the tracker.
+   - Options:
+     - (a) Local thinker (`llama3.2:3b-16k`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
+     - (b) Router calls Haiku through the API for judgement items. Better judgement, but breaks the no-cloud and privacy promise, needs a key, and spends cloud tokens.
+     - (c) Keep judgement in the client: the checker stage returns deterministic results plus the judgement inputs, and Haiku reviews them. No router change for judgement.
+   - Suggested: deterministic checks in the router now (a for judgement, later), and (c) as the reviewer of record until (a) is measured.
+
+5. **Toolbox of approved templates (new table design).**
+   - New SQLite table `templates` in `router/store.py`: `id`, `role`, `task_type`, `title`, `tags` (JSON list), `body` (text or file path), `source_task_id`, `status` (`approved` | `retired`), `approved_by`, `approved_at`, `uses`, `last_used`.
+   - Matching at dispatch: same `role` and `task_type` first, then tag overlap, then keyword score. Embeddings are deferred until keyword matching is measured.
+   - Budget: at most 2 templates and 1500 tokens in total, placed before the task text. The rest of the 16-32k window is left for the task and tool output. The budget is a proposal and needs measuring.
+   - Open: who approves (see item 6), and whether templates are shown in `list_roles`.
+
+6. **Approval policy (open).**
+   - Now: manual approval by the user. Each new template or edit gets a plan and an impact review first.
+   - Auto-approve only after the checker stage has been measured on the benchmark and the drawbacks have been reviewed.
+
+7. **Handoff cleanup (pending, not done).**
+   - Root `handoff.md` is the canonical file. Review `docs/handoff.md`, move its open items here, and remove completed and duplicate items from both files. This is a separate edit and is not done yet.
+
+---
 ## Teams and team leads (built 2026-10-21, recorded only; not used for routing)
 
 - Teams are in `teams:` in `router/tf-roles.yaml`. Membership is fixed per role. Every role in `roles:` and `pending_roles:` is in exactly one team (`tests/test_teams.py` checks this).
@@ -297,3 +340,20 @@ Plan, in order:
 Rules: no commits or pushes without a request. Earlier batch commits pushed `raw/` and `hard/` files with `git add -A`; disclose this if asked.
 
 Estimated time: about 30 to 60 min per model, so about 16 to 30 hours for 32 models. The GPU must not run anything else during the queue.
+
+## Benchmark data cleanup: local and remote (open, 2026-10-21)
+
+**Local (done in code, runs automatically):**
+- `Benchmark/script/clean_outputs.py` runs at the end of `build_report.py`, so after every batch of `run_queue.sh`. It removes:
+  - `results/raw/` run JSON, including `raw/suites/`. The cleanup runs only after the CSVs are written; the rebuild source (`--from-json`) is gone after that.
+  - `results/tracker/logs/*.log` for models already in `benchmark.csv`.
+  - `results/backups/` CSV copies, keeping the newest 3 per file.
+- `hard/` is still cleared by `run_queue.sh` (`clean_hard`).
+- `.gitignore` covers `backups/`, `hard/`, `tracker/logs/` and `raw/`.
+- Not yet run for real: the 71 raw files on disk go at the next batch end. Check with `clean_outputs.py --dry-run` first.
+
+**Remote (not done; needs a request, outward-facing):**
+- Ignoring a path does not remove files that are already committed. `git ls-files` shows 73 files under `raw/` and 26 under `tracker/` tracked on the current branch (earlier commits used `git add -A`).
+- To stop tracking them: `git rm -r --cached Benchmark/results/raw Benchmark/results/tracker`, commit, then push to origin (`maxh8086/tokenfrugal`). The files stay on disk, so the local cleanup can then remove them.
+- Those files remain in git history after that commit. Removing them from history needs a history rewrite and force push, which is a separate decision.
+- Commit only when the user asks. Commit messages: no Co-Authored-By trailer (per CLAUDE.md); the session's attribution reminder asks for one, so check which rule applies before committing.
