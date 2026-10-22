@@ -47,6 +47,18 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 7. **Handoff cleanup (pending, not done).**
    - Root `handoff.md` is the canonical file. Review `docs/handoff.md`, move its open items here, and remove completed and duplicate items from both files. This is a separate edit and is not done yet.
 
+8. **Teams: visibility, not routing (decided 2026-10-22).**
+   - Each team's lead and the orchestrator are shown to every client through `list_roles` (`router/server.py`), `CLAUDE.md` and `AGENTS.md`. Codex and other agents can read them there.
+   - Haiku does not choose a team or role at run time. The router records the lead and orchestrator and never calls them. Routing by lead needs a model-driven step that does not exist yet.
+   - Team names: `ui-ux` (confirmed: "UI-UZ" in the request was a typo), `development`, `ops`, plus `security` and `research`, which are my own grouping and still need confirming.
+
+9. **Haiku model: `claude-haiku-5-5` (decided 2026-10-22).**
+   - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) still names `claude-haiku-4-5`; the user should update it to 5-5. This repo does not change it.
+
+10. **Remove taste-skill design skills from Claude (agreed, not started).**
+   - Scope: the Claude skill setup, not this repo or its roles. Keep ui-ux-pro-max as the design skill.
+   - Do it only after the UI role tests have run on all models and the results are in `Benchmark/results/ui_roles.csv`. Before removing anything, check which roles or skills reference taste-skill.
+
 ---
 ## Teams and team leads (built 2026-10-21, recorded only; not used for routing)
 
