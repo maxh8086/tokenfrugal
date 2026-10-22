@@ -5,6 +5,7 @@ import html
 import json
 import math
 import re
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -121,23 +122,70 @@ LOCAL_BUILDS = {   # tag -> (base model to pull, Modelfile that derives the tag)
 }
 
 
+CTX_SUFFIX = re.compile(r"-(8192|16384|32768|40960|49152|65536)$")
+
+
+def _ollama_show(name):
+    """Ollama's own record of a local model (/api/show), or None when Ollama is not reachable."""
+    req = urllib.request.Request("http://localhost:11434/api/show", data=json.dumps({"model": name}).encode(),
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.load(resp)
+    except (OSError, ValueError):
+        return None
+
+
+def ollama_up():
+    """True when Ollama answers on localhost:11434; the origin column for ts- builds reads from it."""
+    try:
+        urllib.request.urlopen("http://localhost:11434/api/version", timeout=5).close()
+        return True
+    except OSError:
+        return False
+
+
+def _upstream(show):
+    """Original publisher repo from the GGUF metadata, e.g. 'Qwen/Qwen2.5-1.5B'; '' when the file does not record one."""
+    info = (show or {}).get("model_info", {})
+    url = info.get("general.base_model.0.repo_url") or ""
+    return url.replace("https://huggingface.co/", "") if url else ""
+
+
+def _norm(stem):
+    """Model stem without the context-size suffix or the GGUF marker, so ts-x-65536 matches ts-x-16384 and ts-x-gguf-16384."""
+    return CTX_SUFFIX.sub("", stem.lower()).replace("-gguf", "")
+
+
+def _from_base(base):
+    """(source, pull command) for a base model tag that the wrapper was built from."""
+    if base.startswith("hf.co/"):
+        return f"Hugging Face: {base[len('hf.co/'):].split(':')[0]}", f"ollama pull {base}"
+    return "Ollama library", f"ollama pull {base}"
+
+
 def origin(name):
-    """(source, exact command to get this model) from the model tag the run used."""
+    """(source, exact command to get this model) from the model tag the run used. Blank pull = source not recorded."""
     if name.startswith("claude-"):
         return "Anthropic API", "not pullable (cloud baseline)"
     if name in LOCAL_BUILDS:
         base, mf = LOCAL_BUILDS[name]
         return "Ollama library (run as local 16k wrapper)", f"ollama pull {base}"
     if name.startswith("ts-"):
-        stem = name.split(":")[0]
-        for mf in (TRIAL / f"{stem}.Modelfile", TRIAL / f"{stem[3:]}.Modelfile"):
-            if mf.exists():
+        want = _norm(name.split(":")[0])
+        for mf in sorted(TRIAL.glob("*.Modelfile")):
+            if _norm(mf.stem) in (want, want[3:]):
                 m = re.search(r"^FROM\s+(\S+)", mf.read_text(encoding="utf-8"), re.M)
                 if m:
-                    base = m.group(1)
-                    src = f"Hugging Face: {base[6:].split(':')[0]}" if base.startswith("hf.co/") else "Ollama library"
-                    return f"{src} (run as local 16k wrapper)", f"ollama pull {base}"
-        return "Local wrapper (original model unknown)", "original model unknown; run locally: ollama show " + name + " --modelfile"
+                    src, pull = _from_base(m.group(1))
+                    return f"{src} (run as local 16k wrapper)", pull
+        show = _ollama_show(name)
+        parent = ((show or {}).get("details") or {}).get("parent_model") or ""
+        if parent:  # the base tag Ollama recorded when this wrapper was created
+            src, pull = _from_base(parent)
+            up = _upstream(show)
+            return f"{src} (run as local 16k wrapper{'; upstream ' + up if up else ''})", pull
+        return "Local build (source not recorded)", ""
     if name.startswith("hf.co/"):
         org_repo = name[len("hf.co/"):].split(":")[0]
         return f"Hugging Face: {org_repo}", f"ollama pull {name}"
