@@ -55,9 +55,11 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 9. **Haiku model: `claude-haiku-5-5` (decided 2026-10-22).**
    - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) still names `claude-haiku-4-5`; the user should update it to 5-5. This repo does not change it.
 
-10. **Remove taste-skill design skills from Claude (agreed, not started).**
-   - Scope: the Claude skill setup, not this repo or its roles. Keep ui-ux-pro-max as the design skill.
-   - Do it only after the UI role tests have run on all models and the results are in `Benchmark/results/ui_roles.csv`. Before removing anything, check which roles or skills reference taste-skill.
+10. **Review taste-skill against ui-ux-pro-max in the Claude skill setup (open; no removal yet).**
+   - Scope: the Claude skill setup only, not this repo or its roles. Nothing in this repo's roles, skills or profiles references taste-skill (checked 2026-10-22).
+   - Why it is on the list: both families cover UI design, so they may overlap. The overlap is not yet proven. taste-skill has 13 entries (brandkit, brutalist, gpt-taste, image-to-code, imagegen-frontend-mobile, imagegen-frontend-web, minimalist, output, redesign, soft, stitch, taste-skill, taste-skill-v1). ui-ux-pro-max has 7 (banner-design, brand, design, design-system, slides, ui-styling, ui-ux-pro-max). Some overlap, for example design systems and slides.
+   - Before any removal: compare each taste-skill variant with its closest ui-ux-pro-max skill, check which one the UI role tests (`Benchmark/results/ui_roles.csv`) actually used, and get your approval for each skill removed. Nothing is deleted without that review.
+   - Wait for the UI role tests on all models to finish first.
 
 ---
 ## Teams and team leads (built 2026-10-21, recorded only; not used for routing)
@@ -117,7 +119,7 @@ Tool overlap only, different skill (keep; not duplicates):
 - `scripts/ui_role_smoke.py`: live smoke. Without `--confirm` it prints a plan and makes no model call. Needs `--model` and `CC_WORKSPACE`. Results go to their own file, `Benchmark/results/ui_roles.csv`.
 - `Benchmark/results/benchmark.csv` is NOT touched. Merge UI results into it only after the UI roles are final, and only after the user says so.
 - Pending: final UI role changes, then the live run, then the merge. Model assignment waits for passing results.
-- Later cleanup (not started): remove the taste-skill design skills from Claude, and keep ui-ux-pro-max as the design skill. Do this only after the UI role tests have run on all models and the results are in `Benchmark/results/ui_roles.csv`. Before removing anything, check which roles or skills reference taste-skill.
+- Later review (not started, nothing removed): compare taste-skill with ui-ux-pro-max in the Claude skill setup. Do this only after the UI role tests have run on all models and the results are in `Benchmark/results/ui_roles.csv`. Removal needs a detailed review and approval first. See pending decision 10.
 
 **Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
 - Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
