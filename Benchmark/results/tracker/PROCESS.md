@@ -4,7 +4,7 @@ Not user documentation. The user-facing method lives in `Benchmark/Benchmark.md`
 
 ## Start a queue
 
-From the repo root, with the list file in the tracker folder (one model tag per line):
+From the repo root, with the list file in the tracker folder. One model per line: `TAG` runs all four roles, `TAG ROLES` runs only the listed roles (comma-separated, as in `--role`):
 
 ```text
 .venv\Scripts\python.exe Benchmark\script\queue_watch.py Benchmark\results\tracker\<list>.lst
