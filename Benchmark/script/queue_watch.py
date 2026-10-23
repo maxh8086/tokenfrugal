@@ -5,6 +5,9 @@ then rebuilds the report.
     python Benchmark/script/queue_watch.py LIST [--idle 900] [--post-done 300] [--cap 7200] [--poll 30]
                                                 [--tracker DIR] [--dry-run] [--fake] [--no-report]
 
+LIST has one model per line: "TAG" runs all four roles, "TAG ROLES" runs only those roles
+(comma-separated, as in run_benchmark.py --role), e.g. "cogito:8b thinker". Blank lines are skipped.
+
 Stall reasons, checked in this order:
     b  "== realworld done" was seen and no "wrote" line came after it for --post-done seconds
     a  the model log was not written for --idle seconds
@@ -29,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PY = str(ROOT / ".venv" / "Scripts" / "python.exe")
 TAIL_BYTES = 65536
 QUEUE_LOG = None  # set in main()
+ALL_ROLES = "builder,thinker,hard,coding"
 
 
 def now():
@@ -42,7 +46,7 @@ def note(line):
     print(line, flush=True)
 
 
-def child_cmd(m, args):
+def child_cmd(m, args, roles):
     if args.dry_run:
         return [sys.executable, "-c", "print('dry-run ok', flush=True)"]
     if args.fake and m.startswith("fake-"):
@@ -53,7 +57,7 @@ def child_cmd(m, args):
         else:
             code = "print('ok', flush=True)"
         return [sys.executable, "-c", code]
-    return [PY, "-I", str(ROOT / "Benchmark" / "script" / "run_benchmark.py"), "--model", m, "--role", "builder,thinker,hard,coding"]
+    return [PY, "-I", str(ROOT / "Benchmark" / "script" / "run_benchmark.py"), "--model", m, "--role", roles]
 
 
 def tail_lines(path):
@@ -75,12 +79,12 @@ def ollama_stop(name):
         pass  # ollama missing or not running is not fatal
 
 
-def run_model(m, args, logs):
+def run_model(m, roles, args, logs):
     """Run one model under watch. Returns the exit code, or 'STALL' after killing it."""
     safe = re.sub(r"[^A-Za-z0-9._-]", "_", m)
     log_path = logs / (safe + ".log")
     with open(log_path, "w", encoding="utf-8") as logf:
-        proc = subprocess.Popen(child_cmd(m, args), cwd=ROOT, stdin=subprocess.DEVNULL,
+        proc = subprocess.Popen(child_cmd(m, args, roles), cwd=ROOT, stdin=subprocess.DEVNULL,
                                 stdout=logf, stderr=logf)
         start = time.time()
         done_at = None  # first time we saw a pending "== realworld done" line
@@ -171,17 +175,18 @@ def main():
     base = tracker if test else ROOT / "Benchmark" / "results"
 
     with open(args.list, encoding="utf-8") as f:
-        models = [l.strip() for l in f if l.strip()]
-    n = len(models)
+        entries = [l.split() for l in f if l.strip()]
+    jobs = [(e[0], e[1] if len(e) > 1 else ALL_ROLES) for e in entries]  # (tag, roles)
+    n = len(jobs)
     stalled = []
 
-    for i, m in enumerate(models):
+    for i, (m, roles) in enumerate(jobs):
         if i % 3 == 0:
             note(f"=== batch {i // 3 + 1:02d} start {now()}")
-        note(f"--- [{i + 1}/{n}] {m} start {now()}")
-        status = run_model(m, args, logs)
+        note(f"--- [{i + 1}/{n}] {m} [{roles}] start {now()}")
+        status = run_model(m, roles, args, logs)
         if status == "STALL":
-            stalled.append(m)
+            stalled.append((m, roles))
             with open(failed, "a", encoding="utf-8") as f:
                 f.write(m + "\n")
         note(f"--- [{i + 1}/{n}] {m} exit={status} {now()}")
@@ -190,9 +195,9 @@ def main():
             note(f"=== batch {i // 3 + 1:02d} done {now()}")
 
     # Retry pass: only models that stalled in this run, once more.
-    for m in stalled:
-        note(f"--- retry {m} start {now()}")
-        status = run_model(m, args, logs)
+    for m, roles in stalled:
+        note(f"--- retry {m} [{roles}] start {now()}")
+        status = run_model(m, roles, args, logs)
         note(f"--- retry {m} exit={status} {now()}")
         if status == "STALL":
             note(f"PERMANENT-FAIL {m} {now()}")

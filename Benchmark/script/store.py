@@ -197,11 +197,12 @@ def summarize(models, rows):
     out["max"] = str(sum(len(t["cases"]) for t in TESTS.values()) * attempts)  # 27 cases x n attempts
     if not live:
         return out
-    run = max(r["run_id"] for r in live)
-    live = [r for r in live if r["run_id"] == run]
     by_test = {}
     for r in live:
         by_test.setdefault(test_of(r), []).append(r)
+    for name, trows in by_test.items():  # each test keeps its own latest run, so a role-only run keeps the other roles
+        run = max(r["run_id"] for r in trows)
+        by_test[name] = [r for r in trows if r["run_id"] == run]
 
     complete = True
     total_a = total_n = 0
