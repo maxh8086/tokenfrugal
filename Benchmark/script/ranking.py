@@ -15,9 +15,8 @@ AGENTS = B.parent / "router" / "tf-roles.yaml"
 
 # The 16 real case columns. Anything else in the CSV (meta, context_used_* columns) is not a case.
 BUILDER_CASES = ["write_function", "fix_bug", "write_tests", "rename_across_files"]
-THINKER_CASES = ["find_symbol", "review_sqli", "debug_trace", "summarize_readme", "code_graph_search",
-                 "list_project_files", "read_docs_file", "security_file_read", "design_overview",
-                 "browser_navigate_snapshot", "plan_status", "web_crawl"]
+THINKER_CASES = ["find_symbol", "review_sqli", "debug_trace", "summarize_readme", "role_analyzer", "role_data",
+                 "role_docs", "role_security", "role_designer", "role_browser", "role_tracker", "role_research"]
 CASES = BUILDER_CASES + THINKER_CASES
 assert len(CASES) == 16
 
