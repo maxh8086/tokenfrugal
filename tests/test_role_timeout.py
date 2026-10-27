@@ -13,10 +13,11 @@ class RoleTimeout(unittest.TestCase):
             self.assertEqual(resolve_role(role.replace("code-", "coding-"), server.CFG).get("timeout_s"), t, role)
 
     def test_non_coding_values_by_agent(self):
-        # verified p95 x 1.5, rounded up to 10, floor 60; a shared role takes its slowest case
+        # verified p95 x 1.5, rounded up to 10, floor 60; a shared role takes its slowest case.
+        # engineering-sre (debugger) is a user-approved raise to 300 (2026-10-27), not derived.
         expect = {
             "engineering-backend-architect": 130, "gis-analyst": 80, "engineering-software-architect": 90,
-            "security-auditor": 300, "testing-code-reviewer": 90, "engineering-sre": 220,
+            "security-auditor": 300, "testing-code-reviewer": 90, "engineering-sre": 300,
             "engineering-technical-writer": 150, "design-ui-designer": 240, "testing-evidence-collector": 80,
             "project-management-project-shepherd": 60, "support-docs-writer": 90,
         }

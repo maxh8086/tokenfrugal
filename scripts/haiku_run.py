@@ -1,4 +1,4 @@
-"""Cloud baseline: run the 16-case real-world suite on claude-haiku-4-5 through the Messages API with local stand-in tools.
+"""Cloud baseline: run the 16-case real-world suite on claude-haiku-5-5 through the Messages API with local stand-in tools.
 Never ranked. Cases that need a service the stand-ins lack (design, browser, tracker) are written as status `n/a`.
 Usage: python -m scripts.haiku_run [--case ID] [--n 3] [--out Benchmark/results/cloud_runs.csv]
 The key comes from ANTHROPIC_API_KEY, else the Windows User env var; it is never printed."""
@@ -14,7 +14,7 @@ from pathlib import Path
 
 from scripts import bench_real as b
 
-MODEL = "claude-haiku-4-5"
+MODEL = "claude-haiku-5-5"
 URL = "https://api.anthropic.com/v1/messages"
 MAX_STEPS = 8
 NOT_AVAILABLE = {"role_designer", "role_browser", "role_tracker"}

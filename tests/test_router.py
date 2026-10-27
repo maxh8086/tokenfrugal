@@ -8,7 +8,7 @@ from types import SimpleNamespace
 os.environ["GATEWAY_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
 
 from router import store  # noqa: E402
-from router.config import load_tf_roles, resolve_role  # noqa: E402
+from router.config import SUMMARY_MAX_TOKENS, load_tf_roles, resolve_role  # noqa: E402
 from router.loop import arg_error, coerce_args, parse_text_calls, slop_check  # noqa: E402
 from router.mcp_client import Router, to_openai_tools  # noqa: E402
 from router.summarize import hard_trim, tokens  # noqa: E402
@@ -61,7 +61,7 @@ class Catalogue(unittest.TestCase):
 
 class Summary(unittest.TestCase):
     def test_hard_trim_caps(self):
-        self.assertLessEqual(tokens(hard_trim("word. " * 1000)), 300)
+        self.assertLessEqual(tokens(hard_trim("word. " * (2 * SUMMARY_MAX_TOKENS))), SUMMARY_MAX_TOKENS)
 
     def test_short_untouched(self):
         self.assertEqual(hard_trim("ok"), "ok")
