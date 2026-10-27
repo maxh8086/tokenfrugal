@@ -344,7 +344,7 @@ Estimated time: about 30 to 60 min per model, so about 16 to 30 hours for 32 mod
   - `results/backups/` CSV copies, keeping the newest 3 per file.
 - `hard/` is still cleared by `run_queue.sh` (`clean_hard`).
 - `.gitignore` covers `backups/`, `hard/`, `tracker/logs/` and `raw/`.
-- Not yet run for real: the 71 raw files on disk go at the next batch end. Check with `clean_outputs.py --dry-run` first.
+- Ran for real 2026-10-27 at 15:11, from `build_report.py` after the qwen3-4b rerun. Result: `results/raw/` is empty. The raw JSON behind the qwen3-4b row (`20261027-120558-full-ts-qwen3-4b-65536-latest+ts-qwen3-4b-65536-latest.json`, suite files under `raw/suites/`) was deleted. The user accepted this loss on 2026-10-27. The benchmark.csv numbers for that row remain, but its `raw_json` reference is dead and the row cannot be re-checked from raw output. Re-running the model would be the only way to regenerate that evidence.
 
 **Remote (not done; needs a request, outward-facing):**
 - Checked 2026-10-27: no `raw/` file is tracked. Five `tracker/` files are tracked on purpose (PROCESS.md, build_queue.py, progress.md, queue-failures.md, run_queue.sh). Four Saluki files remain in local `raw/` (ignored).
@@ -399,7 +399,10 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 - Policy text is in `Benchmark/README.md` ("Context window and KV cache"). Runs c1 and t15 used smaller effective contexts and are not comparable with policy runs.
 
 ### Benchmark data merge (open)
-- Coding L1-L6 data (c1, t15 and the policy-variant runs) is not in `benchmark.csv`. Merge it once, with backups, after the decisions in "Benchmark status" and "Benchmark data cleanup" above. Do not merge piecemeal.
+- Coding L1-L6 history backfill (done 2026-10-27): `Benchmark/script/merge_legacy_coding.py` wrote 28 legacy runs (`results/coding/` and `results/coding-t15/`, 168 rows) into `coder.csv` as history, marked `superseded=yes`. Backup: `Benchmark/results/backups/coder-20261027-155305-210379.csv`. `benchmark.csv` is unchanged (byte-identical). Re-running skips run_ids already present. Test: `tests/test_merge_legacy_coding.py` (checks that the summary is unchanged with the history added).
+- Live coding results come from the normal bench path. A run with the `coding` role publishes its rows and re-summarizes on each run (`run_benchmark.py`, both the suite-only and main paths). No separate merge step is needed. The qwen3-4b coding 0/18 is a real suite result (the cases failed or timed out), not a missing merge. 30 of 40 CSV rows have a `coding_score`.
+- Still open: the automatic coding path has not yet been exercised end to end on a temp copy of `Benchmark/results`.
+- Explorer coverage (decided 2026-10-27): eight CSV models do not appear in `explorer.html`: `ts-qwen2-5vl-7b-65536`, `mannix/deepseek-coder-v2-lite-instruct:iq4_xs`, `hf.co/kkohtaka/starcoder2-7b`, `hf.co/akpsahan/starcoder2-15b`, `ts-gemma3-4b-65536`, `qwen2.5-coder-yarn:3b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `ts-hf-co-bartowski-google_gemma-3-12b`. This is intended. Other variants of these models are tested and shown in the CSV. Rank parity for the 31 models shown is verified: 0 mismatches.
 
 ### Router clarity for Haiku (proposal; A approved, not implemented)
 - Checked 2026-10-27: `error_kind` and `first_call_unfinished` do not appear in `router/loop.py`, `router/server.py` or `router/store.py`.
