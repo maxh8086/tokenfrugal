@@ -1,6 +1,6 @@
 ﻿# Handoff: tokenfrugal
 
-Last updated: 2026-10-21
+Last updated: 2026-10-27
 
 This file holds the working handoff notes. Closed items are removed once verified.
 
@@ -44,8 +44,8 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
    - Now: manual approval by the user. Each new template or edit gets a plan and an impact review first.
    - Auto-approve only after the checker stage has been measured on the benchmark and the drawbacks have been reviewed.
 
-7. **Handoff cleanup (pending, not done).**
-   - Root `handoff.md` is the canonical file. Review `docs/handoff.md`, move its open items here, and remove completed and duplicate items from both files. This is a separate edit and is not done yet.
+7. **Handoff cleanup (done 2026-10-27).**
+   - Root `handoff.md` is the canonical file. `docs/handoff.md` was merged into it: its open items are in "Open items merged from docs/handoff.md" at the end of this file, and the file was deleted. Completed and duplicate items were dropped.
 
 8. **Teams: visibility, not routing (decided 2026-10-22).**
    - Each team's lead and the orchestrator are shown to every client through `list_roles` (`router/server.py`), `CLAUDE.md` and `AGENTS.md`. Codex and other agents can read them there.
@@ -53,7 +53,7 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
    - Team names: `ui-ux` (confirmed: "UI-UZ" in the request was a typo), `development`, `ops`, plus `security` and `research`, which are my own grouping and still need confirming.
 
 9. **Haiku model: `claude-haiku-5-5` (decided 2026-10-22).**
-   - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) still names `claude-haiku-4-5`; the user should update it to 5-5. This repo does not change it.
+   - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) names `claude-haiku-5-5` as of 2026-10-27. This repo does not change it.
 
 10. **Review taste-skill against ui-ux-pro-max in the Claude skill setup (open; no removal yet).**
    - Scope: the Claude skill setup only, not this repo or its roles. Nothing in this repo's roles, skills or profiles references taste-skill (checked 2026-10-22).
@@ -299,6 +299,7 @@ _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on
 - A shell-level `CC_WORKSPACE` overrides `.env`; unset it or it hides the writable fs tools. `.env` must equal the installed profile's mount path.
 - `ANTHROPIC_API_KEY` must be in the process env; in Git Bash export it from the user env var.
 - Live smoke: security is occasionally flaky because the 3B model writes a tool call as text (rerun passes).
+- A killed or timed-out `docker mcp gateway run` client orphans its stdio containers (label `docker-mcp=true`). Remove them with `docker ps -aq --filter label=docker-mcp-name=<server> | xargs docker rm -f`.
 
 ---
 ## Current plan (2026-10-12)
@@ -370,3 +371,88 @@ Estimated time: about 30 to 60 min per model, so about 16 to 30 hours for 32 mod
 - To stop tracking them: `git rm -r --cached Benchmark/results/raw Benchmark/results/tracker`, commit, then push to origin (`maxh8086/tokenfrugal`). The files stay on disk, so the local cleanup can then remove them.
 - Those files remain in git history after that commit. Removing them from history needs a history rewrite and force push, which is a separate decision.
 - Commit only when the user asks. Commit messages: no Co-Authored-By trailer (per CLAUDE.md); the session's attribution reminder asks for one, so check which rule applies before committing.
+
+---
+## Open items merged from docs/handoff.md (2026-10-27)
+
+Working rules: no Co-Authored-By trailer or "generated with" footer (project CLAUDE.md); no push unless asked; stage explicit paths only; do not use the tokenfrugal MCP in this repo (Haiku subagents only, per memory); never print secrets; ignore the flaky `tests/test_haiku_toolcalls.py`. Test command: `PYTHONPATH=. .venv/Scripts/python.exe -m unittest discover -s tests -t . -q`. Only one bench or Haiku process at a time.
+
+### Stage 1: DB tool checks (open)
+- Not checked: tool lists for mongo-dev-l1, mongo-admin-l1, elastic-admin, redis-dev-l2, redis-dev-l3, redis-admin-l1.
+- Open: mongo-dev-l2 `find` right after writes returned "Connection closed". Not diagnosed.
+
+### Stage 2: coding ablation (results recorded; candidates open)
+- Result (n=3, skills on vs off): skills never lowered the verified rate. They helped only speed (L1, L5) and avoided the L2 timeout. No level showed a verified-rate gain, so the skills are not proven useful. L2, L4 and L6 fail in both arms, so the cause is model or spec.
+- Open candidates, none applied, each through the Stage 3 gate:
+  - code-l2: tighten the tool-call format line (raw `<tool_call>` text instead of a call).
+  - code-l4: require `edit_file` before the final answer (the model summarises test output instead of editing).
+  - code-l6: require callers listed as `file:line` (the model answers from prose).
+- Timeouts: code-l2 225 -> ~340 s was proposed after t15 and is not applied. Current code-l1..l6 values are 180/225/270/450/450/450 (`router/tf-roles.yaml`).
+
+### Stage 3: skill gate (open)
+- `scripts/skill_gate.py` exists. `router/skills_candidates/` does not exist, so no candidate has been stored. Not verified in this pass.
+- Spec: Haiku proposes a SKILL.md change; Sonnet 5.5 reviews L1-L3, Opus 5.5 reviews L4-L6. Gates in order: under 1.2k characters, offline tests, no regression on that level (n>=3), reviewer approval. Candidates go to `router/skills_candidates/<skill>/<ts>.md`. The reviewer cannot edit the skill. Approved text goes to the working tree and is never committed.
+- Done when: gate order and rejection reasons have offline tests that stub the model calls.
+- Not the same as `scripts/role_improve.py` (the self-improvement gate above).
+
+### Stage 4: Haiku cloud baseline (decide)
+- `scripts/haiku_run.py` exists. Its spec names `claude-haiku-4-5`; it would need `claude-haiku-5-5`.
+- The Haiku 5.5 full n=3 run is already in `benchmark.csv` and `cloud.csv` (see "Haiku 80/81" above). Decide whether the script is still needed. If not, delete it. Cloud results are never ranked.
+
+### Stage 5: Codex / cloud agents README (open)
+- `README.md` has the Codex section and the AGENTS.md template (lines 68-96). It is still marked "Not yet verified". Run a real Codex session, then remove that note.
+
+### Stage 6: hard-suite and loose ends (open)
+- Add the hard section to `explorer.html` and `Benchmark.md`, and test the hard block in `run_benchmark.py` live.
+- Reorder `md_table()` so s/case precedes t/s. Scan `tf_roles_ui.py` and `explorer.html` for the old t/s formula.
+- Harden the subtotal and CSV loader against Excel date-mangled cells. Check the Test Model card in the browser pane.
+- Decide on `profiles/build-data.yaml` and `router/skills/role-data` (used by data-engineer). Both still exist.
+- Verify `agentl-growth-mentor` in `router/tf-roles.yaml` (around line 202) is pre-existing (`git log`).
+- Re-index synaptree from the main checkout. Confirm the http.server on port 8765 is stopped (task bf43mceh9, session-only).
+
+### Hard and coding batch record (data lives in Benchmark/results)
+- Hard batches h1-h11 and coding batches c1 and t15: raw results are in `Benchmark/results/hard`, `coding` and `coding-t15`. Not repeated here.
+- Open decision on the caps: batches h5, h6, h8, h9 and h11 show models landing at about 65 s against the 60 s reviewer cap, and at about 226 s against the 220 s debugger cap. The caps decide several scores. Raising them to about 300 s and 90 s would test this, but it changes comparability across models, so it needs an explicit decision. Reviewer 60 s is tight in general (qwable 58.3 s; cogito p50 66 s).
+- Timeout changes since t15: none applied.
+
+### Context policy (done)
+- Policy text is in `Benchmark/README.md` ("Context window and KV cache"). Runs c1 and t15 used smaller effective contexts and are not comparable with policy runs.
+
+### Benchmark data merge (open)
+- Coding L1-L6 data (c1, t15 and the policy-variant runs) is not in `benchmark.csv`. Merge it once, with backups, after the decisions in "Benchmark status" and "Benchmark data cleanup" above. Do not merge piecemeal.
+
+### Router clarity for Haiku (proposal; A approved, not implemented)
+- Checked 2026-10-27: `error_kind` and `first_call_unfinished` do not appear in `router/loop.py`, `router/server.py` or `router/store.py`.
+- A. Failure diagnostics (approved): a `started` counter in the loop; `error_kind` (`step_timeout`, `request_timeout`, `no_tool_call`, `max_steps`, `error`) on the `task_failed` event and the stored row; a short FAILED hint per kind (timeout with 0 calls: split the task, do not `resume_task`; timeout after some calls: `resume_task` or split; no tool call: name the tool and path; max steps: narrow the scope). Store migration next to `trail` and `heartbeat`. Unit tests for classification and counters.
+- B. Bench ideas: B1 `classify` / `TIMEOUT_MARKERS` become `error_kind`. B2 optional `required_tool` per role. B3 container pre-flight returns `error_kind=infra` at once. B4 abort on the first "Connection closed" (check `router/reconnect.py` first). B5 start-up sweep of stale MCP containers (hazard, unconfirmed: with two routers alive, `mcp_reap.leave()` could remove the other's new containers). B6 low value.
+- C. Options: C1 structured status line on every reply. C2 files-changed manifest on success. C3 optional `accept` argument on `dispatch_task`. C4 `list_roles` with measured evidence. C5 pre-dispatch size check. C6 repeat-failure escalation. C7 task-spec template in the tool docstring (measure with the coding suite first). C8 live status for a running task. C9 failure memory per agent.
+- Order: A, B1-B4, C1-C3 first. Then C4 and C5 once the final data is merged. C6-C9 afterwards.
+
+## Fix-first plan (approved 2026-10-19; partly implemented)
+
+Rollback: git tag `rollback-pre-loopfix` (6c0c557). New runs carry `loop_version` (old = 1, new = 2), so old and new results never mix.
+
+Items: (1) bench preflight: a 400 "does not support tools" marks the model `no-tools` and skips it; optional tool-aware Modelfile for 1B. (2) Forced first call: 2A corrective message naming the exact tool; 2B the router pre-reads up to two paths named in the task (`TOKENFRUGAL_NO_PREREAD=1` disables). (3) Salvage parser: execute `<tool_call>` blocks and `{"name", "arguments"}` JSON found in text. (4) `think:false` for thinking models that support it (option B only). (5) Wrap-up nudge at 70% of the step budget. (6) Ollama 500: check the log for OOM; record as infra. (7) Verifier check on ambiguous_trace: the verifier is correct, no re-score.
+
+Status: items 1-6 and 2B are implemented in `router/loop.py` and `Benchmark/script/run_benchmark.py`. Offline suite was 353 OK at that point.
+
+Open:
+- No valid re-run has been done. The first v2 try was invalid (Connection closed). Self-heal was added after that. v2e (phi4-mini, 3/15) ran with containers started by hand, so it is not a clean test.
+- Next step: v2f, the same h11 batch (deepseek-r1-8b, phi4-mini, deepseek-r1-distill-qwen-7b; all 0/15 before) on the new code with containers healthy. Batches h13 and later stay paused until this is validated.
+- Classify the raw files for starcoder2-7b and mistral-nemo-minitron-8b (minitron shows MCPError Connection, likely infra).
+
+## Self-heal layers (implemented 2026-10-19)
+
+Cause of the h11 "Connection closed, calls=0, about 12 s" failures: the `synaptree-synaptree-1` container (Exited 137) and `synaptree-neo4j-1` were stopped, so the native `docker exec` server died on open. Layers, outermost last:
+1. Call-time reopen: `conn_error` -> `Router(..., reopen)` reopens the session and retries, max 2 heals per call.
+2. Open-time retry: `OPEN_ATTEMPTS = 3`, `_open_conn_error`, fresh `AsyncExitStack` per attempt.
+3. Ollama 500 retry in `loop.py` (`infra_error`).
+4. Container ensure: `mcp_client.ensure_backend(name)` starts `config.NATIVE_BACKENDS[name]` and waits up to `BACKEND_WAIT_S` for running and healthy. Never raises. No-op with `SYNAPTREE_HOST_NODE=1`.
+
+Live check passed: both containers were stopped, and `open_role` brought them back and opened in 45 s with 37 tools. Tests: `tests/test_selfheal.py` (21 tests, docker mocked).
+
+Open: `ensure_backend` is not yet called from `router/reconnect.py` or `router/claude_import.py`; both still call `open_native` directly.
+
+## Global CLAUDE.md (user action)
+
+- The global `~/.claude/CLAUDE.md` still names `llama3.2:3b-16k` as the local thinker. That model was removed. The user should update it. The Haiku line in that file already says `claude-haiku-5-5`.
