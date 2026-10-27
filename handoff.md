@@ -281,6 +281,16 @@ Tool overlap only, different skill (keep; not duplicates):
 _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on shared-scratch failures._
 
 ---
+## Benchmark status (2026-10-27, read first for benchmark work)
+
+- **Gemma 4 E4B** (`ts-gemma4-e4b-65536_latest`): imported into `Benchmark/results/benchmark.csv`, 48/81, rank 12. It replaced the 2026-10-21 row under the explicit overwrite rule (old record replaced by the updated one).
+- **Gemma 3 12B** (`ts-hf-co-bartowski-google_gemma-3-12b-it-gguf-65536_latest`): marked NA in the CSV. No tool support in its Ollama template (HTTP 400 "does not support tools" on every case). Other runtimes not tested.
+- **Saluki 27B** (`saluki-27b-iq2:latest`, GGUF from ConwayResearch/Underdog-Saluki-27B-1.0, IQ2-mix, 7.9 GB): loads and answers. Roles suite done: 26/81 (in the CSV). Realworld run done: 14/81, NOT imported (import cancelled by the user). Decision pending on whether to record it.
+- **Ollama:** upgraded 0.40.6 -> 0.40.11. Saluki HF pull failed ("file does not exist") on both versions; GGUF was downloaded directly and imported with a Modelfile.
+- **Not done:** `Benchmark/script/build_report.py` not rerun since the CSV restores (answer N to its roles prompt); `Benchmark/Benchmark.md` Observations not updated for Gemma 4 or Saluki; Saluki tool calling not tested separately.
+- **Session-only, will not carry over:** tracking loops (stopped), cron jobs (expire after 7 days), terminal tab `c4` tailing the Saluki log.
+
+---
 ## Gotchas (kept from closed items: concurrent docker runs, workspace auto-sync, Haiku tool-call check)
 
 - Backend stops use lease files in `router/leases/`; `MCP_KEEP_ALIVE=1` / `keep_alive` skips the stop.
