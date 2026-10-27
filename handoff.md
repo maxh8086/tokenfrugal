@@ -13,7 +13,6 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
    - The constant in `router/config.py` (`SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 5000`) was set on `main` in `ba98023`. The user confirmed 5000 is the intended cap on 2026-10-27. The 1000-1500 target is withdrawn.
    - Docs now say 5000: README.md, CLAUDE.md, docs/architecture.md, docs/technical.md, examples/example_agents.md, the `router/server.py` docstring, and the labels in `docs/hld.svg`, `docs/lld-sequence.svg`, `docs/lld-modules.svg`.
    - Benchmark scores from runs at the old 150-300 cap are not comparable with runs at 5000.
-   - The `dispatch_task` docstring changed. CLAUDE.md says a docstring change changes delegation behaviour, so check local-model behaviour once.
 
 2. **Role contract template (playbook gap).** Decide before editing any role.
    - Proposed fields per role in `router/tf-roles.yaml`: `purpose` (one sentence), `inputs` (paths or arguments the role expects), `output_format`, `stop_condition`, `checklist` (3 or more items, each tagged `deterministic` or `judgement`).
@@ -402,7 +401,6 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 ### Benchmark data merge (open)
 - Coding L1-L6 history backfill (done 2026-10-27): `Benchmark/script/merge_legacy_coding.py` wrote 28 legacy runs (`results/coding/` and `results/coding-t15/`, 168 rows) into `coder.csv` as history, marked `superseded=yes`. Backup: `Benchmark/results/backups/coder-20261027-155305-210379.csv`. `benchmark.csv` is unchanged (byte-identical). Re-running skips run_ids already present. Test: `tests/test_merge_legacy_coding.py` (checks that the summary is unchanged with the history added).
 - Live coding results come from the normal bench path. A run with the `coding` role publishes its rows and re-summarizes on each run (`run_benchmark.py`, both the suite-only and main paths). No separate merge step is needed. The qwen3-4b coding 0/18 is a real suite result (the cases failed or timed out), not a missing merge. 30 of 40 CSV rows have a `coding_score`.
-- Still open: the automatic coding path has not yet been exercised end to end on a temp copy of `Benchmark/results`.
 - Explorer coverage (decided 2026-10-27): eight CSV models do not appear in `explorer.html`: `ts-qwen2-5vl-7b-65536`, `mannix/deepseek-coder-v2-lite-instruct:iq4_xs`, `hf.co/kkohtaka/starcoder2-7b`, `hf.co/akpsahan/starcoder2-15b`, `ts-gemma3-4b-65536`, `qwen2.5-coder-yarn:3b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `ts-hf-co-bartowski-google_gemma-3-12b`. This is intended. Other variants of these models are tested and shown in the CSV. Rank parity for the 31 models shown is verified: 0 mismatches.
 
 ### Router clarity for Haiku (proposal; A approved, not implemented)
