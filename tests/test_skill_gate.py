@@ -39,12 +39,37 @@ class Gate(unittest.TestCase):
         self.assertEqual(v.gate, "tests")
         bench.assert_not_called()
 
+    def test_rejected_candidate_is_still_stored(self):
+        v = self.run_gate("x" * 1200)
+        self.assertEqual(v.gate, "length")
+        stored = list((g.CANDIDATES / "code-l2").glob("*.md"))
+        self.assertEqual(len(stored), 1)
+        self.assertEqual(stored[0].read_text(), "x" * 1200)
+        self.assertFalse((g.SKILLS / "code-l2" / "SKILL.md").exists())
+
     def test_regression_and_small_n(self):
         v = self.run_gate(bench=lambda s, t, lv: {"n": 3, "candidate": 0.33, "baseline": 0.67})
         self.assertEqual(v.gate, "regression")
         v = self.run_gate(bench=lambda s, t, lv: {"n": 2, "candidate": 1, "baseline": 0})
         self.assertEqual(v.gate, "regression")
         self.assertIn("n=2", v.reason)
+
+    def test_tie_is_not_an_improvement(self):
+        v = self.run_gate(bench=lambda s, t, lv: {"n": 3, "candidate": 0.67, "baseline": 0.67})
+        self.assertEqual((v.passed, v.gate), (False, "regression"))
+        self.assertFalse((g.SKILLS / "code-l2" / "SKILL.md").exists())
+
+    def test_floor_tie_is_skipped_not_regression(self):
+        v = self.run_gate(bench=lambda s, t, lv: {"n": 3, "candidate": 0.0, "baseline": 0.0})
+        self.assertEqual(v.gate, "floor")
+        self.assertIn("skill gate skipped", v.reason)
+
+    def test_partial_credit_is_reported(self):
+        v = self.run_gate(bench=lambda s, t, lv: {"n": 3, "candidate": 0.33, "baseline": 0.67,
+                                                  "tests_passed": 2, "tests_total": 3, "tool_errors": 1})
+        self.assertEqual(v.gate, "regression")
+        self.assertIn("tests_passed=2", v.reason)
+        self.assertIn("tool_errors=1", v.reason)
 
     def test_review_rejection_writes_nothing(self):
         v = self.run_gate(review=lambda m, s, t: (False, "vague"))

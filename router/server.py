@@ -14,7 +14,8 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import compose, events, plan, reconnect, store, ui_launcher
-from .config import check_agent, load_tf_roles, resolve_role
+from .config import WORKSPACE, load_tf_roles, resolve_role
+from .preflight import task_error
 from .loop import error_kind, failure_reason, leaf, run, take_started, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
@@ -186,7 +187,7 @@ async def dispatch_task(agent: str = "", task: str = "", plan_id: int = 0, role:
     agent = agent or role
     if not agent:
         return "give agent (or role) and task"
-    err = check_agent(agent, CFG)
+    err = task_error(agent, task, CFG, WORKSPACE)
     if err:
         return err
     role = resolve_role(agent, CFG)

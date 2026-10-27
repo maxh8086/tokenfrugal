@@ -19,8 +19,15 @@ REVIEWERS = {"low": "claude-sonnet-5-5", "high": "claude-opus-5-5"}
 @dataclass
 class Verdict:
     passed: bool
-    gate: str  # length | tests | regression | review | ok
+    gate: str  # length | tests | floor | regression | review | ok
     reason: str
+
+
+def _partial(b):
+    """Partial-credit line for the report, from optional keys the bench may add; empty when it adds none."""
+    keys = ("tests_passed", "tests_total", "first_edit_step", "tool_errors")
+    got = {k: b[k] for k in keys if k in b}
+    return "" if not got else "; partial: " + ", ".join(f"{k}={v}" for k, v in got.items())
 
 
 def level_of(skill):
@@ -46,6 +53,7 @@ def gate(skill, text, run_tests, run_bench, review, apply=True):
     """run_tests() -> (ok, output); run_bench(skill, text, level) -> {"n", "candidate", "baseline"} verified rates;
     review(model, skill, text) -> (approved, reason)."""
     level = level_of(skill)
+    save_candidate(skill, text)  # every proposal is kept, approved or not
     if len(text) >= MAX_CHARS:
         return Verdict(False, "length", f"{len(text)} chars, limit is under {MAX_CHARS}")
     ok, out = run_tests()
@@ -54,8 +62,11 @@ def gate(skill, text, run_tests, run_bench, review, apply=True):
     b = run_bench(skill, text, level)
     if b["n"] < MIN_N:
         return Verdict(False, "regression", f"n={b['n']}, need n>={MIN_N}")
-    if b["candidate"] < b["baseline"]:
-        return Verdict(False, "regression", f"verified {b['candidate']:.2f} < baseline {b['baseline']:.2f}")
+    if b["baseline"] == 0 and b["candidate"] == 0:  # both below floor: nothing to compare, not a regression
+        return Verdict(False, "floor", f"baseline 0/{b['n']}: below floor, skill gate skipped{_partial(b)}")
+    if b["candidate"] <= b["baseline"]:  # a tie is not an improvement
+        return Verdict(False, "regression",
+                       f"verified {b['candidate']:.2f} not above baseline {b['baseline']:.2f}{_partial(b)}")
     approved, why = review(reviewer_model(level), skill, text)
     if not approved:
         return Verdict(False, "review", why)
