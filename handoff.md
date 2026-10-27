@@ -179,8 +179,6 @@ Tool overlap only, different skill (keep; not duplicates):
   - Totals match earlier notes: qwen3.5-9b 46/81 (rank 1), granite3-3b 20/81 (2), qwen2.5-1.5b 15/81 (3), llama3.2-1b 15/81 (4), deepseek-r1-7b 12/81 (5). Haiku 69/81 is cloud and not ranked. Mannix, both starcoder2 entries and gemma3-4b are blank: no hard or coding run.
   - `valid_cases` and `ran` are blank in the new `benchmark.csv`. The rebuild did not carry them over from the old file.
 
-**Closed (2026-10-21):** ranking rule. Only complete rows are ranked; an incomplete model keeps its partial scores and a blank rank. Recorded in `LAYOUT.md`.
-
 **Not done**
 1. Definitions of `valid_cases` and `ran`, and whether to recover their values from the old file or from the raw JSON. They close after one full run through `run_benchmark.py` and the user's sign-off on the definitions.
 
@@ -283,23 +281,13 @@ Tool overlap only, different skill (keep; not duplicates):
 _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on shared-scratch failures._
 
 ---
-## Concurrent docker runs: DONE (2026-10-15)
+## Gotchas (kept from closed items: concurrent docker runs, workspace auto-sync, Haiku tool-call check)
 
-Backend stops are decided by per-backend lease files in `router/leases/` (`<service>.<pid>.<uuid>`), so a router stops a backend only when no other live router still uses it; stale leases of dead pids are pruned. `MCP_KEEP_ALIVE=1` / `keep_alive` still skips the stop. Docker-backed tests may now run concurrently.
-
----
-## Workspace auto-sync: DONE (2026-10-15)
-
-`CC_WORKSPACE` resolves as real env var, then cwd git root, then `.env`, then repo root (`router/profile_sync.py`). The router re-imports Docker MCP profiles on startup only when the workspace changed (marker `router/profiles_workspace.json`, gitignored).
-
----
-## Haiku tool-call verification: DONE (2026-10-15)
-
-Haiku (claude-haiku-5-5) calls all 9 router tools and all 83 role tools behind the Docker gateway (`tests/test_haiku_toolcalls.py --roles`: 83 pass, 0 fail). Offline suite: 183 tests OK. Live smoke: all roles pass; security is occasionally flaky because the 3B model writes a tool call as text (rerun passes).
-
-Gotchas:
+- Backend stops use lease files in `router/leases/`; `MCP_KEEP_ALIVE=1` / `keep_alive` skips the stop.
+- `CC_WORKSPACE` resolves as real env var, then cwd git root, then `.env`, then repo root (`router/profile_sync.py`).
 - A shell-level `CC_WORKSPACE` overrides `.env`; unset it or it hides the writable fs tools. `.env` must equal the installed profile's mount path.
 - `ANTHROPIC_API_KEY` must be in the process env; in Git Bash export it from the user env var.
+- Live smoke: security is occasionally flaky because the 3B model writes a tool call as text (rerun passes).
 
 ---
 ## Current plan (2026-10-12)
