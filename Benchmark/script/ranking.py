@@ -5,6 +5,7 @@ import html
 import json
 import math
 import re
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -14,11 +15,11 @@ AGENTS = B.parent / "router" / "tf-roles.yaml"
 
 # The 16 real case columns. Anything else in the CSV (meta, context_used_* columns) is not a case.
 BUILDER_CASES = ["write_function", "fix_bug", "write_tests", "rename_across_files"]
-THINKER_CASES = ["find_symbol", "review_sqli", "debug_trace", "summarize_readme", "code_graph_search",
-                 "list_project_files", "read_docs_file", "security_file_read", "design_overview",
-                 "browser_navigate_snapshot", "plan_status", "web_crawl"]
+THINKER_CASES = ["find_symbol", "review_sqli", "debug_trace", "summarize_readme", "role_analyzer", "role_data",
+                 "role_docs", "role_security", "role_designer", "role_browser", "role_tracker", "role_research"]
 CASES = BUILDER_CASES + THINKER_CASES
 assert len(CASES) == 16
+RUNS_PER_CASE = 3  # a model is ranked for a role only when each of that role's cases ran this many times
 
 # Cases that need a specific MCP tool. A 0 score here is marked with a warning sign.
 REQUIRED_TOOL_CASES = {
@@ -121,23 +122,70 @@ LOCAL_BUILDS = {   # tag -> (base model to pull, Modelfile that derives the tag)
 }
 
 
+CTX_SUFFIX = re.compile(r"-(8192|16384|32768|40960|49152|65536)$")
+
+
+def _ollama_show(name):
+    """Ollama's own record of a local model (/api/show), or None when Ollama is not reachable."""
+    req = urllib.request.Request("http://localhost:11434/api/show", data=json.dumps({"model": name}).encode(),
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.load(resp)
+    except (OSError, ValueError):
+        return None
+
+
+def ollama_up():
+    """True when Ollama answers on localhost:11434; the origin column for ts- builds reads from it."""
+    try:
+        urllib.request.urlopen("http://localhost:11434/api/version", timeout=5).close()
+        return True
+    except OSError:
+        return False
+
+
+def _upstream(show):
+    """Original publisher repo from the GGUF metadata, e.g. 'Qwen/Qwen2.5-1.5B'; '' when the file does not record one."""
+    info = (show or {}).get("model_info", {})
+    url = info.get("general.base_model.0.repo_url") or ""
+    return url.replace("https://huggingface.co/", "") if url else ""
+
+
+def _norm(stem):
+    """Model stem without the context-size suffix or the GGUF marker, so ts-x-65536 matches ts-x-16384 and ts-x-gguf-16384."""
+    return CTX_SUFFIX.sub("", stem.lower()).replace("-gguf", "")
+
+
+def _from_base(base):
+    """(source, pull command) for a base model tag that the wrapper was built from."""
+    if base.startswith("hf.co/"):
+        return f"Hugging Face: {base[len('hf.co/'):].split(':')[0]}", f"ollama pull {base}"
+    return "Ollama library", f"ollama pull {base}"
+
+
 def origin(name):
-    """(source, exact command to get this model) from the model tag the run used."""
+    """(source, exact command to get this model) from the model tag the run used. Blank pull = source not recorded."""
     if name.startswith("claude-"):
         return "Anthropic API", "not pullable (cloud baseline)"
     if name in LOCAL_BUILDS:
         base, mf = LOCAL_BUILDS[name]
         return "Ollama library (run as local 16k wrapper)", f"ollama pull {base}"
     if name.startswith("ts-"):
-        stem = name.split(":")[0]
-        for mf in (TRIAL / f"{stem}.Modelfile", TRIAL / f"{stem[3:]}.Modelfile"):
-            if mf.exists():
+        want = _norm(name.split(":")[0])
+        for mf in sorted(TRIAL.glob("*.Modelfile")):
+            if _norm(mf.stem) in (want, want[3:]):
                 m = re.search(r"^FROM\s+(\S+)", mf.read_text(encoding="utf-8"), re.M)
                 if m:
-                    base = m.group(1)
-                    src = f"Hugging Face: {base[6:].split(':')[0]}" if base.startswith("hf.co/") else "Ollama library"
-                    return f"{src} (run as local 16k wrapper)", f"ollama pull {base}"
-        return "Local wrapper (original model unknown)", "original model unknown; run locally: ollama show " + name + " --modelfile"
+                    src, pull = _from_base(m.group(1))
+                    return f"{src} (run as local 16k wrapper)", pull
+        show = _ollama_show(name)
+        parent = ((show or {}).get("details") or {}).get("parent_model") or ""
+        if parent:  # the base tag Ollama recorded when this wrapper was created
+            src, pull = _from_base(parent)
+            up = _upstream(show)
+            return f"{src} (run as local 16k wrapper{'; upstream ' + up if up else ''})", pull
+        return "Local build (source not recorded)", ""
     if name.startswith("hf.co/"):
         org_repo = name[len("hf.co/"):].split(":")[0]
         return f"Hugging Face: {org_repo}", f"ollama pull {name}"
@@ -293,32 +341,54 @@ def cloud_reference(cases):
     return best
 
 
-def _role_agg(cases):
-    """Per-model totals for one role's cases across ALL of the model's runs, so each model is compared
-    against its own history. Newest run date and the newest run's shared memory are kept for display."""
-    agg = {}
+def _role_run(r, cases):
+    """(passed, total) for one role's cases in this run, or None unless every case ran RUNS_PER_CASE times (n=3)."""
+    a = 0
+    for c in cases:
+        try:
+            x, y = (int(v) for v in r[c].lstrip("'").split("/"))
+        except (KeyError, ValueError, AttributeError):
+            return None  # case missing or not scored
+        if y != RUNS_PER_CASE:
+            return None
+        a += x
+    return a, RUNS_PER_CASE * len(cases)
+
+
+def _role_latest(cases):
+    """Each local model's newest run that covers this role's cases: {model: row}. Other roles' runs are ignored."""
+    latest = {}
     for r in rows:
-        a, n = subtotal(r, cases)
         name = r["builder_model"]
-        if not n or name.startswith("claude-"):
+        if name.startswith("claude-") or not any(r.get(c) for c in cases):
             continue
-        d = (r.get("date") or "")[:10]
-        m = agg.setdefault(name, {"a": 0, "n": 0, "runs": 0, "full": 0, "infra": 0, "shared": 0,
-                                  "s": [], "t": [], "d": "", "g": set(), "h": set(), "pull": r["pull"]})
-        m["a"] += a
-        m["n"] += n
-        m["runs"] += 1
-        m["full"] += a == n
-        m["infra"] += num(r, "infra_cases") > 0
-        m["shared"] = max(m["shared"], num(r, "shared_system_memory_gb"))
-        m["g"].add((r.get("git_sha") or "")[:7])
-        m["h"].add(r.get("harness_version") or "")
-        if d >= m["d"]:
-            m["d"], m["pull"] = d, r["pull"]
+        if name not in latest or r.get("run_id", "") > latest[name].get("run_id", ""):
+            latest[name] = r
+    return latest
+
+
+def role_unranked(cases):
+    """Models whose newest run for this role is not n=3 on every case. They are left out of the role's ranking."""
+    return sorted(name for name, r in _role_latest(cases).items() if _role_run(r, cases) is None)
+
+
+def _role_agg(cases):
+    """Per-model totals for one role, from each model's newest run of that role only. A run counts only when every
+    case of the role ran n=3 times, so a model with a partial or n!=3 run for the role is not ranked for it."""
+    agg = {}
+    for name, r in _role_latest(cases).items():
+        got = _role_run(r, cases)
+        if got is None:
+            continue
+        a, n = got
+        m = {"a": a, "n": n, "runs": 1, "full": a == n, "infra": num(r, "infra_cases") > 0,
+             "shared": num(r, "shared_system_memory_gb"), "s": [], "t": [], "d": (r.get("date") or "")[:10],
+             "g": {(r.get("git_sha") or "")[:7]}, "h": {r.get("harness_version") or ""}, "pull": r["pull"]}
         if num(r, "mean_s_per_case"):
             m["s"].append(num(r, "mean_s_per_case"))
         if r["tps"] is not None:
             m["t"].append(r["tps"])
+        agg[name] = m
     return agg
 
 

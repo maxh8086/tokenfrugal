@@ -5,6 +5,7 @@
 Pick a profile type (Financial analyst, Programmer, Data scientist, ...), an agent, the MCPs it may use
 (checkboxes or multi-select) and its model. Saves only changes to router/tf-roles_mcps.json and
 router/tf-roles_models.json. A blank model resets an agent to its role's model. Restart the MCP client to apply.
+The Teams box picks each team's lead and the orchestrator (router/tf-roles_teams.json). Team membership stays in tf-roles.yaml.
 """
 import argparse
 import json
@@ -20,6 +21,8 @@ import yaml
 from router import config
 
 YAML = config.Path(config.__file__).parent / "tf-roles.yaml"
+# Cloud models run by Claude Code. The router records a lead or orchestrator pick; it does not call them.
+CLOUD_MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1"]
 
 
 def installed_models() -> list[str]:
@@ -53,7 +56,8 @@ def state() -> dict:
         rows[slug] = {"role": role["role"], "role_model": role["model"], "default": defaults.get(slug, ""),
                       "override": user.get(slug), "mcp_default": config.default_mcps(role, cat), "mcps": umcp.get(slug)}
     return {"rows": rows, "types": types, "mcps": cat["mcps"], "logical": base["models"],
-            "installed": installed_models(), "file": str(config.TF_ROLES_MODELS_FILE), "mcp_file": str(config.TF_ROLES_MCPS_FILE)}
+            "installed": installed_models(), "file": str(config.TF_ROLES_MODELS_FILE), "mcp_file": str(config.TF_ROLES_MCPS_FILE),
+            "teams": teams_state()}
 
 
 def save(body: dict) -> dict:
@@ -71,6 +75,42 @@ def save(body: dict) -> dict:
             mdiff[k] = v
     config.TF_ROLES_MCPS_FILE.write_text(json.dumps(mdiff, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return {"models": diff, "mcps": mdiff}
+
+
+def teams_state() -> dict:
+    base = yaml.safe_load(YAML.read_text(encoding="utf-8"))
+    orch = base.get("orchestration") or {}
+    cfg = config.load_tf_roles()
+    teams = {}
+    for name, t in cfg["teams"].items():
+        default = (base.get("teams") or {}).get(name, {}).get("lead") or orch.get("team_lead")
+        teams[name] = {"roles": t["roles"], "lead": t["lead"], "default_lead": default}
+    return {"orchestrator": cfg["orchestrator"], "orchestrator_default": orch.get("orchestrator"), "teams": teams,
+            "cloud_models": CLOUD_MODELS, "teams_file": str(config.TF_ROLES_TEAMS_FILE)}
+
+
+def save_teams(body: dict) -> dict:
+    """Store only picks that differ from tf-roles.yaml. Membership is not editable here."""
+    base = yaml.safe_load(YAML.read_text(encoding="utf-8"))
+    orch = base.get("orchestration") or {}
+    yteams = base.get("teams") or {}
+    orchestrator = str(body.get("orchestrator") or "").strip()
+    if orchestrator not in CLOUD_MODELS:
+        raise ValueError(f"orchestrator must be one of {', '.join(CLOUD_MODELS)}")
+    leads = {}
+    for team, lead in (body.get("leads") or {}).items():
+        if team not in yteams:
+            raise ValueError(f"unknown team '{team}'")
+        lead = str(lead or "").strip()
+        if lead not in CLOUD_MODELS:
+            raise ValueError(f"lead for {team} must be one of {', '.join(CLOUD_MODELS)}")
+        if lead != (yteams[team].get("lead") or orch.get("team_lead")):
+            leads[team] = lead
+    out = {"leads": leads}
+    if orchestrator != orch.get("orchestrator"):
+        out["orchestrator"] = orchestrator
+    config.TF_ROLES_TEAMS_FILE.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return out
 
 
 JOB = {"running": False, "log": [], "summary": None, "proc": None, "tag": "", "t0": 0.0}
@@ -160,7 +200,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": "not found"})
 
     def do_POST(self):
-        routes = {"/api/save": lambda b: {"saved": save(b)}, "/api/bench/start": bench_start,
+        routes = {"/api/save": lambda b: {"saved": save(b)}, "/api/teams/save": save_teams, "/api/bench/start": bench_start,
                   "/api/bench/stop": lambda b: bench_stop()}
         if self.path not in routes or self.headers.get("Host", "").split(":")[0] not in ("127.0.0.1", "localhost"):
             return self._send(404, {"error": "not found"})
@@ -197,6 +237,13 @@ textarea{width:100%;box-sizing:border-box;font:inherit}.sh button{margin-right:6
 <p>Model (one per agent) <select id=m></select> <span class=d>proposed: <span id=md></span></span></p>
 <p><button id=save disabled>Save</button> <button id=reset>Reset agent to proposed</button><span id=msg></span></p>
 <p class=d>Saved to <code id=f></code> and <code id=g></code>; restart the MCP client to apply.</p>
+<div class=box><h3>Teams</h3>
+<p class=d>Membership is fixed per role in tf-roles.yaml. Each team's lead (Haiku by default) picks which role of its team to use for a job; the orchestrator (Sonnet by default) reviews the leads' results. The router records these picks but does not route with them yet.</p>
+<p>Orchestrator <select id=or></select></p>
+<div id=tl></div>
+<p><button id=tsave>Save teams</button><span id=tmsg></span></p>
+<p class=d>Saved to <code id=h></code>.</p>
+</div>
 </div>
 <div id=bv hidden>
 <h2>Run a benchmark</h2>
@@ -233,7 +280,7 @@ $("m").innerHTML='<option value="">(role model)</option>'+all.map(m=>`<option va
 $("m").onchange=e=>{md[p]=e.target.value};$("md").textContent=pm||r.role_model}
 function pickType(){const t=S.types[$("t").value];
 $("p").innerHTML=t.tf_roles.map(x=>`<option${x===t.default?" selected":""}>${x}</option>`).join("");draw()}
-async function load(){S=await (await fetch("/api/state")).json();$("f").textContent=S.file;$("g").textContent=S.mcp_file;
+async function load(){S=await (await fetch("/api/state")).json();$("f").textContent=S.file;$("g").textContent=S.mcp_file;teamsUI();
 for(const [k,r] of Object.entries(S.rows)){mc[k]=[...(r.mcps??r.mcp_default)];md[k]=r.override??r.default}
 $("t").innerHTML=Object.entries(S.types).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join("");
 $("t").onchange=pickType;$("p").onchange=draw;pickType()}
@@ -241,6 +288,13 @@ $("ack").onchange=()=>{$("save").disabled=!$("ack").checked};
 $("reset").onclick=()=>{const p=cur(),r=S.rows[p];mc[p]=[...r.mcp_default];md[p]=r.default;draw()};
 $("save").onclick=async()=>{const r=await fetch("/api/save",{method:"POST",body:JSON.stringify({models:md,mcps:mc})});
 $("msg").textContent=r.ok?"Saved. Restart the MCP client to apply.":"Save failed"};
+function teamsUI(){const T=S.teams,ms=S.cloud_models;
+$("or").innerHTML=ms.map(m=>`<option${m===T.orchestrator?" selected":""}>${m}</option>`).join("");
+$("tl").innerHTML=Object.entries(T.teams).map(([k,t])=>`<p><b>${k}</b> <span class=d>(${t.roles.length} roles: ${t.roles.join(", ")})</span><br>Lead <select data-team="${k}">${ms.map(m=>`<option${m===t.lead?" selected":""}>${m}</option>`).join("")}</select> <span class=d>proposed: ${t.default_lead}</span></p>`).join("");
+$("h").textContent=T.teams_file}
+$("tsave").onclick=async()=>{const leads={};document.querySelectorAll("#tl select").forEach(x=>leads[x.dataset.team]=x.value);
+const r=await fetch("/api/teams/save",{method:"POST",body:JSON.stringify({orchestrator:$("or").value,leads})});
+$("tmsg").textContent=r.ok?"Saved.":"Save failed"};
 load();
 const BASE="https://maxh8086.github.io/tokenfrugal/Benchmark/";
 const GH="https://github.com/maxh8086/tokenfrugal";

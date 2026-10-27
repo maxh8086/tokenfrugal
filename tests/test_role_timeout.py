@@ -16,7 +16,7 @@ class RoleTimeout(unittest.TestCase):
         # verified p95 x 1.5, rounded up to 10, floor 60; a shared role takes its slowest case
         expect = {
             "engineering-backend-architect": 90, "gis-analyst": 60, "engineering-software-architect": 60,
-            "security-auditor": 160, "testing-code-reviewer": 60, "engineering-sre": 220,
+            "security-auditor": 300, "testing-code-reviewer": 60, "engineering-sre": 220,
             "engineering-technical-writer": 100, "design-ui-designer": 160, "testing-evidence-collector": 80,
             "project-management-project-shepherd": 60, "support-docs-writer": 60,
         }

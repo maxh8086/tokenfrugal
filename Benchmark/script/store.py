@@ -62,7 +62,7 @@ TAIL_COLS = ["mean_s_per_case", "context_used_peak_tokens", "gpu_memory_capacity
 ROLES = list(dict.fromkeys(t["role"] for t in TESTS.values()))  # roles, in TESTS order
 MODEL_COLS = [f"{role}_model" for role in ROLES]  # which model ran each role
 PIPELINE = ["raw_json"] + MODEL_COLS
-SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE
+SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE + ["note"]  # note: free text, e.g. discontinued models
 FRACTION_COLS = ["total_score"] + [t["score"] for t in TESTS.values()]
 
 # Thinker cases whose raw JSON key is a role_* name
@@ -197,11 +197,12 @@ def summarize(models, rows):
     out["max"] = str(sum(len(t["cases"]) for t in TESTS.values()) * attempts)  # 27 cases x n attempts
     if not live:
         return out
-    run = max(r["run_id"] for r in live)
-    live = [r for r in live if r["run_id"] == run]
     by_test = {}
     for r in live:
         by_test.setdefault(test_of(r), []).append(r)
+    for name, trows in by_test.items():  # each test keeps its own latest run, so a role-only run keeps the other roles
+        run = max(r["run_id"] for r in trows)
+        by_test[name] = [r for r in trows if r["run_id"] == run]
 
     complete = True
     total_a = total_n = 0
