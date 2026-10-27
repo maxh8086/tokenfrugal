@@ -62,7 +62,7 @@ TAIL_COLS = ["mean_s_per_case", "context_used_peak_tokens", "gpu_memory_capacity
 ROLES = list(dict.fromkeys(t["role"] for t in TESTS.values()))  # roles, in TESTS order
 MODEL_COLS = [f"{role}_model" for role in ROLES]  # which model ran each role
 PIPELINE = ["raw_json"] + MODEL_COLS
-SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE
+SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE + ["note"]  # note: free text, e.g. discontinued models
 FRACTION_COLS = ["total_score"] + [t["score"] for t in TESTS.values()]
 
 # Thinker cases whose raw JSON key is a role_* name

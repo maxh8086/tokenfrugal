@@ -10,7 +10,8 @@ LIST has one model per line: "TAG" runs all four roles, "TAG ROLES" runs only th
 
 Stall reasons, checked in this order:
     b  "== realworld done" was seen and no "wrote" line came after it for --post-done seconds
-    a  the model log was not written for --idle seconds
+    a  no new realworld case line ("realworld/<case> #<n> ... ran=...") for --idle seconds.
+       Other output (docker, router, retries) does not count as progress.
     c  the model ran longer than --cap seconds
 
 Test options (not for real runs):
@@ -33,6 +34,8 @@ PY = str(ROOT / ".venv" / "Scripts" / "python.exe")
 TAIL_BYTES = 65536
 QUEUE_LOG = None  # set in main()
 ALL_ROLES = "builder,thinker,hard,coding"
+# One line per finished case repeat, as printed by scripts/bench_real.py.
+CASE_RE = re.compile(r"realworld/\S+ #\d+ +[\d.]+s \S+ ran=")
 
 
 def now():
@@ -72,6 +75,18 @@ def tail_lines(path):
     return lines
 
 
+def read_new(path, pos):
+    # Read complete lines written after byte offset pos. Returns (new offset, lines).
+    size = os.path.getsize(path)
+    if size <= pos:
+        return pos, []
+    with open(path, "rb") as f:
+        f.seek(pos)
+        data = f.read(size - pos)
+    cut = data.rfind(b"\n") + 1  # a partly written last line waits for the next poll
+    return pos + cut, data[:cut].decode("utf-8", errors="replace").splitlines()
+
+
 def ollama_stop(name):
     try:
         subprocess.run(["ollama", "stop", name], capture_output=True, timeout=60)
@@ -88,17 +103,22 @@ def run_model(m, roles, args, logs):
                                 stdout=logf, stderr=logf)
         start = time.time()
         done_at = None  # first time we saw a pending "== realworld done" line
+        pos = 0  # byte offset read so far, for the case-line scan
+        progress_t = start  # last time a new case line appeared (or the run started)
         while proc.poll() is None:
             time.sleep(args.poll)
             if proc.poll() is not None:
                 break
             now_t = time.time()
+            pos, new = read_new(log_path, pos)
+            if any(CASE_RE.search(l) for l in new):
+                progress_t = now_t
             lines = tail_lines(log_path)
             last = next((l.strip() for l in reversed(lines) if l.strip()), "")
             marks = [k for k, l in enumerate(lines) if l.startswith("== realworld done")]
             pending = bool(marks) and not any("wrote" in l for l in lines[marks[-1] + 1:])
             done_at = (done_at or now_t) if pending else None
-            idle = now_t - os.path.getmtime(log_path)
+            idle = now_t - progress_t
             reason = None
             if done_at is not None and now_t - done_at > args.post_done:
                 reason = "b"

@@ -19,6 +19,7 @@ THINKER_CASES = ["find_symbol", "review_sqli", "debug_trace", "summarize_readme"
                  "role_docs", "role_security", "role_designer", "role_browser", "role_tracker", "role_research"]
 CASES = BUILDER_CASES + THINKER_CASES
 assert len(CASES) == 16
+RUNS_PER_CASE = 3  # a model is ranked for a role only when each of that role's cases ran this many times
 
 # Cases that need a specific MCP tool. A 0 score here is marked with a warning sign.
 REQUIRED_TOOL_CASES = {
@@ -340,32 +341,54 @@ def cloud_reference(cases):
     return best
 
 
-def _role_agg(cases):
-    """Per-model totals for one role's cases across ALL of the model's runs, so each model is compared
-    against its own history. Newest run date and the newest run's shared memory are kept for display."""
-    agg = {}
+def _role_run(r, cases):
+    """(passed, total) for one role's cases in this run, or None unless every case ran RUNS_PER_CASE times (n=3)."""
+    a = 0
+    for c in cases:
+        try:
+            x, y = (int(v) for v in r[c].lstrip("'").split("/"))
+        except (KeyError, ValueError, AttributeError):
+            return None  # case missing or not scored
+        if y != RUNS_PER_CASE:
+            return None
+        a += x
+    return a, RUNS_PER_CASE * len(cases)
+
+
+def _role_latest(cases):
+    """Each local model's newest run that covers this role's cases: {model: row}. Other roles' runs are ignored."""
+    latest = {}
     for r in rows:
-        a, n = subtotal(r, cases)
         name = r["builder_model"]
-        if not n or name.startswith("claude-"):
+        if name.startswith("claude-") or not any(r.get(c) for c in cases):
             continue
-        d = (r.get("date") or "")[:10]
-        m = agg.setdefault(name, {"a": 0, "n": 0, "runs": 0, "full": 0, "infra": 0, "shared": 0,
-                                  "s": [], "t": [], "d": "", "g": set(), "h": set(), "pull": r["pull"]})
-        m["a"] += a
-        m["n"] += n
-        m["runs"] += 1
-        m["full"] += a == n
-        m["infra"] += num(r, "infra_cases") > 0
-        m["shared"] = max(m["shared"], num(r, "shared_system_memory_gb"))
-        m["g"].add((r.get("git_sha") or "")[:7])
-        m["h"].add(r.get("harness_version") or "")
-        if d >= m["d"]:
-            m["d"], m["pull"] = d, r["pull"]
+        if name not in latest or r.get("run_id", "") > latest[name].get("run_id", ""):
+            latest[name] = r
+    return latest
+
+
+def role_unranked(cases):
+    """Models whose newest run for this role is not n=3 on every case. They are left out of the role's ranking."""
+    return sorted(name for name, r in _role_latest(cases).items() if _role_run(r, cases) is None)
+
+
+def _role_agg(cases):
+    """Per-model totals for one role, from each model's newest run of that role only. A run counts only when every
+    case of the role ran n=3 times, so a model with a partial or n!=3 run for the role is not ranked for it."""
+    agg = {}
+    for name, r in _role_latest(cases).items():
+        got = _role_run(r, cases)
+        if got is None:
+            continue
+        a, n = got
+        m = {"a": a, "n": n, "runs": 1, "full": a == n, "infra": num(r, "infra_cases") > 0,
+             "shared": num(r, "shared_system_memory_gb"), "s": [], "t": [], "d": (r.get("date") or "")[:10],
+             "g": {(r.get("git_sha") or "")[:7]}, "h": {r.get("harness_version") or ""}, "pull": r["pull"]}
         if num(r, "mean_s_per_case"):
             m["s"].append(num(r, "mean_s_per_case"))
         if r["tps"] is not None:
             m["t"].append(r["tps"])
+        agg[name] = m
     return agg
 
 
