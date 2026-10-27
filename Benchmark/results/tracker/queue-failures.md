@@ -1,0 +1,167 @@
+# Queue failures (queue-capfix run)
+
+Append only. Each entry: time, model, case, category, source.
+
+- 2026-10-23 22:51:39 | hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS | engineering-sre debugger, `bench/scratch/trace_cfg.py` root cause (step 1/12, 3m23s in) | APITimeoutError: Request timed out | source: dashboard (run started 22:48:16, read_file preread ok at 22:48:35). Retry started automatically at 22:51:40, still running at time of entry.
+
+- 2026-10-23 23:34:07 | hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS | queue exit=STALL (reason=c, idle 13 min, last output "No secret found in response", pid 31160) | STALL | source: queue-capfix.log/queue-run.log, logs/hf.co_bartowski_Qwen2.5-Coder-32B-Instruct-GGUF_IQ4_XS.log. Model removed from the list after this run; the queue moved to model 2/7 at 23:34:07.
+- 2026-10-23 (32B run, per case, 3 runs each unless noted) | hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS | fix_bug | malformed-tool-call (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | write_tests | timeout (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | rename_across_files | timeout (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | find_symbol | timeout (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | review_sqli | timeout (LoopError) x2 (#3 passed) | source: 32B run log
+- 2026-10-23 (32B run) | ... | debug_trace | CheckFailed (ran, not verified: "not found", scratch bug.py) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | role_security | CheckFailed (ran, not verified: "secrets in source" on scratch/secret.py) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | role_designer | timeout (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | role_browser | infra x2, timeout x1 (LoopError) | source: 32B run log
+- 2026-10-23 (32B run) | ... | role_tracker | infra x1, timeout x2 (LoopError) | source: 32B run log
+- 2026-10-23 (32B run) | ... | role_research | timeout (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | hard_multifile_bug | timeout (APITimeoutError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | hard_ambiguous_trace | timeout (APITimeoutError / LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | hard_compare_functions | timeout (LoopError) x3 | source: 32B run log
+- 2026-10-23 (32B run) | ... | code_l2_slugify | timeout (LoopError) x1 (#2, #3 passed) | source: 32B run log
+- 2026-10-23 (32B run) | ... | code_l3_tax | timeout (LoopError) x3 | source: 32B run log
+
+- 2026-10-24 01:34:14 | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | realworld/code_l3_tax #3 (no result line; stall) | STALL (reason=c, idle 5 min, last output "No secret found in response", pid 31412) | source: queue-run.log, logs/hf.co_empero-ai_Qwable-9B-Claude-Fable-5-GGUF_Q4_K_M.log. Queue moved to model 3/7 at 01:34:14.
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | write_function #1-#3, fix_bug #1-#2, write_tests #1-#2 | infra: synaptree container not running x7 | source: Qwable-9B run log
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | fix_bug #3 | TimeoutError (EXC after 120s, ran=False) | source: Qwable-9B run log
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | review_sqli #1-#3 | bad-answer (LoopError) x3 | source: Qwable-9B run log
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | role_security #1-#3 | infra: ComposeError x3 | source: Qwable-9B run log
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | hard_ambiguous_trace #1 | timeout (LoopError) x1 | source: Qwable-9B run log
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | hard_ambiguous_trace #3 | CheckFailed (ran, wrong root cause: FileNotFoundError) x1 | source: Qwable-9B run log
+- 2026-10-24 (Qwable-9B run) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | role_tracker #1-#3 | CheckFailed (ran, "The plan is empty: no tasks") x3 | source: Qwable-9B run log
+
+- 2026-10-24 03:34:20 | qwen3-omni-thinking-iq4xs:latest | realworld/code_l5_median #3 (no result line; stall) | STALL (reason=c, idle 73 min, last output "No secret found in response", pid 15316) | source: queue-run.log, logs/qwen3-omni-thinking-iq4xs_latest.log. Queue moved to model 4/7 at 03:34:20.
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | fix_bug #1-#3 | timeout (LoopError, 90s) x3 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | write_tests #1-#3 | timeout (LoopError, 90s) x3 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | rename_across_files #1-#3 | timeout (LoopError, 90s) x3 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | role_analyzer #2-#3 | timeout (LoopError, 60s) x2 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | role_browser #1-#3 | timeout (LoopError, 80s) x1, infra x2 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | role_tracker #1-#3 | infra (LoopError, 60s) x3 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | role_research #1-#3 | timeout (LoopError, 60s) x3 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | code_l2_slugify #1-#3 | timeout (LoopError) x2, APITimeoutError x1 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | code_l3_tax #1-#3 | timeout (LoopError) x2, APITimeoutError x1 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | code_l4_rename #1-#3 | APITimeoutError x2, LoopError x1 | source: qwen3-omni run log
+- 2026-10-24 (qwen3-omni run) | qwen3-omni-thinking-iq4xs:latest | role_security #1-#3 | CheckFailed (ran, not verified: "Secrets in source" on scratch/secret.py) x3 | source: qwen3-omni run log
+- 2026-10-24 (mistral-nemo run, exit=0 at 04:38:23) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | write_function #1-#3, fix_bug #1-#3 | CheckFailed (ran, not verified: traceback in scratch/slug.py) x6 | source: logs/ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536_latest.log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | write_tests #1, #3 | CheckFailed (rc=1, tests=1) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | write_tests #2 | timeout (LoopError, 90s) x1 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | rename_across_files #1 | timeout (TimeoutError after 120s, ran=False) x1 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | rename_across_files #2-#3 | timeout (LoopError, ~95s) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | summarize_readme #1-#3 | CheckFailed (ran, summary did not pass check) x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | role_security #1-#3 | CheckFailed (ran, not verified: "secrets in source" on scratch/secret.py) x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | role_browser #1, #3 | timeout (LoopError, ~80s) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | role_browser #2 | infra (LoopError, 80s) x1 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | role_tracker #1-#2 | infra (LoopError, ~60s) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | role_tracker #3 | CheckFailed (ran, wrong answer "- 1 - unknown") x1 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | role_research #2-#3 | CheckFailed (ran, wrong answer) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | hard_multifile_bug #1-#3 | CheckFailed (ran, "not found") x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | hard_two_vulns #2-#3 | CheckFailed (ran, not verified) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | hard_ambiguous_trace #2-#3 | CheckFailed (ran, not verified) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | hard_compare_functions #1-#3 | CheckFailed (ran, wrong verdict "No defects found") x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | code_l1_clamp #2-#3 | CheckFailed (AssertionError 10 != 0) x2 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | code_l2_slugify #1-#3 | CheckFailed (NotImplementedError) x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | code_l3_tax #1-#3 | CheckFailed (unexpected keyword 'tax') x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | code_l4_rename #1-#3 | CheckFailed (assertion failed) x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | code_l5_median #1-#3 | CheckFailed (AssertionError 3 != 2.5) x3 | source: mistral-nemo run log
+- 2026-10-24 (mistral-nemo run) | ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest | code_l6_callers #1-#3 | CheckFailed (invalid values for argument 'ns') x3 | source: mistral-nemo run log
+- 2026-10-24 05:19 (llama3.1-8b run, PARTIAL: still running at check, exit line pending) | ts-llama3-1-8b-65536:latest | write_function #1-#3, fix_bug #1-#3 | CheckFailed (ran, not verified: traceback) x6 | source: logs/ts-llama3-1-8b-65536_latest.log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | write_tests #1-#3 | CheckFailed (rc=1, tests=3) x3 | source: llama3.1-8b run log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | rename_across_files #1-#3 | CheckFailed (ran, not verified) x3 | source: llama3.1-8b run log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | review_sqli #2 | timeout (LoopError, 60s) x1 | source: llama3.1-8b run log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | debug_trace #1-#3 | CheckFailed (ran, wrong root cause: NameError 'avg') x3 | source: llama3.1-8b run log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | role_tracker #1-#3 | CheckFailed (ran, wrong answer, "not found") x3 | source: llama3.1-8b run log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | hard_ambiguous_trace #2-#3 | timeout (APITimeoutError, 205s) x2 | source: llama3.1-8b run log
+- 2026-10-24 05:19 (llama3.1-8b run, partial) | ts-llama3-1-8b-65536:latest | code_l1_clamp #1 | CheckFailed (AssertionError 10 != 0) x1 | source: llama3.1-8b run log
+- 2026-10-24 05:49 (llama3.1-8b run, FINAL, exit=0 at 05:30:55) | ts-llama3-1-8b-65536:latest | code_l1_clamp #2-#3 | CheckFailed (AssertionError 10 != 0) x2 | source: logs/ts-llama3-1-8b-65536_latest.log
+- 2026-10-24 05:49 (llama3.1-8b run, FINAL) | ts-llama3-1-8b-65536:latest | code_l2_slugify #1-#3 | CheckFailed (NotImplementedError) x3 | source: llama3.1-8b run log
+- 2026-10-24 05:49 (llama3.1-8b run, FINAL) | ts-llama3-1-8b-65536:latest | code_l3_tax #1-#3 | CheckFailed (unexpected keyword 'tax') x3 | source: llama3.1-8b run log
+- 2026-10-24 05:49 (llama3.1-8b run, FINAL) | ts-llama3-1-8b-65536:latest | code_l4_rename #1-#3 | CheckFailed (assertion failed) x3 | source: llama3.1-8b run log
+- 2026-10-24 05:49 (llama3.1-8b run, FINAL) | ts-llama3-1-8b-65536:latest | code_l5_median #1-#3 | CheckFailed (AssertionError 3 != 2.5) x3 | source: llama3.1-8b run log
+- 2026-10-24 05:49 (llama3.1-8b run, FINAL) | ts-llama3-1-8b-65536:latest | code_l6_callers #1-#3 | CheckFailed (ran, malformed output) x3 | source: llama3.1-8b run log
+- 2026-10-24 05:49 (qwen2.5-coder-32B-iq4xs run, PARTIAL: 6/7, started 05:30:55, still running) | ts-qwen25c-32b-iq4xs-32768:latest | fix_bug #1-#3 | malformed-tool-call (LoopError, ran=False) x3 | source: logs/ts-qwen25c-32b-iq4xs-32768_latest.log
+- 2026-10-24 05:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | write_tests #1-#3 | timeout (~94s, ran=False) x3 | source: 32B-iq4xs run log
+- 2026-10-24 05:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | rename_across_files #1-#3 | timeout (~94s, ran=False) x3 | source: 32B-iq4xs run log
+- 2026-10-24 05:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | find_symbol #1 | timeout (~95s, ran=False) x1 | source: 32B-iq4xs run log
+- 2026-10-24 06:19 (qwen2.5-coder-32B-iq4xs run, PARTIAL: 6/7, still running) | ts-qwen25c-32b-iq4xs-32768:latest | find_symbol #2-#3 | timeout (LoopError, ~95s, ran=False) x2 | source: logs/ts-qwen25c-32b-iq4xs-32768_latest.log
+- 2026-10-24 06:19 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | review_sqli #1-#2 | timeout (LoopError, ~65s, ran=False) x2 | source: 32B-iq4xs run log
+- 2026-10-24 06:19 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | debug_trace #1-#3 | CheckFailed (ran, not verified: "not found" on scratch/bug.py) x3 | source: 32B-iq4xs run log
+- 2026-10-24 06:19 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | role_security #1-#3 | CheckFailed (ran, not verified: "secrets in source" on scratch/secret.py) x3 | source: 32B-iq4xs run log
+- 2026-10-24 06:19 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | role_designer #1-#3 | timeout (LoopError, ~164s, ran=False) x3 | source: 32B-iq4xs run log
+- 2026-10-24 06:49 (qwen2.5-coder-32B-iq4xs run, PARTIAL: 6/7, still running) | ts-qwen25c-32b-iq4xs-32768:latest | role_browser #1 | timeout (LoopError, ~82s, ran=False) x1 | source: logs/ts-qwen25c-32b-iq4xs-32768_latest.log
+- 2026-10-24 06:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | role_browser #2-#3 | infra (LoopError, ~81s, ran=False) x2 | source: 32B-iq4xs run log
+- 2026-10-24 06:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | role_tracker #1-#3 | timeout (LoopError, ~61s, ran=False) x3 | source: 32B-iq4xs run log
+- 2026-10-24 06:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | hard_multifile_bug #1-#3 | timeout (~207s, ran=False, debugger role) x3 | source: 32B-iq4xs run log
+- 2026-10-24 06:49 (qwen2.5-coder-32B-iq4xs run, partial) | ts-qwen25c-32b-iq4xs-32768:latest | hard_ambiguous_trace #1-#2 | timeout (~206-227s, ran=False, debugger role) x2 | source: 32B-iq4xs run log
+- 2026-10-24 07:19 (qwen2.5-coder-32B-iq4xs run, FINAL, exit=0 at 07:12:00) | ts-qwen25c-32b-iq4xs-32768:latest | hard_multifile_bug #2-#3 | APITimeoutError (~207s, ran=False, debugger) x2 | source: logs/ts-qwen25c-32b-iq4xs-32768_latest.log
+- 2026-10-24 07:19 (qwen2.5-coder-32B-iq4xs run, FINAL) | ts-qwen25c-32b-iq4xs-32768:latest | hard_ambiguous_trace #1 | APITimeoutError (~206s, ran=False, debugger) x1 | source: 32B-iq4xs run log
+- 2026-10-24 07:19 (qwen2.5-coder-32B-iq4xs run, FINAL) | ts-qwen25c-32b-iq4xs-32768:latest | hard_ambiguous_trace #2-#3 | timeout (LoopError, ~227s, ran=False, debugger) x2 | source: 32B-iq4xs run log
+- 2026-10-24 07:19 (qwen2.5-coder-32B-iq4xs run, FINAL) | ts-qwen25c-32b-iq4xs-32768:latest | hard_compare_functions #1-#3 | timeout (LoopError, ~65s, ran=False, reviewer) x3 | source: 32B-iq4xs run log
+- 2026-10-24 07:19 (qwen2.5-coder-32B-iq4xs run, FINAL) | ts-qwen25c-32b-iq4xs-32768:latest | code_l2_slugify #1-#3, code_l3_tax #1-#3, code_l4_rename #1-#3, code_l5_median #1-#3, code_l6_callers #1-#3 | infra (NotFoundError: model not found, ran=False, ~9-14s each; the model tag was removed from Ollama mid-run) x15 | source: 32B-iq4xs run log. NOT a model result: caused by ollama rm during the run.
+- 2026-10-24 07:49 (qwen3-4b run, PARTIAL: 7/7, started 07:12:00, still running) | ts-qwen3-4b-65536:latest | write_function #1-#3, fix_bug #1-#3, write_tests #1-#3, rename_across_files #1, #3, find_symbol #1 | timeout (LoopError, ~95s, ran=False) x11 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 07:49 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | rename_across_files #2 | TimeoutError (270s, ran=False, EXC) x1 | source: qwen3-4b run log
+- 2026-10-24 08:19 (qwen3-4b run, PARTIAL: 7/7, still running) | ts-qwen3-4b-65536:latest | role_security #2-#3 | CheckFailed (ran, not verified: "secrets in source" on scratch/secret.py) x2 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 08:19 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | role_designer #2 | timeout (LoopError, ~163s, ran=False) x1 | source: qwen3-4b run log
+- 2026-10-24 08:19 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | role_browser #1-#3 | infra (LoopError timeout, ~80s, ran=False) x3 | source: qwen3-4b run log
+- 2026-10-24 08:19 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | role_tracker #1-#3 | infra (LoopError timeout, ~60s, ran=False) x3 | source: qwen3-4b run log
+- 2026-10-24 08:19 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | role_research #1-#3 | timeout (LoopError, ~64s, ran=False) x3 | source: qwen3-4b run log
+- 2026-10-24 08:19 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | hard_multifile_bug #1 | timeout (LoopError, ~227s, ran=False, debugger) x1 | source: qwen3-4b run log
+- 2026-10-24 08:49 (qwen3-4b run, PARTIAL: 7/7, still running) | ts-qwen3-4b-65536:latest | hard_multifile_bug #2 | APITimeoutError (~210s, ran=False, debugger) x1 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 08:49 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | hard_multifile_bug #3 | timeout (LoopError, ~227s, ran=False, debugger) x1 | source: qwen3-4b run log
+- 2026-10-24 08:49 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | hard_two_vulns #2-#3 | timeout (LoopError, ~65s, ran=False, reviewer) x2 | source: qwen3-4b run log
+- 2026-10-24 08:49 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | hard_compare_functions #2-#3 | TimeoutError (90s, ran=False, EXC) x2 | source: qwen3-4b run log
+- 2026-10-24 08:49 (qwen3-4b run, partial) | ts-qwen3-4b-65536:latest | code_l1_clamp #1-#3 | timeout (LoopError, ~182s, ran=False, code-l1) x3 | source: qwen3-4b run log
+- 2026-10-24 09:19 (qwen3-4b run, FINAL STALL at 09:12:19, idle 18 min, last output "No secret found in response", pid 10652; queue moved on, cases after code_l3_tax #3 never ran) | ts-qwen3-4b-65536:latest | code_l2_slugify #1-#3 | timeout (LoopError, ~226s, ran=False, code-l2) x3 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 09:19 (qwen3-4b run, FINAL STALL) | ts-qwen3-4b-65536:latest | code_l3_tax #1-#3 | timeout (APITimeoutError, ~246-270s, ran=False, code-l3) x3 | source: qwen3-4b run log
+- 2026-10-24 09:19 (retry phase) | hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS | retry | infra (preflight: model not present on endpoint, exit=1 at 09:12:49). Expected: this tag was removed from Ollama on 07:0x, so the retry cannot run. | source: logs/hf.co_bartowski_Qwen2.5-Coder-32B-Instruct-GGUF_IQ4_XS.log
+- 2026-10-24 09:19 (retry phase, PARTIAL: Qwable-9B retry started 09:12:49, still running, 10 case lines) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | write_function #1-#3 | CheckFailed (ran, not verified: traceback) x3 | source: logs/hf.co_empero-ai_Qwable-9B-Claude-Fable-5-GGUF_Q4_K_M.log
+- 2026-10-24 09:49 (retry phase, Qwable-9B retry, PARTIAL: started 09:12:49, still running, 49 case lines) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | review_sqli #1-#3 | bad-answer (ran=False, ~48s, reviewer) x3 | source: logs/hf.co_empero-ai_Qwable-9B-Claude-Fable-5-GGUF_Q4_K_M.log
+- 2026-10-24 09:49 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | debug_trace #3 | timeout (~227s, ran=False, debugger) x1 | source: Qwable-9B retry log
+- 2026-10-24 09:49 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | role_security #1-#3 | CheckFailed (ran, not verified: "hard-coded secret" on scratch/secret.py) x3 | source: Qwable-9B retry log
+- 2026-10-24 09:49 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | role_tracker #1-#3 | CheckFailed (ran, "The plan is empty: no tasks") x3 | source: Qwable-9B retry log
+- 2026-10-24 10:19 (retry phase, Qwable-9B retry, PARTIAL: still running, 55 passing case lines so far) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | write_function #1-#3 | CheckFailed (ran=True, verified=False, traceback) x3 | source: logs/hf.co_empero-ai_Qwable-9B-Claude-Fable-5-GGUF_Q4_K_M.log
+- 2026-10-24 10:19 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | hard_multifile_bug #3 | timeout (LoopError, ~222s, ran=False, debugger) x1 | source: Qwable-9B retry log
+- 2026-10-24 10:19 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | hard_ambiguous_trace #1 | timeout (LoopError, ~226s, ran=False, debugger) x1 | source: Qwable-9B retry log
+- 2026-10-24 10:19 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | hard_ambiguous_trace #2-#3 | CheckFailed (ran=True, verified=False, FileNotFoundError root cause) x2 | source: Qwable-9B retry log
+- 2026-10-24 10:49 (retry phase, Qwable-9B retry, PARTIAL: still running, 78 case lines) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | code_l4_rename #1-#3 | timeout (LoopError, ~450s each, ran=False, code-l4) x3 | source: logs/hf.co_empero-ai_Qwable-9B-Claude-Fable-5-GGUF_Q4_K_M.log
+- 2026-10-24 10:49 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | code_l5_median #1 | CheckFailed (ran=True, verified=False, AssertionError: 3 != 2.5) x1 | source: Qwable-9B retry log
+- 2026-10-24 10:49 (retry phase, Qwable-9B retry, partial) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | code_l5_median #2-#3 | timeout (LoopError, ~230s each, ran=False, code-l5) x2 | source: Qwable-9B retry log
+- 2026-10-24 11:19 (retry phase, Qwable-9B retry, FINISHED exit=0 at 10:58:24, 81 case lines, 55 passed, 26 failed) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | code_l6_callers #1 | timeout (LoopError, ~294s, ran=False, code-l6) x1 | source: logs/hf.co_empero-ai_Qwable-9B-Claude-Fable-5-GGUF_Q4_K_M.log
+- 2026-10-24 11:19 (retry phase, Qwable-9B retry, finished) | hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M | code_l6_callers #2-#3 | CheckFailed (ran=True, verified=False, argument 'ns' error) x2 | source: Qwable-9B retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, PARTIAL: started 10:58:24, running, 44 case lines, 25 passed) | qwen3-omni-thinking-iq4xs:latest | fix_bug #1-#3 | timeout (LoopError, ~94s, ran=False, builder) x3 | source: logs/qwen3-omni-thinking-iq4xs_latest.log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | write_tests #1-#3 | timeout (LoopError, ~94s, ran=False, builder) x3 | source: qwen3-omni retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | rename_across_files #1-#3 | timeout (LoopError, ~94s, ran=False, builder) x3 | source: qwen3-omni retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | role_analyzer #2-#3 | timeout (LoopError, ~64s, ran=False, analyzer) x2 | source: qwen3-omni retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | role_security #1-#3 | CheckFailed (ran=True, verified=False, hard-coded API key in secret.py) x3 | source: qwen3-omni retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | role_browser #1 | timeout (LoopError, ~82s, ran=False, browser) x1 | source: qwen3-omni retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | role_browser #2-#3 | labelled infra, but reason=timeout (LoopError, ~81s, ran=False, browser) x2 | source: qwen3-omni retry log
+- 2026-10-24 11:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | role_tracker #1-#2 | labelled infra, but reason=timeout (LoopError, ~61s, ran=False, tracker) x2 | source: qwen3-omni retry log
+- 2026-10-24 12:19 (retry phase, qwen3-omni retry, PARTIAL: running, 68 case lines, 43 passed) | qwen3-omni-thinking-iq4xs:latest | role_tracker #3 | labelled infra, but reason=timeout (LoopError, ~61s, ran=False, tracker) x1 | source: qwen3-omni retry log
+- 2026-10-24 12:19 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | role_research #1-#3 | timeout (LoopError, ~64-73s, ran=False, research) x3 | source: qwen3-omni retry log
+- 2026-10-24 12:19 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | code_l2_slugify #1 | timeout (LoopError, ~226s, ran=False, code-l2) x1 | source: qwen3-omni retry log
+- 2026-10-24 12:19 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | code_l2_slugify #2 | timeout (APITimeoutError, ~190s, ran=False, code-l2) x1 | source: qwen3-omni retry log
+- 2026-10-24 12:49 (retry phase, qwen3-omni retry, PARTIAL: running, 74 case lines, 43 passed) | qwen3-omni-thinking-iq4xs:latest | code_l2_slugify #3 | timeout (LoopError, ~226s, ran=False, code-l2) x1 | source: qwen3-omni retry log
+- 2026-10-24 12:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | code_l3_tax #1-#3 | timeout (LoopError x2 ~274s, APITimeoutError x1 ~269s, ran=False, code-l3) x3 | source: qwen3-omni retry log
+- 2026-10-24 12:49 (retry phase, qwen3-omni retry, partial) | qwen3-omni-thinking-iq4xs:latest | code_l4_rename #1-#2 | timeout (APITimeoutError, ~324-366s, ran=False, code-l4) x2 | source: qwen3-omni retry log
+- 2026-10-24 13:19 (retry phase, qwen3-omni retry, FINAL: watchdog STALL at 12:58:30, idle 25 min, last output "No secret found in response", pid 37652; queue logged PERMANENT-FAIL and moved on; 77 case lines, 45 passed) | qwen3-omni-thinking-iq4xs:latest | code_l4_rename #3 | timeout (APITimeoutError, ~322s, ran=False, code-l4) x1 | source: qwen3-omni retry log
+- 2026-10-24 13:19 (retry phase, qwen3-omni retry, FINAL) | qwen3-omni-thinking-iq4xs:latest | cases code_l5_median onward (about 4 of 81 not run) | STALL / PERMANENT-FAIL (watchdog, idle 25 min) | source: queue-run.log lines 33-35
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, PARTIAL: started 12:58:30, running, 41 case lines, 27 passed) | ts-qwen3-4b-65536:latest | write_function #1-#3 | timeout (LoopError, ~94s, ran=False, builder) x3 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | write_tests #2-#3 | timeout (LoopError, ~94s, ran=False, builder) x2 | source: qwen3-4b retry log
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | rename_across_files #1-#3 | timeout (LoopError, ~94-96s, ran=False, builder) x3 | source: qwen3-4b retry log
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | find_symbol #1 | timeout (LoopError, ~94s, ran=False, builder) x1 | source: qwen3-4b retry log
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | role_security #2-#3 | CheckFailed (ran=True, verified=False, hard-coded secret in secret.py) x2 | source: qwen3-4b retry log
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | role_designer #2 | timeout (LoopError, ~164s, ran=False, designer) x1 | source: qwen3-4b retry log
+- 2026-10-24 13:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | role_browser #1-#2 | labelled infra, but reason=timeout (LoopError, ~81s, ran=False, browser) x2 | source: qwen3-4b retry log
+- 2026-10-24 14:19 (retry phase, qwen3-4b retry, PARTIAL: running, 63 case lines, 35 passed) | ts-qwen3-4b-65536:latest | role_browser #3 | labelled infra, but reason=timeout (LoopError, ~81s, ran=False, browser) x1 | source: qwen3-4b retry log
+- 2026-10-24 14:19 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | role_tracker #1-#3 | labelled infra, but reason=timeout (LoopError, ~61s, ran=False, tracker) x3 | source: qwen3-4b retry log
+- 2026-10-24 14:19 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | role_research #1-#3 | timeout (LoopError, ~63-66s, ran=False, research) x3 | source: qwen3-4b retry log
+- 2026-10-24 14:19 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | hard_multifile_bug #1-#3 | timeout (LoopError x2 ~226s, APITimeoutError x1 ~210s, ran=False, debugger) x3 | source: qwen3-4b retry log
+- 2026-10-24 14:19 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | hard_two_vulns #2-#3 | timeout (LoopError, ~65s, ran=False, reviewer) x2 | source: qwen3-4b retry log
+- 2026-10-24 14:19 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | hard_compare_functions #2-#3 | timeout (LoopError, ~62s, ran=False, reviewer) x2 | source: qwen3-4b retry log
+- 2026-10-24 14:49 (retry phase, qwen3-4b retry, PARTIAL: running, 71 case lines, 35 passed) | ts-qwen3-4b-65536:latest | code_l1_clamp #1-#3 | timeout (LoopError, ~181-183s, ran=False, code-l1) x3 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 14:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | code_l2_slugify #1-#3 | timeout (LoopError, ~226s, ran=False, code-l2) x3 | source: qwen3-4b retry log
+- 2026-10-24 14:49 (retry phase, qwen3-4b retry, partial) | ts-qwen3-4b-65536:latest | code_l3_tax #1-#2 | timeout (LoopError ~273s, APITimeoutError ~247s, ran=False, code-l3) x2 | source: qwen3-4b retry log
+- 2026-10-24 15:19 (retry phase, qwen3-4b retry, FINAL: watchdog STALL at 14:58:34, PERMANENT-FAIL logged; 72 case lines, 35 passed) | ts-qwen3-4b-65536:latest | code_l3_tax #3 | timeout (APITimeoutError, ~246s, ran=False, code-l3) x1 | source: logs/ts-qwen3-4b-65536_latest.log
+- 2026-10-24 15:19 (retry phase, qwen3-4b retry, FINAL) | ts-qwen3-4b-65536:latest | cases after code_l3_tax #3 (about 9 of 81 not run, through code_l6_callers) | STALL / PERMANENT-FAIL (watchdog) | source: queue-run.log
+- 2026-10-24 15:19 (queue finished) | ALL_DONE at 14:58:36; report built with exit=0 | — | — | source: queue-run.log
+- 2026-10-24 15:19 (correction to the qwen3-4b FINAL STALL entry above) | ts-qwen3-4b-65536:latest | watchdog STALL reason=c idle=149 min (not 25), last output "No secret found in response", pid 16944; 72 of 81 case lines written; the 9 unrun cases are not listed here and are not known from the log without checking the case list | source: queue-run.log line 37

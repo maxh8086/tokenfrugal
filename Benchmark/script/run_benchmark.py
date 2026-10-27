@@ -147,6 +147,7 @@ def mount_ok(shown: str, workspace: str) -> bool:
 
 FAILURE_KINDS = ("no-tools", "no-tool-call", "timeout", "infra", "wrong-answer", "other")  # ties resolve in this order
 TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")  # same markers as scripts/bench_real.py
+INFRA_MARKERS = ("NotFoundError", "Error code: 404", "ComposeError", "preflight")  # same as scripts/bench_real.py
 
 
 def tool_support(endpoint, key, model):
@@ -177,6 +178,8 @@ def run_failure_kind(run):
     if run.get("status") == "no-tools":
         return "no-tools"
     if run.get("status") == "infra" or error.startswith("infra:") or "ollama 500" in text:
+        return "infra"
+    if any(m.lower() in text for m in INFRA_MARKERS):  # checked before timeouts: a ComposeError timeout is infra
         return "infra"
     if run.get("status") == "timeout" or any(m.lower() in text for m in TIMEOUT_MARKERS):
         return "timeout"
@@ -256,23 +259,23 @@ def preflight(endpoint, key, models):
     shown = {p: run_cmd(["docker", "mcp", "profile", "show", p])[1] for p in PROFILES}
     wrong = [p for p, t in shown.items() if ":/workspace" in t.replace("\\", "/") and not mount_ok(t, ws)]
     check(f"profile mounts -> {ws}:/workspace", not wrong, f"python scripts/install_profiles.py --workspace {ws} (bad: {', '.join(wrong)})")
-    # ts-mcp backends the benchmark roles use (research, security, design, plan profiles); mcp_up.ps1 is idempotent
+    # tokenfrugal backends the benchmark roles use (research, security, design, plan profiles); mcp_up.ps1 is idempotent
     ts_mcp = ("crawl4ai", "searxng", "sonarqube", "penpot-mcp", "neo4j")
-    _, states = run_cmd(["docker", "ps", "-a", "--filter", "label=com.docker.compose.project=ts-mcp", "--format",
+    _, states = run_cmd(["docker", "ps", "-a", "--filter", "label=com.docker.compose.project=tokenfrugal", "--format",
                          '{{.Label "com.docker.compose.service"}} {{.State}}'])
     running = {ln.split()[0] for ln in states.splitlines() if ln.split() and ln.split()[-1] == "running"}
     down = [s for s in ts_mcp if s not in running]
     if down:
-        print(f"  start  ts-mcp backends (down: {', '.join(down)}) via scripts/mcp_up.ps1")
+        print(f"  start  tokenfrugal backends (down: {', '.join(down)}) via scripts/mcp_up.ps1")
         try:  # SonarQube and Penpot can take minutes to become healthy
             subprocess.run(["powershell", "-NoProfile", "-File", str(ROOT / "scripts" / "mcp_up.ps1")], cwd=ROOT,
                            check=False, timeout=900)
         except subprocess.TimeoutExpired:
             print("  WARN   scripts/mcp_up.ps1 did not finish within 900s")
-    rc, states = run_cmd(["docker", "ps", "-a", "--filter", "label=com.docker.compose.project=ts-mcp", "--format",
+    rc, states = run_cmd(["docker", "ps", "-a", "--filter", "label=com.docker.compose.project=tokenfrugal", "--format",
                           '{{.Label "com.docker.compose.service"}} {{.State}}'])
     still = [s for s in ts_mcp if s not in {ln.split()[0] for ln in states.splitlines() if ln.split() and ln.split()[-1] == "running"}]
-    check("ts-mcp backends running (" + ", ".join(ts_mcp) + ")", not still, f"scripts/mcp_up.ps1 (still down: {', '.join(still)})")
+    check("tokenfrugal backends running (" + ", ".join(ts_mcp) + ")", not still, f"scripts/mcp_up.ps1 (still down: {', '.join(still)})")
     try:
         socket.create_connection(("127.0.0.1", 7697), 3).close()
         up = True

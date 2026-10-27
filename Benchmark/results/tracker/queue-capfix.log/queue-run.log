@@ -1,0 +1,44 @@
+=== batch 01 start 2026-10-23T21:34:01+05:30
+--- [1/7] hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS [builder,thinker,hard,coding] start 2026-10-23T21:34:01+05:30
+STALL hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS reason=c idle=13 last=> No secret found in response. pid=31160
+--- [1/7] hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS exit=STALL 2026-10-23T23:34:07+05:30
+--- [2/7] hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M [builder,thinker,hard,coding] start 2026-10-23T23:34:07+05:30
+STALL hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M reason=c idle=5 last=> No secret found in response. pid=31412
+--- [2/7] hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M exit=STALL 2026-10-24T01:34:14+05:30
+--- [3/7] qwen3-omni-thinking-iq4xs:latest [builder,thinker,hard,coding] start 2026-10-24T01:34:14+05:30
+STALL qwen3-omni-thinking-iq4xs:latest reason=c idle=73 last=> No secret found in response. pid=15316
+--- [3/7] qwen3-omni-thinking-iq4xs:latest exit=STALL 2026-10-24T03:34:20+05:30
+hard/ cleanup: removed 0, kept 0 not in hard_test.csv 2026-10-24T03:34:20+05:30
+=== batch 01 done 2026-10-24T03:34:20+05:30
+=== batch 02 start 2026-10-24T03:34:20+05:30
+--- [4/7] ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest [builder,thinker,hard,coding] start 2026-10-24T03:34:20+05:30
+--- [4/7] ts-hf-co-bartowski-mistral-nemo-instruct-2407-gguf-65536:latest exit=0 2026-10-24T04:38:23+05:30
+--- [5/7] ts-llama3-1-8b-65536:latest [builder,thinker,hard,coding] start 2026-10-24T04:38:23+05:30
+--- [5/7] ts-llama3-1-8b-65536:latest exit=0 2026-10-24T05:30:55+05:30
+--- [6/7] ts-qwen25c-32b-iq4xs-32768:latest [builder,thinker,hard,coding] start 2026-10-24T05:30:55+05:30
+--- [6/7] ts-qwen25c-32b-iq4xs-32768:latest exit=0 2026-10-24T07:12:00+05:30
+hard/ cleanup: removed 0, kept 0 not in hard_test.csv 2026-10-24T07:12:00+05:30
+=== batch 02 done 2026-10-24T07:12:00+05:30
+=== batch 03 start 2026-10-24T07:12:00+05:30
+--- [7/7] ts-qwen3-4b-65536:latest [builder,thinker,hard,coding] start 2026-10-24T07:12:00+05:30
+STALL ts-qwen3-4b-65536:latest reason=c idle=18 last=> No secret found in response. pid=10652
+--- [7/7] ts-qwen3-4b-65536:latest exit=STALL 2026-10-24T09:12:19+05:30
+hard/ cleanup: removed 0, kept 0 not in hard_test.csv 2026-10-24T09:12:19+05:30
+=== batch 03 done 2026-10-24T09:12:19+05:30
+--- retry hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS [builder,thinker,hard,coding] start 2026-10-24T09:12:19+05:30
+--- retry hf.co/bartowski/Qwen2.5-Coder-32B-Instruct-GGUF:IQ4_XS exit=1 2026-10-24T09:12:49+05:30
+--- retry hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M [builder,thinker,hard,coding] start 2026-10-24T09:12:49+05:30
+--- retry hf.co/empero-ai/Qwable-9B-Claude-Fable-5-GGUF:Q4_K_M exit=0 2026-10-24T10:58:24+05:30
+--- retry qwen3-omni-thinking-iq4xs:latest [builder,thinker,hard,coding] start 2026-10-24T10:58:24+05:30
+STALL qwen3-omni-thinking-iq4xs:latest reason=c idle=25 last=> No secret found in response. pid=37652
+--- retry qwen3-omni-thinking-iq4xs:latest exit=STALL 2026-10-24T12:58:30+05:30
+PERMANENT-FAIL qwen3-omni-thinking-iq4xs:latest 2026-10-24T12:58:30+05:30
+--- retry ts-qwen3-4b-65536:latest [builder,thinker,hard,coding] start 2026-10-24T12:58:30+05:30
+STALL ts-qwen3-4b-65536:latest reason=c idle=149 last=> No secret found in response. pid=16944
+--- retry ts-qwen3-4b-65536:latest exit=STALL 2026-10-24T14:58:34+05:30
+PERMANENT-FAIL ts-qwen3-4b-65536:latest 2026-10-24T14:58:34+05:30
+=== report start 2026-10-24T14:58:35+05:30
+updated explorer.html and index.html (36 runs, 16 cases)
+cleanup: removed 2 model log(s) (kept 18); removed 20 old backup(s) (kept 15); removed 72 raw file(s)
+=== report done exit=0 2026-10-24T14:58:36+05:30
+ALL_DONE
