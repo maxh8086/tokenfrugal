@@ -1,4 +1,4 @@
-"""Tests for the fix-first loop changes (docs/handoff.md, "Fix-first plan"). Written before the code."""
+"""Tests for the fix-first loop changes (handoff.md, "Fix-first plan"). Written before the code."""
 import json
 import unittest
 

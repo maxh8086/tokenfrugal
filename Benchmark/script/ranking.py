@@ -5,6 +5,7 @@ import html
 import json
 import math
 import re
+import statistics
 import urllib.request
 from pathlib import Path
 
@@ -48,17 +49,18 @@ def _live(name):
 
 
 def _detail_runs():
-    """One wide row per run, from builder.csv (builder cases) and thinker.csv (thinker cases), joined on run_id."""
+    """One wide row per run, joined on run_id from all four detail files: realworld (builder.csv, thinker.csv), hard
+    (hard_test.csv) and coding (coder.csv). Together they are the checks benchmark.csv adds up, so a complete run has FULL checks."""
     runs = {}
-    for fname, role in (("builder.csv", "builder"), ("thinker.csv", "thinker")):
+    for fname in ("builder.csv", "thinker.csv", "hard_test.csv", "coder.csv"):
         for r in _live(fname):
-            g = runs.setdefault(r["run_id"], {"date": r["date"], "git": "", "cases": {}, "s": [], "out": 0.0,
+            g = runs.setdefault(r["run_id"], {"date": r["date"], "git": "", "cases": {}, "case_s": {}, "out": 0.0,
                                                "infra": 0.0, "valid": 0, "ran": 0, "builder_model": "", "thinker_model": ""})
-            g[f"{role}_model"] = r["model"]
+            g[f"{r['role']}_model"] = r["model"]
             g["git"] = g["git"] or r.get("git_sha", "")
             g["cases"][r["case"]] = r["verified"].lstrip("'")
             if r.get("s_p50"):
-                g["s"].append(float(r["s_p50"]))
+                g["case_s"][r["case"]] = float(r["s_p50"])
             g["out"] += float(r.get("output") or 0)
             g["infra"] += float(r.get("infra_cases") or 0)
             g["valid"] += r.get("status") == "valid"
@@ -73,10 +75,12 @@ def _detail_runs():
                "harness_version": "", "shared_system_memory_gb": "", "total_s": "", "run_id": run_id,
                "builder_model": g["builder_model"] or g["thinker_model"], "thinker_model": g["thinker_model"],
                "score": str(a), "max": str(n), "ran": str(g["ran"]), "valid_cases": str(g["valid"]),
-               "mean_s_per_case": f"{sum(g['s']) / len(g['s']):.2f}" if g["s"] else "",
+               "mean_s_per_case": f"{statistics.mean(g['case_s'].values()):.2f}" if g["case_s"] else "",
+               "median_s": statistics.median(g["case_s"].values()) if g["case_s"] else None,
                "tokens_out_per_run": f"{g['out']:g}", "infra_cases": f"{g['infra']:g}"}
         for c in CASES:
             row[c] = g["cases"].get(c, "")
+        row["case_s"] = g["case_s"]
         out.append(row)
     return out
 
@@ -221,13 +225,7 @@ def spc(r):
     return num(r, "mean_s_per_case") or None
 
 
-def speed_score(s, fast, slow):
-    """0-1 speed term from seconds per case on a log scale: the fastest in the pool scores 1, the slowest 0."""
-    if not s or not fast or not slow:
-        return 0
-    if slow <= fast:
-        return 1
-    return max(0, min(1, math.log(slow / s) / math.log(slow / fast)))
+
 
 
 rows.sort(key=lambda r: (spc(r) or 1e9, -pct(r)))
@@ -241,23 +239,23 @@ for r in rows:
     r["params_b"] = params_b(r["params"], r["builder_model"])
 
 
-# Composite score, the same formula as the post pick in ui/server.js:
-# 0.6 x pass rate + 0.4 x ln(slowest s/case / s/case) / ln(slowest s/case / fastest s/case).
-# Only local runs on the full check count take part; fastest and slowest are taken among those runs.
-# Cloud and partial runs get no composite (None) so they never shift the reference.
+# Complete local runs: the full check count, as benchmark.csv scores them.
 _local = [r for r in rows if not r["builder_model"].startswith("claude-") and (r["spc"] or 0) > 0]
 _full = max((num(r, "max") for r in _local), default=0)
 _cands = [r for r in _local if num(r, "max") == _full]
-_fast = min((r["spc"] for r in _cands), default=0)
-_slow = max((r["spc"] for r in _cands), default=0)
 _max_tps = max((r["tps"] for r in _cands if r["tps"]), default=1)  # kept for callers that still import it
+# Rank: each model's newest complete run, by total passes (most first), then median seconds per case (fastest first).
+# Same order as rank_rows() in store.py. benchmark.csv keeps one summary row per model, so the explorer ranks the
+# same runs. Older and partial runs get no rank (None).
+_newest = {}
+for r in _cands:
+    if r["builder_model"] not in _newest or r["run_id"] > _newest[r["builder_model"]]["run_id"]:
+        _newest[r["builder_model"]] = r
+_ranked = sorted(_newest.values(), key=lambda r: (-num(r, "score"), num(r, "median_s") or 1e9))
 for r in rows:
-    r["composite"] = None
-    if r in _cands:
-        r["composite"] = round(0.6 * r["pct"] / 100 + 0.4 * speed_score(r["spc"], _fast, _slow), 3)
-    elif r["builder_model"].startswith("claude-") and r["spc"] and _fast:
-        # cloud reference: same formula against the local range (speed clamped to 0-1); shown, never ranked
-        r["composite"] = round(0.6 * r["pct"] / 100 + 0.4 * speed_score(r["spc"], _fast, _slow), 3)
+    r["rank"] = None
+for i, r in enumerate(_ranked, 1):
+    r["rank"] = i
 
 
 def mmss(v):
@@ -270,12 +268,12 @@ def mmss(v):
 
 
 RANK_LEGEND = [
-    f"Score = verified checks passed out of total checks across {len(CASES)} cases.",
+    "Score = verified checks passed out of total checks across the builder, thinker, hard and coding suites.",
     "Pass rate % = Score / max.",
     "Builder / Thinker = the same score split by role cases.",
     "s per case = mean wall seconds for one case (primary speed metric, lower = faster). It measures how long you wait for an answer, so wordy models get no credit for verbosity.",
     "t/s = tokens generated per second, shown for information only; it no longer affects rank.",
-    "Rank = 100 x (0.6 x pass rate + 0.4 x speed), speed = ln(slowest s per case / s per case) / ln(slowest / fastest) over full local runs (the post pick score). Blank = partial run. The cloud baseline gets the same score against the local range (speed clamped to 0-1), shown for comparison and never ranked.",
+    "Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). The same runs benchmark.csv ranks. Cloud and partial runs are not ranked.",
     "Run time = wall clock for the whole run.",
     "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
     "Date = when the run happened; newer = made with newer code.",
@@ -288,7 +286,7 @@ def md_table():
          "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
-        comp = "" if r["composite"] is None else f"{r['composite'] * 100:.1f}"
+        comp = "" if r["rank"] is None else str(r["rank"])
         o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
                  f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
                  f"| {r['mean_s_per_case']} | {'' if r['tps'] is None else r['tps']} | {comp} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
@@ -313,21 +311,12 @@ def _status(m):
     return "red"
 
 
-def role_score(m, fast, slow):
-    """Role recommendation score 0-1: 0.6 x pass rate on the role's own cases + 0.4 x speed, speed from the model's
-    mean seconds per case on a log scale between the fastest and slowest model in the role."""
-    s = sum(m["s"]) / len(m["s"]) if m["s"] else 0
-    return 0.6 * m["a"] / m["n"] + 0.4 * speed_score(s, fast, slow)
-
-
 def _sort_role(agg):
-    """Rank by role score alone (0.6 x pass rate + 0.4 x speed), then more evidence. Status is a label, not a sort key.
-    Each role is ranked on its own cases only."""
-    means = [sum(m["s"]) / len(m["s"]) for m in agg.values() if m["s"]]
-    fast, slow = min(means, default=0), max(means, default=0)
+    """Rank by pass rate on the role's own cases (most first), then median seconds per case (fastest first), then more
+    evidence. Status is a label, not a sort key. Each role is ranked on its own cases only."""
     for m in agg.values():
-        m["score"] = round(role_score(m, fast, slow), 3)
-    return sorted(agg.items(), key=lambda kv: (-kv[1]["score"], -kv[1]["n"]))
+        m["score"] = round(m["a"] / m["n"], 3)
+    return sorted(agg.items(), key=lambda kv: (-kv[1]["score"], kv[1]["s"][0] if kv[1]["s"] else 1e9, -kv[1]["n"]))
 
 
 def cloud_reference(cases):
@@ -384,8 +373,9 @@ def _role_agg(cases):
         m = {"a": a, "n": n, "runs": 1, "full": a == n, "infra": num(r, "infra_cases") > 0,
              "shared": num(r, "shared_system_memory_gb"), "s": [], "t": [], "d": (r.get("date") or "")[:10],
              "g": {(r.get("git_sha") or "")[:7]}, "h": {r.get("harness_version") or ""}, "pull": r["pull"]}
-        if num(r, "mean_s_per_case"):
-            m["s"].append(num(r, "mean_s_per_case"))
+        case_s = [r["case_s"][c] for c in cases if c in r.get("case_s", {})]
+        if case_s:
+            m["s"].append(statistics.median(case_s))
         if r["tps"] is not None:
             m["t"].append(r["tps"])
         agg[name] = m
