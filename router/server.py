@@ -49,7 +49,7 @@ async def _warm_up():
 
 @contextlib.asynccontextmanager
 async def _lifespan(_server):
-    """The last router to exit stops every ts-mcp container (also on SIGTERM and interpreter exit)."""
+    """The last router to exit stops every tokenfrugal container (also on SIGTERM and interpreter exit)."""
     events.write_roles(CFG)
     store.sweep_stale(STALE_REASON)
     sweeper = asyncio.create_task(_sweep_loop())

@@ -1,6 +1,6 @@
 """Keep MCP containers inside their session: remove gateway stdio containers a closed gateway left behind.
 
-Backends (databases, neo4j, ...) live in the `ts-mcp` compose project and are never touched here. The per-call stdio
+Backends (databases, neo4j, ...) live in the `tokenfrugal` compose project and are never touched here. The per-call stdio
 containers the Docker MCP gateway starts (label docker-mcp=true) are not compose-managed, so they are snapshotted
 before a gateway opens and the new ones are removed once the last open gateway in this process has closed.
 """

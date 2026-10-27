@@ -1,57 +1,34 @@
-import json
+import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
-
-import keyring
-from keyring.backend import KeyringBackend
-from keyring.backends import fail
-from keyring.errors import PasswordDeleteError
+from unittest import mock
 
 from router import secrets_store
 
 
-class FakeKeyring(KeyringBackend):
-    priority = 1
-
-    def __init__(self):
-        self.store = {}
-
-    def get_password(self, service, username):
-        return self.store.get((service, username))
-
-    def set_password(self, service, username, password):
-        self.store[(service, username)] = password
-
-    def delete_password(self, service, username):
-        if (service, username) not in self.store:
-            raise PasswordDeleteError("not found")
-        del self.store[(service, username)]
-
-
 class SecretsStoreTest(unittest.TestCase):
     def setUp(self):
-        self._orig_backend = keyring.get_keyring()
-        self.backend = FakeKeyring()
-        keyring.set_keyring(self.backend)
         self._tmp = tempfile.TemporaryDirectory()
-        self._orig_index = secrets_store.INDEX_FILE
-        secrets_store.INDEX_FILE = Path(self._tmp.name) / "secret_names.json"
+        self._patch = mock.patch.object(secrets_store, "SECRETS_DIR", Path(self._tmp.name) / "secrets")
+        self._patch.start()
 
     def tearDown(self):
-        keyring.set_keyring(self._orig_backend)
-        secrets_store.INDEX_FILE = self._orig_index
+        self._patch.stop()
         self._tmp.cleanup()
 
-    def test_put_get_roundtrip_and_index(self):
+    def test_put_get_roundtrip_writes_value_only(self):
         secrets_store.put("llm-api-key", "abc123")
         self.assertEqual(secrets_store.get("llm-api-key"), "abc123")
-        self.assertEqual(secrets_store.names(), ["llm-api-key"])
-        self.assertEqual(json.loads(secrets_store.INDEX_FILE.read_text(encoding="utf-8")), ["llm-api-key"])
+        raw = (secrets_store.SECRETS_DIR / "llm-api-key").read_bytes()
+        self.assertEqual(raw, b"abc123")  # no trailing newline, no extra content
 
-    def test_index_holds_names_only(self):
-        secrets_store.put("github-token", "ghp_secretvalue")
-        self.assertNotIn("ghp_secretvalue", secrets_store.INDEX_FILE.read_text(encoding="utf-8"))
+    def test_names_lists_files_only(self):
+        self.assertEqual(secrets_store.names(), [])
+        secrets_store.put("SONARQUBE_TOKEN", "sq")
+        secrets_store.put("llm-api-key", "k")
+        self.assertEqual(secrets_store.names(), ["SONARQUBE_TOKEN", "llm-api-key"])
 
     def test_get_unknown_returns_none(self):
         self.assertIsNone(secrets_store.get("missing"))
@@ -60,6 +37,13 @@ class SecretsStoreTest(unittest.TestCase):
         with self.assertRaises(secrets_store.SecretStoreError):
             secrets_store.put("x", "")
 
+    def test_invalid_names_cannot_leave_the_directory(self):
+        for bad in ("../escape", "a/b", "", "with space", ".hidden"):
+            with self.assertRaises(secrets_store.SecretStoreError):
+                secrets_store.put(bad, "v")
+            with self.assertRaises(secrets_store.SecretStoreError):
+                secrets_store.get(bad)
+
     def test_delete(self):
         secrets_store.put("x", "1")
         self.assertTrue(secrets_store.delete("x"))
@@ -67,9 +51,9 @@ class SecretsStoreTest(unittest.TestCase):
         self.assertEqual(secrets_store.names(), [])
         self.assertFalse(secrets_store.delete("x"))
 
-    def test_resolve_keyring_ref(self):
+    def test_resolve_docker_secret_ref(self):
         secrets_store.put("github-token", "tok")
-        self.assertEqual(secrets_store.resolve("keyring:github-token"), "tok")
+        self.assertEqual(secrets_store.resolve("docker-secret:github-token"), "tok")
 
     def test_resolve_passes_plain_values_through(self):
         self.assertEqual(secrets_store.resolve("plain"), "plain")
@@ -77,23 +61,15 @@ class SecretsStoreTest(unittest.TestCase):
 
     def test_resolve_missing_secret_fails_loudly(self):
         with self.assertRaises(secrets_store.SecretStoreError) as cm:
-            secrets_store.resolve("keyring:nope")
+            secrets_store.resolve("docker-secret:nope")
         self.assertIn("nope", str(cm.exception))
 
     def test_resolve_env_mixes_refs_and_literals(self):
         secrets_store.put("tok", "v")
         self.assertEqual(
-            secrets_store.resolve_env({"A": "keyring:tok", "B": "lit"}),
+            secrets_store.resolve_env({"A": "docker-secret:tok", "B": "lit"}),
             {"A": "v", "B": "lit"},
         )
-
-    def test_no_usable_backend_is_an_error_not_a_plaintext_fallback(self):
-        keyring.set_keyring(fail.Keyring())
-        with self.assertRaises(secrets_store.SecretStoreError):
-            secrets_store.put("x", "1")
-        with self.assertRaises(secrets_store.SecretStoreError):
-            secrets_store.get("x")
-        self.assertFalse(secrets_store.INDEX_FILE.exists())
 
     def test_ensure_generated_creates_missing_only(self):
         secrets_store.put("SEARXNG_SECRET", "kept")
@@ -103,10 +79,21 @@ class SecretsStoreTest(unittest.TestCase):
         self.assertTrue(secrets_store.get("NEO4J_AUTH").startswith("neo4j/"))
         self.assertEqual(secrets_store.ensure_generated(), [])
 
-    def test_export_env_returns_only_stored_backend_names(self):
-        secrets_store.put("SONARQUBE_TOKEN", "sq")
-        secrets_store.put("unrelated", "x")
-        self.assertEqual(secrets_store.export_env(), {"SONARQUBE_TOKEN": "sq"})
+    def test_owner_only_permissions_where_posix(self):
+        if os.name == "nt":
+            self.skipTest("POSIX mode bits only")
+        secrets_store.put("x", "1")
+        self.assertEqual(stat.S_IMODE(os.stat(secrets_store.SECRETS_DIR / "x").st_mode), 0o600)
+
+    def test_cli_export_paths_prints_directory_not_values(self):
+        import io
+        from contextlib import redirect_stdout
+        secrets_store.put("SONARQUBE_TOKEN", "sq-value")
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(secrets_store._cli(["export-paths"]), 0)
+        self.assertEqual(out.getvalue().strip(), f"TF_SECRETS_DIR={secrets_store.SECRETS_DIR}")
+        self.assertNotIn("sq-value", out.getvalue())
 
 
 if __name__ == "__main__":

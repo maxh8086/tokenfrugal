@@ -38,13 +38,10 @@ OLLAMA_URL = os.getenv("TOKENFRUGAL_LLM_URL") or os.getenv("OLLAMA_URL", "http:/
 
 
 def _llm_api_key() -> str:
-    """TOKENFRUGAL_LLM_API_KEY wins; otherwise the OS secret store entry `llm-api-key`; otherwise the local default."""
+    """TOKENFRUGAL_LLM_API_KEY wins; otherwise the Docker secret file `llm-api-key`; otherwise the local default."""
     if os.getenv("TOKENFRUGAL_LLM_API_KEY"):
         return os.environ["TOKENFRUGAL_LLM_API_KEY"]
-    try:
-        return secrets_store.get("llm-api-key") or "ollama"
-    except secrets_store.SecretStoreError:  # no usable OS store here: keep the local default
-        return "ollama"
+    return secrets_store.get("llm-api-key") or "ollama"
 
 
 LLM_API_KEY = _llm_api_key()
@@ -80,30 +77,14 @@ NATIVE_SERVERS = {
 }
 # Docker containers a native server needs running (name -> containers, dependency first). See mcp_client.ensure_backend.
 NATIVE_BACKENDS = {"synaptree": ["synaptree-neo4j-1", os.getenv("SYNAPTREE_CONTAINER", "synaptree-synaptree-1")]}
-# Compose-managed backends (docker-compose.yml). Secrets come from an env file outside the repo.
+# Compose-managed backends (docker-compose.yml). Secrets are Docker secret files; compose needs only their directory.
 COMPOSE_FILE = Path(os.getenv("MCP_COMPOSE_FILE", Path(__file__).resolve().parent.parent / "docker-compose.yml"))
-COMPOSE_PROJECT = "ts-mcp"
-MCP_ENV_FILE = os.getenv("MCP_ENV_FILE", str(Path.home() / ".docker" / "mcp" / "mcp.env"))
-os.environ["MCP_ENV_FILE"] = MCP_ENV_FILE
-
-
-def _load_backend_env() -> None:
-    """Export the backend secrets from the OS store (compose reads them from the environment).
-    Values already in the environment win. Nothing is written to disk; values are never printed or logged."""
-    try:
-        for name, value in secrets_store.export_env().items():
-            os.environ.setdefault(name, value)
-    except secrets_store.SecretStoreError:
-        pass  # no usable store here; compose then fails with a message naming the missing variable
-
-
-_load_backend_env()
+COMPOSE_PROJECT = "tokenfrugal"
+os.environ.setdefault("TF_SECRETS_DIR", str(secrets_store.SECRETS_DIR))  # read by docker-compose.yml secrets:
 KEEP_ALIVE = os.getenv("MCP_KEEP_ALIVE", "") == "1"  # leave backends running after a task
 for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
     NATIVE_SERVERS[_n] = {"command": "docker", "args": ["compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE),
                                                          "run", "--rm", "-T", _svc]}
-# keyring: refs are resolved from the OS store by mcp_client.open_native and passed to compose as ${SONARQUBE_TOKEN}
-NATIVE_SERVERS["sonarqube"]["env"] = {"SONARQUBE_TOKEN": "keyring:SONARQUBE_TOKEN"}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "router.plan_mcp"]}
 NATIVE_SERVERS["sandbox"] = {"command": sys.executable, "args": ["-m", "router.sandbox_mcp"]}  # run_tests / run_python in a network-less container
 # synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
@@ -111,7 +92,7 @@ for _n, _spec in claude_import.load()["servers"].items():  # Claude-JSON imports
     NATIVE_SERVERS.setdefault(_n, _spec)
 SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().parent.parent.name
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
-SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 300
+SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 5000
 TOOLS_PER_STEP = 2
 TOOL_MODE = os.getenv("TOKENFRUGAL_TOOL_MODE", "native")  # "text": tools described in the prompt, calls parsed from JSON text (models without a tool template)
 # CPUs / memory per Docker MCP tool container (docker mcp gateway defaults: 1 CPU, 2Gb).

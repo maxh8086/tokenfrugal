@@ -365,7 +365,7 @@ async def main():
                 med = (r.get("s") or {}).get("p50") if isinstance(r, dict) else None
                 w.writerow([a.tag, cid, r.get("verified", ""), r.get("ran", ""), r.get("status", ""),
                             med if med is not None else "", " | ".join(r.get("notes", []))])
-    print("wrote", OUT / f"{stamp}-{a.tag}.md")
+    print("wrote", OUT / f"{stamp}-{a.tag}.md", flush=True)
 
 
 if __name__ == "__main__":
@@ -373,5 +373,12 @@ if __name__ == "__main__":
         s.reconfigure(encoding="utf-8", errors="replace")
     # Dump every thread's stack to the log every 15 min, so a hang shows where it is stuck.
     faulthandler.dump_traceback_later(900, repeat=True)
-    asyncio.run(main())
+    # asyncio.run() waits for leftover tasks and executor threads at shutdown. On Windows a stuck subprocess or
+    # worker blocks that wait forever after the results are on disk, so exit directly once main() has returned.
+    loop_ = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop_)
+    loop_.run_until_complete(main())
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
     faulthandler.cancel_dump_traceback_later()

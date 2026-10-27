@@ -64,7 +64,6 @@ TEXT_TOOLS = (chr(10) * 2 + "Tools are NOT available through an API. To use one,
               "To change an existing file, prefer edit_file over rewriting it with write_file. "
               "Results come back in the next message. Available tools:" + chr(10) + "{tools}")
 SLOP = re.compile(r"(as an ai|i.m sorry, but i.m not able|i can.t assist|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
-TOOL_CAP = 8000  # chars of tool output fed back to the model
 
 
 class LoopError(Exception):
@@ -211,7 +210,7 @@ def text_tool_prompt(tools: list) -> str:
     for t in tools:
         f = t["function"]
         props = ", ".join(f"{k}: {(v or {}).get('type', 'any')}" for k, v in (f["parameters"].get("properties") or {}).items())
-        lines.append(f"- {f['name']}({props}): {(f.get('description') or '')[:160]}")
+        lines.append(f"- {f['name']}({props}): {f.get('description') or ''}")
     return TEXT_TOOLS.format(tools=NL.join(lines))
 
 
@@ -358,7 +357,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                         or not out.strip() or out.startswith(("Error:", "tool error", "Input validation error")):
                     continue
                 events.emit("tool", id=tid, name="read_file", args="preread " + p[:150])
-                msgs += preread_messages(p, out[:TOOL_CAP], i)
+                msgs += preread_messages(p, out, i)
                 ok_calls += 1
                 used_tools = True
         hinted = False  # the first "answered without reading" retry names read_file (2A)
@@ -375,7 +374,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                                                         "Answer now using only the tool results above."})
             use_tools = bool(tools) and not text_mode and not force_answer
             t0 = time.monotonic()
-            kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, "max_tokens": 2048, **think_extra(role)}
+            kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, **think_extra(role)}
             if use_tools and tools:
                 kw["tools"] = tools
                 if not used_tools:
@@ -468,5 +467,5 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     await asyncio.to_thread(mcp_reap.sweep)  # idle per-call stdio containers do not pile up mid-run
                 if out.startswith("tool error") or bad_args:  # the trail keeps the error text, so get_detail shows why a call failed
                     events.emit("tool_error", id=tid, name=c.function.name, error=out[:300])
-                msgs.append({"role": "tool", "tool_call_id": c.id, "content": out[:TOOL_CAP]})
+                msgs.append({"role": "tool", "tool_call_id": c.id, "content": out})
         raise LoopError(f"no final answer in {role['max_steps']} steps")

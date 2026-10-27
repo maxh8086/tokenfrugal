@@ -34,5 +34,5 @@ Repo: https://github.com/maxh8086/synaptree-mcp (MCP server `synaptree`). Query 
 
 ## Never
 
-- Paste secrets into tasks or chat. Secrets live in `~/.docker/mcp/mcp.env`.
+- Paste secrets into tasks or chat. Secrets live in `~/.docker/mcp/secrets`.
 - Add Co-Authored-By trailers or "generated with" footers to commits and PRs, unless you want them.
