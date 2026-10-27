@@ -97,8 +97,8 @@ Each new test gets its own table in `Benchmark.md` and its own dashboard section
 
 These are open and must be settled or noted before a new role is added:
 
-- **Explorer rank.** `explorer.html` ranks by `composite` = 100 x (0.6 pass rate + 0.4 speed on a log scale), via `RANK_LEGEND` in `ranking.py` and the `composite` column in `build_report.py`. The method above ranks by total score only, with median as tie-break. The explorer and the summary will disagree until one is changed.
-- **Stale wording.** `RANK_LEGEND` (ranking.py) and `LEGEND_MD` (build_report.py) say "16 cases" and describe the composite rank.
+- **Explorer rank (open).** The explorer and the post pick rank by total passes, then median seconds per case, over all four suites (81 checks). Scores and medians match benchmark.csv, and the summary rows for ts-qwable-9b-65536 and ts-qwen3-5-9b-iq4xs-65536 were published 2026-10-27. The absolute rank numbers still differ: benchmark.csv also ranks older partial-total rows (/72, /75, /78, /79), and the explorer does not build a complete run for nemotron-3-nano:4b, ts-gemma4-e4b-65536, granite4:tiny-h or hermes3:8b, which have /81 rows in the CSV. The relative order of the complete /81 runs matches.
+- **Stale wording (closed).** The legends no longer say "16 cases". The score is described as the builder, thinker, hard and coding suites together.
 - **Column name.** `benchmark.csv` already has `hard_score` (blank in all rows). The new thinker-hard column is named `thinker_hard_score` for now. Choose one name.
 - **Detail files.** `builder.csv` and `thinker.csv` currently hold both suites under both roles. Builder should keep only coding and thinker only hard (realworld in both). Haiku row 58 stays in the detail files, marked superseded.
 - **Blank vs partial totals.** It is not yet decided whether a model with only one role complete shows a partial total or a blank.

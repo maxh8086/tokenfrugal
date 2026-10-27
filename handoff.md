@@ -203,13 +203,13 @@ Tool overlap only, different skill (keep; not duplicates):
 1. Write v5 columns to the real `benchmark.csv`? Needs a diff review and approval first. Back up to `results/backups/` before any write.
 2. Column name: `thinker_hard_score` (v5) vs existing `hard_score` (blank in all rows). Pick one.
 3. Blank vs partial total for models with only one role complete.
-4. Explorer ranks by `composite` (0.6 pass + 0.4 log speed), while v5 ranks by total with median tie-break. They disagree until one changes. `RANK_LEGEND` in `ranking.py` and `LEGEND_MD` in `build_report.py` also still say "16 cases".
+4. Rank rule (done 2026-10-27, median added): explorer, report and post pick rank by total passes then median s/case over all four suites, newest complete run per model. Scores and medians match benchmark.csv. Summary rows for ts-qwable-9b-65536 and ts-qwen3-5-9b-iq4xs-65536 were published 2026-10-27 (backups in results/backups/). Open: the explorer and benchmark.csv still differ in absolute rank numbers. benchmark.csv also ranks older partial-total rows (/72, /75, /78, /79), and the explorer does not build a complete run for nemotron-3-nano:4b, ts-gemma4-e4b-65536, granite4:tiny-h or hermes3:8b. The relative order of the complete /81 runs matches.
 
 **Next actions**
 1. Explain why only 5 models were ranked (check `latest` / `keep()` in v5 against the other rows).
 2. Show the user a diff and 3 to 4 sample rows from the scratch copy, then wait for approval.
 3. Detail files: `builder.csv` and `thinker.csv` still hold both suites under both roles. Clean up per ADDING_ROLES gap list, with approval.
-4. Fix the stale legend text and the explorer rank once the rank rule is decided.
+4. Decide whether `ui/server.js` post pick moves to the new rank rule.
 
 ---
 ## Full benchmark run, all local models at 32k/64k (open, 2026-10-20)
