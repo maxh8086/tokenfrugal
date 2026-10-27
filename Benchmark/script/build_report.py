@@ -43,12 +43,15 @@ if _args.run is not None:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # `python -I` drops the script dir from sys.path
 from ranking import *  # noqa
-from ranking import B, cloud_reference, _status, _sort_role, _role_agg, _load, _local, _cands, _max_tps
+if not ollama_up():
+    print("WARNING: Ollama not reachable at localhost:11434; ts- origin rows will read 'Local build (source not recorded)'. Start Ollama and rerun.")
+from ranking import B, cloud_reference, _status, _sort_role, _role_agg, role_unranked, _load, _local, _cands, _max_tps, _live
 AGENTS = B.parent / "router" / "tf-roles.yaml"
 
 
 def role_rank(cases, top=5):
-    """Every local model on one role's cases, compared across all its runs, with a status dot.
+    """Every local model on one role's cases, from its newest n=3 run of that role, with a status dot.
+    Models without an n=3 run for the role are listed below the table, not ranked.
     The first `top` rows show by default; the rest sit in a collapsed <details> block."""
     ranked = _sort_role(_role_agg(cases))
     head = ["| | # | Model | Latest run | Runs | Score | % | Rank | Shared memory GB | s/case | t/s (info) |",
@@ -69,6 +72,9 @@ def role_rank(cases, top=5):
     if rest:
         o += ["", f"<details><summary>Show the other {len(rest)} models</summary>", "", *head,
               *[row(i, n, m) for i, (n, m) in enumerate(rest, top + 1)], "", "</details>"]
+    unranked = role_unranked(cases)
+    if unranked:
+        o += ["", "Not ranked (no n=3 run for this role): " + ", ".join(f"`{n}`" for n in unranked)]
     return "\n".join(o)
 
 
@@ -548,7 +554,7 @@ DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchm
 
 ### Best model per role (local models, top 5 each)
 
-Each role is ranked only on its own cases, because one model is pinned to both roles in a run. Each model is compared across all of its runs in the filtered set. `Runs` shows how many runs it has. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
+Each role is ranked only on its own cases, because one model is pinned to both roles in a run. A model is ranked for a role only from its newest run of that role, and only when every case of the role ran n=3 times. Models that do not meet this are listed under the table as not ranked. `Shared memory GB` above 0 means part of the model spilled off the GPU, which is slower. The Haiku cloud baseline is left out because it cannot be pulled.
 
 **Builder** (cases: {", ".join(f"`{c}`" for c in BUILDER_CASES)})
 
@@ -580,7 +586,7 @@ Each model is compared across all of its runs. The dot shows how far to trust it
 
 ### Hard thinker suite (5 harder cases, separate from the 48-case score)
 
-Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function comparison, each run n times (`a/b` = verified runs). Run automatically after the standard benchmark (`run_benchmark.py --no-hard` skips it). Results live in `results/hard_test.csv` and are joined to the models above by name; they do not change the ranking.
+Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function comparison, each run n times (`a/b` = verified runs). Run automatically after the standard benchmark (`run_benchmark.py --role builder,thinker` skips it). Results live in `results/hard_test.csv` and are joined to the models above by name; they do not change the ranking.
 
 {hard_md()}
 
@@ -601,6 +607,36 @@ Multi-file bug, two vulnerabilities, ambiguous trace, long summary and function 
     encoding="utf-8")
 print(f"updated explorer.html and index.html ({len(rows)} runs, {len(CASES)} cases)")
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # run_queue.sh uses python -I, which skips the script dir
+import clean_outputs
+clean_outputs.run()
+
+
+def infra_model_split():
+    """Per model, repeats that failed for infrastructure reasons (infra) and repeats where the model ran and failed (model:
+    LoopError, timeout, CheckFailed, bad answer). Counted from the live rows of the detail files; no-tools repeats never ran."""
+    out = {}
+    for fname in ("builder.csv", "thinker.csv", "hard_test.csv", "coder.csv"):
+        for r in _live(fname):
+            if r.get("status") == "no-tools":
+                continue
+            g = out.setdefault(r["model"], {"infra": 0, "model": 0})
+            g["infra"] += int(float(r.get("infra_cases") or 0))
+            if r.get("status") != "infra":  # verified = a/b over live repeats, so a/b excludes infra repeats
+                try:
+                    a, b = r.get("verified", "").lstrip("'").split("/")
+                    g["model"] += int(b) - int(a)
+                except ValueError:
+                    pass
+    return out
+
+
+_split = infra_model_split()
+print("Infra vs model failed repeats per model (infra = infrastructure, model = LoopError/timeout/check/bad answer):")
+print(f"  {'model':<60} {'infra':>6} {'model':>6}")
+for _m, _g in sorted(_split.items()):
+    if _g["infra"] or _g["model"]:
+        print(f"  {_m:<60} {_g['infra']:>6} {_g['model']:>6}")
 
 if _args.update != "no":
     _go = _args.update == "yes"

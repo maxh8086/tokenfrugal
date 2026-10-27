@@ -5,6 +5,127 @@ Last updated: 2026-10-21
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
+## Pending decisions and designs (added 2026-10-22, nothing implemented)
+
+Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
+
+1. **Summary cap 150-300 -> 1000-1500 (agreed in principle).**
+   - Where: `router/config.py:114` (`SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS`). Text mentions to update: README.md (lines 7, 90), CLAUDE.md (line 7), docs/architecture.md (lines 7, 23), docs/technical.md (line 25), examples/example_agents.md (line 6), `router/server.py` docstring (line 165), and the labels in `docs/hld.svg`, `docs/lld-sequence.svg`, `docs/lld-modules.svg`.
+   - Impact: `summarize()` returns a reply unchanged when it is under the cap, so most replies will now pass through raw. Benchmark scores were produced at 150-300, so they are not comparable: re-run or add a note.
+   - Do not change the constant while the queue runs. Each model is a separate process that reads `config.py` at start, so models later in the queue would get the new cap.
+
+2. **Role contract template (playbook gap).** Decide before editing any role.
+   - Proposed fields per role in `router/tf-roles.yaml`: `purpose` (one sentence), `inputs` (paths or arguments the role expects), `output_format`, `stop_condition`, `checklist` (3 or more items, each tagged `deterministic` or `judgement`).
+   - Basic criteria a role must meet: every field present; each checklist item names what passes it; the matching skill file (`router/skills/<role>/SKILL.md`) states the same stop condition. Follows the `code-l1` pattern (numbered steps, output format, stop condition).
+   - Update all roles only after the benchmark finishes. Roles without a contract are not checked by the checker stage (item 3).
+
+3. **Checker stage (proof gap).** Added per role through its contract, not per model.
+   - Position: new stage in `_execute` in `router/server.py`, after `run()` and before `summarize()`.
+   - Deterministic items: tests (an accept command from the contract), lint (`router/lint.py` `check_python`), diff applies (`git apply --check`), files-changed manifest from git, not the model's claim.
+   - Judgement items: a small local model returns pass or fail with a reason per item. Model choice is open (see item 4).
+   - Failure: a diff-only correction goes back to the same role through `resume_task`, which keeps its message history. Limit one correction per task, then return `FAILED` with the checker output.
+   - Drawbacks: adds time per task, so per-role `timeout_s` must account for it. Judgement results from a 3B model are weak; treat them as advisory until measured.
+
+4. **Who is the checker (open decision).**
+   - Haiku is recorded as the team lead and Sonnet as the orchestrator in `teams:` and `orchestration:`. The router never calls them: the lead and orchestrator are cloud models run by the client. Today Haiku reviews replies by hand, in the client, as the tracker.
+   - Options:
+     - (a) Local thinker (`llama3.2:3b-16k`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
+     - (b) Router calls Haiku through the API for judgement items. Better judgement, but breaks the no-cloud and privacy promise, needs a key, and spends cloud tokens.
+     - (c) Keep judgement in the client: the checker stage returns deterministic results plus the judgement inputs, and Haiku reviews them. No router change for judgement.
+   - Suggested: deterministic checks in the router now (a for judgement, later), and (c) as the reviewer of record until (a) is measured.
+
+5. **Toolbox of approved templates (new table design).**
+   - New SQLite table `templates` in `router/store.py`: `id`, `role`, `task_type`, `title`, `tags` (JSON list), `body` (text or file path), `source_task_id`, `status` (`approved` | `retired`), `approved_by`, `approved_at`, `uses`, `last_used`.
+   - Matching at dispatch: same `role` and `task_type` first, then tag overlap, then keyword score. Embeddings are deferred until keyword matching is measured.
+   - Budget: at most 2 templates and 1500 tokens in total, placed before the task text. The rest of the 16-32k window is left for the task and tool output. The budget is a proposal and needs measuring.
+   - Open: who approves (see item 6), and whether templates are shown in `list_roles`.
+
+6. **Approval policy (open).**
+   - Now: manual approval by the user. Each new template or edit gets a plan and an impact review first.
+   - Auto-approve only after the checker stage has been measured on the benchmark and the drawbacks have been reviewed.
+
+7. **Handoff cleanup (pending, not done).**
+   - Root `handoff.md` is the canonical file. Review `docs/handoff.md`, move its open items here, and remove completed and duplicate items from both files. This is a separate edit and is not done yet.
+
+8. **Teams: visibility, not routing (decided 2026-10-22).**
+   - Each team's lead and the orchestrator are shown to every client through `list_roles` (`router/server.py`), `CLAUDE.md` and `AGENTS.md`. Codex and other agents can read them there.
+   - Haiku does not choose a team or role at run time. The router records the lead and orchestrator and never calls them. Routing by lead needs a model-driven step that does not exist yet.
+   - Team names: `ui-ux` (confirmed: "UI-UZ" in the request was a typo), `development`, `ops`, plus `security` and `research`, which are my own grouping and still need confirming.
+
+9. **Haiku model: `claude-haiku-5-5` (decided 2026-10-22).**
+   - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) still names `claude-haiku-4-5`; the user should update it to 5-5. This repo does not change it.
+
+10. **Review taste-skill against ui-ux-pro-max in the Claude skill setup (open; no removal yet).**
+   - Scope: the Claude skill setup only, not this repo or its roles. Nothing in this repo's roles, skills or profiles references taste-skill (checked 2026-10-22).
+   - Why it is on the list: both families cover UI design, so they may overlap. The overlap is not yet proven. taste-skill has 13 entries (brandkit, brutalist, gpt-taste, image-to-code, imagegen-frontend-mobile, imagegen-frontend-web, minimalist, output, redesign, soft, stitch, taste-skill, taste-skill-v1). ui-ux-pro-max has 7 (banner-design, brand, design, design-system, slides, ui-styling, ui-ux-pro-max). Some overlap, for example design systems and slides.
+   - Before any removal: compare each taste-skill variant with its closest ui-ux-pro-max skill, check which one the UI role tests (`Benchmark/results/ui_roles.csv`) actually used, and get your approval for each skill removed. Nothing is deleted without that review.
+   - Wait for the UI role tests on all models to finish first.
+
+---
+## Teams and team leads (built 2026-10-21, recorded only; not used for routing)
+
+- Teams are in `teams:` in `router/tf-roles.yaml`. Membership is fixed per role. Every role in `roles:` and `pending_roles:` is in exactly one team (`tests/test_teams.py` checks this).
+- Teams: `ui-ux` (all `ui-*` roles plus `designer`, `browser`), `development` (coding, builder, reviewer, debugger, analyzer, db-*-dev), `ops` (devops, tracker, github-read, github-actions-read, db-*-admin), `security` (security), `research` (research, finance, docs). The `security` and `research` teams are my own grouping; the request named only UI-UX, Development and Ops. Confirm or merge them.
+- `orchestration:` in the yaml sets the orchestrator (`claude-sonnet-5-5`) and the default team lead (`claude-haiku-5-5`). A team can set its own `lead:`.
+- The dashboard (`scripts/tf_roles_ui.py`, Teams box) saves picks to `router/tf-roles_teams.json` (`TOKENFRUGAL_TF_ROLES_TEAMS_FILE` overrides the path). It stores only differences from the yaml.
+- `router/config.py`: `team_of(role, cfg)`, `lead_for(team, cfg)`, `cfg["orchestrator"]`.
+- Visibility, not routing: `list_roles` prints each team's lead, description and roles, and the orchestrator. `CLAUDE.md` and `AGENTS.md` describe the same. Any MCP client, Codex included, can read the lead from there.
+- Not built: Haiku choosing a team and role at run time. The lead and orchestrator are cloud models run by the client, so the router records them but does not call them.
+- Model: `claude-haiku-5-5` is the latest Haiku and is used everywhere in the repo. The global CLAUDE.md still names `claude-haiku-4-5` and should be updated to 5-5.
+
+---
+
+## Role improvement scope and self-improvement gate (open, 2026-10-21)
+
+**Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
+
+**Scope of improvement (existing roles)**
+1. **Decided and fixed 2026-10-21.** `security-auditor` keeps 300s. SonarQube is slow to respond, so the higher timeout is correct. `tests/test_role_timeout.py` now expects 300. Config unchanged.
+2. **Open, deferred (no immediate change).** Two tests in `tests/test_ranking_hard.py` fail: `test_latest_run_wins_and_bad_files_skipped` (`[] != ['m1']`) and `test_md_empty_and_filled` (`'| m2 | 2/3 |' not found`). Both write JSON fixtures, but `Benchmark/script/ranking.py` `hard_results` reads `Benchmark/results/hard_test.csv`. Rewrite the fixtures as CSV when this is picked up.
+3. Set explicit `timeout_s` on `github-read`, `github-actions-read`, `devops`, and `finance`. They currently fall back to `TASK_TIMEOUT` in `router/loop.py`.
+4. Clarify overlapping roles. `builder` vs `devops` both write files on the builder model. `reviewer` vs `analyzer` share the `analyze` profile and near-identical tools. Define one job for each.
+5. Check every `tools:` name against its profile in `profiles/*.yaml`. Activate no role before this check passes.
+6. Bring role skills up to the `code-l1` pattern: numbered steps, an explicit output format, and a stop condition. Current role skills are 18–20 lines.
+7. Verify the `synaptree` native server is wired for every role that lists it.
+8. Create a live smoke test per role only after the user confirms. Each role gets its model only after its test passes.
+
+**Self-improvement gate (built 2026-10-21, not yet used on a live role)**
+- Each role carries `improve: gated` in `router/tf-roles.yaml` (51 roles, active and pending). A role without that flag is refused.
+- Scope is one top-level `self_improve:` block: `enabled: true`, `gate: approval`, `scope: [skills]`. Proposals may touch only that role's own `router/skills/<name>/SKILL.md` files. Limits (`timeout_s`, `max_steps`, `tools`) are not yet in scope.
+- `python -m scripts.role_improve propose <role> <diff_file> --reason "..."` stores a proposal in `router/improvements/proposals.json`. Nothing is written to the repo.
+- `python -m scripts.role_improve approve <id>` runs `git apply --check`, then applies. Only a person runs this; no role can.
+- `list`, `show`, and `reject` manage the queue. Tests: `tests/test_role_improve.py` (8 tests).
+
+**Duplicate roles (removal candidates; nothing removed; each removal needs user approval)**
+
+Rule: two roles are duplicates only when they share both the skill set and the tool set. Tool overlap alone is not enough, because a role's skill sets its behaviour. Checked 2026-10-21 against every entry in `roles:` and `pending_roles:`.
+
+Same skill and same tools (merged 2026-10-21):
+- `ui-motion` folded into `ui-layout`. `ui-layout` keeps the layout tools and does motion only when the spec asks.
+- `ui-style` and `ui-patch` folded into `ui-polish`. `ui-polish` covers spacing, the chosen aesthetic, and diff-only review fixes.
+- Both merged roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model. The skill is `role-ui-builder`.
+
+Same skill and same tools, but a different engine per role (keep; not duplicates):
+- `db-{postgres,mysql,mssql,oracle}-dev` share `db-dev` and one tool list. Each has its own profile and compose stack.
+- `db-{postgres,mysql,mssql,oracle}-admin` share `db-admin` and one tool list. Each has its own profile and compose stack.
+
+Tool overlap only, different skill (keep; not duplicates):
+- `ui-tokens-check` and `ui-a11y-check`: different skills (`role-ui-tokens`, `role-ui-a11y`).
+- `ui-review-console` and `ui-review-lighthouse` vs the active `browser` role: different skills (`role-ui-review`, `role-browser`). Note that `browser` already exposes the same tools, so these only stay separate because of their skill.
+- `builder` vs `devops`, `reviewer` vs `analyzer`: already listed in scope item 4. Different skills, so these are not duplicates under this rule. Item 4 still needs a clear job for each.
+
+**UI role tests (pending; no model run yet, waiting for the user's confirmation)**
+- `scripts/ui_role_check.py`: offline structure check for the 10 `ui-` pending roles. Passes: no model key, gated, skill sections present. Tests: `tests/test_ui_role_check.py`.
+- `scripts/ui_role_smoke.py`: live smoke. Without `--confirm` it prints a plan and makes no model call. Needs `--model` and `CC_WORKSPACE`. Results go to their own file, `Benchmark/results/ui_roles.csv`.
+- `Benchmark/results/benchmark.csv` is NOT touched. Merge UI results into it only after the UI roles are final, and only after the user says so.
+- Pending: final UI role changes, then the live run, then the merge. Model assignment waits for passing results.
+- Later review (not started, nothing removed): compare taste-skill with ui-ux-pro-max in the Claude skill setup. Do this only after the UI role tests have run on all models and the results are in `Benchmark/results/ui_roles.csv`. Removal needs a detailed review and approval first. See pending decision 10.
+
+**Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
+- Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
+- Skill: `router/skills/role-ui-webapp-test/SKILL.md`. Activation waits for the user's go-ahead and a passing test.
+
+---
 ## Haiku 80/81 done; local model queue ready to start (open, 2026-10-21, read first)
 
 **Progress**
@@ -22,7 +143,7 @@ This file holds the working handoff notes. Closed items are removed once verifie
 
 **Next execution plan: 32 local models**
 1. Check `Benchmark/results/tracker/queue.lst` (32 models; CRLF, and `run_queue.sh` strips the `\r`). Each model must already be in Ollama and visible at the endpoint. The runner records a per-model exit code.
-2. Run `Benchmark/results/tracker/run_queue.sh` in the background. It runs each model with `-I` and `--coding`, in batches of 3. It writes `Benchmark/results/tracker/queue-run.log`, rebuilds the report after each batch, and does NOT commit or push.
+2. Run `Benchmark/results/tracker/run_queue.sh` in the background. It runs each model with `-I --model <m> --role builder,thinker,hard,coding`, in batches of 3. It writes `Benchmark/results/tracker/queue-run.log`, rebuilds the report after each batch, and does NOT commit or push.
 3. After each batch, rewrite `Benchmark/results/tracker/progress.md`: stage, models done and remaining out of 32, last finished model with exit code, failures, and time of update.
 4. When all 32 finish, show `Benchmark/results/benchmark.csv`. Commit and push only if the user asks.
 5. The old scratchpad queues (`q-batch-*.lst`, `run_queue.sh` under the scratchpad) are from an earlier run. Do not use them.
@@ -130,7 +251,7 @@ This file holds the working handoff notes. Closed items are removed once verifie
 **Status**
 - Haiku (`claude-haiku-5-5`) full n=3 run on all current cases is done. Canonical row: `Benchmark/results/benchmark.csv` line 59, `full-claude-haiku-5-5+claude-haiku-5-5`, 2026-10-20 10:53:05. Line 58 (09:48:46) is the pre-correction run and is superseded. It is not deleted and still needs a superseded marker.
 - The 12/12 targeted Haiku re-run is incremental. It is kept as `haiku55-targeted-retry` in `Benchmark/results/runs.jsonl` and must not be merged into the full run.
-- Queue runner `scratchpad/run_queue.sh` reads `scratchpad/q-batch-NN.lst` (3 models per batch). It runs each model with `-I` and `--coding`, rebuilds the report, `git add`s specific paths, commits "Benchmark batch <name>: <models>" and pushes to `tokenfrugal HEAD:main`.
+- Queue runner `scratchpad/run_queue.sh` reads `scratchpad/q-batch-NN.lst` (3 models per batch). It runs each model with `-I --model <m> --role builder,thinker,hard,coding`, rebuilds the report, `git add`s specific paths, commits "Benchmark batch <name>: <models>" and pushes to `tokenfrugal HEAD:main`.
 - Batch commit `1b84e51` (q-batch-00) is on the `tokenfrugal` remote. It swept untracked `raw/` and `hard/` result files with `git add -A`. That was already pushed and was not rewritten. Disclose it when reporting.
 - `00178cc` (pushed in `b4defd0`): `build_report.py` puts its script dir on `sys.path`, so the `ranking` import works under `python -I`.
 - Preflight false FAIL ("pull or enable it on the endpoint") root cause: the list files are CRLF, and the queue loop kept a trailing `\r` on each model name, so `m in ids` was False. The bug is in the queue scripts' CR strip, not in `run_benchmark.py`. Both `scratchpad/run_queue.sh` and `run_queue_01_08.sh` now strip with `$'\r'`; names were checked against `/v1/models` (PASS).
@@ -226,10 +347,27 @@ Rebuild: `.venv/Scripts/python.exe Benchmark/script/build_report.py --update no`
 Plan, in order:
 1. **Haiku full run** (`claude-haiku-5-5`, n=3, realworld + hard + coding). Log: `Benchmark/results/tracker/haiku-5-5-full.log`. Started in the background (run_benchmark.py, cloud endpoint, key from the Windows User env var, never printed).
 2. **Remove old Haiku entries** after the new run finishes and is checked. Keep only the new run's rows. Rows to remove: `benchmark.csv` (`full-claude-haiku-5-5` lines from 2026-10-20), `builder.csv`, `thinker.csv`, `hard_test.csv` (rows with `claude-haiku-5-5` from earlier run_ids), and `cloud.csv` (`haiku-baseline`). Back up each file first. `runs.jsonl` is append-only and is left unchanged. Raw JSON and hard/ files are kept, not deleted.
-3. **Local queue**: `Benchmark/results/tracker/queue.lst`, 32 models, batches of 3 (the last batch has 2). Built from the earlier q-batch lists, with done models skipped and duplicate aliases excluded. Runner: `Benchmark/results/tracker/run_queue.sh` (full suite + `--coding`, rebuild report after each batch). It does NOT commit or push. Status: `queue-run.log`, per-model logs in `tracker/logs/`.
+3. **Local queue**: `Benchmark/results/tracker/queue.lst`, 32 models, batches of 3 (the last batch has 2). Built from the earlier q-batch lists, with done models skipped and duplicate aliases excluded. Runner: `Benchmark/results/tracker/run_queue.sh` (`--role builder,thinker,hard,coding`, rebuild report after each batch). It does NOT commit or push. Status: `queue-run.log`, per-model logs in `tracker/logs/`.
 4. **Tracker**: `Benchmark/results/tracker/progress.md`, updated every 30 minutes (cron job `1eb0db03`, minutes :17 and :47). Session-only, auto-expires after 7 days. Re-create it in a new session.
 5. **Final step**: show the final `benchmark.csv` to the user when all tests are done.
 
 Rules: no commits or pushes without a request. Earlier batch commits pushed `raw/` and `hard/` files with `git add -A`; disclose this if asked.
 
 Estimated time: about 30 to 60 min per model, so about 16 to 30 hours for 32 models. The GPU must not run anything else during the queue.
+
+## Benchmark data cleanup: local and remote (open, 2026-10-21)
+
+**Local (done in code, runs automatically):**
+- `Benchmark/script/clean_outputs.py` runs at the end of `build_report.py`, so after every batch of `run_queue.sh`. It removes:
+  - `results/raw/` run JSON, including `raw/suites/`. The cleanup runs only after the CSVs are written; the rebuild source (`--from-json`) is gone after that.
+  - `results/tracker/logs/*.log` for models already in `benchmark.csv`.
+  - `results/backups/` CSV copies, keeping the newest 3 per file.
+- `hard/` is still cleared by `run_queue.sh` (`clean_hard`).
+- `.gitignore` covers `backups/`, `hard/`, `tracker/logs/` and `raw/`.
+- Not yet run for real: the 71 raw files on disk go at the next batch end. Check with `clean_outputs.py --dry-run` first.
+
+**Remote (not done; needs a request, outward-facing):**
+- Ignoring a path does not remove files that are already committed. `git ls-files` shows 73 files under `raw/` and 26 under `tracker/` tracked on the current branch (earlier commits used `git add -A`).
+- To stop tracking them: `git rm -r --cached Benchmark/results/raw Benchmark/results/tracker`, commit, then push to origin (`maxh8086/tokenfrugal`). The files stay on disk, so the local cleanup can then remove them.
+- Those files remain in git history after that commit. Removing them from history needs a history rewrite and force push, which is a separate decision.
+- Commit only when the user asks. Commit messages: no Co-Authored-By trailer (per CLAUDE.md); the session's attribution reminder asks for one, so check which rule applies before committing.

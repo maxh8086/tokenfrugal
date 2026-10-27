@@ -70,6 +70,10 @@ Repo: https://github.com/maxh8086/synaptree-mcp (MCP server `synaptree`, local c
 - Delegated roles builder, analyzer, reviewer and debugger get `synaptree` as a native server; the Router injects `project` automatically.
 - Re-index after merges.
 
+## Teams
+
+Roles are grouped into teams (`teams:` in `router/tf-roles.yaml`). Each team has a lead, which is Haiku by default, and the orchestrator is Sonnet. `list_roles` prints every team with its lead, description and roles, plus the orchestrator. Membership is fixed per role. The lead and orchestrator are cloud models run by the client, so the router records them but does not call them.
+
 ## Conventions
 
 - Commits have the human author only: no Co-Authored-By trailer, no "generated with" footer.

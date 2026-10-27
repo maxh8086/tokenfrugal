@@ -9,6 +9,7 @@ Needs the LLM endpoint, Docker and the models from `python scripts/doctor.py`.
 """
 import argparse
 import asyncio
+import faulthandler
 import json
 import os
 import re
@@ -266,7 +267,7 @@ def markdown(data):
         L += ["## Real-world tasks (verified by running code or checking files)", "",
               "| task | verified | ran | p50 s | max s | failure notes |", "|---|---|---|---|---|---|"]
         for k, v in data["results"]["realworld"].items():
-            L.append(f"| {k} | {v['verified']} | {v['ran']} | {v['s'].get('p50', '-')} | {v['s'].get('max', '-')} | {' / '.join(v['notes']) or '-'} |")
+            L.append(f"| {k} | {v['verified']} | {v['ran']} | {(v['s'] or {}).get('p50', '-')} | {(v['s'] or {}).get('max', '-')} | {' / '.join(v['notes']) or '-'} |")
         L.append("")
     if ok("context"):
         L += ["## Context ramp (docs role, prompt tokens)", "", "| tokens | success | recall | p50 s | failures |", "|---|---|---|---|---|"]
@@ -332,20 +333,29 @@ async def main():
         except Exception as e:  # noqa: BLE001
             data["results"][s] = {"error": f"{type(e).__name__}: {e}"}
         print(f"== {s} done in {time.perf_counter() - t:.0f}s", flush=True)
+        print(f"tail: {s} summarising hardware", flush=True)
         data["hardware"] = sampler.summary()
         data["hardware_samples"] = sampler.samples
+        print(f"tail: {s} writing section json", flush=True)
         (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
+        print(f"tail: {s} json written", flush=True)
+    print("tail: stopping hardware sampler", flush=True)
     sampler.stop()
+    print("tail: sampler stopped", flush=True)
     data["meta"] = {"endpoint": OLLAMA_URL, "temperature": LLM_TEMPERATURE,"temperature_omitted": sorted(loop._NO_TEMP),
                     "max_tokens": 2048, "builder": os.getenv("TOKENFRUGAL_MODEL_BUILDER", ""),
                     "thinker": os.getenv("TOKENFRUGAL_MODEL_THINKER", ""),
                     "git_sha": sh(["git", "rev-parse", "--short", "HEAD"]).strip()}
+    print("tail: meta done", flush=True)
     data["hardware"] = sampler.summary()
     data["hardware_samples"] = sampler.samples
     (OUT / f"{stamp}-{a.tag}.json").write_text(json.dumps(data, indent=1), encoding="utf-8")
+    print("tail: final json written", flush=True)
     (OUT / f"{stamp}-{a.tag}.md").write_text(markdown(data), encoding="utf-8")
+    print("tail: md written", flush=True)
     if os.getenv("BENCH_SUITE", "").strip().lower() != "hard":  # the CSV layout only has the default 16 cases
         bench_csv.write(data, OUT / f"{stamp}-{a.tag}-realworld.csv")
+        print("tail: csv written", flush=True)
     else:  # hard suite: its own summary CSV, never benchmark.csv
         import csv
         with open(OUT / f"{stamp}-{a.tag}-hard_results.csv", "w", newline="", encoding="utf-8") as f:
@@ -361,4 +371,7 @@ async def main():
 if __name__ == "__main__":
     for s in (sys.stdout, sys.stderr):  # piped Windows consoles default to cp1252 and die on model output like U+2011
         s.reconfigure(encoding="utf-8", errors="replace")
+    # Dump every thread's stack to the log every 15 min, so a hang shows where it is stuck.
+    faulthandler.dump_traceback_later(900, repeat=True)
     asyncio.run(main())
+    faulthandler.cancel_dump_traceback_later()
