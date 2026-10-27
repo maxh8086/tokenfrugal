@@ -15,7 +15,7 @@ from fastmcp.server.middleware import Middleware
 
 from . import compose, events, plan, reconnect, store, ui_launcher
 from .config import check_agent, load_tf_roles, resolve_role
-from .loop import failure_reason, leaf, run, take_usage
+from .loop import error_kind, failure_reason, leaf, run, take_started, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_tf_roles()
@@ -25,15 +25,30 @@ RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # o
 RESCOPE = "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure."
 
 
-def failure_message(tid: str, role: dict, err: str, reason: str) -> str:
-    """The short failure reply Haiku reads: reason class plus the next step it should take."""
-    if reason in RESUME_HINT:
-        hint = f"Call resume_task('{tid}') to retry."
-    elif reason == "unknown":
-        hint = f"Call resume_task('{tid}') once, then re-scope."
-    else:
-        hint = RESCOPE
-    return f"[{tid}] FAILED ({role['role']}/{role['model']}) reason={reason}: {err}. {hint}"
+def kind_hint(kind: str, started: int) -> str:
+    """Short next-step hint for an error_kind; empty for 'error', which keeps the reason-based hint."""
+    if kind in ("step_timeout", "request_timeout"):
+        if started:
+            return f"Timed out after {started} tool calls. Call resume_task once, or split the task."
+        return "Timed out before any tool call. Split the task into smaller tasks. Do not resume_task."
+    if kind == "no_tool_call":
+        return "The model answered without calling a tool. Name the exact tool and path in the task."
+    if kind == "max_steps":
+        return "Step budget used up. Narrow the scope of the task."
+    return ""
+
+
+def failure_message(tid: str, role: dict, err: str, reason: str, kind: str = "error", started: int = 0) -> str:
+    """The short failure reply Haiku reads: reason class, error_kind, and the next step it should take."""
+    hint = kind_hint(kind, started)
+    if not hint:
+        if reason in RESUME_HINT:
+            hint = f"Call resume_task('{tid}') to retry."
+        elif reason == "unknown":
+            hint = f"Call resume_task('{tid}') once, then re-scope."
+        else:
+            hint = RESCOPE
+    return f"[{tid}] FAILED ({role['role']}/{role['model']}) reason={reason} error_kind={kind}: {err}. {hint}"
 
 
 async def _warm_up():
@@ -131,6 +146,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     beat = asyncio.create_task(_heartbeat(tid))
     try:
         detail, msgs = await run(agent, role, prompt, messages, tid)
+        take_started(tid)
         summary = summarize(role["model"], detail, prompt)
         events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
@@ -144,15 +160,19 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         return f"[{tid}] {summary}"
     except Exception as e:  # noqa: BLE001
         e = leaf(e)
-        reason = failure_reason(f"{type(e).__name__}: {e}")
-        err = hard_trim(f"{type(e).__name__}: {e}", 120)
-        store.update(tid, status="failed", error=err)
-        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
+        full = f"{type(e).__name__}: {e}"
+        reason = failure_reason(full)
+        kind = error_kind(full)
+        started = take_started(tid)
+        err = hard_trim(full, 120)
+        store.update(tid, status="failed", error=err, error_kind=kind)
+        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind,
+                    saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "router", err)
-        return failure_message(tid, role, err, reason)
+        return failure_message(tid, role, err, reason, kind, started)
     finally:
         beat.cancel()
 
