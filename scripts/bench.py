@@ -353,12 +353,15 @@ async def main():
     print("tail: final json written", flush=True)
     (OUT / f"{stamp}-{a.tag}.md").write_text(markdown(data), encoding="utf-8")
     print("tail: md written", flush=True)
-    if os.getenv("BENCH_SUITE", "").strip().lower() != "hard":  # the CSV layout only has the default 16 cases
+    ran_ids = set((data["results"].get("realworld") or {}).keys())
+    fixed_layout = os.getenv("BENCH_SUITE", "").strip().lower() != "hard" and ran_ids <= {c for c, _, _ in bench_csv.LAYOUT}
+    if fixed_layout:  # the CSV layout only has the default 16 cases; a filtered run would show 0/0 totals
         bench_csv.write(data, OUT / f"{stamp}-{a.tag}-realworld.csv")
         print("tail: csv written", flush=True)
-    else:  # hard suite: its own summary CSV, never benchmark.csv
+    else:  # hard suite or a filtered/other-case run: one row per case, its own summary CSV, never benchmark.csv
         import csv
-        with open(OUT / f"{stamp}-{a.tag}-hard_results.csv", "w", newline="", encoding="utf-8") as f:
+        suffix = "hard_results" if os.getenv("BENCH_SUITE", "").strip().lower() == "hard" else "cases"
+        with open(OUT / f"{stamp}-{a.tag}-{suffix}.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["model", "case", "verified", "ran", "status", "median_s", "notes"])
             for cid, r in (data["results"].get("realworld") or {}).items():

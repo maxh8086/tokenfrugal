@@ -9,7 +9,8 @@ from scripts import bench_real
 class CodingSuite(unittest.TestCase):
     def test_six_levels_each_own_role(self):
         cases = bench_real.coding_cases()
-        self.assertEqual([c[1] for c in cases], [f"coding-l{i}" for i in range(1, 7)])
+        # one case per level, plus the graph-dependent L6 variant (same role, same tools)
+        self.assertEqual([c[1] for c in cases], [f"coding-l{i}" for i in range(1, 7)] + ["coding-l6"])
         cfg = config.load_tf_roles()
         for _cid, agent, _seed, task, _check in cases:
             role = config.resolve_role(agent, cfg)

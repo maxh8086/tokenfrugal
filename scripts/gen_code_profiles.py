@@ -19,6 +19,17 @@ LEVELS = {
 }
 
 
+# filesystem tools each level's role uses (the ts-fs-rw gateway filter); the generated profile allows only these
+FS_TOOLS = {
+    1: ["read_file", "write_file"],
+    2: ["read_file", "write_file", "edit_file", "search_files"],
+    3: ["read_file", "write_file", "edit_file", "search_files", "directory_tree"],
+    4: ["read_file", "edit_file", "write_file", "search_files"],
+    5: ["read_file", "edit_file"],
+    6: ["read_file", "write_file", "edit_file"],
+}
+
+
 def _name(server: dict) -> str:
     return server.get("snapshot", {}).get("server", {}).get("name") or server.get("name", "")
 
@@ -30,7 +41,10 @@ def build(level: int) -> dict:
     for prof, name in picks:
         data = base.setdefault(prof, yaml.safe_load((PROFILES / f"{prof}.yaml").read_text(encoding="utf-8")))
         entry = next(s for s in data["servers"] if _name(s) == name or s.get("name") == name)
-        servers.append(copy.deepcopy(entry))
+        entry = copy.deepcopy(entry)
+        if name == "ts-fs-rw":
+            entry["tools"] = FS_TOOLS[level]
+        servers.append(entry)
     first = base[picks[0][0]]
     return {"version": 1, "id": f"code-l{level}", "name": f"code-l{level}",
             "secrets": first["secrets"], "servers": servers}

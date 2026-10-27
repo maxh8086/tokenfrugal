@@ -46,6 +46,14 @@ def take_usage(tid: str) -> dict:
     u = USAGE.pop(tid, {"calls": 0, "input": 0, "output": 0, "secs": 0.0, "peak": 0})
     DONE[tid] = u
     return u
+
+
+STARTED: dict[str, int] = {}  # per task id: tool calls sent to an MCP server in the current run; reset by run()
+
+
+def take_started(tid: str) -> int:
+    """Tool calls the current run actually sent to an MCP server; cleared when the task ends."""
+    return STARTED.pop(tid, 0)
 SYSTEM = ("You are a focused {role} agent ({agent}). Use at most {n} tool calls per step. "
           "Work only inside the workspace, which is mounted at /workspace: always use absolute paths like /workspace/README.md. Be terse. When done, reply with the final result "
           "(findings, files changed, verdict) and no tool call. Never invent file contents or paths: you MUST call a tool to read real data before answering, and say 'not found' if a tool returns nothing.")
@@ -299,6 +307,19 @@ def failure_reason(text: str) -> str:
     return "unknown"
 
 
+def error_kind(text: str) -> str:
+    """Failure kind stored as error_kind: step_timeout (role time limit hit), request_timeout (one model request timed out),
+    no_tool_call, max_steps, or error for everything else (infra, connection, bad answers, ...). Built on failure_reason."""
+    reason = failure_reason(text)
+    if reason == "timeout":
+        return "step_timeout" if "task timed out" in (text or "").lower() else "request_timeout"
+    if reason == "no-tool-call":
+        return "no_tool_call"
+    if reason == "out-of-steps":
+        return "max_steps"
+    return "error"
+
+
 def think_extra(role: dict) -> dict:
     """Ask thinking models to skip their reasoning phase; empty for other roles."""
     return {"extra_body": {"think": False}} if role.get("thinking") else {}
@@ -318,6 +339,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         body = path.read_text(encoding="utf-8").split("---", 2)[-1].strip()
         system += f"\n\nSkill {name}:\n{body}"
     msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
+    STARTED[tid] = 0
     limit = role_timeout(role)
     try:
         return await asyncio.wait_for(_run(agent, role, msgs, tid), limit or None)
@@ -349,6 +371,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 and os.environ.get("TOKENFRUGAL_NO_PREREAD") != "1":
             for i, p in enumerate(named_paths(task_text), 1):
                 try:
+                    STARTED[tid] = STARTED.get(tid, 0) + 1
                     res = await asyncio.wait_for(sess.call_tool("read_file", {"path": p}), TOOL_TIMEOUT or None)
                     out = result_text(res)
                 except Exception:  # unreadable here: skip it silently, the model can still read it itself
@@ -449,6 +472,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     if bad_args:  # never sent to the server; the model must fix the call
                         out = bad_args
                     else:
+                        STARTED[tid] = STARTED.get(tid, 0) + 1
                         res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
                         out = result_text(res)
                         if (hasattr(res, "is_error") and res.is_error) or (not hasattr(res, "is_error") and getattr(res, "isError", False)) or out.startswith(("Input validation error", "Error:")):

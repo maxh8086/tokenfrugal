@@ -15,7 +15,7 @@ def _db():
     c.execute("""CREATE TABLE IF NOT EXISTS tasks(
         id TEXT PRIMARY KEY, agent TEXT, role TEXT, prompt TEXT, status TEXT,
         summary TEXT, detail TEXT, messages TEXT, error TEXT, attempts INTEGER DEFAULT 0)""")
-    for column in ("trail TEXT", "heartbeat REAL"):  # databases created before these columns existed
+    for column in ("trail TEXT", "heartbeat REAL", "error_kind TEXT"):  # databases created before these columns existed
         try:
             c.execute(f"ALTER TABLE tasks ADD COLUMN {column}")
         except sqlite3.OperationalError:
@@ -62,7 +62,7 @@ def sweep_stale(reason: str, stale_after: float = STALE_AFTER) -> int:
     """Mark 'running' tasks whose router stopped heartbeating as failed. Live gateways keep their rows fresh, so this is safe with several gateways running. Rows without a heartbeat count as stale."""
     cutoff = time.time() - stale_after
     with _db() as c:
-        return c.execute("UPDATE tasks SET status='failed', error=? WHERE status='running' AND (heartbeat IS NULL OR heartbeat < ?)",
+        return c.execute("UPDATE tasks SET status='failed', error=?, error_kind='error' WHERE status='running' AND (heartbeat IS NULL OR heartbeat < ?)",
                          (reason, cutoff)).rowcount
 
 
