@@ -5,31 +5,9 @@ uncommitted and separate. Rules: no Co-Authored-By trailer, no "generated with" 
 explicit paths, never use the tokenfrugal MCP in this repo (Haiku subagents only), never print secrets, ignore the flaky
 live `tests/test_haiku_toolcalls.py`. Tests: `PYTHONPATH=. .venv/Scripts/python.exe -m unittest discover -s tests -t . -q`.
 
-## Stage 1: live DB checks (no new software; images already pulled)
-Goal: confirm every db-* profile lists only its allowlisted tools and a dev role can write to scratch.
-1. Start scratch DBs: `scripts/mcp_up.ps1` or `docker compose --profile db-postgres up -d --wait` (needs dummy
-   `CRAWL4AI_API_TOKEN` and `SEARXNG_SECRET` env vars).
-2. For each of postgres, mysql, mssql, redis, elastic: run `docker mcp gateway run --profile db-<engine>-dev` and
-   `-admin` and list tools; check <=6 and no drop/delete/rename.
-3. Re-run the Postgres dev write check (create table, insert, select) and that admin rejects a write.
-4. Oracle: leave as wired + unit-tested (no scratch container); say so in the report.
-Done when: a table of engine x kind with tools-listed and write-result, stopped containers afterwards.
-
-Status: DONE (scratch DBs stopped, neo4j left running). Results:
-
-| Engine / profile | Tools listed | Write result |
-|---|---|---|
-| postgres dev / admin | execute_sql, search_objects | dev writes OK; admin READONLY_VIOLATION |
-| mysql dev / admin | execute_sql, search_objects | dev writes OK; admin READONLY_VIOLATION |
-| mssql dev / admin | execute_sql, search_objects | dev create/insert/select OK; admin READONLY_VIOLATION |
-| redis-dev-l1 | get, hgetall, hset, lrange, set, smembers | set/get OK |
-| mongo-dev-l2 | collection-schema, create-collection, create-index, find, insert-many, update-many | create/insert OK; `find` right after writes returned "Connection closed" (open) |
-| mongo-admin-l2 | aggregate, collection-indexes, count, explain, find, mongodb-logs | find OK |
-| elastic-dev | esql, get_mappings, list_indices, search | list_indices OK |
-| oracle | n/a | wired and unit-tested only; no scratch container |
-
+## Stage 1 leftovers (DB checks done; results table removed)
 Not checked: mongo-dev-l1, mongo-admin-l1, elastic-admin, redis-dev-l2/l3, redis-admin-l1 tool lists.
-Fixed: redis and oracle image digests pinned to the locally pulled ones in gen_db_profiles.py.
+Open: mongo-dev-l2 `find` right after writes returned "Connection closed"; not diagnosed.
 Lesson: a killed or timed-out `docker mcp gateway run` client orphans its stdio containers (label docker-mcp=true);
 remove them with `docker ps -aq --filter label=docker-mcp-name=<server> | xargs docker rm -f`.
 
