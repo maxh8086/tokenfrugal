@@ -278,6 +278,19 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     return r
 
 
+WORKSPACE_PATH = re.compile(r"/workspace/([^\s'\"`,;:)\]]+)")
+
+
+def missing_workspace_folder(task: str, workspace: str) -> str:
+    """Return a short error when the task names /workspace/<folder> and <folder> is not in the workspace (a wrong
+    mount, not a file the builder is about to create), else ''. Only the top-level folder is checked."""
+    for m in WORKSPACE_PATH.finditer(task):
+        top = m.group(1).split("/")[0].rstrip(".")
+        if top and not (Path(workspace) / top).exists():
+            return f"task names /workspace/{top} but {top} is not in the workspace {workspace}; fix the mount or the path"
+    return ""
+
+
 def check_agent(slug: str, cfg: dict) -> str:
     """Return '' when slug is a known agent, else a short error."""
     known = set(cfg.get("overrides") or {}) | set(cfg.get("agent_models") or {}) | set(cfg.get("known_agents") or []) | set(cfg.get("agent_skills") or {})

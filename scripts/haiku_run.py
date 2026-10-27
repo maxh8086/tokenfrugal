@@ -36,7 +36,7 @@ def api_key():
 
 
 def localize(task):
-    return task.replace(b.WS, LOCAL).replace(f"/workspace/{b.SYNAPTREE_PROJECT}", str(ROOT).replace("\\", "/"))
+    return task.replace(b.WS, LOCAL).replace(b.README, (ROOT / "README.md").as_posix())
 
 
 def _path(p):
