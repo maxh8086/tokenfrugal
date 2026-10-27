@@ -75,7 +75,7 @@ Refs are keyed by `run_id` and suite, not by a raw JSON path, because a run may 
 | Summary row values | `benchmark.csv` | `<test>_score`, `<test>_ref`, `<role>_score` (section 3) |
 | Test table in the report | `build_report.py`: a `role_rank`-style function over the test's cases, using `_role_agg`/`_sort_role` from `ranking.py` | One table per test, same columns as the others: model, latest run, runs, pass fraction, %, median s/case, pull command. Add it to `DYN` and `Benchmark.md` |
 | Test dashboard | `explorer.html` template in `build_report.py` | A new `<details>` section with its own id (like `#cdx` for coding), a table filled from the detail CSV, and an entry in the Role filter's `<select>` |
-| Legend | `RANK_LEGEND` in `ranking.py`, `LEGEND_MD` in `build_report.py` | One line for the new test, and fix the stale "16 cases" wording |
+| Legend | `RANK_LEGEND` in `ranking.py`, `LEGEND_MD` in `build_report.py` | One line for the new test |
 | Raw data link | `explorer.html` nav | `results/benchmark.csv` stays the main raw link; add a link to the new role CSV |
 
 Each new test gets its own table in `Benchmark.md` and its own dashboard section in `explorer.html`. Do not merge a new test into an existing test's table.

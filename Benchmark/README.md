@@ -37,7 +37,7 @@ Results depend on the context window (`num_ctx`) each model actually ran with, s
 
 ## How to read the results
 
-Each row in `results/benchmark.csv` is one run of one model setup on the same 16 cases.
+Each row in `results/benchmark.csv` is one run of one model setup, scored on all 81 checks: 27 cases × 3 attempts, across the builder, thinker, hard and coding suites.
 
 | Column | Meaning |
 | --- | --- |
