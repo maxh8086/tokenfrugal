@@ -172,10 +172,10 @@ async def open_role(profile: str | list[str] | None, native: list[str] | None = 
             sessions.append(sess)
             reopen[sess] = reopener(open_profile, p, pr, stack=st)
         for n in native or []:
-            ns, st = await start(_open_native_ensured, n)
+            ns, st = await start(open_native_ensured, n)
             sessions.append(ns)
             nat.add(ns)
-            reopen[ns] = reopener(_open_native_ensured, n, stack=st)
+            reopen[ns] = reopener(open_native_ensured, n, stack=st)
         yield Router(sessions, nat, reopen)
     finally:
         for st in reversed(stacks):
@@ -184,7 +184,7 @@ async def open_role(profile: str | list[str] | None, native: list[str] | None = 
 
 
 @contextlib.asynccontextmanager
-async def _open_native_ensured(name: str):
+async def open_native_ensured(name: str):
     """open_native preceded by ensure_backend, so a stopped backing container is started before every attempt."""
     await ensure_backend(name)  # module globals resolved at call time
     async with open_native(name) as s:

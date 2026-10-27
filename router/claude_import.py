@@ -61,7 +61,7 @@ def install(doc: dict, path: Path = IMPORT_FILE) -> list[str]:
 async def probe_tools(name: str) -> list[str]:
     from . import config, mcp_client
     config.NATIVE_SERVERS.update(load()["servers"])
-    async with mcp_client.open_native(name) as s:
+    async with mcp_client.open_native_ensured(name) as s:
         return [t.name for t in (await s.list_tools()).tools]
 
 
