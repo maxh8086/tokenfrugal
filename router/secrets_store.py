@@ -1,97 +1,99 @@
-"""OS-native secret store (Windows Credential Manager, macOS Keychain, Linux Secret Service) via `keyring`.
+"""Docker secret files: the one credential store for tokenfrugal.
 
-Values never go in repo files, logs or chat. Config refers to a secret by name, either as `keyring:NAME`
-in a native server's env block or as a known name such as `llm-api-key`. Names are kept in a small index
-(router/secret_names.json, gitignored) because keyring cannot list entries on every backend.
+Each secret is one file in the secrets directory (default `~/.docker/mcp/secrets`, outside the repo), named exactly
+as the secret and holding only its value. docker-compose.yml mounts these files at /run/secrets/NAME. The router reads
+them here. Config refers to a secret as `docker-secret:NAME`. Values never go in repo files, logs or chat.
 """
-import json
 import os
+import re
 import secrets
+import subprocess
 import sys
 from pathlib import Path
 
-import keyring
-from keyring.backends import fail, null
-
-SERVICE = "tokenfrugal"
-INDEX_FILE = Path(os.getenv("TOKENFRUGAL_SECRET_INDEX", Path(__file__).parent / "secret_names.json"))
-REF_PREFIX = "keyring:"
+SECRETS_DIR = Path(os.getenv("TF_SECRETS_DIR") or Path.home() / ".docker" / "mcp" / "secrets")
+REF_PREFIX = "docker-secret:"
+NAME_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_-]*$")  # also keeps names from escaping SECRETS_DIR
+GENERATED = {
+    "CRAWL4AI_API_TOKEN": lambda: secrets.token_hex(32),
+    "SEARXNG_SECRET": lambda: secrets.token_hex(32),
+    "NEO4J_AUTH": lambda: "neo4j/" + secrets.token_hex(16),
+}
 
 
 class SecretStoreError(RuntimeError):
     pass
 
 
-def _backend():
-    kr = keyring.get_keyring()
-    if isinstance(kr, (fail.Keyring, null.Keyring)):
-        raise SecretStoreError(f"no usable OS secret store ({type(kr).__name__}); install a backend or run in a desktop session")
-    return kr
+def _path(name: str) -> Path:
+    if not isinstance(name, str) or not NAME_RE.match(name):
+        raise SecretStoreError(f"invalid secret name: {name!r}")
+    return SECRETS_DIR / name
 
 
-def _index() -> list[str]:
+def _restrict(path: Path) -> None:
+    """Owner-only access where the OS allows it: POSIX mode bits, or a Windows ACL through icacls."""
     try:
-        return sorted(set(json.loads(INDEX_FILE.read_text(encoding="utf-8"))))
-    except (OSError, ValueError):
-        return []
-
-
-def _save_index(names: list[str]) -> None:
-    INDEX_FILE.write_text(json.dumps(sorted(set(names)), indent=2), encoding="utf-8")
+        if os.name == "nt":
+            user = os.environ.get("USERNAME")
+            if user:
+                grant = f"{user}:(OI)(CI)F" if path.is_dir() else f"{user}:F"
+                subprocess.run(["icacls", str(path), "/inheritance:r", "/grant:r", grant],
+                               capture_output=True, check=False, timeout=20)
+        else:
+            os.chmod(path, 0o700 if path.is_dir() else 0o600)
+    except (OSError, subprocess.SubprocessError):
+        pass  # best effort; the directory is still outside the repo
 
 
 def get(name: str) -> str | None:
-    """The stored value, or None if the name is unknown. Raises SecretStoreError if no store is usable."""
-    _backend()
-    return keyring.get_password(SERVICE, name)
+    """The stored value, or None if the secret file does not exist."""
+    try:
+        return _path(name).read_text(encoding="utf-8").rstrip("\r\n")
+    except FileNotFoundError:
+        return None
 
 
 def put(name: str, value: str) -> None:
     if not value:
         raise SecretStoreError("empty value")
-    _backend()
-    keyring.set_password(SERVICE, name, value)
-    _save_index(_index() + [name])
+    path = _path(name)
+    SECRETS_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    _restrict(SECRETS_DIR)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:  # value only, no trailing newline
+        f.write(value)
+    _restrict(path)
 
 
 def delete(name: str) -> bool:
-    _backend()
     try:
-        keyring.delete_password(SERVICE, name)
-    except keyring.errors.PasswordDeleteError:
+        _path(name).unlink()
+    except FileNotFoundError:
         return False
-    _save_index([n for n in _index() if n != name])
     return True
 
 
 def names() -> list[str]:
-    return _index()
+    if not SECRETS_DIR.is_dir():
+        return []
+    return sorted(p.name for p in SECRETS_DIR.iterdir() if p.is_file() and NAME_RE.match(p.name))
 
 
 def resolve(value: str) -> str:
-    """`keyring:NAME` -> the stored value. Anything else is returned unchanged.
+    """`docker-secret:NAME` -> the stored value. Anything else is returned unchanged.
     A missing secret raises SecretStoreError, so a server never starts with an empty credential by accident."""
     if not isinstance(value, str) or not value.startswith(REF_PREFIX):
         return value
     name = value[len(REF_PREFIX):]
     got = get(name)
-    if got is None:
-        raise SecretStoreError(f"secret '{name}' is not set; run: python -m router.secrets_store set {name}")
+    if not got:
+        raise SecretStoreError(f"secret '{name}' is not set; write its value to {SECRETS_DIR / name}")
     return got
 
 
 def resolve_env(env: dict[str, str]) -> dict[str, str]:
     return {k: resolve(v) for k, v in env.items()}
-
-
-# Backend secrets that docker-compose and the launcher read from the process environment.
-# Used to be lines in ~/.docker/mcp/mcp.env; the store is now the source of truth.
-ENV_NAMES = ("CRAWL4AI_API_TOKEN", "SEARXNG_SECRET", "SONARQUBE_TOKEN", "SONARQUBE_ORG", "NEO4J_AUTH")
-GENERATED = {
-    "CRAWL4AI_API_TOKEN": lambda: secrets.token_hex(32),
-    "SEARXNG_SECRET": lambda: secrets.token_hex(32),
-    "NEO4J_AUTH": lambda: "neo4j/" + secrets.token_hex(16),
-}
 
 
 def ensure_generated() -> list[str]:
@@ -104,43 +106,31 @@ def ensure_generated() -> list[str]:
     return created
 
 
-def export_env() -> dict[str, str]:
-    """Values of ENV_NAMES that are set in the store. Only the launcher and gateway process call this."""
-    out = {}
-    for name in ENV_NAMES:
-        try:
-            value = get(name)
-        except SecretStoreError:
-            continue
-        if value:
-            out[name] = value
-    return out
-
-
 def _cli(argv: list[str]) -> int:
-    import getpass
-    usage = ("usage: python -m router.secrets_store {set NAME | get-status NAME | list | delete NAME | "
-             "ensure-generated | export-env}")
+    usage = ("usage: python -m router.secrets_store {set NAME (value on stdin) | get-path NAME | list | "
+             "delete NAME | ensure-generated | export-paths}")
     if len(argv) < 1:
         print(usage, file=sys.stderr)
         return 2
     cmd, name = argv[0], (argv[1] if len(argv) > 1 else None)
     try:
-        if cmd == "set" and name:
-            value = getpass.getpass(f"value for {name} (hidden): ")
-            put(name, value)
+        if cmd == "set" and name:  # the value is read from stdin and never echoed
+            put(name, sys.stdin.read().rstrip("\r\n"))
             print(f"stored {name}")
-        elif cmd == "get-status" and name:  # reports presence only; the value is never printed
-            print(f"{name}: {'set' if get(name) else 'not set'}")
+        elif cmd == "get-path" and name:  # the file path only; the value is never printed
+            path = _path(name)
+            if not path.is_file():
+                print(f"{name}: not set", file=sys.stderr)
+                return 1
+            print(path)
         elif cmd == "list":
             print("\n".join(names()) or "(none)")
         elif cmd == "delete" and name:
             print(f"deleted {name}" if delete(name) else f"{name} was not set")
         elif cmd == "ensure-generated" and not name:  # prints the names created, never the values
             print("\n".join(ensure_generated()))
-        elif cmd == "export-env" and not name:  # NAME=value lines for the launcher to capture; do not echo them
-            for k, v in export_env().items():
-                print(f"{k}={v}")
+        elif cmd == "export-paths" and not name:  # the one variable the launcher needs for docker compose
+            print(f"TF_SECRETS_DIR={SECRETS_DIR}")
         else:
             print(usage, file=sys.stderr)
             return 2

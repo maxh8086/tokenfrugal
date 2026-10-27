@@ -112,7 +112,7 @@ async def recreate(services: list[str], timeout: int = 300) -> None:
 
 
 def stop_all_sync() -> None:
-    """Stop every running container of the ts-mcp project (backends and stdio wrappers). Safe to call twice."""
+    """Stop every running container of the tokenfrugal project (backends and stdio wrappers). Safe to call twice."""
     docker = shutil.which("docker") or "docker"
     with contextlib.suppress(Exception):
         ids = subprocess.run([docker, "ps", "-q", "--filter", f"label=com.docker.compose.project={COMPOSE_PROJECT}"],

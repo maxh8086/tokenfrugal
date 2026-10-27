@@ -1,4 +1,4 @@
-"""Enforce the 150-300 token summary cap in code (second summarizing pass, then hard trim)."""
+"""Enforce the summary cap (SUMMARY_MAX_TOKENS) in code (second summarizing pass, then hard trim)."""
 from openai import OpenAI
 
 from .config import LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SUMMARY_MAX_TOKENS, SUMMARY_MIN_TOKENS

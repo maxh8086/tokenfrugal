@@ -9,8 +9,17 @@ SEARX = os.environ.get("SEARXNG_URL", "http://host.docker.internal:8088").rstrip
 mcp = FastMCP("crawl4ai")
 
 
+def _secret_file(name: str) -> str:
+    """Docker secret mounted by compose at /run/secrets/NAME; empty when it is not mounted."""
+    try:
+        with open(f"/run/secrets/{name}", encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
 def _post(path: str, body: dict) -> dict:
-    tok = os.environ.get("CRAWL4AI_API_TOKEN", "")
+    tok = os.environ.get("CRAWL4AI_API_TOKEN", "") or _secret_file("CRAWL4AI_API_TOKEN")
     headers = {"Authorization": f"Bearer {tok}"} if tok else {}
     r = httpx.post(f"{BASE}{path}", json=body, headers=headers, timeout=120)
     r.raise_for_status()

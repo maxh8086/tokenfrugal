@@ -1,18 +1,27 @@
-# All MCP backing services for the TokenFrugal router, in one project (ts-mcp).
+# All MCP backing services for the TokenFrugal router, in one project (tokenfrugal).
 # Nothing runs by default: the router (or scripts/mcp_up.*) starts only what a role needs and stops it afterwards.
 #   backends  : long-running services (crawl4ai, sonarqube, penpot-mcp)
-#   neo4j     : plan/task graph; started with the router, kept up until the router exits (which stops every ts-mcp container)
+#   neo4j     : plan/task graph; started with the router, kept up until the router exits (which stops every tokenfrugal container)
 #   mcp-*     : stdio MCP wrappers, started per task with `docker compose run --rm -T` (router native servers)
-# Secrets live in the OS secret store (python -m router.secrets_store); scripts/mcp_up.* export them into the
-# environment and each service below takes only the variables it needs. No env file is read.
-name: ts-mcp
+# Secrets are Docker secret files in the secrets directory outside the repo (~/.docker/mcp/secrets, written by
+# python -m router.secrets_store). scripts/mcp_up.* set TF_SECRETS_DIR to that directory. Each service mounts only the
+# secrets it needs at /run/secrets/NAME; no secret value is read from the environment.
+name: tokenfrugal
+
+secrets:
+  CRAWL4AI_API_TOKEN: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/CRAWL4AI_API_TOKEN"}
+  SEARXNG_SECRET: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/SEARXNG_SECRET"}
+  SONARQUBE_TOKEN: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/SONARQUBE_TOKEN"}
+  NEO4J_AUTH: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/NEO4J_AUTH"}
+  TF_DB_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_PASSWORD"}
+  TF_DB_MSSQL_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_MSSQL_PASSWORD"}
 
 services:
   crawl4ai:
     image: unclecode/crawl4ai:latest
     profiles: [research]
-    environment:
-      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:?run scripts/mcp_up first}
+    # The image's entrypoint reads /run/secrets/api_token, so the secret is mounted under that name.
+    secrets: [{source: CRAWL4AI_API_TOKEN, target: api_token}]
     ports: ["127.0.0.1:11235:11235"]
     shm_size: 1g
     mem_limit: 2g
@@ -29,16 +38,17 @@ services:
     build: ./docker/crawl4ai-mcp   # built on first use, then reused
     profiles: [research]
     environment:
-      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:?run scripts/mcp_up first}
       CRAWL4AI_URL: http://crawl4ai:11235
       SEARXNG_URL: http://searxng:8080
+    secrets: [CRAWL4AI_API_TOKEN]   # server.py reads /run/secrets/CRAWL4AI_API_TOKEN
     stdin_open: true
 
   searxng:
     image: searxng/searxng:latest
     profiles: [research]
-    environment:
-      SEARXNG_SECRET: ${SEARXNG_SECRET:?run scripts/mcp_up first}
+    # Wrapper: exports the secret file into the environment inside the container, then runs the image's entrypoint.
+    entrypoint: ["/bin/sh", "-c", "export SEARXNG_SECRET=\"$$(cat /run/secrets/SEARXNG_SECRET)\" && exec /usr/local/searxng/entrypoint.sh \"$$@\"", "sh"]
+    secrets: [SEARXNG_SECRET]
     volumes:
       - ./docker/searxng/settings.yml:/etc/searxng/settings.yml:ro
     ports: ["127.0.0.1:8088:8080"]
@@ -54,6 +64,9 @@ services:
   sonarqube:
     image: sonarqube:community
     profiles: [security]
+    # Elasticsearch resolves the container's own hostname at start; pin it so /etc/hosts has an entry for it.
+    hostname: tf-sonarqube
+    extra_hosts: ["tf-sonarqube:127.0.0.1"]
     ports: ["127.0.0.1:9100:9000"]
     mem_limit: 3g
     restart: "no"
@@ -71,18 +84,22 @@ services:
   mcp-sonarqube:
     image: mcp/sonarqube@sha256:925c88bc7cab2a1e1025b0bd43f0af504cd8ce1b99e9663ececaca914fb632e7
     profiles: [security]
+    # Wrapper: exports the secret file as SONARQUBE_TOKEN (the server reads only the environment), then runs the image's entrypoint.
+    entrypoint: ["/bin/sh", "-c", "export SONARQUBE_TOKEN=\"$$(cat /run/secrets/SONARQUBE_TOKEN)\" && exec /usr/local/bin/docker-entrypoint \"$$@\"", "sh"]
     environment:
-      SONARQUBE_TOKEN: ${SONARQUBE_TOKEN:-}
       SONARQUBE_ORG: ${SONARQUBE_ORG:-}
       SONARQUBE_URL: http://sonarqube:9000
       STORAGE_PATH: /tmp
+    secrets: [SONARQUBE_TOKEN]
     stdin_open: true
 
   neo4j:
     image: neo4j:5-community
     profiles: [plan]
+    # BLOCKED: NEO4J_AUTH is mounted at /run/secrets/NEO4J_AUTH, but the image is not verified to read it from a file
+    # (not pulled locally). Until a wrapper is verified, the server starts without the configured auth.
+    secrets: [NEO4J_AUTH]
     environment:
-      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/unset-run-scripts-mcp_up}
       NEO4J_server_memory_heap_initial__size: 256m
       NEO4J_server_memory_heap_max__size: 512m
       NEO4J_server_memory_pagecache_size: 128m
@@ -115,12 +132,14 @@ services:
       retries: 20
       start_period: 5s
 
-  # Scratch databases for the db-* roles. Ephemeral (no volumes), loopback only, throwaway test password
-  # (must match SCRATCH_PW in scripts/gen_db_profiles.py). Never point real data at these.
+  # Scratch databases for the db-* roles. Ephemeral (no volumes), loopback only. Their passwords are the files
+  # TF_DB_PASSWORD and TF_DB_MSSQL_PASSWORD in the secrets directory and must match the DSNs in scripts/gen_db_profiles.py.
+  # Never point real data at these.
   db-postgres:
     image: postgres:16
     profiles: [db-postgres]
-    environment: {POSTGRES_USER: tf, POSTGRES_PASSWORD: "${TF_DB_PASSWORD:-tf_scratch_pw}", POSTGRES_DB: tf_scratch}
+    environment: {POSTGRES_USER: tf, POSTGRES_PASSWORD_FILE: /run/secrets/TF_DB_PASSWORD, POSTGRES_DB: tf_scratch}
+    secrets: [TF_DB_PASSWORD]
     ports: ["127.0.0.1:5432:5432"]
     mem_limit: 512m
     restart: "no"
@@ -133,12 +152,13 @@ services:
   db-mysql:
     image: mysql:8.0
     profiles: [db-mysql]
-    environment: {MYSQL_ROOT_PASSWORD: "${TF_DB_PASSWORD:-tf_scratch_pw}", MYSQL_DATABASE: tf_scratch}
+    environment: {MYSQL_ROOT_PASSWORD_FILE: /run/secrets/TF_DB_PASSWORD, MYSQL_DATABASE: tf_scratch}
+    secrets: [TF_DB_PASSWORD]
     ports: ["127.0.0.1:3306:3306"]
     mem_limit: 768m
     restart: "no"
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$(cat /run/secrets/TF_DB_PASSWORD)\" --silent"]
       interval: 3s
       timeout: 3s
       retries: 40
@@ -147,7 +167,11 @@ services:
   db-mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     profiles: [db-mssql]
-    environment: {ACCEPT_EULA: "Y", MSSQL_SA_PASSWORD: "${TF_DB_MSSQL_PASSWORD:-tf_Scratch_pw1}", MSSQL_PID: Developer}
+    # Wrapper: exports the secret file as MSSQL_SA_PASSWORD, then runs the image's launcher (image entrypoint and command).
+    entrypoint: ["/bin/sh", "-c", "export MSSQL_SA_PASSWORD=\"$$(cat /run/secrets/TF_DB_MSSQL_PASSWORD)\" && exec /opt/mssql/bin/launch_sqlservr.sh \"$$@\"", "sh"]
+    command: ["/opt/mssql/bin/sqlservr"]
+    environment: {ACCEPT_EULA: "Y", MSSQL_PID: Developer}
+    secrets: [TF_DB_MSSQL_PASSWORD]
     ports: ["127.0.0.1:1433:1433"]
     mem_limit: 2g
     restart: "no"
@@ -198,7 +222,8 @@ services:
       start_period: 20s
 
 volumes:
-  neo4j_data:
+  # existing volume of the former ts-mcp project, so the plan-store data is kept
+  neo4j_data: {external: true, name: ts-mcp_neo4j_data}
   # existing volumes from the former `docker run` sonarqube-ce container (keeps its data)
   sonarqube_data: {external: true}
   sonarqube_logs: {external: true}

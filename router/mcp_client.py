@@ -194,7 +194,7 @@ async def _open_native_ensured(name: str):
 @contextlib.asynccontextmanager
 async def open_native(name: str):
     cfg = NATIVE_SERVERS[name]
-    # "keyring:NAME" values in the server's env block are read from the OS secret store, never from a file
+    # "docker-secret:NAME" values in the server's env block are read from their secret files
     extra = secrets_store.resolve_env(cfg.get("env") or {})
     params = StdioServerParameters(command=cfg["command"], args=cfg["args"], env={**os.environ, **extra})
     async with stdio_client(params) as (r, w):
@@ -205,7 +205,7 @@ async def open_native(name: str):
 
 @contextlib.asynccontextmanager
 async def open_profile(profile: str, params: dict | None = None):
-    """`docker mcp gateway run --profile`; catalog `params` (config/secrets, keyring: refs resolved) are pushed first."""
+    """`docker mcp gateway run --profile`; catalog `params` (config/secrets, docker-secret: refs resolved) are pushed first."""
     docker = docker_mcp.docker_bin()
     await asyncio.to_thread(profile_sync.ensure_profiles, WORKSPACE)  # no-op unless the workspace changed
     if params:
@@ -233,7 +233,7 @@ def _schema(t) -> dict:
 
 def to_openai_tools(tools, allow: list[str]) -> list[dict]:
     """Convert MCP tools to OpenAI function specs, filtered to the role allowlist (empty = all)."""
-    return [{"type": "function", "function": {"name": t.name, "description": (t.description or "")[:300],
+    return [{"type": "function", "function": {"name": t.name, "description": t.description or "",
                                               "parameters": _schema(t)}}
             for t in tools if not allow or t.name in allow]
 
