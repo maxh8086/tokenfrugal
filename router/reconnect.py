@@ -12,7 +12,7 @@ import os
 
 from . import compose
 from .events import EVENTS_PATH
-from .mcp_client import open_native, open_profile
+from .mcp_client import open_native_ensured, open_profile
 
 REQUEST = EVENTS_PATH.with_name("reconnect_request.json")
 RESULT = EVENTS_PATH.with_name("reconnect_result.json")
@@ -30,7 +30,7 @@ async def _probe(m: dict) -> int:
         async with open_profile(p) as s:
             n += len((await s.list_tools()).tools)
     if m.get("native"):
-        async with open_native(m["native"]) as s:
+        async with open_native_ensured(m["native"]) as s:
             n += len((await s.list_tools()).tools)
     return n
 

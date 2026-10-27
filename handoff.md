@@ -9,11 +9,6 @@ This file holds the working handoff notes. Closed items are removed once verifie
 
 Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
 
-1. **Summary cap is 5000 tokens (done 2026-10-27).**
-   - The constant in `router/config.py` (`SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 5000`) was set on `main` in `ba98023`. The user confirmed 5000 is the intended cap on 2026-10-27. The 1000-1500 target is withdrawn.
-   - Docs now say 5000: README.md, CLAUDE.md, docs/architecture.md, docs/technical.md, examples/example_agents.md, the `router/server.py` docstring, and the labels in `docs/hld.svg`, `docs/lld-sequence.svg`, `docs/lld-modules.svg`.
-   - Benchmark scores from runs at the old 150-300 cap are not comparable with runs at 5000.
-
 2. **Role contract template (playbook gap).** Decide before editing any role.
    - Proposed fields per role in `router/tf-roles.yaml`: `purpose` (one sentence), `inputs` (paths or arguments the role expects), `output_format`, `stop_condition`, `checklist` (3 or more items, each tagged `deterministic` or `judgement`).
    - Basic criteria a role must meet: every field present; each checklist item names what passes it; the matching skill file (`router/skills/<role>/SKILL.md`) states the same stop condition. Follows the `code-l1` pattern (numbered steps, output format, stop condition).
@@ -43,9 +38,6 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 6. **Approval policy (open).**
    - Now: manual approval by the user. Each new template or edit gets a plan and an impact review first.
    - Auto-approve only after the checker stage has been measured on the benchmark and the drawbacks have been reviewed.
-
-7. **Handoff cleanup (done 2026-10-27).**
-   - Root `handoff.md` is the canonical file. `docs/handoff.md` was merged into it: its open items are in "Open items merged from docs/handoff.md" at the end of this file, and the file was deleted. Completed and duplicate items were dropped.
 
 8. **Teams: visibility, not routing (decided 2026-10-22).**
    - Each team's lead and the orchestrator are shown to every client through `list_roles` (`router/server.py`), `CLAUDE.md` and `AGENTS.md`. Codex and other agents can read them there.
@@ -433,5 +425,5 @@ Cause of the h11 "Connection closed, calls=0, about 12 s" failures: the `synaptr
 
 Live check passed: both containers were stopped, and `open_role` brought them back and opened in 45 s with 37 tools. Tests: `tests/test_selfheal.py` (21 tests, docker mocked).
 
-Open: `ensure_backend` is not yet called from `router/reconnect.py` or `router/claude_import.py`; both still call `open_native` directly.
+Done (2026-10-27): the wrapper is public as `open_native_ensured` (`router/mcp_client.py`). `router/reconnect.py` (`_probe`) and `router/claude_import.py` (`probe_tools`) use it. Tests: `tests/test_ensure_call_sites.py`.
 
