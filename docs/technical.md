@@ -22,7 +22,7 @@ Cloud agent (plans, decides)
      v
 TokenFrugal router --> ONE local model (builder or thinker)
      |                    |
-     |<-- short summary --+   (150-300 tokens)
+     |<-- short summary --+   (up to 5000 tokens)
      |<-- task_id -------- on failure: resume_task / get_detail
 ```
 

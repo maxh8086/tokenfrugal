@@ -162,7 +162,7 @@ async def dispatch_task(agent: str = "", task: str = "", plan_id: int = 0, role:
     """Run a task on a local tf-role (agency-agents slug, e.g. 'engineering-code-reviewer').
     `role` is an alias for `agent`; when both are given, `agent` wins.
     Optional plan_id links it to a plan task (claimed first, marked done/blocked after).
-    Returns a 150-300 token summary and a task_id."""
+    Returns a summary of up to 5000 tokens and a task_id."""
     agent = agent or role
     if not agent:
         return "give agent (or role) and task"
