@@ -60,6 +60,8 @@ class RunCase(unittest.IsolatedAsyncioTestCase):
             mock.patch.object(bench_real, "SCRATCH", Path(self.tmp.name)),
             mock.patch.dict(os.environ, {"BENCH_CASES": "find_symbol"}),
             mock.patch.object(bench_real, "container_logs", return_value="LOGTAIL"),
+            mock.patch.object(bench_real, "path_preflight", lambda: None),  # SCRATCH is redirected to a temp dir
+            mock.patch.object(bench_real.preflight, "mount_error", lambda *a: ""),  # the per-repeat check, same reason
         ]
         for p in patches:
             p.start()

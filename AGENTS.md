@@ -16,3 +16,14 @@ Guidance for AI coding agents (Codex, Claude Code, Cursor, others) working on To
 - Each team's lead defaults to `claude-haiku-5-5`, and the orchestrator is `claude-sonnet-5-5`. The orchestrator reviews each lead's result.
 - `list_roles` (the tokenfrugal MCP tool) prints every team with its lead, description and roles, plus the orchestrator.
 - The lead and orchestrator are cloud models run by the client. The router records them and does not call them.
+
+## Skill gate review
+
+Any agent can review a candidate skill (Claude Code, Codex, OpenCode). No API is called by the gate.
+
+1. Run `python -m scripts.skill_gate_live --skills <skill> --n 3`. It writes `router/skills_review/<skill>/<sha>.request.md` when the candidate passes the gates.
+2. Read that request. Judge the candidate note only. Do not change the task, any other file, or the live skill.
+3. Write `router/skills_review/<skill>/<sha>.verdict.json` next to the request, with exactly these fields:
+   `candidate_sha256` (copied from the request), `skill`, `approved` (true or false), `reason` (one sentence), `reviewer_tool` (`claude-code`, `codex` or `opencode`), `reviewer_model` (the exact model id you run as).
+4. Only `claude-sonnet-5-5` and `claude-opus-5-5` are accepted as `reviewer_model`. Any other model is refused and the skill is not applied.
+5. Run `python -m scripts.skill_gate_live --skills <skill> --finish` to read the verdict. Add `--apply` only when it is approved and you want the live `SKILL.md` written.

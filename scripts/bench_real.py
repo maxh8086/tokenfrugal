@@ -11,11 +11,22 @@ import tempfile
 import time
 from datetime import datetime, timezone
 
-from router import loop, server, store
-from router.config import ROOT, SYNAPTREE_PROJECT, resolve_role
+from router import loop, preflight, server, store
+from router.config import ROOT, SYNAPTREE_PROJECT, WORKSPACE, resolve_role  # SYNAPTREE_PROJECT: read by scripts/haiku_run.py
 
 SCRATCH = ROOT / "bench" / "scratch"
-WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
+
+
+def tool_paths(folder, workspace):
+    """The same folder as the tools see it: /workspace (file, sandbox and test tools) and /src (ast-grep).
+    Built from the real workspace root, so it holds whatever CC_WORKSPACE points at (repo root or its parent)."""
+    rel = folder.relative_to(workspace).as_posix()  # ValueError if the folder is outside the workspace
+    return f"/workspace/{rel}", f"/src/{rel}"
+
+
+WS, AST_DIR = tool_paths(SCRATCH, WORKSPACE)
+_repo_rel = ROOT.relative_to(WORKSPACE).as_posix()  # "." when the workspace is the repo root
+README = f"/workspace/{_repo_rel}/README.md" if _repo_rel != "." else "/workspace/README.md"
 
 # Per-repeat status and infrastructure gate.
 #   infra   the synaptree container (native MCP server of the builder/reviewer/debugger/analyzer roles) was not
@@ -29,7 +40,7 @@ WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
 SYNAPTREE_CONTAINER = "synaptree-synaptree-1"
 SYNAPTREE_CASES = {"write_function", "fix_bug", "write_tests", "rename_across_files",
                    "find_symbol", "review_sqli", "debug_trace", "role_analyzer",  # cases 1-7 and 9
-                   "role_browser", "code_l6_callers"}  # also the browser case, which needs the synaptree UI container
+                   "role_browser", "code_l6_callers_graph"}  # also the browser case, which needs the synaptree UI container
 CASE_TIMEOUT = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # seconds; per-repeat watchdog, a hit is scored as a failure (status timeout)
 LOG_TAIL_LINES = 60
 LOG_CAP_BYTES = 4096
@@ -310,7 +321,7 @@ def cases():
          f"{WS}/bug.py crashes. Read it and name the exception and root cause.",
          _debug_ok),
         ("summarize_readme", "engineering-technical-writer", _none,
-         f"Read /workspace/{SYNAPTREE_PROJECT}/README.md and summarize what the project does in 3 sentences.",
+         f"Read {README} and summarize what the project does in 3 sentences.",
          _readme_ok),
         # one verified case per remaining role: analyzer, data, docs, security, designer, browser, tracker, research
         ("role_analyzer", "engineering-software-architect", _none,
@@ -476,7 +487,7 @@ def coding_cases():
               "    def test_cli(self):\n        self.assertEqual(cli.run([2, 4]), 3)\n"
               "    def test_report(self):\n        self.assertEqual(report.summary([2, 4]), 'avg=3.0')\n"},
              "Rename calc_avg to mean everywhere (definition and every caller in all files). "
-             f"The ast-grep tool sees this same folder as {WS.replace('/workspace/', '/src/', 1)} (pass that as its dir)."),
+             f"The ast-grep tool sees this same folder as {AST_DIR} (pass that as its dir)."),
         case("code_l5_median", "coding-l5",
              {"stats.py": "def median(xs):\n    xs = sorted(xs)\n    return xs[len(xs) // 2]\n\n\n"
                           "def spread(xs):\n    return max(xs) - min(xs)\n"},
@@ -487,6 +498,16 @@ def coding_cases():
               "    def test_spread(self):\n        self.assertEqual(spread([1, 9, 4]), 8)\n"},
              "The tests in test_stats.py fail. Run them, read the failure, find the cause and fix the code."),
         case("code_l6_callers", "coding-l6",
+             {"store.py": "def save(key, value):\n    return {key: value}\n",
+              "a.py": "from store import save\n\n\ndef put_a(v):\n    return save('a', v)\n",
+              "b.py": "from store import save\n\n\ndef put_b(v):\n    return save('b', v)\n"},
+             {"test_store.py": "import unittest\nimport a, b\nfrom store import save\n\n\nclass T(unittest.TestCase):\n"
+              "    def test_save_ns(self):\n        self.assertEqual(save('k', 1, ns='x'), {'x:k': 1})\n"
+              "    def test_a(self):\n        self.assertEqual(a.put_a(1), {'a:a': 1})\n"
+              "    def test_b(self):\n        self.assertEqual(b.put_b(2), {'b:b': 2})\n"},
+             "Add a required namespace argument ns to save() in store.py (key becomes 'ns:key'), "
+             "then update every caller (read the files in the folder to find them) to pass ns='a' in a.py and ns='b' in b.py."),
+        case("code_l6_callers_graph", "coding-l6",
              {"store.py": "def save(key, value):\n    return {key: value}\n",
               "a.py": "from store import save\n\n\ndef put_a(v):\n    return save('a', v)\n",
               "b.py": "from store import save\n\n\ndef put_b(v):\n    return save('b', v)\n"},
@@ -514,8 +535,14 @@ def case_limits(agent):
     return (float(t), float(t) + WATCHDOG_GRACE) if t else (None, CASE_TIMEOUT)
 
 
+def path_preflight():
+    """Stop before any case if the sandbox would not resolve the scratch folder to the host folder the cases seed."""
+    err = preflight.mount_error(SCRATCH, WS)
+    if err:
+        raise RuntimeError(err)
+
+
 async def run(n, timed, ok, failure_mode, stats):
-    SCRATCH.mkdir(parents=True, exist_ok=True)
     res = {}
     pick = [c for c in os.getenv("BENCH_CASES", "").split(",") if c]  # e.g. BENCH_CASES=write_tests,role_browser
     for cid, agent, setup, task, check in active_cases():
@@ -536,9 +563,17 @@ async def run(n, timed, ok, failure_mode, stats):
                              "container_state": pre, "container_logs": container_logs(start)})
                 print(f"  realworld/{cid} #{i + 1} infra: {INFRA_ERROR}", flush=True)
                 continue
+            # checked before every repeat, not once per run: a wrong mount or a bad task fails here, before any model time
+            err = preflight.mount_error(SCRATCH, WS) or preflight.task_error(agent, task, server.CFG, WORKSPACE)
+            if err:
+                raise RuntimeError(f"preflight refused {cid} repeat {i + 1}: {err}")
             setup()
             role_t, watchdog = case_limits(agent)
             dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), watchdog))
+            if not ok(r) and "step_timeout" in r:  # the router's rule: a timed-out task gets one resume_task before scoring
+                tid = r[1:r.find("]")]
+                dt2, r = await timed(asyncio.wait_for(server.resume_task(tid), watchdog))
+                dt += dt2
             end = _now()
             ran = ok(r)
             if not ran:
