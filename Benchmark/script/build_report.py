@@ -122,7 +122,7 @@ def role_cfg():
 
 _CFG = role_cfg()
 
-LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 cases. `score` is passes out of `max`.
+LEGEND_MD = """- Each **run** is one local model setup, scored on the same cases. `score` is passes out of `max`.
 - **Builder** writes code and edits files. **Thinker** reads, analyses and browses. The models for each role are set in `router/tf-roles.yaml`. Context window per model follows the `num_ctx` policy in `Benchmark/README.md`.
 - A task uses **one** model at a time. Models never run together or talk to each other.
 - The role table shows which tools each role is allowed to call. A case needs the tools of its role.
@@ -132,7 +132,7 @@ LEGEND_MD = """- Each **run** is one local model setup, scored on the same 16 ca
 auto = f"""<!-- BEGIN:auto -->
 _{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`._
 
-### Ranking (fastest first, by seconds per case)
+### Ranking (by pass rate, then median seconds per case)
 
 {RANK_LEGEND_MD}
 
@@ -237,14 +237,14 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <details open><summary>Charts (linked to the filters and table)</summary><div id="ch" class="ch"></div></details>
 <details open id="cdx"><summary>Coding (L1–L6, realworld suite)</summary><p class="mut">Separate suite from the table above: runs live in <code>results/coding/</code> and are not merged into benchmark.csv. Latest complete run per model; partial runs are marked.</p><div id="cd"></div></details>
 <script>
-const D=__DATA__,C=__CASES__,REQ=__REQ__,CD=__CODING__;let sk="composite",sd=-1;
+const D=__DATA__,C=__CASES__,REQ=__REQ__,CD=__CODING__;let sk="rank",sd=1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
-const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s (info)","Tokens per second, for information only (rewards verbose models)"],["composite","Rank","Rank = 100 x (60% pass rate + 40% speed, speed = seconds per case on a log scale between the fastest and slowest full run); higher is better, and the post pick uses the same score"],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; primary speed metric)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
+const cols=[["builder_model","Model"],["day","Date","Day the run was made (YYYY-MM-DD)"],["source","Origin"],["pull","Pull command"],["params_b","Params (B)","Parameter count in billions, from the params column (blank = unknown)"],["pct","Pass rate %","Score as a percentage of the max checks (higher is better)"],["score","Score"],["builder_score","Builder"],["thinker_score","Thinker"],["tps","t/s (info)","Tokens per second, for information only (rewards verbose models)"],["rank","Rank","Position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."],["mean_s_per_case","s per case","Mean seconds per case (lower is faster; primary speed metric)"],["total_s","Run time (s)","Wall clock seconds for the whole run"],...C.map(c=>[c,c])];
 const wrap=(svg,n)=>`<div style="${n>30?"max-height:560px;overflow-y:auto":""}">${svg}</div>`;
 const SEL={band:null,model:null};
 const BANDS=[["90-100% (excellent)",90,101,"#2e9e5b"],["75-89% (good)",75,90,"#8bc34a"],["50-74% (fair)",50,75,"#d9a021"],["Below 50% (poor)",0,50,"#d0453b"]];
@@ -320,10 +320,10 @@ function sizeChart(R){
  return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Size vs pass rate");
 }
 function sizeRankChart(R){
- const P=R.filter(r=>r.params_b!=null&&!isNaN(r.params_b)&&r.composite!=null);
+ const P=R.filter(r=>r.params_b!=null&&!isNaN(r.params_b)&&r.rank!=null);
  if(!P.length)return sizeNone("local runs with a known size and a rank");
  const xmax=Math.max(4,Math.ceil(Math.max(...D.filter(r=>r.params_b!=null&&!isNaN(r.params_b)).map(r=>r.params_b))/4)*4);
- return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Size vs rank",r=>r.composite*100,"Rank, higher = better");
+ return legend(BANDS.map(b=>({c:b[3],t:b[0]})))+scatter(P,r=>r.params_b,"Model size, billions of parameters",xmax,()=>7,r=>BANDS[bandOf(r)][3],"Pass rate %",r=>r.pct,"Pass rate %, higher = better");
 }
 
 function findModel(){
@@ -352,23 +352,23 @@ function draw(){
  const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
  const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R2=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
- R2.sort((a,b)=>{let x=a[sk],y=b[sk];x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;let c=(x>y?1:x<y?-1:0)*sd;if(c==0&&sk=="composite")c=(b.pct-a.pct);return c});
+ R2.sort((a,b)=>{let x=a[sk]??1e9,y=b[sk]??1e9;x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;let c=(x>y?1:x<y?-1:0)*sd;return c});
  R2.sort((a,b)=>b.builder_model.startsWith("claude-")-a.builder_model.startsWith("claude-"));
  const R=R2.filter((r,i)=>i<lim||r.builder_model.startsWith("claude-"));
  const chips=(SEL.band!=null?`<span class="chip" data-sk="band" data-sv="${SEL.band}">Score band: ${esc(BANDS[SEL.band][0])} ✕</span>`:"")+(SEL.model!=null?`<span class="chip" data-sk="model" data-sv="${esc(SEL.model)}">Model: ${esc(sn(SEL.model))} ✕</span>`:"")+(cs?`<span class="chip" data-sk="case" data-sv="${esc(cs)}">Case: ${esc(cs)} ✕</span>`:"");
- $("n").innerHTML=R2.length+" of "+D.length+" runs match"+(R.length<R2.length?` (showing top ${R.length} by ${sk=="composite"?"Rank":sk})`:"")+chips+(SEL.band!=null||SEL.model!=null?`<span class="chip" data-sk="clear">Clear chart selections</span>`:"");
+ $("n").innerHTML=R2.length+" of "+D.length+" runs match"+(R.length<R2.length?` (showing top ${R.length} by ${sk=="rank"?"Rank":sk})`:"")+chips+(SEL.band!=null||SEL.model!=null?`<span class="chip" data-sk="clear">Clear chart selections</span>`:"");
  $("ch").innerHTML=`<p class="mut">Click a pie slice, bar, dot or case to filter the table and every chart; click again to undo. The filter fields above update every chart too.</p>`
   +`<div class="row">`+box("Runs by score band",pie(R1),"Pie: share of runs per pass-rate band, after the filters above. Click a slice or legend entry to show only those runs.")+`</div>`
   +box("Model comparison: pass rate by run",passChart(R),"One horizontal bar per run, colored by score band. Click a bar to focus that model.")
   +box("Builder vs thinker by run",roleChart(R),"Top 12 runs by pass rate. Blue = builder cases, orange = thinker cases. Click to focus a model.")
   +box("Model size vs pass rate",sizeChart(R2),"Does a bigger model score higher? Local runs with a known size only (all runs matching the filters, not just the top-N table rows). Click a dot to focus a model.")
-  +box("Model size vs rank",sizeRankChart(R2),"Rank (60% pass rate, 40% speed) against parameter count. Local runs with a known size and a rank only. Click a dot to focus a model.");
+  +box("Model size vs pass rate (ranked runs)",sizeRankChart(R2),"Pass rate % against parameter count. Ranked local runs only (a rank needs a complete run). Click a dot to focus a model.");
  $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""}>${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
   R.map(r=>"<tr>"+cols.map(([k])=>{
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
    if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
    if(k=="params_b")return`<td>${r.params_b==null?"·":r.params_b}</td>`;
-   if(k=="composite")return`<td>${r.composite==null?"":(r.composite*100).toFixed(1)}</td>`;
+   if(k=="rank")return`<td>${r.rank==null?"":r.rank}</td>`;
    if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
  document.querySelectorAll("th").forEach(h=>h.onclick=()=>{sd=sk==h.dataset.k?-sd:-1;sk=h.dataset.k;draw()});
 }
@@ -473,7 +473,7 @@ function render(id,cols,rows,key){
 const code=s=>"<code>"+esc(s)+"</code>";
 function sel(id){const f=S.f[id];
  const R=D.filter(r=>r.model.startsWith("claude-")||((!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size))&&(!f.days||!r.day||r.day>=cutoff(+f.days))));
- R.sort(id==="rank"?(x,y)=>((y.comp??-1)-(x.comp??-1))||tie(x,y):tie);R.sort((x,y)=>y.model.startsWith("claude-")-x.model.startsWith("claude-"));return R}
+ R.sort(id==="rank"?(x,y)=>((x.rank??1e9)-(y.rank??1e9))||tie(x,y):tie);R.sort((x,y)=>y.model.startsWith("claude-")-x.model.startsWith("claude-"));return R}
 // Cloud baseline rows are always kept; "Show top N" counts local rows only.
 function topN(V,n,k){let c=0;return n?V.filter(x=>k(x).startsWith("claude-")||c++<n):V}
 function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').textContent=`Showing ${shown} of ${total} ${what}`}
@@ -489,7 +489,7 @@ function draw(id){
    {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
    {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
    {k:"tps",l:"t/s (info)",v:r=>r.tps||-1,f:r=>r.tps??""},
-   {k:"comp",l:"Rank",v:r=>r.comp??-1,f:r=>r.comp==null?"":(r.comp*100).toFixed(1),t:"Rank = 100 x (60% pass rate + 40% speed, speed = log-scaled seconds per case); higher is better, and the post pick uses the same score"},
+   {k:"rank",l:"Rank",v:r=>-(r.rank??1e9),f:r=>r.rank??"",t:"Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
    {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
    {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
@@ -535,7 +535,7 @@ def _data():
     for r in rows:
         out.append({"model": r["builder_model"], "day": r["day"], "params": r["params"], "pb": r["params_b"],
                     "score": r["score"], "max": r["max"], "pct": r["pct"], "tps": r["tps"], "s": num(r, "mean_s_per_case"),
-                    "tot": num(r, "total_s"), "comp": r["composite"], "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
+                    "tot": num(r, "total_s"), "rank": r["rank"], "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
                     "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
                     "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
                     "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "").lstrip("'") for c in CASES}})

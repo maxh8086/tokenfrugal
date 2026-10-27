@@ -1,4 +1,4 @@
-"""Tests for MCP gateway self-heal (docs/handoff.md, fix-first follow-up). Written before the code."""
+"""Tests for MCP gateway self-heal (handoff.md, "Self-heal layers"). Written before the code."""
 import asyncio
 import unittest
 

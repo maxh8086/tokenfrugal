@@ -379,35 +379,28 @@ function benchTop(n) {
     if (!model || !num(r, 'max')) continue;
     const pct = Math.round((100 * num(r, 'score')) / num(r, 'max'));
     const speed = num(r, 'mean_s_per_case');
+  const median = num(r, 'median_s');
     // Output tokens summed over every check, divided by the wall time those checks took (mean s/case x checks run).
     const tokOut = num(r, 'tokens_out_per_run');
     const tps = speed && num(r, 'max') && tokOut ? Math.round((10 * tokOut) / (speed * num(r, 'max'))) / 10 : null;
     const cur = best.get(model);
-    if (!cur || pct > cur.pct || (pct === cur.pct && speed < cur.speed)) {
+    if (!cur || pct > cur.pct || (pct === cur.pct && median < cur.median)) {
       best.set(model, { model, tag: r.tag, verified: num(r, 'score'), ran: num(r, 'max'), cases: num(r, 'max'),
-        pct, speed, s_per_case: Math.round(10 * speed) / 10 || null, tps });
+        pct, speed, median, s_per_case: Math.round(10 * speed) / 10 || null, tps });
     }
   }
   return [...best.values()]
-    .sort((a, b) => b.ran - a.ran || b.pct - a.pct || a.speed - b.speed).slice(0, n)
+    .sort((a, b) => b.ran - a.ran || b.pct - a.pct || a.median - b.median).slice(0, n)
     .map(({ speed, ...s }) => s);
 }
-// Default post pick: among complete local runs (full check count, not partial reruns), the highest composite score.
-// composite = 0.6 * pass rate + 0.4 * ln(slowest s/case / s/case) / ln(slowest / fastest among the candidates), so the speed range moves with the pool.
-const POST_PASS_WEIGHT = 0.6;
-const POST_SPEED_WEIGHT = 0.4;
+// Default post pick: the same rule as the explorer and benchmark.csv rank. Among complete local runs (full check
+// count, not partial reruns): most passes first, then the lowest median seconds per case.
 function benchLatest() {
-  const all = benchTop(Infinity).filter((s) => s.ran && !s.model.startsWith('claude-') && s.s_per_case > 0);
+  const all = benchTop(Infinity).filter((s) => s.ran && !s.model.startsWith('claude-') && s.median > 0);
   const full = Math.max(0, ...all.map((s) => s.ran));
   const runs = all.filter((s) => s.ran === full);
   if (!runs.length) return null;
-  const fast = Math.min(...runs.map((s) => s.s_per_case)), slow = Math.max(...runs.map((s) => s.s_per_case));
-  const speed = (s) => (slow <= fast ? 1 : Math.max(0, Math.min(1, Math.log(slow / s) / Math.log(slow / fast))));
-  const scored = runs.map((s) => ({
-    ...s,
-    composite: POST_PASS_WEIGHT * (s.pct / 100) + POST_SPEED_WEIGHT * speed(s.s_per_case),
-  }));
-  return scored.sort((a, b) => b.composite - a.composite || b.pct - a.pct)[0];
+  return runs.sort((a, b) => b.verified - a.verified || a.median - b.median)[0];
 }
 function benchStart(b) {
   const model = typeof b.model === 'string' ? b.model.trim() : '';
