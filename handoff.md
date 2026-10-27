@@ -29,7 +29,7 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 4. **Who is the checker (open decision).**
    - Haiku is recorded as the team lead and Sonnet as the orchestrator in `teams:` and `orchestration:`. The router never calls them: the lead and orchestrator are cloud models run by the client. Today Haiku reviews replies by hand, in the client, as the tracker.
    - Options:
-     - (a) Local thinker (`prism-bonsai-4b-q1:latest`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
+     - (a) Local thinker (the `models.thinker` entry in `router/tf-roles.yaml`, currently `prism-bonsai-4b-q1:latest`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
      - (b) Router calls Haiku through the API for judgement items. Better judgement, but breaks the no-cloud and privacy promise, needs a key, and spends cloud tokens.
      - (c) Keep judgement in the client: the checker stage returns deterministic results plus the judgement inputs, and Haiku reviews them. No router change for judgement.
    - Suggested: deterministic checks in the router now (a for judgement, later), and (c) as the reviewer of record until (a) is measured.
@@ -203,7 +203,7 @@ Tool overlap only, different skill (keep; not duplicates):
 1. Write v5 columns to the real `benchmark.csv`? Needs a diff review and approval first. Back up to `results/backups/` before any write.
 2. Column name: `thinker_hard_score` (v5) vs existing `hard_score` (blank in all rows). Pick one.
 3. Blank vs partial total for models with only one role complete.
-4. Rank rule (fixed 2026-10-27 in `Benchmark/script/store.py` `rank_rows`): only complete /81 runs are ranked, by passes then median s/case. benchmark.csv was re-ranked (backup in `results/backups/`). Open: the explorer does not yet match benchmark.csv. It ranks 16 models and omits nemotron-3-nano:4b, ts-gemma4-e4b-65536, granite4:tiny-h and hermes3:8b. Checking it needs `build_report.py`, which runs `clean_outputs` (deletes 9 raw files and 11 old backups), so it waits for approval.
+4. Rank rule (fixed 2026-10-27 in `Benchmark/script/store.py` `rank_rows`): only complete /81 runs are ranked, by passes then median s/case. A run is one run: rows whose builder, thinker and hard datetimes differ mix roles from different runs and stay unranked. Explorer and benchmark.csv now rank the same 16 models in the same order (checked 2026-10-27, before the explorer rebuild).
 
 **Next actions**
 1. Explain why only 5 models were ranked (check `latest` / `keep()` in v5 against the other rows).
@@ -268,7 +268,7 @@ _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on
 ---
 ## Benchmark status (2026-10-27, read first for benchmark work)
 
-- **Local queue (2026-10-21 run, 32 models):** finished. `ALL_DONE` at 2026-10-24 14:58:36, report exit 0. Log is `Benchmark/results/tracker/queue-capfix.out` (there is no `queue-run.log`). Qwen2.5-Coder-32B, Qwable-9B, mistral-nemo and llama3.1-8b have rows; qwen3-omni-thinking has no row (PERMANENT-FAIL). The model is 30.5B (IQ4_XS), not 32B, so the item stays; qwen3-4b has no total (72/81 case lines, watchdog stall). Full rerun started 2026-10-27, log `Benchmark/results/tracker/qwen3-4b-rerun-20261027.log`. Details: `Benchmark/results/tracker/queue-failures.md`.
+- **Local queue (2026-10-21 run, 32 models):** finished. `ALL_DONE` at 2026-10-24 14:58:36, report exit 0. Log is `Benchmark/results/tracker/queue-capfix.out` (there is no `queue-run.log`). Qwen2.5-Coder-32B, Qwable-9B, mistral-nemo and llama3.1-8b have rows; qwen3-omni-thinking is now a `NA` row in `benchmark.csv` (blank scores; not fast enough to finish in time, 2026-10-27). The model is 30.5B (IQ4_XS), not 32B; qwen3-4b has no total (72/81 case lines, watchdog stall). Full rerun restarted 2026-10-27 under the new debugger cap, log `Benchmark/results/tracker/qwen3-4b-rerun-20261027.log`. Details: `Benchmark/results/tracker/queue-failures.md`.
 - **Ollama:** upgraded 0.40.6 -> 0.40.11. Saluki HF pull failed ("file does not exist") on both versions; GGUF was downloaded directly and imported with a Modelfile.
 - **Not done:** `Benchmark/script/build_report.py` not rerun since the CSV restores (answer N to its roles prompt); `Benchmark/Benchmark.md` Observations not updated for Gemma 4 or Saluki; Saluki tool calling not tested separately.
 
@@ -392,7 +392,7 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 
 ### Hard and coding batch record (data lives in Benchmark/results)
 - Hard batches h1-h11 and coding batches c1 and t15: raw results are in `Benchmark/results/hard`, `coding` and `coding-t15`. Not repeated here.
-- Caps evidence (checked 2026-10-27 in `thinker.csv` and `hard_test.csv`): 10 hard-suite and 22 thinker-suite runs hit `timeout`. They cluster at about 61-66 s (reviewer cap 60 s; e.g. `review_sqli`, `code_graph_search`, `hard_two_vulns`) and at about 226 s (debugger cap 220 s; `debug_trace`, `hard_ambiguous_trace`). 54 thinker runs that were `valid` took over 60 s, so the 60 s cap also discards valid answers. Builder timeouts (`code_l4_rename` about 451 s) are a separate cap. Decision still open: raising the caps to about 300 s and 90 s changes comparability across models, so it needs an explicit yes.
+- Caps decided 2026-10-27 (user approved): debugger `timeout_s` 220 -> 300 in `router/tf-roles.yaml`, test updated in `tests/test_role_timeout.py`. Reviewer was already 90 in `router/tf-roles.yaml`, so the 60 s cap in the evidence is historical. Evidence (`thinker.csv`, `hard_test.csv`): timeouts clustered at about 61-66 s and about 226 s, and 54 valid thinker runs took over 60 s. Results from models run before this change were at the old caps, so they are not fully comparable with new ones.
 - Timeout changes since t15: none applied.
 
 ### Context policy (done)
