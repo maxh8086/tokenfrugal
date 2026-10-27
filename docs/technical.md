@@ -83,14 +83,14 @@ Replace the placeholders with the base models and tags you chose. `doctor.py` re
 
 ### 3. Start backends and install tool profiles
 
-1. `scripts/mcp_up.sh` (macOS/Linux) or `scripts/mcp_up.ps1` (Windows) starts the backends and creates secrets in `~/.docker/mcp/mcp.env`, outside the repo. Helper images from `docker/` are built on first use.
+1. `scripts/mcp_up.sh` (macOS/Linux) or `scripts/mcp_up.ps1` (Windows) starts the backends and creates the missing random secrets as files in `~/.docker/mcp/secrets`, outside the repo. Helper images from `docker/` are built on first use.
 2. `python scripts/install_profiles.py` imports the profiles in `profiles/*.yaml` into Docker's MCP Toolkit. It mounts `CC_WORKSPACE` from `.env`, or this repo by default. Use `--workspace PATH` to override. Set `CC_WORKSPACE` in `.env` to the same absolute path, and re-run the script after changes.
 
 The committed `.mcp.json` pins no workspace, so the router mounts the git root of the folder the client starts it from. To mount a different folder, set `CC_WORKSPACE` as a real environment variable (on Windows: `setx CC_WORKSPACE C:/path/to/Projects`, then restart the client). A real environment variable overrides `.env`.
 
 ### 4. SonarQube (security role only)
 
-Open http://localhost:9100, log in as `admin` / `admin`, set a new password, then go to *My Account -> Security -> Generate Token* (type: User). Put the token in `~/.docker/mcp/mcp.env` as `SONARQUBE_TOKEN=...`. Leave `SONARQUBE_ORG` empty for the local server. If your secrets file lives elsewhere, set `MCP_ENV_FILE=<path>`. Check with `python scripts/smoke.py security`.
+Open http://localhost:9100, log in as `admin` / `admin`, set a new password, then go to *My Account -> Security -> Generate Token* (type: User). Save the token as the secret file `SONARQUBE_TOKEN`: `printf '%s' '<token>' | python -m router.secrets_store set SONARQUBE_TOKEN`. Leave `SONARQUBE_ORG` empty for the local server. Check with `python scripts/smoke.py security`.
 
 ### 5. Smoke tests
 
@@ -109,7 +109,7 @@ Tools exposed to the agent: `dispatch_task`, `ask_followup`, `get_detail`, `resu
 | --- | --- | --- |
 | `TOKENFRUGAL_LLM_URL` | `.env` | `http://localhost:11434/v1`. Any OpenAI-compatible endpoint works |
 | `CC_WORKSPACE` | `.env` or real env var | Folder the file tools may write to |
-| `MCP_ENV_FILE` | `.env` or env | Path to the secrets file (default `~/.docker/mcp/mcp.env`) |
+| `TF_SECRETS_DIR` | set by the launcher | Directory of the Docker secret files (default `~/.docker/mcp/secrets`) |
 | `PLAN_RETENTION_DAYS` | `.env` | 30. Finished plans are pruned after this |
 | `TOKENFRUGAL_TF_ROLES_MODELS` | env | `0` turns off per-agent model mapping |
 | `TOKENFRUGAL_MODEL_*` | env | Any value pins every agent to the role models |
@@ -146,7 +146,7 @@ The easiest way to make these changes is to give your agent a prompt. Paste one 
 > 1. Add it to the matching profile in `profiles/*.yaml`. Follow the format of the existing profiles. Create a new profile file only if no existing profile fits.
 > 2. In `router/tf-roles.yaml`, allowlist 4-6 of the server's tools for `<role>`. If the server exposes more than 6 tools, list them and ask me which to keep.
 > 3. Run `python scripts/install_profiles.py`, then `python scripts/smoke.py` and report the result for `<role>`.
-> 4. If the server needs a token, name the variable and say where it goes (`~/.docker/mcp/mcp.env`). Never write a secret into a repo file or into chat.
+> 4. If the server needs a token, name the variable and say where it goes (`~/.docker/mcp/secrets/NAME`, written with `python -m router.secrets_store set NAME`). Never write a secret into a repo file or into chat.
 > Show me the diff. Then tell me to restart the MCP client.
 
 Manual steps: edit `profiles/*.yaml` and `router/tf-roles.yaml`, then run `python scripts/install_profiles.py` and restart the router.
@@ -157,7 +157,7 @@ Manual steps: edit `profiles/*.yaml` and `router/tf-roles.yaml`, then run `pytho
 > 1. Read `docker/pins.yaml` and one existing helper directory under `docker/` (for example `docker/penpot-mcp/`). Follow their layout.
 > 2. Add an entry to `docker/pins.yaml` with `repo`, `sha` (the full 40 characters, never a branch name), `image`, and `dockerfile`. Add a `tag_regex` if the upstream uses release tags.
 > 3. Create the Dockerfile at the path you set in `dockerfile`. It builds from the cloned repo as its context.
-> 4. Add the service to `docker-compose.yml` (project `ts-mcp`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/tf-roles.yaml`, and allowlist 4-6 of its tools.
+> 4. Add the service to `docker-compose.yml` (project `tokenfrugal`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/tf-roles.yaml`, and allowlist 4-6 of its tools.
 > 5. Run `python scripts/pinned_build.py <name>`, then `python scripts/install_profiles.py`.
 > Report the image tag and the SHA. Do not change other pins or roles. Show me the diff.
 
