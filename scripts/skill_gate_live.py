@@ -1,11 +1,14 @@
-"""Live run of the skill gate for leveled coding skills: real benchmark runs, real reviewer call.
+"""Live run of the skill gate for leveled coding skills: real benchmark runs, then a review request for any agent.
 
 For each skill: the offline tests run, then the level's coding case runs n times with the baseline skill text and n
 times with the candidate. The candidate text is swapped into router/skills/<skill>/SKILL.md for its runs only; the
-original bytes are restored afterwards, even on error. The reviewer is Sonnet 5.5 for L1-L3 and Opus 5.5 for L4-L6.
-Results go to Benchmark/results/gate/. Needs Docker, Ollama and ANTHROPIC_API_KEY.
+original bytes are restored afterwards, even on error. No API is called here: the run ends with a review request in
+router/skills_review/<skill>/ (see AGENTS.md, section 'Skill gate review'). Results go to Benchmark/results/gate/.
+Needs Docker and Ollama.
 
-    python -m scripts.skill_gate_live --skills code-l2,code-l4,code-l6 --n 3
+    python -m scripts.skill_gate_live --skills code-l2,code-l4,code-l6 --n 3     # benchmarks, then awaiting_review
+    python -m scripts.skill_gate_live --skills code-l4 --finish                  # read the verdict, report only
+    python -m scripts.skill_gate_live --skills code-l4 --finish --apply          # write the skill when approved
 """
 import argparse
 import json
@@ -13,7 +16,6 @@ import os
 import subprocess
 import sys
 import time
-import urllib.request
 from datetime import datetime, timezone
 
 from router import preflight
@@ -23,7 +25,6 @@ from scripts import skill_gate as g
 CASES = {"code-l2": "code_l2_slugify", "code-l4": "code_l4_rename", "code-l6": "code_l6_callers"}
 RESULTS = ROOT / "Benchmark" / "results" / "gate"
 SUITE_TIMEOUT_S = 3 * 3600
-API_URL = "https://api.anthropic.com/v1/messages"
 
 
 def _records(node):
@@ -36,6 +37,9 @@ def _records(node):
     elif isinstance(node, list):
         for v in node:
             yield from _records(v)
+
+
+BASE = {}  # skill -> original text (LF), filled before any run
 
 
 def run_variant(skill, label, text, n, stamp):
@@ -61,9 +65,6 @@ def run_variant(skill, label, text, n, stamp):
     return sum(1 for r in runs if r["verified"]), len(runs)
 
 
-BASE = {}  # skill -> original text (LF), filled before any run
-
-
 def run_tests():
     # the benchmark's TOKENFRUGAL_MODEL_* overrides must not reach the offline tests, which check the real config
     env = {k: v for k, v in os.environ.items() if not k.startswith("TOKENFRUGAL_MODEL_")}
@@ -73,33 +74,21 @@ def run_tests():
     return p.returncode == 0, "\n".join(tail[-3:])
 
 
-def review(model, skill, text):
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    if not key:
-        raise RuntimeError("ANTHROPIC_API_KEY is not set in this process")
-    prompt = ("You review one short instruction note (a SKILL.md) for a small local coding model. Approve only if it "
-              "is specific, does not change the task, and is safe to use. You cannot edit it. Reply with JSON only: "
-              '{"approved": true or false, "reason": "one sentence"}.\n\n---\n' + text)
-    body = json.dumps({"model": model, "max_tokens": 300, "messages": [{"role": "user", "content": prompt}]}).encode()
-    req = urllib.request.Request(API_URL, data=body, headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                                                              "content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=180) as r:
-        blocks = json.loads(r.read())["content"]
-        reply = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
-    verdict = json.loads(reply[reply.index("{"): reply.rindex("}") + 1])
-    return bool(verdict["approved"]), str(verdict["reason"])
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--skills", required=True)
     ap.add_argument("--n", type=int, default=g.MIN_N)
-    ap.add_argument("--apply", action="store_true", help="write a passing candidate to router/skills (default: report only)")
+    ap.add_argument("--finish", action="store_true", help="read the reviewer's verdict for the prepared candidate")
+    ap.add_argument("--apply", action="store_true", help="write an approved candidate to router/skills (default: report only)")
     a = ap.parse_args()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     RESULTS.mkdir(parents=True, exist_ok=True)
     for skill in a.skills.split(","):
         g.level_of(skill)
+        if a.finish:
+            v = g.finish(skill, apply=a.apply)
+            print(json.dumps({"skill": skill, "passed": v.passed, "gate": v.gate, "reason": v.reason}))
+            continue
         live = g.SKILLS / skill / "SKILL.md"
         original = live.read_bytes()
         cand_path = sorted((g.CANDIDATES / skill).glob("*.md"), key=lambda p: p.stat().st_mtime)
@@ -122,9 +111,9 @@ def main():
                           "seconds": round(time.time() - t0)})
             return {"n": n, "candidate": cv / cn if cn else 0.0, "baseline": bv / bn if bn else 0.0}
 
-        verdict = g.gate(skill, candidate, run_tests, run_bench, review, apply=a.apply)
-        out = {"skill": skill, "case": CASES[skill], "passed": verdict.passed, "gate": verdict.gate,
-               "reason": verdict.reason, "rates": rates, "stamp": stamp}
+        v = g.prepare(skill, candidate, run_tests, run_bench)
+        out = {"skill": skill, "case": CASES[skill], "passed": v.passed, "gate": v.gate,
+               "reason": v.reason, "rates": rates, "stamp": stamp}
         (RESULTS / f"{skill}-{stamp}.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
         print(json.dumps(out))
 

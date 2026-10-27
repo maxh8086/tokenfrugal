@@ -74,6 +74,10 @@ Repo: https://github.com/maxh8086/synaptree-mcp (MCP server `synaptree`, local c
 
 Roles are grouped into teams (`teams:` in `router/tf-roles.yaml`). Each team has a lead, which is Haiku by default, and the orchestrator is Sonnet. `list_roles` prints every team with its lead, description and roles, plus the orchestrator. Membership is fixed per role. The lead and orchestrator are cloud models run by the client, so the router records them but does not call them.
 
+## Skill gate review
+
+Reviewing a candidate skill from `scripts/skill_gate_live.py` (any agent, no API call): follow AGENTS.md, section "Skill gate review". Accepted reviewers are Sonnet and Opus only.
+
 ## Conventions
 
 - Commits have the human author only: no Co-Authored-By trailer, no "generated with" footer.
