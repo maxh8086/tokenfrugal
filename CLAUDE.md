@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-TokenFrugal is an MCP router (`router/`, FastMCP, stdio) that lets a cloud agent hand routine work to local LLMs (Ollama or any OpenAI-compatible endpoint) and get back a 150-300 token summary. Python 3.11+ (3.10.0 breaks pydantic). The root `server.py` is the legacy single-file server (`query_local_llm*`); the router supersedes it.
+TokenFrugal is an MCP router (`router/`, FastMCP, stdio) that lets a cloud agent hand routine work to local LLMs (Ollama or any OpenAI-compatible endpoint) and get back a summary of up to 5000 tokens. Python 3.11+ (3.10.0 breaks pydantic). The root `server.py` is the legacy single-file server (`query_local_llm*`); the router supersedes it.
 
 ## Commands
 

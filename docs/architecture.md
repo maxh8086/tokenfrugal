@@ -4,7 +4,7 @@
 
 ![HLD](hld.svg)
 
-A cloud agent (Claude, Codex) plans and calls the router's MCP tools. The router routes each task by persona to a role (builder or thinker), runs a bounded tool-calling loop against a local LLM, reaches tools through Docker MCP profiles, and returns a 150-300 token summary. Full output stays in the SQLite task store and is fetched on demand with `get_detail`. Failures never fall back to the cloud: the agent gets a capped error and a `task_id` to pass to `resume_task`.
+A cloud agent (Claude, Codex) plans and calls the router's MCP tools. The router routes each task by persona to a role (builder or thinker), runs a bounded tool-calling loop against a local LLM, reaches tools through Docker MCP profiles, and returns a summary of up to 5000 tokens. Full output stays in the SQLite task store and is fetched on demand with `get_detail`. Failures never fall back to the cloud: the agent gets a capped error and a `task_id` to pass to `resume_task`.
 
 ## Low-level design
 
@@ -20,7 +20,7 @@ A cloud agent (Claude, Codex) plans and calls the router's MCP tools. The router
 | `router/mcp_client.py` | Docker profile and native MCP sessions behind one `Router` |
 | `router/compose.py` | On-demand backend containers, last-router-out shutdown |
 | `router/store.py` | SQLite task persistence for follow-ups and resume |
-| `router/summarize.py` | Summary capped at 150-300 tokens |
+| `router/summarize.py` | Summary capped at 5000 tokens |
 | `router/plan.py`, `plan_mcp.py` | Neo4j plan graph and its MCP surface |
 | `router/events.py`, `ui_launcher.py`, `ui/` | Event log and the live dashboard on port 7777 |
 

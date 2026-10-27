@@ -4,7 +4,7 @@
 
 **Hand routine coding work to a free local LLM, and keep your paid cloud model for planning and hard decisions.**
 
-TokenFrugal is an MCP server. Your cloud agent (Claude Code, Codex, Cursor or any MCP client) calls one tool, `dispatch_task(agent, task)`. A local model does the work and returns a 150-300 token summary, so your cloud quota pays for thinking, not for boilerplate.
+TokenFrugal is an MCP server. Your cloud agent (Claude Code, Codex, Cursor or any MCP client) calls one tool, `dispatch_task(agent, task)`. A local model does the work and returns a summary of up to 5000 tokens, so your cloud quota pays for thinking, not for boilerplate.
 
 ## Why TokenFrugal
 
@@ -87,7 +87,7 @@ Codex reads `AGENTS.md` from the project root. Copy [examples/example_agents.md]
 ```markdown
 # AGENTS.md
 - Delegate routine work (code, tests, docstrings, lint fixes, summaries) with `dispatch_task(agent, task)`; pick the slug from `list_roles`. Keep architecture and hard decisions for yourself.
-- Results are 150-300 token summaries; call `get_detail(task_id)` sparingly.
+- Results are summaries of up to 5000 tokens; call `get_detail(task_id)` sparingly.
 - On failure call `resume_task(task_id)` once, then split the task.
 - Pass file paths, not file contents. Run the project's tests after every delegated change.
 - Never print or commit secrets.

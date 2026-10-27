@@ -12,11 +12,11 @@ from scripts import bench_csv, bench_real
 
 
 def _load_run_verdict():
-    """run_benchmark.py parses argv at import time, so pull only run_verdict out of its source."""
+    """run_benchmark.py parses argv at import time, so pull run_verdict and the helper it calls out of its source."""
     src = (Path(__file__).resolve().parent.parent / "Benchmark" / "script" / "run_benchmark.py").read_text(encoding="utf-8")
-    fn = next(n for n in ast.parse(src).body if isinstance(n, ast.FunctionDef) and n.name == "run_verdict")
+    fns = [n for n in ast.parse(src).body if isinstance(n, ast.FunctionDef) and n.name in ("synaptree_changed", "run_verdict")]
     ns = {}
-    exec(compile(ast.Module([fn], []), "run_benchmark.py", "exec"), ns)
+    exec(compile(ast.Module(fns, []), "run_benchmark.py", "exec"), ns)
     return ns["run_verdict"]
 
 

@@ -9,10 +9,11 @@ This file holds the working handoff notes. Closed items are removed once verifie
 
 Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
 
-1. **Summary cap 150-300 -> 1000-1500 (agreed in principle).**
-   - Where: `router/config.py:114` (`SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS`). Text mentions to update: README.md (lines 7, 90), CLAUDE.md (line 7), docs/architecture.md (lines 7, 23), docs/technical.md (line 25), examples/example_agents.md (line 6), `router/server.py` docstring (line 165), and the labels in `docs/hld.svg`, `docs/lld-sequence.svg`, `docs/lld-modules.svg`.
-   - Impact: `summarize()` returns a reply unchanged when it is under the cap, so most replies will now pass through raw. Benchmark scores were produced at 150-300, so they are not comparable: re-run or add a note.
-   - Do not change the constant while the queue runs. Each model is a separate process that reads `config.py` at start, so models later in the queue would get the new cap.
+1. **Summary cap is 5000 tokens (done 2026-10-27).**
+   - The constant in `router/config.py` (`SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 5000`) was set on `main` in `ba98023`. The user confirmed 5000 is the intended cap on 2026-10-27. The 1000-1500 target is withdrawn.
+   - Docs now say 5000: README.md, CLAUDE.md, docs/architecture.md, docs/technical.md, examples/example_agents.md, the `router/server.py` docstring, and the labels in `docs/hld.svg`, `docs/lld-sequence.svg`, `docs/lld-modules.svg`.
+   - Benchmark scores from runs at the old 150-300 cap are not comparable with runs at 5000.
+   - The `dispatch_task` docstring changed. CLAUDE.md says a docstring change changes delegation behaviour, so check local-model behaviour once.
 
 2. **Role contract template (playbook gap).** Decide before editing any role.
    - Proposed fields per role in `router/tf-roles.yaml`: `purpose` (one sentence), `inputs` (paths or arguments the role expects), `output_format`, `stop_condition`, `checklist` (3 or more items, each tagged `deterministic` or `judgement`).
