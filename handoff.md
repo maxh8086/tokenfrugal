@@ -29,7 +29,7 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 4. **Who is the checker (open decision).**
    - Haiku is recorded as the team lead and Sonnet as the orchestrator in `teams:` and `orchestration:`. The router never calls them: the lead and orchestrator are cloud models run by the client. Today Haiku reviews replies by hand, in the client, as the tracker.
    - Options:
-     - (a) Local thinker (`llama3.2:3b-16k`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
+     - (a) Local thinker (`prism-bonsai-4b-q1:latest`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
      - (b) Router calls Haiku through the API for judgement items. Better judgement, but breaks the no-cloud and privacy promise, needs a key, and spends cloud tokens.
      - (c) Keep judgement in the client: the checker stage returns deterministic results plus the judgement inputs, and Haiku reviews them. No router change for judgement.
    - Suggested: deterministic checks in the router now (a for judgement, later), and (c) as the reviewer of record until (a) is measured.
@@ -71,7 +71,7 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 - `router/config.py`: `team_of(role, cfg)`, `lead_for(team, cfg)`, `cfg["orchestrator"]`.
 - Visibility, not routing: `list_roles` prints each team's lead, description and roles, and the orchestrator. `CLAUDE.md` and `AGENTS.md` describe the same. Any MCP client, Codex included, can read the lead from there.
 - Not built: Haiku choosing a team and role at run time. The lead and orchestrator are cloud models run by the client, so the router records them but does not call them.
-- Model: `claude-haiku-5-5` is the latest Haiku and is used everywhere in the repo. The global CLAUDE.md still names `claude-haiku-4-5` and should be updated to 5-5.
+- Model: `claude-haiku-5-5` is the latest Haiku and is used everywhere in the repo.
 
 ---
 
@@ -242,7 +242,6 @@ Tool overlap only, different skill (keep; not duplicates):
 4. Disclose to the user: `1b84e51` and `4e07633` swept untracked files (`git add -A` / broad adds). Both are pushed and not rewritten. Also disclose that the qwen3-4b run was killed and its partial raw files are in `4e07633`.
 5. Ask whether to commit `router/tf-roles.yaml`, `scripts/bench_real.py`, and `Benchmark/results/cloud.csv`.
 6. After confirmation, restart the queue: qwen3-4b first (realworld + coding), then the remaining batches of 3. Run `scratchpad/run_queue.sh` with the CR fix. Commit and push per batch to `tokenfrugal HEAD:main`, with no Co-Authored-By trailer and only specific paths added.
-7. Progress report every 30 minutes. Cron `f005ae68` expires after 7 days. Check it with CronList in the new session; it may not carry over.
 
 **Scratchpad caveat**: the queue lists and logs live in `C:\Users\vaibh\AppData\Local\Temp\claude\C--Users-vaibh-Downloads-Projects-tokenfrugal\3fcf2a35-5f28-486d-92c5-8bd8f806feed\scratchpad\`. A new session gets a new scratchpad id. Reference that path by absolute path, and check that it still exists before the queue restart.
 
@@ -276,7 +275,6 @@ Tool overlap only, different skill (keep; not duplicates):
 2. After approval, pull the q-batch-09 models, then restart `run_queue.sh` with `-I`. Use the 32k default and 64k max policy. Run the excluded models after the eligible ones, with policy `num_ctx` variants.
 3. After each batch: check the rows, commit and push to `tokenfrugal` only, then report progress.
 4. After the full run: regenerate the explorer, mark line 58 as superseded, and merge the c2 coding results only if asked. Clean old CSVs and temp files only after the full run is done and the user confirms. Do not delete files before then.
-5. Progress check: a 30-minute cron (`f005ae68`) was set up and expires after 7 days. Its status was not re-verified in this update.
 
 _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on shared-scratch failures._
 
@@ -289,7 +287,6 @@ _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on
 - **Saluki 27B** (`saluki-27b-iq2:latest`, GGUF from ConwayResearch/Underdog-Saluki-27B-1.0, IQ2-mix, 7.9 GB): loads and answers. Roles suite done: 26/81 (in the CSV). Realworld run done: 14/81, NOT imported (import cancelled by the user). Decision pending on whether to record it.
 - **Ollama:** upgraded 0.40.6 -> 0.40.11. Saluki HF pull failed ("file does not exist") on both versions; GGUF was downloaded directly and imported with a Modelfile.
 - **Not done:** `Benchmark/script/build_report.py` not rerun since the CSV restores (answer N to its roles prompt); `Benchmark/Benchmark.md` Observations not updated for Gemma 4 or Saluki; Saluki tool calling not tested separately.
-- **Session-only, will not carry over:** tracking loops (stopped), cron jobs (expire after 7 days), terminal tab `c4` tailing the Saluki log.
 
 ---
 ## Gotchas (kept from closed items: concurrent docker runs, workspace auto-sync, Haiku tool-call check)
@@ -348,8 +345,7 @@ Plan, in order:
 1. **Haiku full run** (`claude-haiku-5-5`, n=3, realworld + hard + coding). Log: `Benchmark/results/tracker/haiku-5-5-full.log`. Started in the background (run_benchmark.py, cloud endpoint, key from the Windows User env var, never printed).
 2. **Remove old Haiku entries** after the new run finishes and is checked. Keep only the new run's rows. Rows to remove: `benchmark.csv` (`full-claude-haiku-5-5` lines from 2026-10-20), `builder.csv`, `thinker.csv`, `hard_test.csv` (rows with `claude-haiku-5-5` from earlier run_ids), and `cloud.csv` (`haiku-baseline`). Back up each file first. `runs.jsonl` is append-only and is left unchanged. Raw JSON and hard/ files are kept, not deleted.
 3. **Local queue**: `Benchmark/results/tracker/queue.lst`, 32 models, batches of 3 (the last batch has 2). Built from the earlier q-batch lists, with done models skipped and duplicate aliases excluded. Runner: `Benchmark/results/tracker/run_queue.sh` (`--role builder,thinker,hard,coding`, rebuild report after each batch). It does NOT commit or push. Status: `queue-run.log`, per-model logs in `tracker/logs/`.
-4. **Tracker**: `Benchmark/results/tracker/progress.md`, updated every 30 minutes (cron job `1eb0db03`, minutes :17 and :47). Session-only, auto-expires after 7 days. Re-create it in a new session.
-5. **Final step**: show the final `benchmark.csv` to the user when all tests are done.
+4. **Final step**: show the final `benchmark.csv` to the user when all tests are done.
 
 Rules: no commits or pushes without a request. Earlier batch commits pushed `raw/` and `hard/` files with `git add -A`; disclose this if asked.
 
@@ -396,7 +392,7 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 - Not the same as `scripts/role_improve.py` (the self-improvement gate above).
 
 ### Stage 4: Haiku cloud baseline (decide)
-- `scripts/haiku_run.py` exists. Its spec names `claude-haiku-4-5`; it would need `claude-haiku-5-5`.
+- `scripts/haiku_run.py` exists. Its model is now `claude-haiku-5-5` (fixed 2026-10-27).
 - The Haiku 5.5 full n=3 run is already in `benchmark.csv` and `cloud.csv` (see "Haiku 80/81" above). Decide whether the script is still needed. If not, delete it. Cloud results are never ranked.
 
 ### Stage 5: Codex / cloud agents README (open)
@@ -453,6 +449,3 @@ Live check passed: both containers were stopped, and `open_role` brought them ba
 
 Open: `ensure_backend` is not yet called from `router/reconnect.py` or `router/claude_import.py`; both still call `open_native` directly.
 
-## Global CLAUDE.md (user action)
-
-- The global `~/.claude/CLAUDE.md` still names `llama3.2:3b-16k` as the local thinker. That model was removed. The user should update it. The Haiku line in that file already says `claude-haiku-5-5`.
