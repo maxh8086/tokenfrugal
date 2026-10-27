@@ -3,7 +3,7 @@
 Input shape (same as Claude Code / Claude Desktop):
     {"mcpServers": {"memory": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-memory"], "env": {}}}}
 Each entry becomes a native stdio server (`servers`) plus a catalog entry (`mcps`), stored in
-router/imported_mcps.json and merged by config.py. Env values may be `keyring:NAME` references.
+router/imported_mcps.json and merged by config.py. Env values may be `docker-secret:NAME` references.
 
 Usage: python -m router.claude_import FILE.json [--probe]   (--probe lists the server's tools and records them)
 """

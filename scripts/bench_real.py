@@ -20,7 +20,8 @@ WS = f"/workspace/{SYNAPTREE_PROJECT}/bench/scratch"
 # Per-repeat status and infrastructure gate.
 #   infra   the synaptree container (native MCP server of the builder/reviewer/debugger/analyzer roles) was not
 #           running before the repeat, or was down or restarted around a failed repeat. Not dispatched when down.
-#   timeout TimeoutError / APITimeoutError / the per-case watchdog (CASE_TIMEOUT).
+#           Also infra: a failed repeat with NotFoundError (HTTP 404, model missing), ComposeError or preflight.
+#   timeout TimeoutError / APITimeoutError / LoopError timeouts / the per-case watchdog (CASE_TIMEOUT).
 #   valid   everything else: the repeat ran (verified or not), or failed with a model/loop error such as
 #           LoopError or CheckFailed, while the infrastructure was healthy.
 #   partial a case whose repeats mix timeouts with other non-infra outcomes (infra repeats are ignored).
@@ -34,6 +35,7 @@ LOG_TAIL_LINES = 60
 LOG_CAP_BYTES = 4096
 INFRA_ERROR = "synaptree container not running"
 TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")
+INFRA_MARKERS = ("NotFoundError", "Error code: 404", "ComposeError", "preflight")  # missing model, compose/container start, preflight
 CONN_MARKERS = ("Connection closed",)
 # tool a case must have called (per the step trail) before its reply can count as verified; None = no requirement
 REQUIRED_TOOLS = {"role_tracker": "plan_status", "role_designer": "high_level_overview", "role_browser": "navigate_page"}
@@ -206,12 +208,14 @@ def classify(ran, error, uses_synaptree, container_bad, tool_missing=False):
     """Status of one repeat (rules in the module comment above)."""
     if uses_synaptree and container_bad:
         return "infra"
-    if tool_missing:  # the required tool was never offered: the server failed to start, not the model
-        return "infra"
+    if not ran and any(m in error for m in INFRA_MARKERS):
+        return "infra"  # missing model (HTTP 404), failed preflight or container start: the endpoint or harness, not the model
     if not ran and "unknown agent" in error:
         return "infra"  # router rejected the slug: harness/config fault, not the model
     if not ran and any(m in error for m in TIMEOUT_MARKERS):
-        return "timeout"
+        return "timeout"  # a LoopError or APITimeoutError timeout is the model's, even when it never called the required tool
+    if tool_missing and "LoopError" not in error:  # the required tool was never offered: the server failed to start, not the model
+        return "infra"
     return "valid"
 
 

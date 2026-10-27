@@ -1,6 +1,7 @@
 <# Stop the MCP backends (data volumes kept). Usage: powershell -File scripts/mcp_down.ps1 [-Remove] #>
 param([switch]$Remove)
-$env:MCP_ENV_FILE = if ($env:MCP_ENV_FILE) { $env:MCP_ENV_FILE } else { Join-Path $HOME ".docker\mcp\mcp.env" }
+# compose parses the secrets: block even for stop, so the secrets directory must be set (no values are read)
+$env:TF_SECRETS_DIR = (& python -m router.secrets_store export-paths) -replace '^TF_SECRETS_DIR=', ''
 $compose = Join-Path (Split-Path $PSScriptRoot) "docker-compose.yml"
-$a = @("compose", "-p", "ts-mcp", "-f", $compose, "--profile", "research", "--profile", "security", "--profile", "design", "--profile", "plan")
+$a = @("compose", "-p", "tokenfrugal", "-f", $compose, "--profile", "research", "--profile", "security", "--profile", "design", "--profile", "plan")
 if ($Remove) { docker @a down } else { docker @a stop }

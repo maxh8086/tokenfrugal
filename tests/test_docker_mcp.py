@@ -56,15 +56,15 @@ class ParamTests(unittest.TestCase):
         self.assertEqual(docker_mcp.param_commands("p", None, docker="D"), [])
 
     def test_config_and_secret_commands(self):
-        params = {"config": {"srv.key": "v1", "srv.tok": "keyring:T"}, "secrets": {"NAME": "keyring:NAME"}}
+        params = {"config": {"srv.key": "v1", "srv.tok": "docker-secret:T"}, "secrets": {"NAME": "docker-secret:NAME"}}
         with mock.patch("router.docker_mcp.secrets_store.resolve", side_effect=lambda v: "R:" + v):
             cmds = docker_mcp.param_commands("p", params, docker="D")
-        self.assertEqual(cmds[0], (["D", "mcp", "profile", "config", "p", "--set", "srv.key=R:v1", "--set", "srv.tok=R:keyring:T"], None))
-        self.assertEqual(cmds[1], (["D", "mcp", "secret", "set", "NAME"], "R:keyring:NAME"))
+        self.assertEqual(cmds[0], (["D", "mcp", "profile", "config", "p", "--set", "srv.key=R:v1", "--set", "srv.tok=R:docker-secret:T"], None))
+        self.assertEqual(cmds[1], (["D", "mcp", "secret", "set", "NAME"], "R:docker-secret:NAME"))
 
     def test_secret_never_in_argv(self):
         with mock.patch("router.docker_mcp.secrets_store.resolve", return_value="s3cret"):
-            cmds = docker_mcp.param_commands("p", {"secrets": {"N": "keyring:N"}}, docker="D")
+            cmds = docker_mcp.param_commands("p", {"secrets": {"N": "docker-secret:N"}}, docker="D")
         self.assertNotIn("s3cret", " ".join(cmds[0][0]))
         self.assertEqual(cmds[0][1], "s3cret")
 
@@ -94,12 +94,12 @@ class ParamTests(unittest.TestCase):
 
 class ClaudeImportTests(unittest.TestCase):
     DOC = {"mcpServers": {"memory": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-memory"],
-                                     "env": {"TOKEN": "keyring:TOKEN"}}}}
+                                     "env": {"TOKEN": "docker-secret:TOKEN"}}}}
 
     def test_convert(self):
         out = claude_import.convert(self.DOC)
         self.assertEqual(out["servers"]["memory"], {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-memory"],
-                                                    "env": {"TOKEN": "keyring:TOKEN"}})
+                                                    "env": {"TOKEN": "docker-secret:TOKEN"}})
         self.assertEqual(out["mcps"]["memory"]["native"], "memory")
 
     def test_rejects_url_servers_and_bad_names(self):

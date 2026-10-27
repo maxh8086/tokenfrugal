@@ -13,7 +13,7 @@ python -m venv .venv && pip install -r requirements.txt
 cp .env.example .env                      # set TOKENFRUGAL_LLM_URL; CC_WORKSPACE = folder the file tools may write
 python scripts/doctor.py                  # checks Python, Docker, LLM endpoint, models; prints fix commands
 PYTHONPATH=. python -m unittest discover -s tests -t . -q     # offline tests
-scripts/mcp_up.sh | scripts/mcp_up.ps1   # start ts-mcp backends (compose project `ts-mcp`)
+scripts/mcp_up.sh | scripts/mcp_up.ps1   # start tokenfrugal backends (compose project `tokenfrugal`)
 python scripts/install_profiles.py       # import Docker MCP profiles (--workspace PATH to override CC_WORKSPACE)
 python scripts/smoke.py                  # live role smoke tests; `smoke.py security` needs SONARQUBE_TOKEN
 python -m scripts.smoke_plan             # live Neo4j plan-store smoke (prune, checkpoint, evidence rules)
@@ -43,7 +43,7 @@ Local models run 16k-32k context. Point them at file paths in the workspace inst
 
 ## Never
 
-- Paste secrets into tasks or chat. Secrets live in `~/.docker/mcp/mcp.env`.
+- Paste secrets into tasks or chat. Secrets live as Docker secret files in `~/.docker/mcp/secrets`.
 - Add Co-Authored-By trailers or "generated with" footers to commits and PRs, unless you want them.
 
 Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "command": "python", "args": ["-m", "router.server"], "cwd": "<path>/tokenfrugal"}}}`. Use the venv's python on Windows.
@@ -54,10 +54,10 @@ Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "co
 - `router/tf-roles.yaml` maps agency-agents slugs (division prefix, longest match, plus overrides) to a role = model + Docker MCP profile + 4-6 allowlisted tools (+ optional `native:` servers). Only two local models: builder `qwen2.5-coder-yarn:3b`, thinker `llama3.2:3b-16k`. No cloud fallback: failures return a short error and a `task_id` for `resume_task`.
 - Per-agent model: `tf_roles_models` in `tf-roles.yaml` (slug -> `builder`/`thinker`/Ollama tag), overridden by `router/tf-roles_models.json` (written by `python -m scripts.tf_roles_ui`). `TOKENFRUGAL_TF_ROLES_MODELS=0` or any `TOKENFRUGAL_MODEL_*` env var disables it. Resolved in `config.resolve_role`.
 - `loop.py` is the tool-calling loop (max 2 calls/step, forced first tool call, slop retry). `mcp_client.py` opens `docker mcp gateway run --profile <p>` and native stdio servers behind one `Router`. `summarize.py` enforces the token cap; `store.py` (SQLite, `router/tasks.db`) backs `get_detail`/`resume_task`.
-- `compose.py` + `docker-compose.yml` (project `ts-mcp`): roles with `compose: [...]` start their backends (`up -d --wait`) before a run and stop them after (`keep_alive` / `MCP_KEEP_ALIVE=1` skips the stop). The last router process to exit stops every `ts-mcp` container. Leave other compose projects alone.
+- `compose.py` + `docker-compose.yml` (project `tokenfrugal`): roles with `compose: [...]` start their backends (`up -d --wait`) before a run and stop them after (`keep_alive` / `MCP_KEEP_ALIVE=1` skips the stop). The last router process to exit stops every `tokenfrugal` container. Leave other compose projects alone.
 - Plan store (`plan.py`, Neo4j service `neo4j`, host 127.0.0.1:7697): `Task -DEPENDS_ON-> Task`, `Task -HAS_RUN-> Run`, `Task -HAS_EVENT-> Event`, `Task -LINKED_TO-> Commit`. `done` needs evidence (real git sha or finished router task id). Finished plans are pruned after `PLAN_RETENTION_DAYS` (default 30). Workers use the stdio server `python -m router.plan_mcp`.
 - Docker MCP profiles live in `profiles/*.yaml` with a `__WORKSPACE__` placeholder; `scripts/install_profiles.py` fills it in and builds helper images `tokenfrugal/chrome-devtools-mcp:1` and `tokenfrugal/penpot-mcp:1`.
-- Secrets (`SONARQUBE_TOKEN`, `NEO4J_AUTH`, ...) live in `~/.docker/mcp/mcp.env`, never in the repo or catalogue YAMLs.
+- Secrets (`SONARQUBE_TOKEN`, `NEO4J_AUTH`, ...) are Docker secret files in `~/.docker/mcp/secrets`, written with `python -m router.secrets_store set NAME`, never in the repo or catalogue YAMLs.
 - Writable workspace for `ts-fs-rw` needs `:rw` in the catalogue volume and `CC_WORKSPACE` equal to that exact host path.
 
 ## Code intelligence (synaptree-mcp)

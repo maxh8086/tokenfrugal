@@ -113,7 +113,7 @@ function poll() {
 const run = (cmd, args) => new Promise((ok) => execFile(cmd, args, { timeout: 4000, windowsHide: true }, (e, out) => ok(e ? null : String(out))));
 let svc = { at: 0, data: null };
 
-// Ollama (OpenAI-compatible /models), Docker engine and the ts-mcp compose containers; cached a few seconds.
+// Ollama (OpenAI-compatible /models), Docker engine and the tokenfrugal compose containers; cached a few seconds.
 async function services(cfg) {
   if (svc.data && Date.now() - svc.at < 4000) return svc.data;
   const llm = { url: cfg.llm_url || '', ok: false, models: [] };
@@ -127,7 +127,7 @@ async function services(cfg) {
   }
   const ver = await run('docker', ['info', '--format', '{{.ServerVersion}}']);
   const docker = { ok: !!ver && ver.trim() !== '', version: (ver || '').trim() };
-  const ps = docker.ok ? await run('docker', ['ps', '-a', '--filter', 'label=com.docker.compose.project=' + (cfg.compose_project || 'ts-mcp'),
+  const ps = docker.ok ? await run('docker', ['ps', '-a', '--filter', 'label=com.docker.compose.project=' + (cfg.compose_project || 'tokenfrugal'),
     '--format', '{{.Label "com.docker.compose.service"}}|{{.State}}']) : null;
   const containers = {};
   for (const l of (ps || '').split('\n')) { const [n, st] = l.trim().split('|'); if (n) containers[n] = st; }

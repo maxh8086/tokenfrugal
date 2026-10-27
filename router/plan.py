@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from datetime import datetime, timezone
 
-from . import store
+from . import secrets_store, store
 
 TAG = os.getenv("PLAN_TAG", "main")
 RETENTION_DAYS = int(os.getenv("PLAN_RETENTION_DAYS", "30"))
@@ -48,7 +48,7 @@ def _drv():
     global _driver
     if _driver is None:
         from neo4j import GraphDatabase
-        _driver = GraphDatabase.driver(URI, auth=parse_auth(os.environ.get("NEO4J_AUTH")),
+        _driver = GraphDatabase.driver(URI, auth=parse_auth(secrets_store.get("NEO4J_AUTH")),
                                        notifications_min_severity="OFF")
     return _driver
 

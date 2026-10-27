@@ -1,10 +1,10 @@
 """Docker MCP Toolkit helpers: gateway argv, profile loading, and catalog parameters.
 
 A catalog entry may declare `params` for its Docker profile:
-    params: {config: {"server.key": "value"}, secrets: {NAME: "keyring:NAME"}}
+    params: {config: {"server.key": "value"}, secrets: {NAME: "docker-secret:NAME"}}
 `config` values go to `docker mcp profile config <profile> --set key=value`; `secrets` go to the Docker
 secret store via `docker mcp secret set NAME` (value on stdin, never on the command line). Any value may be a
-`keyring:NAME` reference, resolved through secrets_store.resolve() before it is handed to docker.
+`docker-secret:NAME` reference, read from its secret file by secrets_store.resolve() before it is handed to docker.
 """
 import shutil
 import subprocess
@@ -57,7 +57,7 @@ def split_params(params: dict | None) -> tuple[dict, dict]:
 
 
 def param_commands(profile: str, params: dict | None, docker: str | None = None) -> list[tuple[list[str], str | None]]:
-    """(argv, stdin) pairs that push the declared parameters into Docker. keyring: refs are resolved here."""
+    """(argv, stdin) pairs that push the declared parameters into Docker. docker-secret: refs are resolved here."""
     config, secrets = split_params(params)
     if not config and not secrets:
         return []
@@ -70,7 +70,7 @@ def param_commands(profile: str, params: dict | None, docker: str | None = None)
         cmds.append((argv, None))
     for name, ref in secrets.items():
         if not str(ref).startswith(secrets_store.REF_PREFIX):
-            raise DockerMcpError(f"secret '{name}' must be a keyring: reference, not a literal value")
+            raise DockerMcpError(f"secret '{name}' must be a docker-secret: reference, not a literal value")
         cmds.append(([docker, "mcp", "secret", "set", name], secrets_store.resolve(ref)))
     return cmds
 
