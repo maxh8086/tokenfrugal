@@ -229,12 +229,15 @@ def summarize(models, rows):
 
 
 def rank_rows(rows):
-    """Assign rank by total pass count (desc), then median_s (asc). Blank for incomplete rows."""
+    """Assign rank among complete local runs: total pass count (desc), then median_s (asc). A complete run has the
+    full check count, the largest denominator in the file. Partial totals, cloud rows and blanks stay unranked.
+    The explorer (ranking.py) uses the same rule."""
+    full = max((_fraction(r["total_score"])[1] for r in rows if r.get("total_score")), default=0)
     ranked = []
     for r in rows:
         r["rank"] = ""
         cloud = r.get("builder_model", "").startswith("claude-")  # cloud reference rows never enter the local ranking
-        if r.get("total_score") and r.get("median_s") and not cloud:
+        if r.get("total_score") and r.get("median_s") and not cloud and _fraction(r["total_score"])[1] == full:
             ranked.append((-_fraction(r["total_score"])[0], float(r["median_s"]), r))
     for i, (_, _, r) in enumerate(sorted(ranked, key=lambda x: (x[0], x[1])), start=1):
         r["rank"] = str(i)
