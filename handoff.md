@@ -9,51 +9,17 @@ This file holds the working handoff notes. Closed items are removed once verifie
 
 Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
 
-2. **Role contract template (decided and applied 2026-10-28).** User approved the fields ("go ahead").
-   - Fields per role in `router/tf-roles.yaml` under `contracts:`: `purpose`, `inputs`, `output_format`, `stop_condition`, `checklist` (3 or more items, each `deterministic` or `judgement`). All 39 active roles have one; the shared checklists are YAML anchors.
-   - `router/preflight.py` `contract_errors` checks this offline. `tests/test_role_contracts.py` runs it on the real config and on negative cases.
-   - Not yet checked: that each role's skill file (`router/skills/<role>/SKILL.md`) states the same stop condition. Follows the `code-l1` pattern (item 6).
-   - Commit `5d73be3`. The user said to update roles only after the benchmark finishes. No benchmark process was running at commit time, but that check does not prove the run is complete. Confirm with the user.
-
-3. **Checker stage (wired 2026-10-28, commit `b585610`; user chose option (c)).**
-   - Position: in `_execute` in `router/server.py`, after `run()` and before `summarize()`. The per-role timeout covers the checker time.
-   - Deterministic checks run in the router through `router/checker.py`: the `Accept:` command from the task (split on spaces, so quoted arguments are not supported), `git apply --check` on a ```` ```diff ```` block, lint through `check_python`, and the files-changed list from git.
-   - Judgement items are returned to the client (Haiku) as text. No model judges them in the router.
-   - One correction runs inside the same `dispatch_task` call through `run()` with the first run's message history. It is not a separate `resume_task` call. If the second check fails, the task is `failed` with `error_kind=checker` and the checker output.
-   - Tests: `tests/test_checker_stage.py` (17 tests with `test_templates.py`).
-
-4. **Who is the checker (open decision).**
-   - Haiku is recorded as the team lead and Sonnet as the orchestrator in `teams:` and `orchestration:`. The router never calls them: the lead and orchestrator are cloud models run by the client. Today Haiku reviews replies by hand, in the client, as the tracker.
-   - Options:
-     - (a) Local thinker (the `models.thinker` entry in `router/tf-roles.yaml`, currently `prism-bonsai-4b-q1:latest`) for judgement items inside the router. Keeps the no-cloud promise; judgement quality is weak.
-     - (b) Router calls Haiku through the API for judgement items. Better judgement, but breaks the no-cloud and privacy promise, needs a key, and spends cloud tokens.
-     - (c) Keep judgement in the client: the checker stage returns deterministic results plus the judgement inputs, and Haiku reviews them. No router change for judgement.
-   - Suggested: deterministic checks in the router now (a for judgement, later), and (c) as the reviewer of record until (a) is measured.
-
-5. **Toolbox of approved templates (implemented 2026-10-28, commit `b585610`, user approved).**
-   - Table `templates` in `router/store.py`: `id`, `role`, `task_type`, `title`, `tags` (JSON list), `body` (text or file path), `source_task_id`, `status` (`approved` | `retired`), `approved_by`, `approved_at`, `uses`, `last_used`.
-   - `add_template` refuses an empty `approved_by`. Nothing is stored or used without a manual approval.
-   - Matching at dispatch: same `role` and `task_type` first, then tag overlap, then title keywords. A template with no match is never used.
-   - Budget: at most 2 templates and 1500 tokens, placed before the task text (`with_templates`).
-   - Open: `dispatch_task` does not pass `task_type`, so the first ranking criterion does nothing until it is supplied. `list_roles` does not show templates (default chosen; not confirmed).
-   - No template is approved yet. Tests: `tests/test_templates.py`.
-
-6. **Approval policy (decided 2026-10-28).**
-   - Manual approval by the user only. Auto-approve is not allowed until the checker stage has been measured on the benchmark and its drawbacks reviewed.
-
-8. **Teams: visibility, not routing (decided 2026-10-22).**
+1. **Teams: visibility, not routing (decided 2026-10-22).**
    - Each team's lead and the orchestrator are shown to every client through `list_roles` (`router/server.py`), `CLAUDE.md` and `AGENTS.md`. Codex and other agents can read them there.
    - Haiku does not choose a team or role at run time. The router records the lead and orchestrator and never calls them. Routing by lead needs a model-driven step that does not exist yet.
    - Team names: `ui-ux` (confirmed: "UI-UZ" in the request was a typo), `development`, `ops`, `security` and `research`. The user confirmed `security` and `research` on 2026-10-28 ("go ahead"); they are kept as defined.
 
-9. **Haiku model: `claude-haiku-5-5` (decided 2026-10-22).**
-   - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) names `claude-haiku-5-5` as of 2026-10-27. This repo does not change it.
-
-10. **Review taste-skill against ui-ux-pro-max in the Claude skill setup (open; no removal yet).**
+2. **Review taste-skill against ui-ux-pro-max in the Claude skill setup (open; no removal yet).**
    - Scope: the Claude skill setup only, not this repo or its roles. Nothing in this repo's roles, skills or profiles references taste-skill (checked 2026-10-22).
    - Why it is on the list: both families cover UI design, so they may overlap. The overlap is not yet proven. taste-skill has 13 entries (brandkit, brutalist, gpt-taste, image-to-code, imagegen-frontend-mobile, imagegen-frontend-web, minimalist, output, redesign, soft, stitch, taste-skill, taste-skill-v1). ui-ux-pro-max has 7 (banner-design, brand, design, design-system, slides, ui-styling, ui-ux-pro-max). Some overlap, for example design systems and slides.
    - Before any removal: compare each taste-skill variant with its closest ui-ux-pro-max skill, check which one the UI role tests (`Benchmark/results/ui_roles.csv`) actually used, and get your approval for each skill removed. Nothing is deleted without that review.
    - Wait for the UI role tests on all models to finish first.
+   - Kept aside on the user's instruction, 2026-10-28. Not started.
 
 ---
 ## Teams and team leads (built 2026-10-21, recorded only; not used for routing)
@@ -74,14 +40,9 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 **Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. Offline suite run 2026-10-28: 487 tests, OK, 5 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
 
 **Scope of improvement (existing roles)**
-1. **Decided and fixed 2026-10-21.** `security-auditor` keeps 300s. SonarQube is slow to respond, so the higher timeout is correct. `tests/test_role_timeout.py` now expects 300. Config unchanged.
-2. **Closed 2026-10-28 (offline suite passes, 487 OK).** These two tests in `tests/test_ranking_hard.py` used to fail: `test_latest_run_wins_and_bad_files_skipped` (`[] != ['m1']`) and `test_md_empty_and_filled` (`'| m2 | 2/3 |' not found`). Both write JSON fixtures, but `Benchmark/script/ranking.py` `hard_results` reads `Benchmark/results/hard_test.csv`. Rewrite the fixtures as CSV when this is picked up.
-3. **Done 2026-10-28 (commit `14e65ec`).** `timeout_s: 90` on `github-read`, `github-actions-read` and `finance`; test in `tests/test_role_timeout.py`. `devops` was left without a timeout by user direction (it is a team-level entry, not a single role).
-4. **Done 2026-10-28 (commit `14e65ec`).** `builder` = application source only; `devops` = CI, Docker, compose and config only, no test runs. `analyzer` = explains code, `git_diff` removed; `reviewer` = judges diffs. Scope lines added to `role-builder`, `role-devops`, `role-analyzer`; `code-review` tool list aligned to the reviewer role. Skill edits were made directly, not through the gate.
-5. **Done 2026-10-28.** `router/preflight.py` `role_errors` checks every `tools:` name against its profiles and native servers; all active roles pass. Removed `search_files` from pending `ui-components` (no profile or native server provides it). Pending UI roles report "model None" until they get a model. Still open: `unverified_roles` lists native servers not yet verified live (`synaptree`, `sonarqube`).
-6. Bring role skills up to the `code-l1` pattern: numbered steps, an explicit output format, and a stop condition. Current role skills are 18–20 lines.
-7. Verify the `synaptree` native server is wired for every role that lists it.
-8. Create a live smoke test per role only after the user confirms. Each role gets its model only after its test passes.
+1. Bring role skills up to the `code-l1` pattern: numbered steps, an explicit output format, and a stop condition. Current role skills are 18–20 lines.
+2. Verify the `synaptree` native server is wired for every role that lists it.
+3. Create a live smoke test per role only after the user confirms. Each role gets its model only after its test passes.
 
 **Self-improvement gate (built 2026-10-21, not yet used on a live role)**
 - Each role carries `improve: gated` in `router/tf-roles.yaml` (51 roles, active and pending). A role without that flag is refused.
@@ -174,8 +135,12 @@ Tool overlap only, different skill (keep; not duplicates):
   - Totals match earlier notes: qwen3.5-9b 46/81 (rank 1), granite3-3b 20/81 (2), qwen2.5-1.5b 15/81 (3), llama3.2-1b 15/81 (4), deepseek-r1-7b 12/81 (5). Haiku 69/81 is cloud and not ranked. Mannix, both starcoder2 entries and gemma3-4b are blank: no hard or coding run.
   - `valid_cases` and `ran` are blank in the new `benchmark.csv`. The rebuild did not carry them over from the old file.
 
+**Definitions (added 2026-10-28, in the page legend `Benchmark/script/ranking.py` `RANK_LEGEND`)**
+- `valid_cases`: cases whose status is valid on the page. A case with an infrastructure failure or no tool call is not valid. It is excluded from speed, not from score. Counted per case over the builder, thinker, hard and coding files.
+- `ran`: cases with at least one attempt that reached the model. A case that never ran is not counted. Counted per case over the same four files, so it has the same total as valid cases.
+
 **Not done**
-1. Definitions of `valid_cases` and `ran`, and whether to recover their values from the old file or from the raw JSON. They close after one full run through `run_benchmark.py` and the user's sign-off on the definitions.
+1. Unit mismatch, decision needed: the CSV `valid_cases`/`ran` count realworld cases and repeats (Haiku shows 16/48), while the page counts case rows across the four files (Haiku shows 27/27). The legend explains the page rule; the two are not unified. The user must choose which one `benchmark.csv` stores.
 
 **Decided (user, 2026-10-20)**
 1. Displaced summary lines are not kept. The summary is rebuilt from the detail CSVs (latest run only), so no `benchmark_history.csv`.
@@ -195,10 +160,8 @@ Tool overlap only, different skill (keep; not duplicates):
 - The real `results/benchmark.csv` is unchanged. User said hold on writing it.
 
 **Open decisions**
-1. Resolved 2026-10-28: `benchmark.csv` header already matches `SUMMARY_COLS` (33 of 33, checked by script). Nothing was written, no backup needed. The per-role datetime and score columns are present.
-2. Resolved 2026-10-28: the column is `thinker_hard_score`. `hard_score` is not in the header and is not added.
-3. Blank vs partial total for models with only one role complete.
-4. Rank rule (fixed 2026-10-27 in `Benchmark/script/store.py` `rank_rows`): only complete /81 runs are ranked, by passes then median s/case. A run is one run: rows whose builder, thinker and hard datetimes differ mix roles from different runs and stay unranked. Explorer and benchmark.csv now rank the same 16 models in the same order (checked 2026-10-27, before the explorer rebuild).
+1. Blank vs partial total for models with only one role complete.
+2. Rank rule (fixed 2026-10-27 in `Benchmark/script/store.py` `rank_rows`): only complete /81 runs are ranked, by passes then median s/case. A run is one run: rows whose builder, thinker and hard datetimes differ mix roles from different runs and stay unranked. Explorer and benchmark.csv now rank the same 16 models in the same order (checked 2026-10-27, before the explorer rebuild).
 
 **Next actions**
 1. Explain why only 5 models were ranked (check `latest` / `keep()` in v5 against the other rows).
@@ -262,6 +225,8 @@ _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on
 
 ---
 ## Benchmark status (2026-10-27, read first for benchmark work)
+
+- **Benchmark done, confirmed by the user on 2026-10-28.** `benchmark.csv` header matches `SUMMARY_COLS` (33 of 33). Team results are on `Benchmark/index.html`: "Best model per team", built from builder and thinker families only (hard and coding are not mapped to teams). No thinker family has a green recommendation; the team view shows "best available" for those. Rebuild with `--no-clean` (keeps `clean_outputs` from deleting the old backup): `.venv/Scripts/python.exe Benchmark/script/build_report.py --update no --no-clean`.
 
 - **Local queue (2026-10-21 run, 32 models):** finished. `ALL_DONE` at 2026-10-24 14:58:36, report exit 0. Log is `Benchmark/results/tracker/queue-capfix.out` (there is no `queue-run.log`). Qwen2.5-Coder-32B, Qwable-9B, mistral-nemo and llama3.1-8b have rows; qwen3-omni-thinking is now a `NA` row in `benchmark.csv` (blank scores; not fast enough to finish in time, 2026-10-27). The model is 30.5B (IQ4_XS), not 32B; qwen3-4b has no total (72/81 case lines, watchdog stall). Full rerun restarted 2026-10-27 under the new debugger cap, log `Benchmark/results/tracker/qwen3-4b-rerun-20261027.log`. Details: `Benchmark/results/tracker/queue-failures.md`.
 - **Ollama:** upgraded 0.40.6 -> 0.40.11. Saluki HF pull failed ("file does not exist") on both versions; GGUF was downloaded directly and imported with a Modelfile.
