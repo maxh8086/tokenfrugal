@@ -1,6 +1,6 @@
 ﻿# Handoff: tokenfrugal
 
-Last updated: 2026-10-27
+Last updated: 2026-10-28
 
 This file holds the working handoff notes. Closed items are removed once verified.
 
@@ -69,14 +69,14 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 
 ## Role improvement scope and self-improvement gate (open, 2026-10-21)
 
-**Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
+**Context.** Offline suite run 2026-10-21: 384 tests, 3 failures, 2 skipped. Offline suite run 2026-10-28: 487 tests, OK, 5 skipped. No model was dispatched. The 12 UI roles are in `pending_roles:` in `router/tf-roles.yaml`, with no model assigned. No UI role is tested yet, and no test runs until the user confirms.
 
 **Scope of improvement (existing roles)**
 1. **Decided and fixed 2026-10-21.** `security-auditor` keeps 300s. SonarQube is slow to respond, so the higher timeout is correct. `tests/test_role_timeout.py` now expects 300. Config unchanged.
-2. **Open, deferred (no immediate change).** Two tests in `tests/test_ranking_hard.py` fail: `test_latest_run_wins_and_bad_files_skipped` (`[] != ['m1']`) and `test_md_empty_and_filled` (`'| m2 | 2/3 |' not found`). Both write JSON fixtures, but `Benchmark/script/ranking.py` `hard_results` reads `Benchmark/results/hard_test.csv`. Rewrite the fixtures as CSV when this is picked up.
-3. Set explicit `timeout_s` on `github-read`, `github-actions-read`, `devops`, and `finance`. They currently fall back to `TASK_TIMEOUT` in `router/loop.py`.
-4. Clarify overlapping roles. `builder` vs `devops` both write files on the builder model. `reviewer` vs `analyzer` share the `analyze` profile and near-identical tools. Define one job for each.
-5. Check every `tools:` name against its profile in `profiles/*.yaml`. Activate no role before this check passes.
+2. **Closed 2026-10-28 (offline suite passes, 487 OK).** These two tests in `tests/test_ranking_hard.py` used to fail: `test_latest_run_wins_and_bad_files_skipped` (`[] != ['m1']`) and `test_md_empty_and_filled` (`'| m2 | 2/3 |' not found`). Both write JSON fixtures, but `Benchmark/script/ranking.py` `hard_results` reads `Benchmark/results/hard_test.csv`. Rewrite the fixtures as CSV when this is picked up.
+3. **Done 2026-10-28 (commit `14e65ec`).** `timeout_s: 90` on `github-read`, `github-actions-read` and `finance`; test in `tests/test_role_timeout.py`. `devops` was left without a timeout by user direction (it is a team-level entry, not a single role).
+4. **Done 2026-10-28 (commit `14e65ec`).** `builder` = application source only; `devops` = CI, Docker, compose and config only, no test runs. `analyzer` = explains code, `git_diff` removed; `reviewer` = judges diffs. Scope lines added to `role-builder`, `role-devops`, `role-analyzer`; `code-review` tool list aligned to the reviewer role. Skill edits were made directly, not through the gate.
+5. **Done 2026-10-28.** `router/preflight.py` `role_errors` checks every `tools:` name against its profiles and native servers; all active roles pass. Removed `search_files` from pending `ui-components` (no profile or native server provides it). Pending UI roles report "model None" until they get a model. Still open: `unverified_roles` lists native servers not yet verified live (`synaptree`, `sonarqube`).
 6. Bring role skills up to the `code-l1` pattern: numbered steps, an explicit output format, and a stop condition. Current role skills are 18–20 lines.
 7. Verify the `synaptree` native server is wired for every role that lists it.
 8. Create a live smoke test per role only after the user confirms. Each role gets its model only after its test passes.
@@ -115,6 +115,7 @@ Tool overlap only, different skill (keep; not duplicates):
 
 **Pending role: `ui-webapp-test`** (added 2026-10-21, no model assigned, not dispatchable)
 - Based on the `webapp-testing` skill in `anthropics/skills` (Apache 2.0). I have not fetched or checked its contents in this session. Installing it needs `pip install playwright` and `playwright install chromium`. Both need the user's approval.
+- **Update 2026-10-28:** do not pip install. The Docker gateway has profiles `browser-pw` and `browser-pwlh`, each with a `playwright` server (`docker mcp profile server ls`). Tool names are not confirmed yet: `docker mcp tools ls` returned no matching rows. Once the names are confirmed, point the role at that profile and set its tools (tool cap is 6). The role still uses profile `build` and has no browser tools.
 - Skill: `router/skills/role-ui-webapp-test/SKILL.md`. Activation waits for the user's go-ahead and a passing test.
 
 ---
@@ -340,7 +341,7 @@ Estimated time: about 30 to 60 min per model, so about 16 to 30 hours for 32 mod
 
 **Remote (not done; needs a request, outward-facing):**
 - Checked 2026-10-27: no `raw/` file is tracked. Five `tracker/` files are tracked on purpose (PROCESS.md, build_queue.py, progress.md, queue-failures.md, run_queue.sh). Four Saluki files remain in local `raw/` (ignored).
-- To stop tracking them: `git rm -r --cached Benchmark/results/raw Benchmark/results/tracker`, commit, then push to origin (`maxh8086/tokenfrugal`). The files stay on disk, so the local cleanup can then remove them.
+- **Checked 2026-10-28, no action:** `results/raw/` is not tracked and is empty. Do NOT run `git rm --cached Benchmark/results/tracker`: it would untrack the five files that must stay tracked (listed above). Nothing needs untracking.
 - Those files remain in git history after that commit. Removing them from history needs a history rewrite and force push, which is a separate decision.
 - Commit only when the user asks. Commit messages: no Co-Authored-By trailer (per CLAUDE.md); the session's attribution reminder asks for one, so check which rule applies before committing.
 
@@ -391,6 +392,7 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 - Policy text is in `Benchmark/README.md` ("Context window and KV cache"). Runs c1 and t15 used smaller effective contexts and are not comparable with policy runs.
 
 ### Benchmark data merge (open)
+- **Update 2026-10-28:** `Benchmark/results/coding/` deleted (commit `14e65ec`, 78 tracked files). Its 26 runs were checked against `coder.csv` first; all are present. `coding-t15/` is kept. `tests/test_merge_legacy_coding.py` skips while the source folder is absent.
 - Coding L1-L6 history backfill (done 2026-10-27): `Benchmark/script/merge_legacy_coding.py` wrote 28 legacy runs (`results/coding/` and `results/coding-t15/`, 168 rows) into `coder.csv` as history, marked `superseded=yes`. Backup: `Benchmark/results/backups/coder-20261027-155305-210379.csv`. `benchmark.csv` is unchanged (byte-identical). Re-running skips run_ids already present. Test: `tests/test_merge_legacy_coding.py` (checks that the summary is unchanged with the history added).
 - Live coding results come from the normal bench path. A run with the `coding` role publishes its rows and re-summarizes on each run (`run_benchmark.py`, both the suite-only and main paths). No separate merge step is needed. The qwen3-4b coding 0/18 is a real suite result (the cases failed or timed out), not a missing merge. 30 of 40 CSV rows have a `coding_score`.
 - Explorer coverage (decided 2026-10-27): eight CSV models do not appear in `explorer.html`: `ts-qwen2-5vl-7b-65536`, `mannix/deepseek-coder-v2-lite-instruct:iq4_xs`, `hf.co/kkohtaka/starcoder2-7b`, `hf.co/akpsahan/starcoder2-15b`, `ts-gemma3-4b-65536`, `qwen2.5-coder-yarn:3b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `ts-hf-co-bartowski-google_gemma-3-12b`. This is intended. Other variants of these models are tested and shown in the CSV. Rank parity for the 31 models shown is verified: 0 mismatches.
