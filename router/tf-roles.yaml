@@ -225,15 +225,33 @@ orchestration:
   orchestrator: claude-sonnet-5-5   # reviews each team lead's result and gives the final answer
   team_lead: claude-haiku-5-5       # default lead for every team that does not set its own
 teams:
-  ui-ux:
-    description: UI and UX work. Layout, components, design tokens, accessibility checks, visual and console review, webapp tests.
+  frontend:
+    description: Frontend work. Layout, components, design tokens, accessibility checks, visual and console review, webapp tests.
     roles: [designer, browser, ui-components, ui-layout, ui-polish, ui-tokens, ui-tokens-check, ui-a11y-check, ui-review-lighthouse, ui-review-console, ui-vision-review, ui-webapp-test]
-  development:
-    description: Coding and development. Writing and reviewing code, debugging, analysis, data engineering and database development.
-    roles: [builder, data-engineer, analyzer, reviewer, debugger, code-l1, code-l2, code-l3, code-l4, code-l5, code-l6, db-postgres-dev, db-mysql-dev, db-mssql-dev, db-oracle-dev, db-elastic-dev, db-mongo-dev-l1, db-mongo-dev-l2, db-redis-dev-l1, db-redis-dev-l2, db-redis-dev-l3]
-  ops:
-    description: Operations. Devops, task tracking, GitHub read-only access, and database administration.
-    roles: [devops, tracker, github-read, github-actions-read, db-postgres-admin, db-mysql-admin, db-mssql-admin, db-oracle-admin, db-elastic-admin, db-mongo-admin-l1, db-mongo-admin-l2, db-redis-admin-l1]
+  backend-sql-dba:
+    description: SQL database administration. Inspecting and operating PostgreSQL, MySQL, MSSQL and Oracle servers.
+    roles: [db-postgres-admin, db-mysql-admin, db-mssql-admin, db-oracle-admin]
+  backend-nosql-dba:
+    description: NoSQL database administration. Inspecting and operating MongoDB, Redis and Elasticsearch servers.
+    roles: [db-mongo-admin-l1, db-mongo-admin-l2, db-redis-admin-l1, db-elastic-admin]
+  dev-sql:
+    description: SQL database development. Queries, schemas and data changes on PostgreSQL, MySQL, MSSQL and Oracle.
+    roles: [db-postgres-dev, db-mysql-dev, db-mssql-dev, db-oracle-dev]
+  dev-nosql:
+    description: NoSQL database development. Documents, keys, indexes and data pipelines on MongoDB, Redis and Elasticsearch.
+    roles: [db-mongo-dev-l1, db-mongo-dev-l2, db-redis-dev-l1, db-redis-dev-l2, db-redis-dev-l3, db-elastic-dev, data-engineer]
+  infra:
+    description: Infrastructure. Devops, CI configuration and read-only GitHub and Actions access.
+    roles: [devops, github-read, github-actions-read]
+  orchestrator:
+    description: Orchestration. Builds the change and tracks the plan status.
+    roles: [builder, tracker]
+  dev-coding:
+    description: Coding. Writing and changing application code at each difficulty level.
+    roles: [code-l1, code-l2, code-l3, code-l4, code-l5, code-l6]
+  dev-analyst:
+    description: Analysis. Reviewing code, analysing the codebase and debugging.
+    roles: [analyzer, reviewer, debugger]
   security:
     description: Security audits and reviews.
     roles: [security]

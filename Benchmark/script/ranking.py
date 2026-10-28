@@ -100,6 +100,23 @@ def _detail_runs():
 
 
 _PARAMS = _params_by_model()
+
+
+def _team_scores():
+    """Model -> {team: "passes/valid"} summed over that team's roles in results/team_results.csv. Valid = runs minus infra.
+    A team with no role run for a model is absent, so the report shows NA for it."""
+    tot = {}
+    for r in _load("team_results.csv"):
+        valid = int(r["runs"] or 0) - int(r["infra"] or 0)
+        if valid <= 0 or not r["runs"] or r["runs"] == "0":
+            continue
+        t = tot.setdefault(r["model"], {}).setdefault(r["team"], [0, 0])
+        t[0] += int(r["passes"] or 0)
+        t[1] += valid
+    return {m: {t: f"{a}/{n}" for t, (a, n) in teams.items()} for m, teams in tot.items()}
+
+
+_TEAM_SCORES = _team_scores()
 rows = [r for r in _detail_runs() + _load("cloud.csv")]  # cloud rows are shown, never ranked (_local)
 rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
 
@@ -389,7 +406,7 @@ def _role_agg(cases):
         a, n = got
         m = {"a": a, "n": n, "runs": 1, "full": a == n, "infra": num(r, "infra_cases") > 0,
              "shared": num(r, "shared_system_memory_gb"), "s": [], "t": [], "d": (r.get("date") or "")[:10],
-             "g": {(r.get("git_sha") or "")[:7]}, "h": {r.get("harness_version") or ""}, "pull": r["pull"]}
+             "g": {(r.get("git_sha") or "")[:7]}, "h": {r.get("harness_version") or ""}, "pull": r["pull"], "row": r}
         case_s = [r["case_s"][c] for c in cases if c in r.get("case_s", {})]
         if case_s:
             m["s"].append(statistics.median(case_s))
@@ -444,6 +461,7 @@ def hard_results(path=None):
             continue
         m = out.setdefault(model, {"cases": {}, "secs": []})
         m["cases"][case] = (v, n)
+        m["day"] = max(m.get("day", ""), r["date"][:10])
         if r["s_p50"]:
             m["secs"].append(float(r["s_p50"]))
     for m in out.values():
@@ -452,6 +470,13 @@ def hard_results(path=None):
         m["n"] = sum(n for _, n in m["cases"].values())
         m["s"] = secs[len(secs) // 2] if secs else 0.0
     return out
+
+
+_HARD = hard_results()  # hard_test.csv, newest non-superseded row per model and case
+for r in rows:  # hard and team scores need hard_results(), so they are attached here, after its definition
+    h = _HARD.get(r["builder_model"])
+    r["hard"] = f"{h['a']}/{h['n']}" if h else ""
+    r["teams"] = _TEAM_SCORES.get(r["builder_model"], {})
 
 
 def score_cell(a, n):
@@ -467,18 +492,33 @@ def frac_cell(s):
     return score_cell(m.group(1), m.group(2)) if m else "⬜ NA"
 
 
-def _hard_mark(a, n):
-    return score_cell(a, n)
+PASS_DATA = {}  # page key -> {labels, rows}; the page script draws each one with the same table code as the ranking
+
+
+def pass_entry(name, a, n, runs, cells, s, day=""):
+    """One model's row for pass_block: a/n passes, runs per case, one cell per column ('a/b' or a marker), median s/case, latest run date."""
+    p = _PARAMS.get(name, "")
+    return {"name": name, "a": a, "n": n, "runs": runs, "cells": cells, "s": s, "day": day, "params": p, "pb": params_b(p, name)}
+
+
+def pass_block(key, entries, labels):
+    """Register one pass table (a team or the Hard suite) and return its placeholder. Entries must be in rank order."""
+    PASS_DATA[key] = {"labels": labels, "rows": [
+        {"model": e["name"], "params": e["params"], "pb": e["pb"], "rank": i, "a": e["a"], "n": e["n"],
+         "pct": round(100 * e["a"] / e["n"]) if e["n"] else None, "s": round(e["s"], 1) if e["s"] else None,
+         "runs": e["runs"], "cells": e["cells"], "day": e["day"]}
+        for i, e in enumerate(entries, 1)]}
+    return f'<div id="{key}-bar"></div>\n<div id="{key}" class="tbox"></div>'
 
 
 def hard_md(results=None):
-    """Markdown table of the hard suite, best first."""
+    """The Hard suite as a pass_block, best first."""
     res = hard_results() if results is None else results
     if not res:
         return "_No hard-suite runs yet._"
-    short = [c.replace("hard_", "") for c in HARD_CASES]
-    lines = ["| Model | Hard score | " + " | ".join(short) + " | median s/case |", "|---|---|" + "---|" * len(short) + "---|"]
+    entries = []
     for m, r in sorted(res.items(), key=lambda kv: (-kv[1]["a"] / max(kv[1]["n"], 1), kv[1]["s"] or 1e9)):
-        cells = [_hard_mark(*r["cases"][c]) if c in r["cases"] else "⬜ NA" for c in HARD_CASES]
-        lines.append(f"| `{m}` | {r['a']}/{r['n']} | " + " | ".join(cells) + f" | {r['s']:.0f} |")
-    return "\n".join(lines)
+        cells = [f"{r['cases'][c][0]}/{r['cases'][c][1]}" if c in r["cases"] else "⬜ NA" for c in HARD_CASES]
+        runs = max((n for _, n in r["cases"].values()), default="")
+        entries.append(pass_entry(m, r["a"], r["n"], runs, cells, r["s"] or None, r.get("day", "")))
+    return pass_block("hd", entries, [c.replace("hard_", "") for c in HARD_CASES])
