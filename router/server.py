@@ -247,14 +247,17 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
 
 
 @mcp.tool()
-async def dispatch_task(agent: str = "", task: str = "", plan_id: int = 0, role: str = "") -> str:
+async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", plan_id: int = 0, role: str = "") -> str:
     """Run a task on a local tf-role (agency-agents slug, e.g. 'engineering-code-reviewer').
     `role` is an alias for `agent`; when both are given, `agent` wins.
+    `task_type` is required: the kind of task (e.g. 'add test', 'fix bug', 'explain code'). It picks which approved templates apply.
     Optional plan_id links it to a plan task (claimed first, marked done/blocked after).
     Returns a summary of up to 5000 tokens and a task_id."""
     agent = agent or role
     if not agent:
         return "give agent (or role) and task"
+    if not task_type.strip():
+        return "give task_type: the kind of task, e.g. 'add test' or 'explain code' (see list_roles for templates)"
     err = task_error(agent, task, CFG, WORKSPACE)
     if err:
         return err
@@ -263,7 +266,7 @@ async def dispatch_task(agent: str = "", task: str = "", plan_id: int = 0, role:
         ok, msg = await _plan(plan.claim, plan_id, "router")
         if not ok:
             return f"plan task {plan_id} not started: {msg}"
-    prompt = store.with_templates(role["role"], task)  # approved templates go before the task text; the row keeps the task
+    prompt = store.with_templates(role["role"], task, task_type.strip())  # approved templates go before the task text; the row keeps the task
     return await _execute(store.create(agent, role["role"], task), agent, role, prompt, plan_id=plan_id)
 
 
@@ -351,8 +354,12 @@ def list_roles() -> str:
             f"{','.join(r['tools']) or 'all'}" for r in events.roles_rows(CFG)]
     teams = [f"team {n}: lead {t['lead']} | {t['description']} | roles {', '.join(t['roles'])}"
              for n, t in CFG["teams"].items()]
+    tpl = [f"  #{t['id']} {t['role']}: {t['title']} | task_type {t['task_type'] or '-'} | uses {t['uses']}"
+           for t in store.list_templates()]
     return "\n".join(["role: model | docker profile | compose backends | tools", *rows,
-                      "", f"orchestrator: {CFG['orchestrator']} (reviews each team lead's result)", *teams])
+                      "", f"orchestrator: {CFG['orchestrator']} (reviews each team lead's result)", *teams,
+                      "", "approved templates (applied only when a dispatch_task task_type and wording match):",
+                      *(tpl or ["  none"])])
 
 
 if __name__ == "__main__":

@@ -569,7 +569,7 @@ async def run(n, timed, ok, failure_mode, stats):
                 raise RuntimeError(f"preflight refused {cid} repeat {i + 1}: {err}")
             setup()
             role_t, watchdog = case_limits(agent)
-            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), watchdog))
+            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task, task_type="benchmark"), watchdog))
             if not ok(r) and "step_timeout" in r:  # the router's rule: a timed-out task gets one resume_task before scoring
                 tid = r[1:r.find("]")]
                 dt2, r = await timed(asyncio.wait_for(server.resume_task(tid), watchdog))
