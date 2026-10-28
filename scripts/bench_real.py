@@ -45,7 +45,6 @@ CASE_TIMEOUT = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # seconds; per-rep
 LOG_TAIL_LINES = 60
 LOG_CAP_BYTES = 4096
 INFRA_ERROR = "synaptree container not running"
-TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")
 INFRA_MARKERS = ("NotFoundError", "Error code: 404", "ComposeError", "preflight")  # missing model, compose/container start, preflight
 CONN_MARKERS = ("Connection closed",)
 # tool a case must have called (per the step trail) before its reply can count as verified; None = no requirement
@@ -76,7 +75,9 @@ def _has(*words):
 
 
 def strip_tid(r):
-    return re.sub(r"^\[[0-9a-f]{10}\]\s*", "", r)
+    """The reply body the checks read: no task id, and none of the router's trailer lines (status=, files_changed:)."""
+    body = re.sub(r"^\[[0-9a-f]{10}\]\s*", "", r)
+    return "\n".join(ln for ln in body.splitlines() if not re.match(r"\s*(status=|files_changed:)", ln))
 
 
 def tid_of(r):
@@ -105,6 +106,11 @@ def trail_tools(trail):
 def trail_conn_error(trail):
     """True when a tool_error event in the trail carries a connection failure (see CONN_MARKERS)."""
     return any(e.get("kind") == "tool_error" and any(m in e.get("error", "") for m in CONN_MARKERS) for e in trail)
+
+
+def connection_closed(r, trail):
+    """True when the reply is a connection-closed failure (router failure_reason) or the trail has one (see trail_conn_error)."""
+    return loop.failure_reason(r) == "connection" or trail_conn_error(trail)
 
 
 def _all_has(*words):
@@ -223,8 +229,10 @@ def classify(ran, error, uses_synaptree, container_bad, tool_missing=False):
         return "infra"  # missing model (HTTP 404), failed preflight or container start: the endpoint or harness, not the model
     if not ran and "unknown agent" in error:
         return "infra"  # router rejected the slug: harness/config fault, not the model
-    if not ran and any(m in error for m in TIMEOUT_MARKERS):
-        return "timeout"  # a LoopError or APITimeoutError timeout is the model's, even when it never called the required tool
+    # a LoopError or APITimeoutError timeout is the model's, even when it never called the required tool.
+    # "watchdog" is bench-only: the per-case limit (CASE_TIMEOUT) is not a router reason, so failure_reason does not know it.
+    if not ran and (loop.failure_reason(error) == "timeout" or "watchdog" in error.lower()):
+        return "timeout"
     if tool_missing and "LoopError" not in error:  # the required tool was never offered: the server failed to start, not the model
         return "infra"
     return "valid"
@@ -611,6 +619,8 @@ async def run(n, timed, ok, failure_mode, stats):
             runs.append(rec)
             print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s {status} ran={ran} verified={bool(good)} {'' if good else note}"[:200],
                   flush=True)
+            if connection_closed(r, trail):  # the router's connection is gone: every later repeat would fail the same way
+                raise RuntimeError(f"connection closed on {cid} repeat {i + 1}: the bench stopped here, rerun the realworld section")
         live = [x for x in runs if x["status"] != "infra"]
         nl = len(live)
         live_s = [x["s"] for x in live]

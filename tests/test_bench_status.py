@@ -96,18 +96,11 @@ class RunCase(unittest.IsolatedAsyncioTestCase):
         case, _, _ = await self.run_case(states=[HEALTHY, HEALTHY], reply=reply)
         self.assertEqual(case["runs"][0]["status"], "infra")
 
-    async def test_connection_closed_with_restart_is_infra(self):
+    async def test_connection_closed_with_restart_aborts_run(self):
+        # B4: a connection-closed reply stops the realworld loop (RuntimeError); the status rules are covered by classify tests
         reply = "[t1] FAILED (engineering-backend-architect/x): Connection closed"
-        case, disp, _ = await self.run_case(states=[HEALTHY, RESTARTED], reply=reply)
-        disp.assert_called_once()
-        run = case["runs"][0]
-        self.assertEqual(run["status"], "infra")
-        self.assertTrue(run["dispatched"])
-        self.assertEqual(run["error"], reply)
-        self.assertEqual(run["container_state"]["StartedAt"], "2026-10-16T05:00:00Z")
-        self.assertEqual(run["container_logs"], "LOGTAIL")
-        self.assertEqual(case["infra_runs"], 1)
-        self.assertEqual(case["status"], "infra")
+        with self.assertRaisesRegex(RuntimeError, "connection closed on find_symbol repeat 1"):
+            await self.run_case(states=[HEALTHY, RESTARTED], reply=reply)
 
     async def test_loop_error_with_healthy_container_is_valid(self):
         reply = "[t2] FAILED (engineering-backend-architect/x): no final answer in 8 steps"
@@ -146,15 +139,12 @@ class TrailChecks(unittest.IsolatedAsyncioTestCase):
     setUp = RunCase.setUp  # same temp scratch dir, BENCH_CASES and container_logs patches
     run_case = RunCase.run_case
 
-    async def test_connection_error_in_trail_is_infra_even_when_reply_is_answer(self):
+    async def test_connection_error_in_trail_aborts_run_even_when_reply_is_answer(self):
+        # B4: a connection error in the trail stops the realworld loop, even though the reply is an answer
         reply = f"[{HEX}] resolve_role is defined in router/config.py"
-        with mock.patch.object(bench_real.store, "get", return_value={"trail": CONN_TRAIL}):
-            case, _, _ = await self.run_case(states=[HEALTHY, HEALTHY], reply=reply)
-        run = case["runs"][0]
-        self.assertTrue(run["ok"])
-        self.assertEqual(run["status"], "infra")
-        self.assertEqual(run["trail_tools"], ["search_graph"])
-        self.assertEqual(case["status"], "infra")
+        with mock.patch.object(bench_real.store, "get", return_value={"trail": CONN_TRAIL}), \
+                self.assertRaisesRegex(RuntimeError, "connection closed on find_symbol repeat 1"):
+            await self.run_case(states=[HEALTHY, HEALTHY], reply=reply)
 
     async def test_required_tool_missing_from_trail_is_not_verified(self):
         reply = f"[{HEX}] Plan has 3 tasks, 1 done, 2 open."

@@ -146,7 +146,6 @@ def mount_ok(shown: str, workspace: str) -> bool:
 
 
 FAILURE_KINDS = ("no-tools", "no-tool-call", "timeout", "infra", "wrong-answer", "other")  # ties resolve in this order
-TIMEOUT_MARKERS = ("TimeoutError", "APITimeoutError", "timed out", "watchdog")  # same markers as scripts/bench_real.py
 INFRA_MARKERS = ("NotFoundError", "Error code: 404", "ComposeError", "preflight")  # same as scripts/bench_real.py
 
 
@@ -181,7 +180,8 @@ def run_failure_kind(run):
         return "infra"
     if any(m.lower() in text for m in INFRA_MARKERS):  # checked before timeouts: a ComposeError timeout is infra
         return "infra"
-    if run.get("status") == "timeout" or any(m.lower() in text for m in TIMEOUT_MARKERS):
+    from router.loop import failure_reason  # lazy, like the router imports below; ROOT is on sys.path
+    if run.get("status") == "timeout" or failure_reason(text) == "timeout" or "watchdog" in text:  # watchdog: bench-only limit
         return "timeout"
     if run.get("ok"):
         return "wrong-answer"  # reached a final answer, but the output did not verify
