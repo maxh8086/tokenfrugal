@@ -5,7 +5,8 @@ description: Review checklist for a diff or file. Findings are ordered by severi
 
 # Code review
 
-Tools: git_diff, read_file, search_files, ast-grep. Review only what the task names.
+Tools: git_diff, read_file, get_code_snippet, trace_path, ast-grep. Review only what the task names.
+Scope: judge a diff or file for defects. Do not explain code paths in general; that is role-analyzer.
 
 1. git_diff the named file or range; read_file for surrounding context.
 2. Correctness: wrong results, off-by-one, unhandled None or empty input, escaping exceptions.

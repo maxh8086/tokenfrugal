@@ -13,7 +13,7 @@ known_agents: [db-postgres-dev, db-postgres-admin, db-mysql-dev, db-mysql-admin,
 roles:
   builder:  {model: builder, profile: build,      max_steps: 12, timeout_s: 130, native: [synaptree, sandbox], tools: [read_file, write_file, edit_file, search_graph, get_code_snippet, run_tests], skills: [role-builder], improve: gated}
   data-engineer: {model: builder, profile: build-data, max_steps: 12, timeout_s: 80, tools: [read_file, list_directory], skills: [role-data], improve: gated}  # pipelines and files; SQL work goes to db-* roles
-  analyzer: {model: thinker, profile: analyze,    max_steps: 10, timeout_s: 90, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, git_diff, ast-grep], skills: [role-analyzer], improve: gated}
+  analyzer: {model: thinker, profile: analyze,    max_steps: 10, timeout_s: 90, native: [synaptree], tools: [read_file, search_graph, get_code_snippet, trace_path, ast-grep], skills: [role-analyzer], improve: gated}
   security: {model: thinker, profile: security,   max_steps: 10, timeout_s: 300, compose: [sonarqube], native: [sonarqube], tools: [read_file, search_files, ast-grep, search_sonar_issues_in_projects, search_security_hotspots, show_rule], skills: [security-audit], improve: gated}
   reviewer: {model: thinker, profile: analyze,    max_steps: 8, timeout_s: 90,  native: [synaptree], tools: [read_file, git_diff, get_code_snippet, trace_path, ast-grep], skills: [code-review], improve: gated}
   debugger: {model: thinker, profile: debug,      max_steps: 12, timeout_s: 300, native: [synaptree], tools: [read_file, search_graph, trace_path, git_log, sequentialthinking, execute_code], skills: [role-debugger], improve: gated}
@@ -27,10 +27,10 @@ roles:
   code-l4:  {model: builder, profile: code-l4, max_steps: 16, timeout_s: 450, native: [sandbox], tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests], skills: [code-l4], improve: gated}
   code-l5:  {model: builder, profile: code-l5, max_steps: 14, timeout_s: 450, native: [sandbox], tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python], skills: [code-l5], improve: gated}
   code-l6:  {model: builder, profile: code-l6, max_steps: 14, timeout_s: 450, native: [synaptree, sandbox], tools: [search_graph, trace_path, read_file, write_file, edit_file, run_tests], skills: [code-l6], improve: gated}
-  github-read: {model: thinker, profile: github, max_steps: 8, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read], improve: gated}  # read-only; create/close/merge PRs stay with Haiku
-  github-actions-read: {model: thinker, profile: github, max_steps: 8, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read], improve: gated}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
+  github-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read], improve: gated}  # read-only; create/close/merge PRs stay with Haiku
+  github-actions-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read], improve: gated}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops], improve: gated}
-  finance:  {model: thinker, profile: docs,       max_steps: 8,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown], skills: [role-finance], improve: gated}
+  finance:  {model: thinker, profile: docs,       max_steps: 8, timeout_s: 90,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [read_file, list_directory, fetch, web_search, crawl_markdown], skills: [role-finance], improve: gated}
   research: {model: thinker,                       max_steps: 8, timeout_s: 90,  compose: [crawl4ai, searxng], native: [crawl4ai], tools: [web_search, crawl_markdown, crawl_links], skills: [role-research], improve: gated}
   db-postgres-dev: {model: builder, profile: db-postgres-dev, max_steps: 10, compose: [db-postgres], tools: [execute_sql, search_objects], skills: [db-dev], improve: gated}
   db-postgres-admin: {model: thinker, profile: db-postgres-admin, max_steps: 8, compose: [db-postgres], tools: [execute_sql, search_objects], skills: [db-admin], improve: gated}
@@ -205,7 +205,7 @@ members:
 # only after it passes its own test. To activate one, move its entry under `roles:` and add
 # `model: <logical name>` once the model is chosen.
 pending_roles:
-  ui-components: {profile: build,   max_steps: 12, timeout_s: 120, native: [sandbox], tools: [read_file, write_file, edit_file, search_files, run_tests], skills: [role-ui-builder], improve: gated}   # shadcn/Radix components
+  ui-components: {profile: build,   max_steps: 12, timeout_s: 120, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}   # shadcn/Radix components
   ui-layout:     {profile: build,   max_steps: 12, timeout_s: 150, native: [sandbox], tools: [read_file, write_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}   # Tailwind grids, responsive layout, motion when the spec asks
   ui-polish:     {profile: build,   max_steps: 10, timeout_s: 120, native: [sandbox], tools: [read_file, edit_file, run_tests], skills: [role-ui-builder], improve: gated}   # spacing, shadows, the chosen aesthetic, diff-only fixes from a review
   ui-tokens:     {profile: build,   max_steps: 10, timeout_s: 90,  native: [sandbox], tools: [read_file, write_file, edit_file], skills: [role-ui-tokens], improve: gated}                                  # CSS variables and tokens file

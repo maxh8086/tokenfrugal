@@ -16,3 +16,4 @@ Tools: search_graph, get_code_snippet, read_file, edit_file, write_file, run_tes
 7. Stop when run_tests passes, or after 4 failed attempts. Report the last error line.
 
 Never edit test files. Use write_file only for a new file the task names.
+Scope: application source code only. CI, Docker, compose and config files go to role-devops; stop and report "use devops" if the task names only those.
