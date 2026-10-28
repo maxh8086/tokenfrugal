@@ -368,9 +368,9 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 - Done when: gate order and rejection reasons have offline tests that stub the model calls.
 - Not the same as `scripts/role_improve.py` (the self-improvement gate above).
 
-### Stage 4: Haiku cloud baseline (decide)
-- `scripts/haiku_run.py` exists. Its model is now `claude-haiku-5-5` (fixed 2026-10-27).
-- The Haiku 5.5 full n=3 run is already in `benchmark.csv` and `cloud.csv` (see "Haiku 80/81" above). Decide whether the script is still needed. If not, delete it. Cloud results are never ranked.
+### Stage 4: Haiku cloud baseline (closed 2026-10-28)
+- Closed. `scripts/haiku_run.py` and `tests/test_haiku_run.py` were deleted. The user confirmed the Haiku 5.5 run is in `benchmark.csv` and `cloud.csv` ("Haiku 80/81" above) and that only updated run results are kept.
+- Cloud results are never ranked.
 
 ### Stage 5: Codex / cloud agents README (open)
 - `README.md` has the Codex section and the AGENTS.md template (lines 68-96). It is still marked "Not yet verified". Run a real Codex session, then remove that note.

@@ -12,7 +12,7 @@ import time
 from datetime import datetime, timezone
 
 from router import loop, preflight, server, store
-from router.config import ROOT, SYNAPTREE_PROJECT, WORKSPACE, resolve_role  # SYNAPTREE_PROJECT: read by scripts/haiku_run.py
+from router.config import ROOT, SYNAPTREE_PROJECT, WORKSPACE, resolve_role
 
 SCRATCH = ROOT / "bench" / "scratch"
 
