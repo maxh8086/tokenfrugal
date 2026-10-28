@@ -1,0 +1,40 @@
+team,role,model,tag,json,runs,passes,infra,pass_pct,mean_s_warm,failure
+development,builder,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,12.6,
+development,data-engineer,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,8.4,
+development,analyzer,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,24.1,
+development,reviewer,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,16.0,
+development,debugger,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,30.8,
+development,code-l1,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,9.6,
+development,code-l2,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,8.8,
+development,code-l3,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,9.8,
+development,code-l4,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,7.8,
+development,code-l5,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,10.4,
+development,code-l6,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,11.0,
+development,db-postgres-dev,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,0,3,,,infra: compose backend did not start
+development,db-mysql-dev,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,0,3,,,infra: compose backend did not start
+development,db-mssql-dev,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,0,3,,,infra: compose backend did not start
+development,db-oracle-dev,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,7.6,
+development,db-elastic-dev,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,29.4,
+development,db-mongo-dev-l1,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,2,0,67,144.4,[760e53197d] FAILED (db-mongo-dev-l1/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: ta
+development,db-mongo-dev-l2,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,0,0,0,,[115831f39a] FAILED (db-mongo-dev-l2/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: ta
+development,db-redis-dev-l1,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,87.7,
+development,db-redis-dev-l2,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,1,1,50,,[7c6c581719] FAILED (db-redis-dev-l2/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: ta
+development,db-redis-dev-l3,maternion/spark-x2.5:4b-q8_0,spark-team-development,20261028-104230-spark-team-development.json,3,3,0,100,21.8,
+ui-ux,designer,maternion/spark-x2.5:4b-q8_0,spark-team-ui-ux,20261028-111657-spark-team-ui-ux.json,3,3,0,100,41.6,
+ui-ux,browser,maternion/spark-x2.5:4b-q8_0,spark-team-ui-ux,20261028-111657-spark-team-ui-ux.json,3,3,0,100,47.9,
+ops,devops,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,3,0,100,29.0,
+ops,tracker,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,1,0,33,,[458f0d714b] FAILED (tracker/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: task timed
+ops,github-read,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,0,0,,[5b9e47b406] FAILED (github-read/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: task t
+ops,github-actions-read,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,0,0,,[1d71379c47] FAILED (github-actions-read/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError
+ops,db-postgres-admin,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,3,,,infra: compose backend did not start
+ops,db-mysql-admin,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,3,,,infra: compose backend did not start
+ops,db-mssql-admin,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,2,0,,[35ce72a691] FAILED (db-mssql-admin/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: tas
+ops,db-oracle-admin,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,3,0,100,46.9,
+ops,db-elastic-admin,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,3,0,100,34.9,
+ops,db-mongo-admin-l1,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,0,0,,[410e1d4845] FAILED (db-mongo-admin-l1/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: 
+ops,db-mongo-admin-l2,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,0,0,0,,[ac28bf89e4] FAILED (db-mongo-admin-l2/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: 
+ops,db-redis-admin-l1,maternion/spark-x2.5:4b-q8_0,spark-team-ops,20261028-112117-spark-team-ops.json,3,3,0,100,39.9,
+security,security,maternion/spark-x2.5:4b-q8_0,spark-team-security,20261028-115858-spark-team-security.json,3,0,0,0,,FAILED TimeoutError after 600s
+research,research,maternion/spark-x2.5:4b-q8_0,spark-team-research,20261028-124801-spark-team-research.json,3,1,0,33,64.9,[5a9ad307f9] FAILED (research/maternion/spark-x2.5:4b-q8_0) reason=timeout error_kind=step_timeout: LoopError: task time
+research,finance,maternion/spark-x2.5:4b-q8_0,spark-team-research,20261028-124801-spark-team-research.json,3,3,0,100,27.8,
+research,docs,maternion/spark-x2.5:4b-q8_0,spark-team-research,20261028-124801-spark-team-research.json,3,3,0,100,18.9,

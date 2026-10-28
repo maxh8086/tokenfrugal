@@ -30,6 +30,7 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
 <label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
+<label>Team<select id="ft"><option value="">(any)</option></select></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
 <label>From date<input id="fd" type="date"></label>
 <label>Show<select id="lim"><option value="10" selected>Top 10 by Rank</option><option value="25">Top 25</option><option value="50">Top 50</option><option value="">All runs</option></select></label>
@@ -148,11 +149,12 @@ function findModel(){
   +`<p class="mut">${A.length} models qualify (${L.length} runs). Fit score = accuracy and log-scaled speed mixed by the priority slider.</p>`;
 }
 [...new Set(D.map(r=>r.hardware_id).filter(Boolean))].forEach(h=>$("fh").add(new Option(h,h)));
+[...new Set(D.map(r=>r.team).filter(Boolean))].sort().forEach(t=>$("ft").add(new Option(t,t)));
 ["fh","fv","fr","fw"].forEach(i=>$(i).addEventListener("input",findModel));
 function draw(){
  findModel();
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
- const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
+ const ft=$("ft").value,q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
+ const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!ft||r.team===ft)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R2=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R2.sort((a,b)=>{let x=a[sk]??1e9,y=b[sk]??1e9;x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;let c=(x>y?1:x<y?-1:0)*sd;return c});
  R2.sort((a,b)=>b.builder_model.startsWith("claude-")-a.builder_model.startsWith("claude-"));

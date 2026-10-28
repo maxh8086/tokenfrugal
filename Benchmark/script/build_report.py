@@ -229,6 +229,7 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
 <label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
+<label>Team<select id="ft"><option value="">(any)</option></select></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
 <label>From date<input id="fd" type="date"></label>
 <label>Show<select id="lim"><option value="10" selected>Top 10 by Rank</option><option value="25">Top 25</option><option value="50">Top 50</option><option value="">All runs</option></select></label>
@@ -347,11 +348,12 @@ function findModel(){
   +`<p class="mut">${A.length} models qualify (${L.length} runs). Fit score = accuracy and log-scaled speed mixed by the priority slider.</p>`;
 }
 [...new Set(D.map(r=>r.hardware_id).filter(Boolean))].forEach(h=>$("fh").add(new Option(h,h)));
+[...new Set(D.map(r=>r.team).filter(Boolean))].sort().forEach(t=>$("ft").add(new Option(t,t)));
 ["fh","fv","fr","fw"].forEach(i=>$(i).addEventListener("input",findModel));
 function draw(){
  findModel();
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
- const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
+ const ft=$("ft").value,q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
+ const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!ft||r.team===ft)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R2=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R2.sort((a,b)=>{let x=a[sk]??1e9,y=b[sk]??1e9;x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;let c=(x>y?1:x<y?-1:0)*sd;return c});
  R2.sort((a,b)=>b.builder_model.startsWith("claude-")-a.builder_model.startsWith("claude-"));
@@ -538,7 +540,7 @@ def _data():
                     "score": r["score"], "max": r["max"], "pct": r["pct"], "tps": r["tps"], "s": num(r, "mean_s_per_case"),
                     "tot": num(r, "total_s"), "rank": r["rank"], "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
                     "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
-                    "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
+                    "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"], "team": r.get("team") or "",
                     "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "").lstrip("'") for c in CASES}})
     return out
 
@@ -567,6 +569,30 @@ def team_md():
             out.append(f"- {cls}, {n} role(s): {label}: {picks}")
         if pending:
             out.append(f"- {pending} role(s) have no model yet, not scored")
+        out.append("")
+    return "\n".join(out)
+
+
+TEAM_RESULTS = B / "results" / "team_results.csv"
+
+
+def team_results_md():
+    """Per team, one table of its active roles from results/team_results.csv (written by team_results.py).
+    Infra repeats (the compose backend did not start) are not in the pass rate. Empty if the file is missing."""
+    if not TEAM_RESULTS.exists():
+        return "_No per-team results yet (results/team_results.csv is missing)._"
+    by_team = {}
+    for r in csv.DictReader(TEAM_RESULTS.open(encoding="utf-8", newline="")):
+        by_team.setdefault(r["team"], []).append(r)
+    out = []
+    for team, rs in by_team.items():
+        out += [f"**{team}** ({len(rs)} roles)", "",
+                "| Role | Model | Runs | Passed | Infra | Pass rate % | Mean s/case (warm) | Failure |",
+                "|---|---|--:|--:|--:|--:|--:|---|"]
+        for r in rs:
+            fail = r["failure"].replace("|", "\\|").replace("\n", " ")[:80]
+            out.append(f"| `{r['role']}` | `{r['model']}` | {r['runs']} | {r['passes']} | {r['infra']} "
+                       f"| {r['pass_pct']} | {r['mean_s_warm']} | {fail} |")
         out.append("")
     return "\n".join(out)
 
@@ -602,6 +628,12 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 Each team is scored through the families its roles use: builder roles on the builder cases, thinker roles on the thinker cases. Hard and coding scores are not mapped to a team. Picks follow the same rule as the role tables above.
 
 {team_md()}
+
+### Per team, per role (results/team_results.csv)
+
+Each active role runs n=3 on its team's task (`scripts/bench_team_tasks.py`). Infra repeats, where the compose backend did not start, are left out of the pass rate.
+
+{team_results_md()}
 
 ### Recommended model per role
 

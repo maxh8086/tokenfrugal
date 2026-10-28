@@ -26,6 +26,7 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
+from scripts.bench_team_tasks import TEAM_TASKS  # noqa: E402
 from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_tf_roles, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
@@ -45,20 +46,7 @@ def section_timeout(n):
 SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
 
 # One short, checkable task per role: (agent slug, task).
-ROLE_TASKS = {
-    "builder": ("engineering-backend-architect",
-                "Use search_graph to find the symbol named summarize and report its file path."),
-    "analyzer": ("engineering-software-architect", f"Use search_graph to find the symbol named run in project {SYNAPTREE_PROJECT} and say which file defines it."),
-    "reviewer": ("testing-code-reviewer", "Read /workspace/%s/router/summarize.py and say in two sentences what it does." % SYNAPTREE_PROJECT),
-    "debugger": ("engineering-sre", "Read /workspace/%s/router/summarize.py and name its public functions." % SYNAPTREE_PROJECT),
-    "research": ("support-docs-writer", "Read /workspace/%s/README.md and give a one-sentence description of the project." % SYNAPTREE_PROJECT),
-    "data": ("gis-analyst", "List the files in /workspace/%s/router and name three." % SYNAPTREE_PROJECT),
-    "tracker": ("project-management-project-shepherd", "Report the plan status."),
-    "security": ("security-auditor", "Read /workspace/%s/router/config.py and list any hard-coded secrets (say none if none)." % SYNAPTREE_PROJECT),
-    "designer": ("design-ui-designer", "Say what design tools you have."),
-    "browser": ("testing-evidence-collector", "Say what browser tools you have."),
-    "docs": ("engineering-technical-writer", "Read /workspace/%s/router/summarize.py and say in one sentence what it does." % SYNAPTREE_PROJECT),
-}
+ROLE_TASKS = TEAM_TASKS  # one entry per active role, grouped by team in scripts/bench_team_tasks.py
 
 
 def pct(xs, p):
@@ -82,7 +70,16 @@ async def timed(coro):
     return time.perf_counter() - t, str(r)
 
 
+# Harness errors come back as ordinary text, so they must not count as passes (a run with a bad mount reported "ok").
+HARNESS_ERRORS = ("is not in the workspace", "fix the mount", "container is not running")
+# Tool-auth failures (e.g. the filesystem MCP answering 401) come back as a model reply that says it could not read
+# the file. Matched case-insensitively, since the model may capitalise them differently.
+AUTH_ERRORS = ("tool authorization error", "401 unauthorized")
+
+
 def ok(r):
+    if any(m in r for m in HARNESS_ERRORS) or any(m in r.lower() for m in AUTH_ERRORS):
+        return False
     return "FAILED" not in r[:60] and not r.startswith(("EXC", "plan task"))
 
 
@@ -91,7 +88,7 @@ def failure_mode(r):
     return (r[i:i + 110] if i >= 0 else r[:110]).replace("\n", " ")
 
 
-async def bench_roles(n):
+async def bench_roles(n, only=None):
     res = {}
     role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
     cfg = load_tf_roles()
@@ -99,7 +96,8 @@ async def bench_roles(n):
     # assert not missing, f"bench does not cover roles: {sorted(missing)}"
     if missing:  # report uncovered roles instead of aborting the whole section
         print(f"  roles: no bench task for {sorted(missing)}, skipped", flush=True)
-    for role, (agent, task) in ROLE_TASKS.items():
+    chosen = ROLE_TASKS if not only else {r: ROLE_TASKS[r] for r in only}
+    for role, (agent, task) in chosen.items():
         assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
         runs = []
         for i in range(n):
@@ -298,8 +296,15 @@ async def main():
     ap.add_argument("--n", type=int, default=5)
     ap.add_argument("--only", default=",".join(SECTIONS))
     ap.add_argument("--tag", default="run")
+    ap.add_argument("--team", default="", help="comma-separated teams; runs every active role in each team (roles section)")
     a = ap.parse_args()
     want = a.only.split(",")
+    cfg = load_tf_roles()
+    role_only = []  # empty = every active role in ROLE_TASKS
+    for t in [x.strip() for x in a.team.split(",") if x.strip()]:
+        if t not in cfg["teams"]:
+            ap.error(f"unknown team: {t}")
+        role_only += [r for r in cfg["teams"][t]["roles"] if r in cfg["roles"] and r in ROLE_TASKS and r not in role_only]
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     data = {"tag": a.tag, "stamp": stamp, "n": a.n, "results": {},
             "env": bench_env.capture_env(), "task_timeout": bench_env.task_timeout(_ENV_AT_START, TASK_TIMEOUT_DEFAULT)}
@@ -314,7 +319,10 @@ async def main():
     async def _real(n):
         return await bench_real.run(n, timed, ok, failure_mode, stats)
 
-    fns = {"roles": bench_roles, "realworld": _real, "context": bench_context, "concurrency": bench_concurrency, "resume": bench_resume,
+    async def _roles(n):
+        return await bench_roles(n, role_only or None)
+
+    fns = {"roles": _roles, "realworld": _real, "context": bench_context, "concurrency": bench_concurrency, "resume": bench_resume,
            "plan": bench_plan, "resources": bench_resources}
     OUT.mkdir(exist_ok=True)
     for s in SECTIONS:
