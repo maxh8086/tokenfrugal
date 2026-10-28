@@ -47,8 +47,8 @@ ROLES.update({
     "db-mongo-dev-l2": ("mongo", "dev", ["insert-many", "update-many", "create-collection", "create-index", "find", "collection-schema"]),
     "db-mongo-admin-l1": ("mongo", "admin", ["list-databases", "list-collections", "collection-schema", "collection-indexes", "db-stats", "collection-storage-size"]),
     "db-mongo-admin-l2": ("mongo", "admin", ["explain", "find", "aggregate", "count", "mongodb-logs", "collection-indexes"]),
-    "db-redis-dev-l1": ("redis", "dev", ["get", "set", "hgetall", "hset", "lrange", "smembers"]),
-    "db-redis-dev-l2": ("redis", "dev", ["lpush", "rpush", "sadd", "expire", "json_get", "json_set"]),
+    "db-redis-dev-l1": ("redis", "dev", ["scan_keys", "get", "set", "hgetall", "hset", "lrange"]),
+    "db-redis-dev-l2": ("redis", "dev", ["scan_keys", "lpush", "sadd", "expire", "json_get", "json_set"]),
     "db-redis-dev-l3": ("redis", "dev", ["create_vector_index_hash", "set_vector_in_hash", "hybrid_search", "search_redis_documents", "get_indexed_keys_number", "scan_keys"]),
     "db-redis-admin-l1": ("redis", "admin", ["info", "dbsize", "client_list", "scan_keys", "get_indexes", "get_index_info"]),
 })

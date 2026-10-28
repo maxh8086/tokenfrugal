@@ -9,11 +9,11 @@ servers:
   secrets: default
   tools:
   - lpush
-  - rpush
   - sadd
   - expire
   - json_get
   - json_set
+  - scan_keys
   image: mcp/redis@sha256:e886a7e9990a084a20d46adcea8e7c89d539271f1b453ffabdce4c3f96f27fa0
   snapshot:
     server:
