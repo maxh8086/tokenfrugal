@@ -155,3 +155,11 @@ def with_templates(role: str, task: str, task_type: str = "") -> str:
         return task
     head = "\n\n".join(f"[template: {p['title']}]\n{p['body']}" for p in picked)
     return f"{head}\n\n[task]\n{task}"
+
+
+def list_templates() -> list[dict]:
+    """Approved templates, for display only. Nothing is applied from this list; a template runs only when pick_templates matches it."""
+    with _db() as c:
+        c.row_factory = sqlite3.Row
+        rows = c.execute("SELECT id, role, task_type, title, uses FROM templates WHERE status='approved' ORDER BY role, id").fetchall()
+    return [dict(r) for r in rows]

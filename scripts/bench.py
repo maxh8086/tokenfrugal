@@ -103,7 +103,7 @@ async def bench_roles(n):
         assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
         runs = []
         for i in range(n):
-            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task), role_timeout))
+            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task, task_type="benchmark"), role_timeout))
             if "TimeoutError" in r or r.startswith("EXC TimeoutError"):
                 r = f"FAILED TimeoutError after {role_timeout:g}s"
             # a reply shorter than 20 chars (after dropping the leading "[tid] ") is a failure, not a success
@@ -128,7 +128,7 @@ async def bench_context(n, sizes=(2000, 4000, 8000, 12000, 16000, 24000, 32000))
         prompt = filler[:half] + " SECRET-WORD is pelican. " + filler[half:] + "\nWhat is SECRET-WORD? Answer with the word only."
         runs = []
         for _ in range(max(1, n // 2)):
-            dt, r = await timed(server.dispatch_task("support-docs-writer", prompt))
+            dt, r = await timed(server.dispatch_task("support-docs-writer", prompt, task_type="benchmark"))
             runs.append({"s": round(dt, 1), "ok": ok(r), "found": "pelican" in r.lower(), "out": r[:120]})
         res[str(toks)] = {"success": f"{sum(x['ok'] for x in runs)}/{len(runs)}",
                           "recall": f"{sum(x['found'] for x in runs)}/{len(runs)}",
@@ -168,7 +168,7 @@ async def bench_concurrency(n, levels=(1, 2, 4, 8)):
     agent, task = ROLE_TASKS["research"]
     for k in levels:
         t = time.perf_counter()
-        out = await asyncio.gather(*[timed(server.dispatch_task(agent, task)) for _ in range(k)])
+        out = await asyncio.gather(*[timed(server.dispatch_task(agent, task, task_type="benchmark")) for _ in range(k)])
         wall = time.perf_counter() - t
         per = [dt for dt, _ in out]
         res[str(k)] = {"wall_s": round(wall, 1), "per_task": stats(per), "success": f"{sum(ok(r) for _, r in out)}/{k}",
@@ -176,8 +176,8 @@ async def bench_concurrency(n, levels=(1, 2, 4, 8)):
                        "failures": sorted({failure_mode(r) for _, r in out if not ok(r)})}
         print(f"  concurrency/{k} {res[str(k)]}", flush=True)
     # mixed models: builder + thinker at once forces model swaps in VRAM
-    mixed = await asyncio.gather(timed(server.dispatch_task(*ROLE_TASKS["builder"])), timed(server.dispatch_task(*ROLE_TASKS["research"])),
-                                 timed(server.dispatch_task(*ROLE_TASKS["builder"])), timed(server.dispatch_task(*ROLE_TASKS["research"])))
+    mixed = await asyncio.gather(timed(server.dispatch_task(*ROLE_TASKS["builder"], task_type="benchmark")), timed(server.dispatch_task(*ROLE_TASKS["research"], task_type="benchmark")),
+                                 timed(server.dispatch_task(*ROLE_TASKS["builder"], task_type="benchmark")), timed(server.dispatch_task(*ROLE_TASKS["research"], task_type="benchmark")))
     res["mixed_models_4"] = {"s": [round(dt, 1) for dt, _ in mixed], "success": f"{sum(ok(r) for _, r in mixed)}/4"}
     print(f"  concurrency/mixed {res['mixed_models_4']}", flush=True)
     return res
@@ -190,7 +190,7 @@ async def bench_resume(n, rounds=5):
     loop.TASK_TIMEOUT = 2.0
     try:
         agent, task = ROLE_TASKS["builder"]
-        dt, r = await timed(server.dispatch_task(agent, task))
+        dt, r = await timed(server.dispatch_task(agent, task, task_type="benchmark"))
         tid = r[1:r.find("]")]
         rows = [{"round": 0, "s": round(dt, 1), "ok": ok(r), "msgs": len(store.get(tid)["messages"] or [])}]
         for i in range(1, rounds + 1):
@@ -242,7 +242,7 @@ async def bench_resources(n):
             peak.append(sh(["docker", "stats", "--no-stream", "--format", "{{.Name}} {{.CPUPerc}} {{.MemUsage}}"]))
             await asyncio.sleep(1)
     s = asyncio.create_task(sample())
-    dt, r = await timed(server.dispatch_task(agent, task))
+    dt, r = await timed(server.dispatch_task(agent, task, task_type="benchmark"))
     s.cancel()
     res.update(gpu_after=sh(gpu), run_s=round(dt, 1), ok=ok(r), docker_samples=peak[-5:],
                ollama_ps=sh(["ollama", "ps"]), leftover_containers=sh(["docker", "ps", "--format", "{{.Names}}"]))
