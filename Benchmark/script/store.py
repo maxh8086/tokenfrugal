@@ -62,7 +62,16 @@ TAIL_COLS = ["mean_s_per_case", "context_used_peak_tokens", "gpu_memory_capacity
 ROLES = list(dict.fromkeys(t["role"] for t in TESTS.values()))  # roles, in TESTS order
 MODEL_COLS = [f"{role}_model" for role in ROLES]  # which model ran each role
 PIPELINE = ["raw_json"] + MODEL_COLS
-SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE + ["note"]  # note: free text, e.g. discontinued models
+SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE + ["note", "team"]  # note: free text, e.g. discontinued models
+
+
+def team_of(row):
+    """Team a summary row belongs to: a builder score is development, a thinker-only score is research."""
+    if str(row.get("builder_score") or "").strip():
+        return "development"
+    if str(row.get("thinker_score") or "").strip():
+        return "research"
+    return ""
 FRACTION_COLS = ["total_score"] + [t["score"] for t in TESTS.values()]
 
 # Thinker cases whose raw JSON key is a role_* name
@@ -260,7 +269,7 @@ def upsert_summary(bench_path, rec_summary, config):
     row.update({c: config.get(c, "") for c in SUMMARY_COLS})
     row.update(rec_summary)
     row["model"] = config["model"]
-    rows = rank_rows(kept + [row])
+    rows = [dict(r, team=team_of(r)) for r in rank_rows(kept + [row])]
     backup = _backup(bench_path)
     _write(bench_path, SUMMARY_COLS,
            [{k: csvstore.excel_safe(v) if k in FRACTION_COLS else v for k, v in r.items()} for r in rows])

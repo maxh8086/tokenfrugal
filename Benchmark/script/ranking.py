@@ -48,6 +48,19 @@ def _live(name):
     return [r for r in _load(name) if not (r.get("superseded") or "").strip()]
 
 
+def _params_by_model():
+    """Model -> params text from the summary CSVs (benchmark.csv, then cloud.csv); the newest non-blank value wins.
+    The detail files have no params column, so this is where a run's params come from."""
+    out = {}
+    for name in ("benchmark.csv", "cloud.csv"):
+        for r in _load(name):
+            m = (r.get("builder_model") or r.get("model") or "").strip()
+            p = (r.get("params") or "").strip()
+            if m and p:
+                out[m] = p
+    return out
+
+
 def _detail_runs():
     """One wide row per run, joined on run_id from all four detail files: realworld (builder.csv, thinker.csv), hard
     (hard_test.csv) and coding (coder.csv). Together they are the checks benchmark.csv adds up, so a complete run has FULL checks."""
@@ -71,7 +84,8 @@ def _detail_runs():
             continue
         a = sum(int(v.split("/")[0]) for v in g["cases"].values() if "/" in v)
         n = sum(int(v.split("/")[1]) for v in g["cases"].values() if "/" in v)
-        row = {"model": g["builder_model"] or g["thinker_model"], "date": g["date"], "params": "", "git_sha": g["git"],
+        row = {"model": g["builder_model"] or g["thinker_model"], "date": g["date"],
+               "params": _PARAMS.get(g["builder_model"] or g["thinker_model"], ""), "git_sha": g["git"],
                "harness_version": "", "shared_system_memory_gb": "", "total_s": "", "run_id": run_id,
                "builder_model": g["builder_model"] or g["thinker_model"], "thinker_model": g["thinker_model"],
                "score": str(a), "max": str(n), "ran": str(g["ran"]), "valid_cases": str(g["valid"]),
@@ -85,6 +99,7 @@ def _detail_runs():
     return out
 
 
+_PARAMS = _params_by_model()
 rows = [r for r in _detail_runs() + _load("cloud.csv")]  # cloud rows are shown, never ranked (_local)
 rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
 
@@ -210,7 +225,7 @@ def subtotal(r, cases):
 
 def sub_md(r, cases):
     a, n = subtotal(r, cases)
-    return f"{a}/{n}" if n else "·"
+    return f"{a}/{n}" if n else "⬜ NA"
 
 
 def tps(r):
@@ -288,8 +303,9 @@ def md_table():
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
         comp = "" if r["rank"] is None else str(r["rank"])
-        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
-                 f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
+        score = frac_cell(f"{r['score']}/{r['max']}")
+        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {score} "
+                 f"| {r['pct']} | {frac_cell(r['builder_score'])} | {frac_cell(r['thinker_score'])} "
                  f"| {r['mean_s_per_case']} | {'' if r['tps'] is None else r['tps']} | {comp} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
@@ -438,11 +454,21 @@ def hard_results(path=None):
     return out
 
 
-def _hard_mark(a, n):
-    """Colour mark plus verified count for one hard case, e.g. '🟨 2/3'."""
+def score_cell(a, n):
+    """Colour mark plus run score, e.g. '🟧 2/3'. Used by every table so a score reads the same everywhere."""
     a, n = int(a), int(n)
-    mark = "🟩" if n and a == n else "🟨" if a > 0 else "🟥"
+    mark = "🟩" if n and a == n else "🟧" if a > 0 else "🟥"
     return f"{mark} {a}/{n}"
+
+
+def frac_cell(s):
+    """score_cell for an 'a/b' string (the form the CSVs store). Blank or unparsable gives '⬜ NA' (not run)."""
+    m = re.fullmatch(r"'?(\d+)/(\d+)", str(s or "").strip())
+    return score_cell(m.group(1), m.group(2)) if m else "⬜ NA"
+
+
+def _hard_mark(a, n):
+    return score_cell(a, n)
 
 
 def hard_md(results=None):
@@ -453,6 +479,6 @@ def hard_md(results=None):
     short = [c.replace("hard_", "") for c in HARD_CASES]
     lines = ["| Model | Hard score | " + " | ".join(short) + " | median s/case |", "|---|---|" + "---|" * len(short) + "---|"]
     for m, r in sorted(res.items(), key=lambda kv: (-kv[1]["a"] / max(kv[1]["n"], 1), kv[1]["s"] or 1e9)):
-        cells = [_hard_mark(*r["cases"][c]) if c in r["cases"] else "·" for c in HARD_CASES]
+        cells = [_hard_mark(*r["cases"][c]) if c in r["cases"] else "⬜ NA" for c in HARD_CASES]
         lines.append(f"| `{m}` | {r['a']}/{r['n']} | " + " | ".join(cells) + f" | {r['s']:.0f} |")
     return "\n".join(lines)

@@ -62,13 +62,13 @@ def role_rank(cases, top=5):
         tps = f"{sum(m['t']) / len(m['t']):.1f}" if m["t"] else ""
         spc = f"{sum(m['s']) / len(m['s']):.1f}" if m["s"] else ""
         return (f"| {DOT[_status(m)]} | {i} | `{name}` | {m['d']} | {m['runs']} "
-                f"| {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {round(100 * m['score'])} | {m['shared']:g} | {spc} | {tps} |")
+                f"| {score_cell(m['a'], m['n'])} | {round(100 * m['a'] / m['n'])} | {round(100 * m['score'])} | {m['shared']:g} | {spc} | {tps} |")
 
     o = head + [row(i, n, m) for i, (n, m) in enumerate(ranked[:top], 1)]
     ref = cloud_reference(cases)
     if ref:
         a, n = ref[1]["a"], ref[1]["n"]
-        o.append(f"| ☁️ | ref | `{ref[0]}` (cloud reference, not ranked) | | | {a}/{n} | {round(100 * a / n)} | 100 | | | |")
+        o.append(f"| ☁️ | ref | `{ref[0]}` (cloud reference, not ranked) | | | {score_cell(a, n)} | {round(100 * a / n)} | 100 | | | |")
     rest = ranked[top:]
     if rest:
         o += ["", f"<details><summary>Show the other {len(rest)} models</summary>", "", *head,
@@ -99,13 +99,10 @@ def role_text():
 
 
 def cell_md(r, c):
-    f = case_frac(r, c)
-    if f is None:
-        return "·"
-    mark = "🟩" if f == 1 else "🟨" if f > 0 else "🟥"
-    if f == 0 and c in REQUIRED_TOOL_CASES:
-        mark += "⚠"
-    return mark
+    out = frac_cell(r.get(c))
+    if case_frac(r, c) == 0 and c in REQUIRED_TOOL_CASES:
+        out += "⚠"
+    return out
 
 
 def heatmap(cases):
@@ -127,7 +124,7 @@ LEGEND_MD = """- Each **run** is one local model setup, scored on the same cases
 - **Builder** writes code and edits files. **Thinker** reads, analyses and browses. The models for each role are set in `router/tf-roles.yaml`. Context window per model follows the `num_ctx` policy in `Benchmark/README.md`.
 - A task uses **one** model at a time. Models never run together or talk to each other.
 - The role table shows which tools each role is allowed to call. A case needs the tools of its role.
-- 🟩 all checks passed, 🟨 some passed, 🟥 none passed, `·` not run.
+- 🟩 all checks passed, 🟧 some passed, 🟥 none passed, `⬜ NA` not run.
 - ⚠ on a case that needs a specific tool means that run scored 0 on it, so the tool was likely missing or not called."""
 
 auto = f"""<!-- BEGIN:auto -->
@@ -229,6 +226,7 @@ details{margin:12px 0;font-size:13px}summary{cursor:pointer;font-weight:600}deta
 <label>Max s/case<input id="mt" type="number" placeholder="any"></label>
 <label>Max params (B)<input id="mp" type="number" placeholder="any"></label>
 <label>Name contains<input id="q"></label>
+<label>Team<select id="ft"><option value="">(any)</option></select></label>
 <label>Must pass case<select id="cs"><option value="">(any)</option></select></label>
 <label>From date<input id="fd" type="date"></label>
 <label>Show<select id="lim"><option value="10" selected>Top 10 by Rank</option><option value="25">Top 25</option><option value="50">Top 50</option><option value="">All runs</option></select></label>
@@ -242,6 +240,7 @@ const D=__DATA__,C=__CASES__,REQ=__REQ__,CD=__CODING__;let sk="rank",sd=1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
+const markF=s=>{const m=/^(\d+)\/(\d+)$/.exec(String(s||"").replace(/^'/,""));if(!m)return"⬜ NA";const a=+m[1],n=+m[2];return(n&&a===n?"🟩":a>0?"🟧":"🟥")+" "+a+"/"+n};
 const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
@@ -339,7 +338,7 @@ function findModel(){
  A.forEach(a=>{a.speed=hi>lo?Math.log(hi/a.mean_s_per_case)/Math.log(hi/lo):1;a.fit=100*((1-w)*a.pct/100+w*a.speed)});
  A.sort((a,b)=>b.fit-a.fit||b.pct-a.pct);
  const front=A.filter(a=>!A.some(b=>b!==a&&b.pct>=a.pct&&b.mean_s_per_case<=a.mean_s_per_case&&(b.pct>a.pct||b.mean_s_per_case<a.mean_s_per_case)));
- const top=A.slice(0,3).map((a,i)=>`<tr><td>${i+1}</td><td title="${esc(a.builder_model)}"><b>${esc(sn(a.builder_model))}</b></td><td>${a.pct}%</td><td>${a.mean_s_per_case} s</td><td>${a.gb||"·"} GB</td><td>${a.fit.toFixed(1)}</td></tr>`).join("");
+ const top=A.slice(0,3).map((a,i)=>`<tr><td>${i+1}</td><td title="${esc(a.builder_model)}"><b>${esc(sn(a.builder_model))}</b></td><td>${a.pct}%</td><td>${a.mean_s_per_case} s</td><td>${a.gb||"⬜ NA"} GB</td><td>${a.fit.toFixed(1)}</td></tr>`).join("");
  const xmax=Math.max(10,Math.ceil(hi/10)*10);
  $("fo").innerHTML=`<div class="w"><table><tr><th>#</th><th>Model</th><th>Pass rate</th><th>Per case</th><th>File size</th><th>Fit score</th></tr>${top}</table></div>`
   +legend([{c:"var(--acc)",t:"Candidate"},{c:"#2e7de0",t:"Pareto front (nothing is both faster and more accurate)"}])
@@ -347,11 +346,12 @@ function findModel(){
   +`<p class="mut">${A.length} models qualify (${L.length} runs). Fit score = accuracy and log-scaled speed mixed by the priority slider.</p>`;
 }
 [...new Set(D.map(r=>r.hardware_id).filter(Boolean))].forEach(h=>$("fh").add(new Option(h,h)));
+[...new Set(D.map(r=>r.team).filter(Boolean))].sort().forEach(t=>$("ft").add(new Option(t,t)));
 ["fh","fv","fr","fw"].forEach(i=>$(i).addEventListener("input",findModel));
 function draw(){
  findModel();
- const q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
- const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
+ const ft=$("ft").value,q=$("q").value.toLowerCase(),ms=+$("ms").value,mt=+$("mt").value||1e9,mp=+$("mp").value||1e9,cs=$("cs").value,fd=$("fd").value,lim=+$("lim").value||1e9;
+ const R0=D.filter(r=>r.builder_model.startsWith("claude-")||(r.pct>=ms&&+r.mean_s_per_case<=mt&&(mp>=1e9||(r.params_b==null?r.builder_model.startsWith("claude-"):r.params_b<=mp))&&(r.builder_model+r.source).toLowerCase().includes(q)&&(!ft||r.team===ft)&&(!cs||frac(r,cs)===1)&&(!fd||r.day>=fd)));
  const R1=R0.filter(r=>SEL.model==null||r.builder_model===SEL.model),R2=R1.filter(r=>SEL.band==null||bandOf(r)===SEL.band);
  R2.sort((a,b)=>{let x=a[sk]??1e9,y=b[sk]??1e9;x=isNaN(+x)?x:+x;y=isNaN(+y)?y:+y;let c=(x>y?1:x<y?-1:0)*sd;return c});
  R2.sort((a,b)=>b.builder_model.startsWith("claude-")-a.builder_model.startsWith("claude-"));
@@ -367,10 +367,10 @@ function draw(){
  $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""}>${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
   R.map(r=>"<tr>"+cols.map(([k])=>{
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
-   if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
-   if(k=="params_b")return`<td>${r.params_b==null?"·":r.params_b}</td>`;
+   if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${markF(r[k])}${w}</td>`}
+   if(k=="params_b")return`<td>${r.params_b==null?"⬜ NA":r.params_b}</td>`;
    if(k=="rank")return`<td>${r.rank==null?"":r.rank}</td>`;
-   if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
+   if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;if(k=="builder_score"||k=="thinker_score")return`<td>${markF(r[k])}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
  document.querySelectorAll("th").forEach(h=>h.onclick=()=>{sd=sk==h.dataset.k?-sd:-1;sk=h.dataset.k;draw()});
 }
 const pick=e=>{const t=e.target.closest("[data-sk]");if(!t)return;const k=t.dataset.sk,v=t.dataset.sv;
@@ -388,9 +388,9 @@ function renderCoding(){
  const lab=c=>(c.split("_")[1]||c).toUpperCase();
  const rows=[...CD].sort((a,b)=>(b.pct??-1)-(a.pct??-1)||(a.mean_s??1e9)-(b.mean_s??1e9));
  const tbl=`<div class="w"><table><tr><th>Model</th><th>Suite</th><th>Runs</th><th>Passed</th><th>Pass rate</th><th>Mean s/case</th>${cols.map(c=>`<th title="${esc(c)}">${lab(c)}</th>`).join("")}</tr>`
-  +rows.map(r=>`<tr><td title="${esc(r.model)}"><b>${esc(sn(r.model))}</b>${r.complete?"":" <i>(partial)</i>"}</td><td>${esc(r.suite)}</td><td>${r.n==null?"·":r.n}</td><td>${r.ok}/${r.ran}</td><td>${r.pct==null?"·":r.pct+"%"}</td><td>${r.mean_s==null?"·":r.mean_s+" s"}</td>`
-  +cols.map(c=>{const v=r.cases[c]||"";const [a,b]=v.split("/").map(Number);const cls=!b?"":a===b?"g":a===0?"r":"y";return`<td class="${cls}">${v||"·"}</td>`}).join("")+"</tr>").join("")+"</table></div>";
- const bars=rows.map(r=>`<div><span title="${esc(r.model)}">${esc(short(sn(r.model),40))}</span> <span class="bar" style="width:${(r.pct||0)*3}px"></span> ${r.pct==null?"·":r.pct+"%"}</div>`).join("");
+  +rows.map(r=>`<tr><td title="${esc(r.model)}"><b>${esc(sn(r.model))}</b>${r.complete?"":" <i>(partial)</i>"}</td><td>${esc(r.suite)}</td><td>${r.n==null?"⬜ NA":r.n}</td><td>${markF(r.ok+"/"+r.ran)}</td><td>${r.pct==null?"⬜ NA":r.pct+"%"}</td><td>${r.mean_s==null?"⬜ NA":r.mean_s+" s"}</td>`
+  +cols.map(c=>{const v=r.cases[c]||"";const [a,b]=v.split("/").map(Number);const cls=!b?"":a===b?"g":a===0?"r":"y";return`<td class="${cls}">${markF(v)}</td>`}).join("")+"</tr>").join("")+"</table></div>";
+ const bars=rows.map(r=>`<div><span title="${esc(r.model)}">${esc(short(sn(r.model),40))}</span> <span class="bar" style="width:${(r.pct||0)*3}px"></span> ${r.pct==null?"⬜ NA":r.pct+"%"}</div>`).join("");
  $("cd").innerHTML=tbl+box("Coding pass rate by model",bars,"Share of coding verifications passed across the L1–L6 cases, latest complete run per model.");
 }
 renderCoding();
@@ -411,6 +411,7 @@ PAGE = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="w
 body{font:15px/1.55 system-ui;margin:0;background:var(--bg);color:var(--fg)}
 nav{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
 nav a{color:var(--acc);font-weight:600;text-decoration:none}
+#rank{max-height:70vh;overflow:auto}#rank th{position:sticky;top:0;z-index:2}#rank .bar{display:inline-block;height:10px;background:var(--acc);margin-right:6px;vertical-align:middle}
 main{max-width:1100px;margin:0 auto;padding:8px 16px 48px}
 a{color:var(--acc)}h1,h2,h3{line-height:1.25}h2{border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}
 table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;font-size:13px}
@@ -427,6 +428,9 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}pre{background:var
 const GH="__GH__",SRC=__MD__,RES=__RES__,D=__DATA__,BC=__BC__,TC=__TC__;
 const el=document.getElementById("res"),doc=document.getElementById("md");
 el.innerHTML="<h1>TokenFrugal benchmark results</h1>"+marked.parse(RES);
+const rd=el.querySelector("#rank-desc");
+if(rd){try{const v=localStorage.getItem("rank-desc");if(v!==null)rd.open=v==="1"}catch(e){}
+rd.addEventListener("toggle",()=>{try{localStorage.setItem("rank-desc",rd.open?"1":"0")}catch(e){}})}
 doc.innerHTML="<h2>About this benchmark</h2>"+marked.parse(SRC.replace(/^# .*\n/,""));
 doc.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html|index\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
 {const loc=/^(localhost|127\.|\[::1\]|)$/.test(location.hostname),u=loc?"https://maxh8086.github.io/tokenfrugal/Benchmark/":location.href.split("#")[0],t="🚀💥 Boom! My model just took on the TokenFrugal Benchmark! 🧠🔥\n\nTry your own model using https://github.com/maxh8086/tokenfrugal shared by @vpavtekar. Share me your results below so we can see how different hardware performs!\n#LocalLLM #Ollama #TokenFrugal",e=encodeURIComponent,
@@ -436,10 +440,11 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cnt=(r,cs)=>{let a=0,n=0;cs.forEach(c=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(m){a+=+m[1];n+=+m[2]}});return[a,n]};
 const frac=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a/n:-1};
-const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"·"};
+const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"⬜ NA"};
 const tie=(x,y)=>(y.pct-x.pct)||((x.s||1e9)-(y.s||1e9));
 const mmss=t=>t?Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0"):"";
-const mark=(r,c)=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(!m)return"·";const f=+m[1]/+m[2];let s=f===1?"🟩":f>0?"🟨":"🟥";if(f===0&&r.req.includes(c))s+="⚠";return s};
+const markF=s=>{const m=/^(\d+)\/(\d+)$/.exec(String(s||"").replace(/^'/,""));if(!m)return"⬜ NA";const a=+m[1],n=+m[2];return(n&&a===n?"🟩":a>0?"🟧":"🟥")+" "+a+"/"+n};
+const mark=(r,c)=>{const s=markF(r.cases[c]);return s+(/^0\//.test(r.cases[c]||"")&&r.req.includes(c)?"⚠":"")};
 const S={sort:{},f:{}};
 const DEF={rank:"10",rb:"5",rt:"5",hc:"10"};
 const TOPS={rank:[5,10,20,0],rb:[3,5,10,0],rt:[3,5,10,0],hc:[5,10,20,0]};
@@ -463,10 +468,11 @@ function table(id,cols,rows,key){
  if(c&&c.v)rows=[...rows].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*dir||tie(x,y)});
  return rows;
 }
+function sty(c,hd){let s=c.v?"cursor:pointer;":"";if(c.fz!=null)s+=`position:sticky;left:${c.fz}px;z-index:${hd?3:1};background:${hd?"var(--code)":"var(--bg)"};min-width:${c.w}px;max-width:${c.w}px;white-space:normal;overflow-wrap:anywhere;`;return s?` style="${s}"`:""}
 function render(id,cols,rows,key){
  const[k,dir]=S.sort[key]||[null,0];
- const h=cols.map(c=>`<th data-k="${c.k}"${c.v?' style="cursor:pointer"':""}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
- const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
+ const h=cols.map(c=>`<th data-k="${c.k}"${sty(c,1)}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
+ const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td${sty(c,0)}>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
  $(id).innerHTML=`<table><thead><tr>${h}</tr></thead><tbody>${b}</tbody></table>`;
  $(id).querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{const c=cols.find(c=>c.k===t.dataset.k);if(!c.v)return;
   const[k0,d0]=S.sort[key]||[];S.sort[key]=[c.k,k0===c.k?-d0:(c.str?1:-1)];draw(id)});
@@ -481,16 +487,16 @@ function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').te
 function draw(id){
  const R=sel(id),top=+S.f[id].top;
  if(id==="rank"){
-  const cols=[{k:"n",l:"#",f:(r,i)=>i+1},
-   {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
-   {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
-   {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
-   {k:"score",l:"Score",v:r=>r.score,f:r=>r.score+"/"+r.max},
-   {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
-   {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
-   {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
+  const cols=[
+   {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":""),fz:0,w:250},
+   {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>r.params?esc(r.params):"⬜ NA",fz:250,w:70},
+   {k:"rank",l:"Rank",v:r=>-(r.rank??1e9),f:r=>r.rank??"",fz:320,w:60,t:"Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."},
+   {k:"score",l:"Score",v:r=>r.score,f:r=>markF(r.score+"/"+r.max),fz:380,w:90},
+   {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>`<span class="bar" style="width:${(r.pct||0)*0.7}px"></span>${r.pct}`,fz:470,w:95},
+   {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day,fz:565,w:100},
+   {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>markF(sub(r,BC))},
+   {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>markF(sub(r,TC))},
    {k:"tps",l:"t/s (info)",v:r=>r.tps||-1,f:r=>r.tps??""},
-   {k:"rank",l:"Rank",v:r=>-(r.rank??1e9),f:r=>r.rank??"",t:"Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
    {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
    {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
@@ -508,7 +514,7 @@ function draw(id){
    {k:"model",l:"Model",str:1,v:m=>m.model.toLowerCase(),f:m=>code(m.model)},
    {k:"day",l:"Date",str:1,v:m=>m.day,f:m=>m.day},
    {k:"h",l:"Harness",f:m=>[...m.h].filter(Boolean).join(", ")||"-"},
-   {k:"a",l:"Score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
+   {k:"a",l:"Score",v:m=>m.a/m.n,f:m=>markF(m.a+"/"+m.n)},
    {k:"pct",l:"%",v:m=>m.pct,f:m=>m.pct},
    {k:"runs",l:"Runs",v:m=>m.runs,f:m=>m.runs},
    {k:"tps",l:"t/s (info)",v:m=>m.tps||-1,f:m=>m.tps==null?"":m.tps.toFixed(1)},
@@ -538,7 +544,7 @@ def _data():
                     "score": r["score"], "max": r["max"], "pct": r["pct"], "tps": r["tps"], "s": num(r, "mean_s_per_case"),
                     "tot": num(r, "total_s"), "rank": r["rank"], "valid": r.get("valid_cases") or "", "infra": num(r, "infra_cases"),
                     "git": (r.get("git_sha") or "")[:7], "harness": r.get("harness_version") or "",
-                    "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"],
+                    "shared": r.get("shared_system_memory_gb") or "", "pull": r["pull"], "team": r.get("team") or "",
                     "req": list(REQUIRED_TOOL_CASES), "cases": {c: r.get(c, "").lstrip("'") for c in CASES}})
     return out
 
@@ -571,11 +577,39 @@ def team_md():
     return "\n".join(out)
 
 
+TEAM_RESULTS = B / "results" / "team_results.csv"
+
+
+def team_results_md():
+    """Per team, one table of its active roles from results/team_results.csv (written by team_results.py).
+    Infra repeats (the compose backend did not start) are not in the pass rate. Empty if the file is missing."""
+    if not TEAM_RESULTS.exists():
+        return "_No per-team results yet (results/team_results.csv is missing)._"
+    by_team = {}
+    for r in csv.DictReader(TEAM_RESULTS.open(encoding="utf-8", newline="")):
+        by_team.setdefault(r["team"], []).append(r)
+    out = []
+    for team, rs in by_team.items():
+        out += [f"**{team}** ({len(rs)} roles)", "",
+                "| Role | Model | Runs | Passed | Infra | Pass rate % | Mean s/case (warm) | Failure |",
+                "|---|---|--:|--:|--:|--:|--:|---|"]
+        for r in rs:
+            fail = r["failure"].replace("|", "\\|").replace("\n", " ")[:80]
+            valid = int(r["runs"]) - int(r["infra"])
+            passed = frac_cell(f"{r['passes']}/{valid}") if valid > 0 else "⬜ NA"
+            out.append(f"| `{r['role']}` | `{r['model']}` | {r['runs']} | {passed} | {r['infra']} "
+                       f"| {r['pass_pct']} | {r['mean_s_warm']} | {fail} |")
+        out.append("")
+    return "\n".join(out)
+
+
 DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by rank (ties by pass rate)._
 
-### Ranking
+<details id="rank-desc"><summary style="cursor:pointer;display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.25);font-weight:600">&#9656; Ranking <span style="font-weight:400;color:var(--mut)">(click to show how ranks are set)</span></summary>
 
 {RANK_LEGEND_MD}
+
+</details>
 
 <div id="rank-bar"></div>
 
@@ -602,6 +636,12 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 Each team is scored through the families its roles use: builder roles on the builder cases, thinker roles on the thinker cases. Hard and coding scores are not mapped to a team. Picks follow the same rule as the role tables above.
 
 {team_md()}
+
+### Per team, per role (results/team_results.csv)
+
+Each active role runs n=3 on its team's task (`scripts/bench_team_tasks.py`). Infra repeats, where the compose backend did not start, are left out of the pass rate.
+
+{team_results_md()}
 
 ### Recommended model per role
 
