@@ -9,17 +9,18 @@ This file holds the working handoff notes. Closed items are removed once verifie
 
 Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
 
-2. **Role contract template (playbook gap).** Decide before editing any role.
-   - Proposed fields per role in `router/tf-roles.yaml`: `purpose` (one sentence), `inputs` (paths or arguments the role expects), `output_format`, `stop_condition`, `checklist` (3 or more items, each tagged `deterministic` or `judgement`).
-   - Basic criteria a role must meet: every field present; each checklist item names what passes it; the matching skill file (`router/skills/<role>/SKILL.md`) states the same stop condition. Follows the `code-l1` pattern (numbered steps, output format, stop condition).
-   - Update all roles only after the benchmark finishes. Roles without a contract are not checked by the checker stage (item 3).
+2. **Role contract template (decided and applied 2026-10-28).** User approved the fields ("go ahead").
+   - Fields per role in `router/tf-roles.yaml` under `contracts:`: `purpose`, `inputs`, `output_format`, `stop_condition`, `checklist` (3 or more items, each `deterministic` or `judgement`). All 39 active roles have one; the shared checklists are YAML anchors.
+   - `router/preflight.py` `contract_errors` checks this offline. `tests/test_role_contracts.py` runs it on the real config and on negative cases.
+   - Not yet checked: that each role's skill file (`router/skills/<role>/SKILL.md`) states the same stop condition. Follows the `code-l1` pattern (item 6).
+   - Commit `5d73be3`. The user said to update roles only after the benchmark finishes. No benchmark process was running at commit time, but that check does not prove the run is complete. Confirm with the user.
 
-3. **Checker stage (proof gap).** Added per role through its contract, not per model.
-   - Position: new stage in `_execute` in `router/server.py`, after `run()` and before `summarize()`.
-   - Deterministic items: tests (an accept command from the contract), lint (`router/lint.py` `check_python`), diff applies (`git apply --check`), files-changed manifest from git, not the model's claim.
-   - Judgement items: a small local model returns pass or fail with a reason per item. Model choice is open (see item 4).
-   - Failure: a diff-only correction goes back to the same role through `resume_task`, which keeps its message history. Limit one correction per task, then return `FAILED` with the checker output.
-   - Drawbacks: adds time per task, so per-role `timeout_s` must account for it. Judgement results from a 3B model are weak; treat them as advisory until measured.
+3. **Checker stage (wired 2026-10-28, commit `b585610`; user chose option (c)).**
+   - Position: in `_execute` in `router/server.py`, after `run()` and before `summarize()`. The per-role timeout covers the checker time.
+   - Deterministic checks run in the router through `router/checker.py`: the `Accept:` command from the task (split on spaces, so quoted arguments are not supported), `git apply --check` on a ```` ```diff ```` block, lint through `check_python`, and the files-changed list from git.
+   - Judgement items are returned to the client (Haiku) as text. No model judges them in the router.
+   - One correction runs inside the same `dispatch_task` call through `run()` with the first run's message history. It is not a separate `resume_task` call. If the second check fails, the task is `failed` with `error_kind=checker` and the checker output.
+   - Tests: `tests/test_checker_stage.py` (17 tests with `test_templates.py`).
 
 4. **Who is the checker (open decision).**
    - Haiku is recorded as the team lead and Sonnet as the orchestrator in `teams:` and `orchestration:`. The router never calls them: the lead and orchestrator are cloud models run by the client. Today Haiku reviews replies by hand, in the client, as the tracker.
@@ -29,20 +30,21 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
      - (c) Keep judgement in the client: the checker stage returns deterministic results plus the judgement inputs, and Haiku reviews them. No router change for judgement.
    - Suggested: deterministic checks in the router now (a for judgement, later), and (c) as the reviewer of record until (a) is measured.
 
-5. **Toolbox of approved templates (new table design).**
-   - New SQLite table `templates` in `router/store.py`: `id`, `role`, `task_type`, `title`, `tags` (JSON list), `body` (text or file path), `source_task_id`, `status` (`approved` | `retired`), `approved_by`, `approved_at`, `uses`, `last_used`.
-   - Matching at dispatch: same `role` and `task_type` first, then tag overlap, then keyword score. Embeddings are deferred until keyword matching is measured.
-   - Budget: at most 2 templates and 1500 tokens in total, placed before the task text. The rest of the 16-32k window is left for the task and tool output. The budget is a proposal and needs measuring.
-   - Open: who approves (see item 6), and whether templates are shown in `list_roles`.
+5. **Toolbox of approved templates (implemented 2026-10-28, commit `b585610`, user approved).**
+   - Table `templates` in `router/store.py`: `id`, `role`, `task_type`, `title`, `tags` (JSON list), `body` (text or file path), `source_task_id`, `status` (`approved` | `retired`), `approved_by`, `approved_at`, `uses`, `last_used`.
+   - `add_template` refuses an empty `approved_by`. Nothing is stored or used without a manual approval.
+   - Matching at dispatch: same `role` and `task_type` first, then tag overlap, then title keywords. A template with no match is never used.
+   - Budget: at most 2 templates and 1500 tokens, placed before the task text (`with_templates`).
+   - Open: `dispatch_task` does not pass `task_type`, so the first ranking criterion does nothing until it is supplied. `list_roles` does not show templates (default chosen; not confirmed).
+   - No template is approved yet. Tests: `tests/test_templates.py`.
 
-6. **Approval policy (open).**
-   - Now: manual approval by the user. Each new template or edit gets a plan and an impact review first.
-   - Auto-approve only after the checker stage has been measured on the benchmark and the drawbacks have been reviewed.
+6. **Approval policy (decided 2026-10-28).**
+   - Manual approval by the user only. Auto-approve is not allowed until the checker stage has been measured on the benchmark and its drawbacks reviewed.
 
 8. **Teams: visibility, not routing (decided 2026-10-22).**
    - Each team's lead and the orchestrator are shown to every client through `list_roles` (`router/server.py`), `CLAUDE.md` and `AGENTS.md`. Codex and other agents can read them there.
    - Haiku does not choose a team or role at run time. The router records the lead and orchestrator and never calls them. Routing by lead needs a model-driven step that does not exist yet.
-   - Team names: `ui-ux` (confirmed: "UI-UZ" in the request was a typo), `development`, `ops`, plus `security` and `research`, which are my own grouping and still need confirming.
+   - Team names: `ui-ux` (confirmed: "UI-UZ" in the request was a typo), `development`, `ops`, `security` and `research`. The user confirmed `security` and `research` on 2026-10-28 ("go ahead"); they are kept as defined.
 
 9. **Haiku model: `claude-haiku-5-5` (decided 2026-10-22).**
    - Used everywhere in the repo. The global Claude CLAUDE.md (`C:/Users/vaibh/.claude/CLAUDE.md`) names `claude-haiku-5-5` as of 2026-10-27. This repo does not change it.
@@ -193,8 +195,8 @@ Tool overlap only, different skill (keep; not duplicates):
 - The real `results/benchmark.csv` is unchanged. User said hold on writing it.
 
 **Open decisions**
-1. Write v5 columns to the real `benchmark.csv`? Needs a diff review and approval first. Back up to `results/backups/` before any write.
-2. Column name: `thinker_hard_score` (v5) vs existing `hard_score` (blank in all rows). Pick one.
+1. Resolved 2026-10-28: `benchmark.csv` header already matches `SUMMARY_COLS` (33 of 33, checked by script). Nothing was written, no backup needed. The per-role datetime and score columns are present.
+2. Resolved 2026-10-28: the column is `thinker_hard_score`. `hard_score` is not in the header and is not added.
 3. Blank vs partial total for models with only one role complete.
 4. Rank rule (fixed 2026-10-27 in `Benchmark/script/store.py` `rank_rows`): only complete /81 runs are ranked, by passes then median s/case. A run is one run: rows whose builder, thinker and hard datetimes differ mix roles from different runs and stay unranked. Explorer and benchmark.csv now rank the same 16 models in the same order (checked 2026-10-27, before the explorer rebuild).
 
