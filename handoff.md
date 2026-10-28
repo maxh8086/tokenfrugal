@@ -5,6 +5,17 @@ Last updated: 2026-10-28
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
+## TOP PRIORITY (next): per-team benchmarks for the 40-run models (set 2026-10-28, NOT started)
+
+The user asked to run the team benchmarks for the models in `Benchmark/results/benchmark.csv` and to keep this as the next top priority. The user then stopped the run ("do not start run now, i have many changes to finish yet"). Nothing is running. No team results were written for these models.
+
+- Script ready: `Benchmark/script/team_bench_queue.py` (untracked). Dry run: `python Benchmark/script/team_bench_queue.py --dry-run`. It lists 37 installed tags to run and skips `ts-qwen25c-32b-iq4xs-32768:latest` (not installed) and the Haiku cloud row.
+- Per model it runs `scripts.bench --only roles --team ui-ux,development,ops,security,research --n 3`, then `team_results.py`, and rebuilds the report at the end. One model at a time; the GPU is shared.
+- Cost: roughly 1 to 2 hours per model on the spark run timings, so this is a multi-day queue. Confirm with the user before starting, and start only when the user says so.
+- Spark (`maternion/spark-x2.5:4b-q8_0`) already has team results (`results/team_results.csv`). It is not in the 40-run table.
+- Before starting: check Docker compose backends are up (`docker ps`), and that the index rank table columns (Hard score, ui-ux, development, ops, security, research) are still correct after the rebuild.
+
+---
 ## Pending decisions and designs (added 2026-10-22, nothing implemented)
 
 Rule: no code or doc edits for these until the benchmark runs in the other session are finished. Each change gets a plan and an impact review first.
@@ -396,3 +407,7 @@ Live check passed: both containers were stopped, and `open_role` brought them ba
 
 Done (2026-10-27): the wrapper is public as `open_native_ensured` (`router/mcp_client.py`). `router/reconnect.py` (`_probe`) and `router/claude_import.py` (`probe_tools`) use it. Tests: `tests/test_ensure_call_sites.py`.
 
+
+## Parked: Coding table on index (set 2026-10-28)
+
+Move the Coding table (`cd`, L1-L6 realworld suite, `results/coding/`) from `explorer.html` to `index.html`, placed above the model run tables under its own heading that says it is a separate suite. Parked until the other index and explorer changes in `Benchmark/REPORT_DESIGN.md` are concluded.

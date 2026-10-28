@@ -29,7 +29,7 @@ class TeamPartition(unittest.TestCase):
     def test_ui_roles_share_one_team(self):
         cfg = config.load_tf_roles()
         teams = {config.team_of(r, cfg) for r in self.roles if r.startswith("ui-")}
-        self.assertEqual(teams, {"ui-ux"})
+        self.assertEqual(teams, {"frontend"})
 
 
 class TeamListing(unittest.TestCase):
@@ -56,21 +56,21 @@ class TeamDefaults(unittest.TestCase):
     def test_defaults_without_pick_file(self):
         cfg = config.load_tf_roles()
         self.assertEqual(cfg["orchestrator"], "claude-sonnet-5-5")
-        self.assertEqual(config.lead_for("ui-ux", cfg), "claude-haiku-5-5")
-        self.assertEqual(config.team_of("builder", cfg), "development")
+        self.assertEqual(config.lead_for("frontend", cfg), "claude-haiku-5-5")
+        self.assertEqual(config.team_of("builder", cfg), "orchestrator")
         self.assertIsNone(config.team_of("no-such-role", cfg))
 
     def test_pick_file_overrides_orchestrator_and_one_lead(self):
-        self.picks.write_text(json.dumps({"orchestrator": "claude-opus-5-5", "leads": {"ops": "claude-sonnet-5-5"}}), encoding="utf-8")
+        self.picks.write_text(json.dumps({"orchestrator": "claude-opus-5-5", "leads": {"infra": "claude-sonnet-5-5"}}), encoding="utf-8")
         cfg = config.load_tf_roles()
         self.assertEqual(cfg["orchestrator"], "claude-opus-5-5")
-        self.assertEqual(config.lead_for("ops", cfg), "claude-sonnet-5-5")
-        self.assertEqual(config.lead_for("ui-ux", cfg), "claude-haiku-5-5")
+        self.assertEqual(config.lead_for("infra", cfg), "claude-sonnet-5-5")
+        self.assertEqual(config.lead_for("frontend", cfg), "claude-haiku-5-5")
 
     def test_save_stores_only_differences(self):
         out = ui.save_teams({"orchestrator": "claude-sonnet-5-5",
-                             "leads": {"ops": "claude-haiku-5-5", "ui-ux": "claude-opus-5-5"}})
-        self.assertEqual(out, {"leads": {"ui-ux": "claude-opus-5-5"}})
+                             "leads": {"infra": "claude-haiku-5-5", "frontend": "claude-opus-5-5"}})
+        self.assertEqual(out, {"leads": {"frontend": "claude-opus-5-5"}})
         self.assertEqual(json.loads(self.picks.read_text(encoding="utf-8")), out)
 
     def test_save_rejects_unknown_team_and_model(self):

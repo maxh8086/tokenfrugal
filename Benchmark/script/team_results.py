@@ -13,6 +13,7 @@ Usage (from the repo root):
 The JSON files do not record the model, so it is passed in with --model.
 """
 import csv
+import re
 import json
 import sys
 from pathlib import Path
@@ -23,7 +24,13 @@ from router.config import load_tf_roles  # noqa: E402
 from scripts.bench import ok  # noqa: E402
 
 OUT = ROOT / "Benchmark" / "results" / "team_results.csv"
-COLS = ["team", "role", "model", "tag", "json", "runs", "passes", "infra", "pass_pct", "mean_s_warm", "failure"]
+COLS = ["team", "role", "model", "tag", "json", "runs", "passes", "infra", "pass_pct", "mean_s_warm", "failure", "date"]
+
+
+def run_date(json_name):
+    """YYYY-MM-DD from the bench file stamp (YYYYMMDD-HHMMSS-...), or blank."""
+    m = re.match(r"(\d{4})(\d{2})(\d{2})-", json_name)
+    return f"{m[1]}-{m[2]}-{m[3]}" if m else ""
 INFRA = ("ComposeError", "compose up failed")
 
 
@@ -86,7 +93,7 @@ def main(model, paths):
         w = csv.DictWriter(f, fieldnames=COLS, lineterminator="\r\n")
         if write_header:
             w.writeheader()
-        w.writerows(new)
+        w.writerows({**r, "date": run_date(r["json"])} for r in new)
     print(f"wrote {len(new)} rows to {OUT}")
 
 

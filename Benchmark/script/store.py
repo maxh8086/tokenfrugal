@@ -66,9 +66,9 @@ SUMMARY_COLS = HEAD_COLS + RANK_COLS + TEST_COLS + TAIL_COLS + PIPELINE + ["note
 
 
 def team_of(row):
-    """Team a summary row belongs to: a builder score is development, a thinker-only score is research."""
+    """Team a summary row belongs to: a builder score is orchestrator, a thinker-only score is research."""
     if str(row.get("builder_score") or "").strip():
-        return "development"
+        return "orchestrator"
     if str(row.get("thinker_score") or "").strip():
         return "research"
     return ""
