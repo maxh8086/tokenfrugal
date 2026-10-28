@@ -24,6 +24,7 @@ _ap = argparse.ArgumentParser(description="Rebuild the benchmark report, optiona
 _ap.add_argument("--run", nargs="*", metavar="MODEL", help="fresh benchmark run first; no names = every model already in benchmark.csv")
 _ap.add_argument("--n", type=int, default=3, help="runs per model for --run")
 _ap.add_argument("--update", choices=["ask", "yes", "no"], default="ask", help="update recommendations after the rebuild (default: ask)")
+_ap.add_argument("--no-clean", action="store_true", help="skip the cleanup of old logs, backups and raw files, which deletes files")
 _args = _ap.parse_args()
 _HERE = Path(__file__).resolve().parent
 if _args.run is not None:
@@ -542,6 +543,34 @@ def _data():
     return out
 
 
+def team_md():
+    """Per team: its roles by model class, and the recommended local models for each class it uses. Builder roles are
+    scored on the builder cases and thinker roles on the thinker cases. Hard and coding scores are not mapped to a team."""
+    fam = {"builder": BUILDER_CASES, "thinker": THINKER_CASES}
+    out = []
+    for team, t in _CFG["teams"].items():
+        counts = {k: 0 for k in fam}
+        pending = 0
+        for name in t.get("roles") or []:
+            cls = _CFG["roles"].get(name, {}).get("model")
+            if cls in counts:
+                counts[cls] += 1
+            else:
+                pending += 1
+        out += [f"**{team}**: {t.get('description', '')}", ""]
+        for cls, n in counts.items():
+            if not n:
+                continue
+            preferred, _, best = role_pick(fam[cls])
+            names, label = (preferred[:3], "recommended") if preferred else (best[:3], "best available (none green)")
+            picks = ", ".join(f"`{m}`" for m in names) or "none"
+            out.append(f"- {cls}, {n} role(s): {label}: {picks}")
+        if pending:
+            out.append(f"- {pending} role(s) have no model yet, not scored")
+        out.append("")
+    return "\n".join(out)
+
+
 DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by rank (ties by pass rate)._
 
 ### Ranking
@@ -567,6 +596,12 @@ Each role is ranked only on its own cases, because one model is pinned to both r
 <div id="rt-bar"></div>
 
 <div id="rt"></div>
+
+### Best model per team
+
+Each team is scored through the families its roles use: builder roles on the builder cases, thinker roles on the thinker cases. Hard and coding scores are not mapped to a team. Picks follow the same rule as the role tables above.
+
+{team_md()}
 
 ### Recommended model per role
 
@@ -609,7 +644,10 @@ print(f"updated explorer.html and index.html ({len(rows)} runs, {len(CASES)} cas
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # run_queue.sh uses python -I, which skips the script dir
 import clean_outputs
-clean_outputs.run()
+if _args.no_clean:
+    print("cleanup skipped (--no-clean)")
+else:
+    clean_outputs.run()
 
 
 def infra_model_split():

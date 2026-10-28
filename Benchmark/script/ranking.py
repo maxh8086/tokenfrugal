@@ -275,7 +275,8 @@ RANK_LEGEND = [
     "t/s = tokens generated per second, shown for information only; it no longer affects rank.",
     "Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). The same runs benchmark.csv ranks. Cloud and partial runs are not ranked.",
     "Run time = wall clock for the whole run.",
-    "Valid cases = cases that finished without infrastructure failure (invalid cases are excluded from speed, not from score).",
+    "Valid cases = cases whose status is valid on the page: a case with infrastructure failure or no tools called is not valid and is excluded from speed, not from score. Counted per case over the builder, thinker, hard and coding files.",
+    "Ran = cases with at least one attempt that reached the model. A case that never ran is not counted. Counted per case over the same four files, so it is out of the same total as valid cases.",
     "Date = when the run happened; newer = made with newer code.",
 ]
 RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
