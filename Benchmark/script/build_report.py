@@ -411,6 +411,7 @@ PAGE = r"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="w
 body{font:15px/1.55 system-ui;margin:0;background:var(--bg);color:var(--fg)}
 nav{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
 nav a{color:var(--acc);font-weight:600;text-decoration:none}
+#rank{max-height:70vh;overflow:auto}#rank th{position:sticky;top:0;z-index:2}#rank .bar{display:inline-block;height:10px;background:var(--acc);margin-right:6px;vertical-align:middle}
 main{max-width:1100px;margin:0 auto;padding:8px 16px 48px}
 a{color:var(--acc)}h1,h2,h3{line-height:1.25}h2{border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}
 table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;font-size:13px}
@@ -427,6 +428,9 @@ code{background:var(--code);padding:1px 4px;border-radius:3px}pre{background:var
 const GH="__GH__",SRC=__MD__,RES=__RES__,D=__DATA__,BC=__BC__,TC=__TC__;
 const el=document.getElementById("res"),doc=document.getElementById("md");
 el.innerHTML="<h1>TokenFrugal benchmark results</h1>"+marked.parse(RES);
+const rd=el.querySelector("#rank-desc");
+if(rd){try{const v=localStorage.getItem("rank-desc");if(v!==null)rd.open=v==="1"}catch(e){}
+rd.addEventListener("toggle",()=>{try{localStorage.setItem("rank-desc",rd.open?"1":"0")}catch(e){}})}
 doc.innerHTML="<h2>About this benchmark</h2>"+marked.parse(SRC.replace(/^# .*\n/,""));
 doc.querySelectorAll("a[href]").forEach(a=>{const h=a.getAttribute("href");if(h&&!/^(https?:|#|explorer\.html|index\.html)/.test(h))a.href=GH+"/"+h.replace(/^\.?\//,"")});
 {const loc=/^(localhost|127\.|\[::1\]|)$/.test(location.hostname),u=loc?"https://maxh8086.github.io/tokenfrugal/Benchmark/":location.href.split("#")[0],t="🚀💥 Boom! My model just took on the TokenFrugal Benchmark! 🧠🔥\n\nTry your own model using https://github.com/maxh8086/tokenfrugal shared by @vpavtekar. Share me your results below so we can see how different hardware performs!\n#LocalLLM #Ollama #TokenFrugal",e=encodeURIComponent,
@@ -464,10 +468,11 @@ function table(id,cols,rows,key){
  if(c&&c.v)rows=[...rows].sort((x,y)=>{const a=c.v(x),b=c.v(y);return(a<b?-1:a>b?1:0)*dir||tie(x,y)});
  return rows;
 }
+function sty(c,hd){let s=c.v?"cursor:pointer;":"";if(c.fz!=null)s+=`position:sticky;left:${c.fz}px;z-index:${hd?3:1};background:${hd?"var(--code)":"var(--bg)"};min-width:${c.w}px;max-width:${c.w}px;white-space:normal;overflow-wrap:anywhere;`;return s?` style="${s}"`:""}
 function render(id,cols,rows,key){
  const[k,dir]=S.sort[key]||[null,0];
- const h=cols.map(c=>`<th data-k="${c.k}"${c.v?' style="cursor:pointer"':""}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
- const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
+ const h=cols.map(c=>`<th data-k="${c.k}"${sty(c,1)}>${c.l}${c.k===k?(dir<0?" ▼":" ▲"):""}</th>`).join("");
+ const b=rows.map((r,i)=>"<tr>"+cols.map(c=>`<td${sty(c,0)}>${c.f(r,i)}</td>`).join("")+"</tr>").join("");
  $(id).innerHTML=`<table><thead><tr>${h}</tr></thead><tbody>${b}</tbody></table>`;
  $(id).querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{const c=cols.find(c=>c.k===t.dataset.k);if(!c.v)return;
   const[k0,d0]=S.sort[key]||[];S.sort[key]=[c.k,k0===c.k?-d0:(c.str?1:-1)];draw(id)});
@@ -482,16 +487,16 @@ function note(id,shown,total,what){$(id+"-bar").querySelector('[data-f="c"]').te
 function draw(id){
  const R=sel(id),top=+S.f[id].top;
  if(id==="rank"){
-  const cols=[{k:"n",l:"#",f:(r,i)=>i+1},
-   {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
-   {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
-   {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
-   {k:"score",l:"Score",v:r=>r.score,f:r=>markF(r.score+"/"+r.max)},
-   {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
+  const cols=[
+   {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":""),fz:0,w:250},
+   {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>r.params?esc(r.params):"⬜ NA",fz:250,w:70},
+   {k:"rank",l:"Rank",v:r=>-(r.rank??1e9),f:r=>r.rank??"",fz:320,w:60,t:"Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."},
+   {k:"score",l:"Score",v:r=>r.score,f:r=>markF(r.score+"/"+r.max),fz:380,w:90},
+   {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>`<span class="bar" style="width:${(r.pct||0)*0.7}px"></span>${r.pct}`,fz:470,w:95},
+   {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day,fz:565,w:100},
    {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>markF(sub(r,BC))},
    {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>markF(sub(r,TC))},
    {k:"tps",l:"t/s (info)",v:r=>r.tps||-1,f:r=>r.tps??""},
-   {k:"rank",l:"Rank",v:r=>-(r.rank??1e9),f:r=>r.rank??"",t:"Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
    {k:"tot",l:"Run time",v:r=>r.tot||1e9,f:r=>mmss(r.tot)},
    {k:"valid",l:"Valid cases",v:r=>+r.valid||0,f:r=>r.valid||""}];
@@ -600,9 +605,11 @@ def team_results_md():
 
 DYN = f"""_{len(rows)} runs x {len(CASES)} cases, generated from `results/benchmark.csv` and `results/cloud.csv` by `script/build_report.py`. Each table below has its own filters (model name, size, recency, how many to show) and sortable headers; defaults show the top runs by rank (ties by pass rate)._
 
-### Ranking
+<details id="rank-desc"><summary style="cursor:pointer;display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.25);font-weight:600">&#9656; Ranking <span style="font-weight:400;color:var(--mut)">(click to show how ranks are set)</span></summary>
 
 {RANK_LEGEND_MD}
+
+</details>
 
 <div id="rank-bar"></div>
 

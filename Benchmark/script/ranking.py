@@ -48,6 +48,19 @@ def _live(name):
     return [r for r in _load(name) if not (r.get("superseded") or "").strip()]
 
 
+def _params_by_model():
+    """Model -> params text from the summary CSVs (benchmark.csv, then cloud.csv); the newest non-blank value wins.
+    The detail files have no params column, so this is where a run's params come from."""
+    out = {}
+    for name in ("benchmark.csv", "cloud.csv"):
+        for r in _load(name):
+            m = (r.get("builder_model") or r.get("model") or "").strip()
+            p = (r.get("params") or "").strip()
+            if m and p:
+                out[m] = p
+    return out
+
+
 def _detail_runs():
     """One wide row per run, joined on run_id from all four detail files: realworld (builder.csv, thinker.csv), hard
     (hard_test.csv) and coding (coder.csv). Together they are the checks benchmark.csv adds up, so a complete run has FULL checks."""
@@ -71,7 +84,8 @@ def _detail_runs():
             continue
         a = sum(int(v.split("/")[0]) for v in g["cases"].values() if "/" in v)
         n = sum(int(v.split("/")[1]) for v in g["cases"].values() if "/" in v)
-        row = {"model": g["builder_model"] or g["thinker_model"], "date": g["date"], "params": "", "git_sha": g["git"],
+        row = {"model": g["builder_model"] or g["thinker_model"], "date": g["date"],
+               "params": _PARAMS.get(g["builder_model"] or g["thinker_model"], ""), "git_sha": g["git"],
                "harness_version": "", "shared_system_memory_gb": "", "total_s": "", "run_id": run_id,
                "builder_model": g["builder_model"] or g["thinker_model"], "thinker_model": g["thinker_model"],
                "score": str(a), "max": str(n), "ran": str(g["ran"]), "valid_cases": str(g["valid"]),
@@ -85,6 +99,7 @@ def _detail_runs():
     return out
 
 
+_PARAMS = _params_by_model()
 rows = [r for r in _detail_runs() + _load("cloud.csv")]  # cloud rows are shown, never ranked (_local)
 rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
 
