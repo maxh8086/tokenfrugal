@@ -10,6 +10,12 @@ import store  # noqa: E402
 
 
 class LegacyCoding(unittest.TestCase):
+    # results/coding/ was deleted 2026-10-28 after its 28 runs were merged into coder.csv as history.
+    # These checks need that folder, so they skip when it is absent.
+    def setUp(self):
+        if not (m.RESULTS / "coding").exists():
+            self.skipTest("results/coding/ removed; legacy history already in coder.csv")
+
     def test_legacy_rows_are_history_only(self):
         rows = m.legacy_rows()
         self.assertEqual(len(rows), 28 * 6)

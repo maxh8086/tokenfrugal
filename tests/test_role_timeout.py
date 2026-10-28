@@ -24,6 +24,11 @@ class RoleTimeout(unittest.TestCase):
         for agent, t in expect.items():
             self.assertEqual(resolve_role(agent, server.CFG).get("timeout_s"), t, agent)
 
+    def test_read_only_thinker_roles_have_explicit_timeout(self):
+        # set 2026-10-28: read-only roles that fell back to the global TASK_TIMEOUT
+        for role in ("github-read", "github-actions-read", "finance"):
+            self.assertEqual(server.CFG["roles"][role].get("timeout_s"), 90, role)
+
     def test_every_bench_case_agent_has_a_timeout(self):
         for case in bench_real.cases() + bench_real.hard_cases():
             agent = case[1]
