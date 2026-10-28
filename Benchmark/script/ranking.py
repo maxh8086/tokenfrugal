@@ -210,7 +210,7 @@ def subtotal(r, cases):
 
 def sub_md(r, cases):
     a, n = subtotal(r, cases)
-    return f"{a}/{n}" if n else "·"
+    return f"{a}/{n}" if n else "⬜ NA"
 
 
 def tps(r):
@@ -288,8 +288,9 @@ def md_table():
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
         comp = "" if r["rank"] is None else str(r["rank"])
-        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {r['score']}/{r['max']} "
-                 f"| {r['pct']} | {r['builder_score']} | {r['thinker_score']} "
+        score = frac_cell(f"{r['score']}/{r['max']}")
+        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {score} "
+                 f"| {r['pct']} | {frac_cell(r['builder_score'])} | {frac_cell(r['thinker_score'])} "
                  f"| {r['mean_s_per_case']} | {'' if r['tps'] is None else r['tps']} | {comp} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
     return "\n".join(o)
 
@@ -438,11 +439,21 @@ def hard_results(path=None):
     return out
 
 
-def _hard_mark(a, n):
-    """Colour mark plus verified count for one hard case, e.g. '🟨 2/3'."""
+def score_cell(a, n):
+    """Colour mark plus run score, e.g. '🟧 2/3'. Used by every table so a score reads the same everywhere."""
     a, n = int(a), int(n)
-    mark = "🟩" if n and a == n else "🟨" if a > 0 else "🟥"
+    mark = "🟩" if n and a == n else "🟧" if a > 0 else "🟥"
     return f"{mark} {a}/{n}"
+
+
+def frac_cell(s):
+    """score_cell for an 'a/b' string (the form the CSVs store). Blank or unparsable gives '⬜ NA' (not run)."""
+    m = re.fullmatch(r"'?(\d+)/(\d+)", str(s or "").strip())
+    return score_cell(m.group(1), m.group(2)) if m else "⬜ NA"
+
+
+def _hard_mark(a, n):
+    return score_cell(a, n)
 
 
 def hard_md(results=None):
@@ -453,6 +464,6 @@ def hard_md(results=None):
     short = [c.replace("hard_", "") for c in HARD_CASES]
     lines = ["| Model | Hard score | " + " | ".join(short) + " | median s/case |", "|---|---|" + "---|" * len(short) + "---|"]
     for m, r in sorted(res.items(), key=lambda kv: (-kv[1]["a"] / max(kv[1]["n"], 1), kv[1]["s"] or 1e9)):
-        cells = [_hard_mark(*r["cases"][c]) if c in r["cases"] else "·" for c in HARD_CASES]
+        cells = [_hard_mark(*r["cases"][c]) if c in r["cases"] else "⬜ NA" for c in HARD_CASES]
         lines.append(f"| `{m}` | {r['a']}/{r['n']} | " + " | ".join(cells) + f" | {r['s']:.0f} |")
     return "\n".join(lines)

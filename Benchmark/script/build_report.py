@@ -62,13 +62,13 @@ def role_rank(cases, top=5):
         tps = f"{sum(m['t']) / len(m['t']):.1f}" if m["t"] else ""
         spc = f"{sum(m['s']) / len(m['s']):.1f}" if m["s"] else ""
         return (f"| {DOT[_status(m)]} | {i} | `{name}` | {m['d']} | {m['runs']} "
-                f"| {m['a']}/{m['n']} | {round(100 * m['a'] / m['n'])} | {round(100 * m['score'])} | {m['shared']:g} | {spc} | {tps} |")
+                f"| {score_cell(m['a'], m['n'])} | {round(100 * m['a'] / m['n'])} | {round(100 * m['score'])} | {m['shared']:g} | {spc} | {tps} |")
 
     o = head + [row(i, n, m) for i, (n, m) in enumerate(ranked[:top], 1)]
     ref = cloud_reference(cases)
     if ref:
         a, n = ref[1]["a"], ref[1]["n"]
-        o.append(f"| ☁️ | ref | `{ref[0]}` (cloud reference, not ranked) | | | {a}/{n} | {round(100 * a / n)} | 100 | | | |")
+        o.append(f"| ☁️ | ref | `{ref[0]}` (cloud reference, not ranked) | | | {score_cell(a, n)} | {round(100 * a / n)} | 100 | | | |")
     rest = ranked[top:]
     if rest:
         o += ["", f"<details><summary>Show the other {len(rest)} models</summary>", "", *head,
@@ -99,13 +99,10 @@ def role_text():
 
 
 def cell_md(r, c):
-    f = case_frac(r, c)
-    if f is None:
-        return "·"
-    mark = "🟩" if f == 1 else "🟨" if f > 0 else "🟥"
-    if f == 0 and c in REQUIRED_TOOL_CASES:
-        mark += "⚠"
-    return mark
+    out = frac_cell(r.get(c))
+    if case_frac(r, c) == 0 and c in REQUIRED_TOOL_CASES:
+        out += "⚠"
+    return out
 
 
 def heatmap(cases):
@@ -127,7 +124,7 @@ LEGEND_MD = """- Each **run** is one local model setup, scored on the same cases
 - **Builder** writes code and edits files. **Thinker** reads, analyses and browses. The models for each role are set in `router/tf-roles.yaml`. Context window per model follows the `num_ctx` policy in `Benchmark/README.md`.
 - A task uses **one** model at a time. Models never run together or talk to each other.
 - The role table shows which tools each role is allowed to call. A case needs the tools of its role.
-- 🟩 all checks passed, 🟨 some passed, 🟥 none passed, `·` not run.
+- 🟩 all checks passed, 🟧 some passed, 🟥 none passed, `⬜ NA` not run.
 - ⚠ on a case that needs a specific tool means that run scored 0 on it, so the tool was likely missing or not called."""
 
 auto = f"""<!-- BEGIN:auto -->
@@ -243,6 +240,7 @@ const D=__DATA__,C=__CASES__,REQ=__REQ__,CD=__CODING__;let sk="rank",sd=1;
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
+const markF=s=>{const m=/^(\d+)\/(\d+)$/.exec(String(s||"").replace(/^'/,""));if(!m)return"⬜ NA";const a=+m[1],n=+m[2];return(n&&a===n?"🟩":a>0?"🟧":"🟥")+" "+a+"/"+n};
 const sn=m=>{m=m.replace(/^hf\.co\//,"").replace(/^[^\/]+\//,"").replace(/-GGUF/i,"").replace(/:/," ");return m};
 C.forEach(c=>$("cs").add(new Option(c,c)));
 const frac=(r,c)=>{try{const[a,n]=r[c].split("/");return a/n}catch(e){return null}};
@@ -340,7 +338,7 @@ function findModel(){
  A.forEach(a=>{a.speed=hi>lo?Math.log(hi/a.mean_s_per_case)/Math.log(hi/lo):1;a.fit=100*((1-w)*a.pct/100+w*a.speed)});
  A.sort((a,b)=>b.fit-a.fit||b.pct-a.pct);
  const front=A.filter(a=>!A.some(b=>b!==a&&b.pct>=a.pct&&b.mean_s_per_case<=a.mean_s_per_case&&(b.pct>a.pct||b.mean_s_per_case<a.mean_s_per_case)));
- const top=A.slice(0,3).map((a,i)=>`<tr><td>${i+1}</td><td title="${esc(a.builder_model)}"><b>${esc(sn(a.builder_model))}</b></td><td>${a.pct}%</td><td>${a.mean_s_per_case} s</td><td>${a.gb||"·"} GB</td><td>${a.fit.toFixed(1)}</td></tr>`).join("");
+ const top=A.slice(0,3).map((a,i)=>`<tr><td>${i+1}</td><td title="${esc(a.builder_model)}"><b>${esc(sn(a.builder_model))}</b></td><td>${a.pct}%</td><td>${a.mean_s_per_case} s</td><td>${a.gb||"⬜ NA"} GB</td><td>${a.fit.toFixed(1)}</td></tr>`).join("");
  const xmax=Math.max(10,Math.ceil(hi/10)*10);
  $("fo").innerHTML=`<div class="w"><table><tr><th>#</th><th>Model</th><th>Pass rate</th><th>Per case</th><th>File size</th><th>Fit score</th></tr>${top}</table></div>`
   +legend([{c:"var(--acc)",t:"Candidate"},{c:"#2e7de0",t:"Pareto front (nothing is both faster and more accurate)"}])
@@ -369,10 +367,10 @@ function draw(){
  $("t").innerHTML="<tr>"+cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""}>${c[1].replace(/_/g," ")}</th>`).join("")+"</tr>"+
   R.map(r=>"<tr>"+cols.map(([k])=>{
    if(k=="pct")return`<td><span class="bar" style="width:${r.pct*.6}px"></span>${r.pct}</td>`;
-   if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${r[k]||"·"}${w}</td>`}
-   if(k=="params_b")return`<td>${r.params_b==null?"·":r.params_b}</td>`;
+   if(C.includes(k)){const p=frac(r,k);const w=(p===0&&REQ.includes(k))?" ⚠":"";return`<td class="${p==null?"":p==1?"g":p==0?"r":"y"}">${markF(r[k])}${w}</td>`}
+   if(k=="params_b")return`<td>${r.params_b==null?"⬜ NA":r.params_b}</td>`;
    if(k=="rank")return`<td>${r.rank==null?"":r.rank}</td>`;
-   if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
+   if(k=="builder_model")return`<td title="${esc(r[k])}">${esc(sn(r[k]))}</td>`;if(k=="builder_score"||k=="thinker_score")return`<td>${markF(r[k])}</td>`;return`<td>${r[k]}</td>`}).join("")+"</tr>").join("");
  document.querySelectorAll("th").forEach(h=>h.onclick=()=>{sd=sk==h.dataset.k?-sd:-1;sk=h.dataset.k;draw()});
 }
 const pick=e=>{const t=e.target.closest("[data-sk]");if(!t)return;const k=t.dataset.sk,v=t.dataset.sv;
@@ -390,9 +388,9 @@ function renderCoding(){
  const lab=c=>(c.split("_")[1]||c).toUpperCase();
  const rows=[...CD].sort((a,b)=>(b.pct??-1)-(a.pct??-1)||(a.mean_s??1e9)-(b.mean_s??1e9));
  const tbl=`<div class="w"><table><tr><th>Model</th><th>Suite</th><th>Runs</th><th>Passed</th><th>Pass rate</th><th>Mean s/case</th>${cols.map(c=>`<th title="${esc(c)}">${lab(c)}</th>`).join("")}</tr>`
-  +rows.map(r=>`<tr><td title="${esc(r.model)}"><b>${esc(sn(r.model))}</b>${r.complete?"":" <i>(partial)</i>"}</td><td>${esc(r.suite)}</td><td>${r.n==null?"·":r.n}</td><td>${r.ok}/${r.ran}</td><td>${r.pct==null?"·":r.pct+"%"}</td><td>${r.mean_s==null?"·":r.mean_s+" s"}</td>`
-  +cols.map(c=>{const v=r.cases[c]||"";const [a,b]=v.split("/").map(Number);const cls=!b?"":a===b?"g":a===0?"r":"y";return`<td class="${cls}">${v||"·"}</td>`}).join("")+"</tr>").join("")+"</table></div>";
- const bars=rows.map(r=>`<div><span title="${esc(r.model)}">${esc(short(sn(r.model),40))}</span> <span class="bar" style="width:${(r.pct||0)*3}px"></span> ${r.pct==null?"·":r.pct+"%"}</div>`).join("");
+  +rows.map(r=>`<tr><td title="${esc(r.model)}"><b>${esc(sn(r.model))}</b>${r.complete?"":" <i>(partial)</i>"}</td><td>${esc(r.suite)}</td><td>${r.n==null?"⬜ NA":r.n}</td><td>${markF(r.ok+"/"+r.ran)}</td><td>${r.pct==null?"⬜ NA":r.pct+"%"}</td><td>${r.mean_s==null?"⬜ NA":r.mean_s+" s"}</td>`
+  +cols.map(c=>{const v=r.cases[c]||"";const [a,b]=v.split("/").map(Number);const cls=!b?"":a===b?"g":a===0?"r":"y";return`<td class="${cls}">${markF(v)}</td>`}).join("")+"</tr>").join("")+"</table></div>";
+ const bars=rows.map(r=>`<div><span title="${esc(r.model)}">${esc(short(sn(r.model),40))}</span> <span class="bar" style="width:${(r.pct||0)*3}px"></span> ${r.pct==null?"⬜ NA":r.pct+"%"}</div>`).join("");
  $("cd").innerHTML=tbl+box("Coding pass rate by model",bars,"Share of coding verifications passed across the L1–L6 cases, latest complete run per model.");
 }
 renderCoding();
@@ -438,10 +436,11 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cnt=(r,cs)=>{let a=0,n=0;cs.forEach(c=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(m){a+=+m[1];n+=+m[2]}});return[a,n]};
 const frac=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a/n:-1};
-const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"·"};
+const sub=(r,cs)=>{const[a,n]=cnt(r,cs);return n?a+"/"+n:"⬜ NA"};
 const tie=(x,y)=>(y.pct-x.pct)||((x.s||1e9)-(y.s||1e9));
 const mmss=t=>t?Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0"):"";
-const mark=(r,c)=>{const m=/^(\d+)\/(\d+)$/.exec(r.cases[c]||"");if(!m)return"·";const f=+m[1]/+m[2];let s=f===1?"🟩":f>0?"🟨":"🟥";if(f===0&&r.req.includes(c))s+="⚠";return s};
+const markF=s=>{const m=/^(\d+)\/(\d+)$/.exec(String(s||"").replace(/^'/,""));if(!m)return"⬜ NA";const a=+m[1],n=+m[2];return(n&&a===n?"🟩":a>0?"🟧":"🟥")+" "+a+"/"+n};
+const mark=(r,c)=>{const s=markF(r.cases[c]);return s+(/^0\//.test(r.cases[c]||"")&&r.req.includes(c)?"⚠":"")};
 const S={sort:{},f:{}};
 const DEF={rank:"10",rb:"5",rt:"5",hc:"10"};
 const TOPS={rank:[5,10,20,0],rb:[3,5,10,0],rt:[3,5,10,0],hc:[5,10,20,0]};
@@ -487,10 +486,10 @@ function draw(id){
    {k:"model",l:"Model",str:1,v:r=>r.model.toLowerCase(),f:r=>code(r.model)+(r.infra>0?" ⚠infra":"")},
    {k:"day",l:"Date",str:1,v:r=>r.day,f:r=>r.day},
    {k:"pb",l:"Params",v:r=>r.pb==null?-1:r.pb,f:r=>esc(r.params)},
-   {k:"score",l:"Score",v:r=>r.score,f:r=>r.score+"/"+r.max},
+   {k:"score",l:"Score",v:r=>r.score,f:r=>markF(r.score+"/"+r.max)},
    {k:"pct",l:"Pass rate %",v:r=>r.pct,f:r=>r.pct},
-   {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>sub(r,BC)},
-   {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>sub(r,TC)},
+   {k:"b",l:"Builder",v:r=>frac(r,BC),f:r=>markF(sub(r,BC))},
+   {k:"t",l:"Thinker",v:r=>frac(r,TC),f:r=>markF(sub(r,TC))},
    {k:"tps",l:"t/s (info)",v:r=>r.tps||-1,f:r=>r.tps??""},
    {k:"rank",l:"Rank",v:r=>-(r.rank??1e9),f:r=>r.rank??"",t:"Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). Cloud and partial runs are not ranked."},
    {k:"s",l:"s per case",v:r=>r.s||1e9,f:r=>r.s||""},
@@ -510,7 +509,7 @@ function draw(id){
    {k:"model",l:"Model",str:1,v:m=>m.model.toLowerCase(),f:m=>code(m.model)},
    {k:"day",l:"Date",str:1,v:m=>m.day,f:m=>m.day},
    {k:"h",l:"Harness",f:m=>[...m.h].filter(Boolean).join(", ")||"-"},
-   {k:"a",l:"Score",v:m=>m.a/m.n,f:m=>m.a+"/"+m.n},
+   {k:"a",l:"Score",v:m=>m.a/m.n,f:m=>markF(m.a+"/"+m.n)},
    {k:"pct",l:"%",v:m=>m.pct,f:m=>m.pct},
    {k:"runs",l:"Runs",v:m=>m.runs,f:m=>m.runs},
    {k:"tps",l:"t/s (info)",v:m=>m.tps||-1,f:m=>m.tps==null?"":m.tps.toFixed(1)},
@@ -591,7 +590,9 @@ def team_results_md():
                 "|---|---|--:|--:|--:|--:|--:|---|"]
         for r in rs:
             fail = r["failure"].replace("|", "\\|").replace("\n", " ")[:80]
-            out.append(f"| `{r['role']}` | `{r['model']}` | {r['runs']} | {r['passes']} | {r['infra']} "
+            valid = int(r["runs"]) - int(r["infra"])
+            passed = frac_cell(f"{r['passes']}/{valid}") if valid > 0 else "⬜ NA"
+            out.append(f"| `{r['role']}` | `{r['model']}` | {r['runs']} | {passed} | {r['infra']} "
                        f"| {r['pass_pct']} | {r['mean_s_warm']} | {fail} |")
         out.append("")
     return "\n".join(out)
