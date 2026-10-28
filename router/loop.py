@@ -241,13 +241,15 @@ def role_timeout(role: dict) -> float:
     return float(role.get("timeout_s") or TASK_TIMEOUT)
 
 
-def first_call_hint(task: str, names: set) -> str | None:
-    """Corrective message for a model that answered without reading anything: name read_file, and the task's path if it has one."""
+def first_call_hint(task: str, names: set, required: str = "") -> str | None:
+    """Corrective message for a model that answered without reading anything: name the role's required tool (else read_file), and the task's path if it has one."""
+    m = PATH.search(task or "")
+    path = m.group(0).rstrip(".,;:)'\"") if m else ""
+    if required and required in names:
+        return f"You have not called {required} yet. Call {required}" + (f" with path={path}" if path else "") + " now, then answer from its result."
     if "read_file" not in names:
         return None
-    m = PATH.search(task or "")
-    if m:
-        path = m.group(0).rstrip(".,;:)'\"")
+    if path:
         return f"You have not read anything yet. Call read_file with path={path} now, then answer from its result."
     return "You have not read anything yet. Call read_file on the file you need now, then answer from its result."
 
@@ -294,7 +296,7 @@ def failure_reason(text: str) -> str:
         return "infra"
     if re.search(r"connection closed|is not running|broken ?pipe", s):
         return "connection"
-    if "timed out" in s:
+    if "timed out" in s or "timeouterror" in s or "apitimeouterror" in s:
         return "timeout"
     if "without calling any tool" in s:
         return "no-tool-call"
@@ -309,8 +311,11 @@ def failure_reason(text: str) -> str:
 
 def error_kind(text: str) -> str:
     """Failure kind stored as error_kind: step_timeout (role time limit hit), request_timeout (one model request timed out),
-    no_tool_call, max_steps, or error for everything else (infra, connection, bad answers, ...). Built on failure_reason."""
+    no_tool_call, max_steps, infra (backend or runner failure), or error for everything else (connection, bad answers, ...).
+    Built on failure_reason."""
     reason = failure_reason(text)
+    if reason == "infra":
+        return "infra"
     if reason == "timeout":
         return "step_timeout" if "task timed out" in (text or "").lower() else "request_timeout"
     if reason == "no-tool-call":
@@ -441,7 +446,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     else:
                         bad += ". Unknown tool name? Valid tool names: " + ", ".join(sorted(names))
                 if not bad and tools and not used_tools:
-                    bad = (first_call_hint(task_text, names) if not hinted else None) or \
+                    bad = (first_call_hint(task_text, names, role.get("required_tool") or "") if not hinted else None) or \
                         "you answered without calling any tool; call a tool to read real data first"
                     hinted = True
                 failed = not bad and used_tools and not ok_calls and fail_retries < 2

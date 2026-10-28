@@ -15,7 +15,8 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import checker, compose, events, plan, reconnect, store, ui_launcher
-from .config import WORKSPACE, load_tf_roles, resolve_role
+from .config import NATIVE_BACKENDS, WORKSPACE, load_tf_roles, resolve_role
+from .mcp_client import ensure_backend
 from .preflight import task_error
 from .loop import error_kind, failure_reason, leaf, role_timeout, run, take_started, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
@@ -28,22 +29,27 @@ RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # o
 RESCOPE = "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure."
 
 
-def kind_hint(kind: str, started: int) -> str:
+def kind_hint(kind: str, started: int, required_tool: str = "") -> str:
     """Short next-step hint for an error_kind; empty for 'error', which keeps the reason-based hint."""
     if kind in ("step_timeout", "request_timeout"):
         if started:
             return f"Timed out after {started} tool calls. Call resume_task once, or split the task."
         return "Timed out before any tool call. Split the task into smaller tasks. Do not resume_task."
     if kind == "no_tool_call":
+        if required_tool:
+            return f"The model answered without calling a tool. Call {required_tool} with the exact path in the task."
         return "The model answered without calling a tool. Name the exact tool and path in the task."
     if kind == "max_steps":
         return "Step budget used up. Narrow the scope of the task."
+    if kind == "infra":
+        return "The backend containers did not start. Do not resume_task; check Docker, then dispatch again."
     return ""
 
 
-def failure_message(tid: str, role: dict, err: str, reason: str, kind: str = "error", started: int = 0) -> str:
+def failure_message(tid: str, role: dict, err: str, reason: str, kind: str = "error", started: int = 0,
+                    required_tool: str = "") -> str:
     """The short failure reply Haiku reads: reason class, error_kind, and the next step it should take."""
-    hint = kind_hint(kind, started)
+    hint = kind_hint(kind, started, required_tool)
     if not hint:
         if reason in RESUME_HINT:
             hint = f"Call resume_task('{tid}') to retry."
@@ -52,6 +58,11 @@ def failure_message(tid: str, role: dict, err: str, reason: str, kind: str = "er
         else:
             hint = RESCOPE
     return f"[{tid}] FAILED ({role['role']}/{role['model']}) reason={reason} error_kind={kind}: {err}. {hint}"
+
+
+def status_line(status: str, role: str, model: str, calls: int, elapsed: float) -> str:
+    """Last line of every dispatch reply: outcome, role, model, tool calls sent and wall time in seconds."""
+    return f"status={status} role={role} model={model} calls={calls} elapsed={round(elapsed, 1)}s"
 
 
 async def _warm_up():
@@ -157,10 +168,11 @@ def diff_block(text: str) -> str | None:
     return m.group(1) if m else None
 
 
-def _check(role: dict, prompt: str, detail: str, t0: float) -> dict | None:
+def _check(role: dict, prompt: str, detail: str, t0: float, accept_override: list[str] | None = None) -> dict | None:
     """Deterministic checks, run only when the task names an Accept: command or the reply holds a ```diff block.
+    accept_override (from dispatch_task's accept argument) replaces the task's Accept: line when given.
     The accept command gets what is left of the role's timeout_s after the run, so run and checks share one budget."""
-    accept = accept_cmd(prompt)
+    accept = accept_override if accept_override is not None else accept_cmd(prompt)
     diff = diff_block(detail)
     if accept is None and diff is None:
         return None
@@ -177,6 +189,14 @@ def _fix_prompt(verdict: dict) -> str:
             "that fixes these. Do not explain.")
 
 
+def _changed_set() -> set[str]:
+    """Files git reports as changed in the workspace. Empty when git fails, so a broken git never fails a task."""
+    try:
+        return set(checker.files_changed(WORKSPACE))
+    except Exception:  # noqa: BLE001
+        return set()
+
+
 def _report(verdict: dict | None, role: dict) -> str:
     """Checker line appended to the summary; the judgement items go to the client to decide."""
     if verdict is None:
@@ -184,7 +204,7 @@ def _report(verdict: dict | None, role: dict) -> str:
     parts = []
     for i in verdict["items"]:
         state = "ok" if i["passed"] else "FAILED"
-        shown = i["name"] == "files_changed" or not i["passed"]
+        shown = not i["passed"]  # files_changed is listed by the manifest line instead
         parts.append(f"{i['name']} {state}" + (f" ({i['detail']})" if shown else ""))
     text = "\nChecks: " + "; ".join(parts) + "."
     contract = (CFG.get("contracts") or {}).get(role["role"], {})
@@ -194,25 +214,45 @@ def _report(verdict: dict | None, role: dict) -> str:
     return text
 
 
-async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0) -> str:
+async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: int, name: str, t0: float) -> str:
+    """B3: a native server's containers were not running or healthy, so the task fails before any model run."""
+    err = f"infra: backend containers for {name} are not running or healthy"
+    store.update(tid, status="failed", error=err, error_kind="infra")
+    events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason="infra", error_kind="infra",
+                saved=0, task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
+    if plan_id:
+        await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
+        await _plan(plan.set_status, plan_id, "blocked", "router", err)
+    return (failure_message(tid, role, err, "infra", "infra", 0, role.get("required_tool") or "") + "\n"
+            + status_line("failed", role["role"], role["model"], 0, time.monotonic() - t0))
+
+
+async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0,
+                   accept_override: list[str] | None = None) -> str:
+    t0 = time.monotonic()
+    for name in role.get("native") or []:  # B3: a native server's containers must be up before any model call
+        if name in NATIVE_BACKENDS and not await ensure_backend(name):
+            return await _infra_failed(tid, agent, role, prompt, plan_id, name, t0)
     row = store.get(tid)
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
                 max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300],
                 tools=role.get("tools") or [], skills=role.get("skills") or [])
     base = len(messages or [])  # messages from an earlier run were already counted
-    t0 = time.monotonic()
+    before = await asyncio.to_thread(_changed_set)  # C2: the workspace's changed files before the run
     beat = asyncio.create_task(_heartbeat(tid))
+    calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
     try:
         detail, msgs = await run(agent, role, prompt, messages, tid)
-        take_started(tid)
-        verdict = await asyncio.to_thread(_check, role, prompt, detail, t0)
+        calls += take_started(tid)
+        verdict = await asyncio.to_thread(_check, role, prompt, detail, t0, accept_override)
         if verdict and not verdict["passed"]:  # one correction, continuing the same message history
             detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid)
-            take_started(tid)
-            verdict = await asyncio.to_thread(_check, role, prompt, detail, t0)
+            calls += take_started(tid)
+            verdict = await asyncio.to_thread(_check, role, prompt, detail, t0, accept_override)
             if verdict and not verdict["passed"]:
                 raise CheckFailed(_failed_text(verdict))
+        after = await asyncio.to_thread(_changed_set)
         summary = summarize(role["model"], detail, prompt) + _report(verdict, role)
         events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
@@ -223,7 +263,8 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             if ok:
                 await _plan(plan.checkpoint)
             summary += "" if ok else f" (plan: {msg})"
-        return f"[{tid}] {summary}"
+        return (f"[{tid}] {summary}\n{checker.manifest(before, after)}\n"
+                + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
         if isinstance(e, CheckFailed):
             full, reason, kind = str(e), "checker", "checker"
@@ -232,7 +273,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             full = f"{type(e).__name__}: {e}"
             reason = failure_reason(full)
             kind = error_kind(full)
-        started = take_started(tid)
+        started = calls + take_started(tid)
         err = hard_trim(full, 300 if kind == "checker" else 120)
         store.update(tid, status="failed", error=err, error_kind=kind)
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind,
@@ -241,16 +282,19 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "router", err)
-        return failure_message(tid, role, err, reason, kind, started)
+        return (failure_message(tid, role, err, reason, kind, started, role.get("required_tool") or "") + "\n"
+                + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
     finally:
         beat.cancel()
 
 
 @mcp.tool()
-async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", plan_id: int = 0, role: str = "") -> str:
+async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", plan_id: int = 0, role: str = "",
+                        accept: str = "") -> str:
     """Run a task on a local tf-role (agency-agents slug, e.g. 'engineering-code-reviewer').
     `role` is an alias for `agent`; when both are given, `agent` wins.
     `task_type` is required: the kind of task (e.g. 'add test', 'fix bug', 'explain code'). It picks which approved templates apply.
+    `accept`, when given, is a command (e.g. 'python -m unittest') that replaces the task's Accept: line; it runs without a shell.
     Optional plan_id links it to a plan task (claimed first, marked done/blocked after).
     Returns a summary of up to 5000 tokens and a task_id."""
     agent = agent or role
@@ -258,6 +302,11 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
         return "give agent (or role) and task"
     if not task_type.strip():
         return "give task_type: the kind of task, e.g. 'add test' or 'explain code' (see list_roles for templates)"
+    accept_argv = None
+    if accept:
+        accept_argv = accept.split()
+        if not accept_argv:
+            return "accept must be a command, e.g. 'python -m unittest ...'"
     err = task_error(agent, task, CFG, WORKSPACE)
     if err:
         return err
@@ -267,7 +316,8 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
         if not ok:
             return f"plan task {plan_id} not started: {msg}"
     prompt = store.with_templates(role["role"], task, task_type.strip())  # approved templates go before the task text; the row keeps the task
-    return await _execute(store.create(agent, role["role"], task), agent, role, prompt, plan_id=plan_id)
+    return await _execute(store.create(agent, role["role"], task), agent, role, prompt, plan_id=plan_id,
+                          accept_override=accept_argv)
 
 
 @mcp.tool()

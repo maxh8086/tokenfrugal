@@ -155,6 +155,9 @@ def role_errors(roles: dict, root: Path) -> dict:
         for n in _as_list(role.get("native")):
             if n not in NATIVE:
                 probs.append(f"native server '{n}' is not a known native server")
+        req = role.get("required_tool")
+        if req and tools and req not in tools:
+            probs.append(f"required_tool '{req}' is not in the role's tools")
         missing, _ = tool_gaps(role, root)
         for t in missing:
             probs.append(f"tool '{t}' is not provided by any of its profiles or native servers")

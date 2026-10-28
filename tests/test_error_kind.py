@@ -102,10 +102,17 @@ class Classify(unittest.TestCase):
         self.assertEqual(loop.error_kind("LoopError: no final answer in 12 steps"), "max_steps")
 
     def test_everything_else_is_error(self):
-        for text in ("ValueError: something else", "LoopError: infra: Error code: 500 - internal error",
-                     "infra: task timed out after 5s, Connection closed", "MCPError: Connection closed",
+        for text in ("ValueError: something else", "MCPError: Connection closed",
                      "LoopError: empty answer", ""):
             self.assertEqual(loop.error_kind(text), "error", text)
+
+    def test_infra_text_is_infra_kind(self):
+        for text in ("LoopError: infra: Error code: 500 - internal error", "infra: task timed out after 5s, Connection closed"):
+            self.assertEqual(loop.error_kind(text), "infra", text)
+
+    def test_timeout_error_class_is_request_timeout(self):
+        self.assertEqual(loop.failure_reason("TimeoutError: slow"), "timeout")
+        self.assertEqual(loop.error_kind("TimeoutError: slow"), "request_timeout")
 
 
 class ToolCallCounter(unittest.TestCase):
@@ -230,7 +237,8 @@ class ExecuteEndToEnd(unittest.TestCase):
             for p in reversed(patches):
                 p.stop()
         self.assertIn("FAILED (builder/m) reason=timeout error_kind=request_timeout", reply)
-        self.assertTrue(reply.endswith("Timed out after 1 tool calls. Call resume_task once, or split the task."), reply)
+        self.assertIn("Timed out after 1 tool calls. Call resume_task once, or split the task.", reply)
+        self.assertRegex(reply.splitlines()[-1], r"^status=failed role=builder model=m calls=1 elapsed=\d+\.\d+s$")
         row = store.get(tid)
         self.assertEqual(row["status"], "failed")
         self.assertEqual(row["error_kind"], "request_timeout")

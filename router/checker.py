@@ -27,6 +27,15 @@ def files_changed(repo: str) -> list[str]:
     return sorted(paths)
 
 
+def manifest(before: set[str], after: set[str], cap: int = 20) -> str:
+    """One line naming the files a run changed (after minus before), sorted, with a count of any beyond cap."""
+    new = sorted(after - before)
+    if not new:
+        return "files_changed: none"
+    more = f" (+{len(new) - cap} more)" if len(new) > cap else ""
+    return f"files_changed: {', '.join(new[:cap])}{more}"
+
+
 def diff_applies(diff_text: str, repo: str) -> tuple[bool, str]:
     try:
         r = subprocess.run(["git", "-C", repo, "apply", "--check", "-"], input=diff_text,
