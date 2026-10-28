@@ -41,7 +41,7 @@ Rule: no code or doc edits for these until the benchmark runs in the other sessi
 
 **Scope of improvement (existing roles)**
 1. Bring role skills up to the `code-l1` pattern: numbered steps, an explicit output format, and a stop condition. Current role skills are 18–20 lines.
-2. Verify the `synaptree` native server is wired for every role that lists it.
+2. Verify the `synaptree` native server is wired for every role that lists it. Done 2026-10-28: `tests/test_native_wiring.py` (7 synaptree roles; reviewer allows `trace_path` and `get_code_snippet`).
 3. Create a live smoke test per role only after the user confirms. Each role gets its model only after its test passes.
 
 **Self-improvement gate (built 2026-10-21, not yet used on a live role)**
@@ -198,7 +198,7 @@ Tool overlap only, different skill (keep; not duplicates):
 2. Backfill the 12 existing rows of `benchmark.csv` from `results/hard/` and `results/coding/`. Work on a copy first and show the diff. Keep the Haiku baseline row (line 59 canonical, line 58 superseded and not deleted) and keep the targeted retry row (`haiku55-targeted-retry`) separate.
 3. Report the CSV issues and the expected final layout to the user. Ask for explicit confirmation before deleting `results/hard/`, `results/coding/`, or the stray raw JSON. Keep `results/coding/` temp data until the c2 merge.
 4. Disclose to the user: `1b84e51` and `4e07633` swept untracked files (`git add -A` / broad adds). Both are pushed and not rewritten. Also disclose that the qwen3-4b run was killed and its partial raw files are in `4e07633`.
-5. Ask whether to commit `router/tf-roles.yaml`, `scripts/bench_real.py`, and `Benchmark/results/cloud.csv`.
+5. Done: `router/tf-roles.yaml`, `scripts/bench_real.py` and `Benchmark/results/cloud.csv` are tracked and nothing is uncommitted (checked 2026-10-28).
 6. After confirmation, restart the queue: qwen3-4b first (realworld + coding), then the remaining batches of 3. Run `scratchpad/run_queue.sh` with the CR fix. Commit and push per batch to `tokenfrugal HEAD:main`, with no Co-Authored-By trailer and only specific paths added.
 
 **Scratchpad caveat**: the queue lists and logs live in `C:\Users\vaibh\AppData\Local\Temp\claude\C--Users-vaibh-Downloads-Projects-tokenfrugal\3fcf2a35-5f28-486d-92c5-8bd8f806feed\scratchpad\`. A new session gets a new scratchpad id. Reference that path by absolute path, and check that it still exists before the queue restart.
@@ -228,9 +228,11 @@ _Unresolved, not verified in this update: `_clean_scratch()` isolation effect on
 
 - **Benchmark done, confirmed by the user on 2026-10-28.** `benchmark.csv` header matches `SUMMARY_COLS` (33 of 33). Team results are on `Benchmark/index.html`: "Best model per team", built from builder and thinker families only (hard and coding are not mapped to teams). No thinker family has a green recommendation; the team view shows "best available" for those. Rebuild with `--no-clean` (keeps `clean_outputs` from deleting the old backup): `.venv/Scripts/python.exe Benchmark/script/build_report.py --update no --no-clean`.
 
-- **Local queue (2026-10-21 run, 32 models):** finished. `ALL_DONE` at 2026-10-24 14:58:36, report exit 0. Log is `Benchmark/results/tracker/queue-capfix.out` (there is no `queue-run.log`). Qwen2.5-Coder-32B, Qwable-9B, mistral-nemo and llama3.1-8b have rows; qwen3-omni-thinking is now a `NA` row in `benchmark.csv` (blank scores; not fast enough to finish in time, 2026-10-27). The model is 30.5B (IQ4_XS), not 32B; qwen3-4b has no total (72/81 case lines, watchdog stall). Full rerun restarted 2026-10-27 under the new debugger cap, log `Benchmark/results/tracker/qwen3-4b-rerun-20261027.log`. Details: `Benchmark/results/tracker/queue-failures.md`.
+- **Local queue (2026-10-21 run, 32 models):** finished. `ALL_DONE` at 2026-10-24 14:58:36, report exit 0. Log is `Benchmark/results/tracker/queue-capfix.out` (there is no `queue-run.log`). Qwen2.5-Coder-32B, Qwable-9B, mistral-nemo and llama3.1-8b have rows; qwen3-omni-thinking is now a `NA` row in `benchmark.csv` (blank scores; not fast enough to finish in time, 2026-10-27). The model is 30.5B (IQ4_XS), not 32B; qwen3-4b reran in full on 2026-10-27 under the new debugger cap: 36/81 in `benchmark.csv`. Details: `Benchmark/results/tracker/queue-failures.md`.
 - **Ollama:** upgraded 0.40.6 -> 0.40.11. Saluki HF pull failed ("file does not exist") on both versions; GGUF was downloaded directly and imported with a Modelfile.
-- **Not done:** `Benchmark/script/build_report.py` not rerun since the CSV restores (answer N to its roles prompt); `Benchmark/Benchmark.md` Observations not updated for Gemma 4 or Saluki; Saluki tool calling not tested separately.
+- **Not done:** `Benchmark/script/build_report.py` not rerun since the CSV restores (answer N to its roles prompt).
+- Gemma 4 and Saluki results are in `benchmark.csv`. `Benchmark/Benchmark.md` has no Observations section by design (its maintainer note keeps results out), so nothing is added there. Saluki has scored rows in every test (builder 3/12, thinker 18/36, hard 2/15, coding 3/18), so tool calls do run; the "untested" note is retired. `qwen3-omni-thinking` is an NA row; its `note` column says why.
+- `Benchmark/script/README.md` still says Observations go into `Benchmark.md`. That is stale; fix it when the README is next edited.
 
 ---
 ## Gotchas (kept from closed items: concurrent docker runs, workspace auto-sync, Haiku tool-call check)
@@ -306,11 +308,11 @@ Estimated time: about 30 to 60 min per model, so about 16 to 30 hours for 32 mod
 - `.gitignore` covers `backups/`, `hard/`, `tracker/logs/` and `raw/`.
 - Ran for real 2026-10-27 at 15:11, from `build_report.py` after the qwen3-4b rerun. Result: `results/raw/` is empty. The raw JSON behind the qwen3-4b row (`20261027-120558-full-ts-qwen3-4b-65536-latest+ts-qwen3-4b-65536-latest.json`, suite files under `raw/suites/`) was deleted. The user accepted this loss on 2026-10-27. The benchmark.csv numbers for that row remain, but its `raw_json` reference is dead and the row cannot be re-checked from raw output. Re-running the model would be the only way to regenerate that evidence.
 
-**Remote (not done; needs a request, outward-facing):**
+**Remote (done 2026-10-28):**
 - Checked 2026-10-27: no `raw/` file is tracked. Five `tracker/` files are tracked on purpose (PROCESS.md, build_queue.py, progress.md, queue-failures.md, run_queue.sh). Four Saluki files remain in local `raw/` (ignored).
 - **Checked 2026-10-28, no action:** `results/raw/` is not tracked and is empty. Do NOT run `git rm --cached Benchmark/results/tracker`: it would untrack the five files that must stay tracked (listed above). Nothing needs untracking.
-- Those files remain in git history after that commit. Removing them from history needs a history rewrite and force push, which is a separate decision.
-- Commit only when the user asks. Commit messages: no Co-Authored-By trailer (per CLAUDE.md); the session's attribution reminder asks for one, so check which rule applies before committing.
+- Rewritten 2026-10-28: `main` no longer has `Benchmark/results/raw`, `hard`, `coding` or `tracker/logs` in any commit (filter-branch, then force-push with lease, `11b9430` -> `8147e33`). Every commit SHA on main changed, so SHAs cited in this file (for example `1b84e51`, `4e07633`, `14e65ec`, `9d641c2`, `f09dc07`) no longer exist on main. Other remote branches still hold the old history (`bench/harness-and-results`, `fix/browser-long-lived`, `handoff-cleanup`); they were not rewritten. Local objects are not pruned.
+- Commits: commit and push by default (user, 2026-10-28). No Co-Authored-By trailer (CLAUDE.md and memory rule).
 
 ---
 ## Open items merged from docs/handoff.md (2026-10-27)
@@ -329,18 +331,15 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
   - code-l6: require callers listed as `file:line` (the model answers from prose).
 - Timeouts: code-l2 225 -> ~340 s was proposed after t15 and is not applied. Current code-l1..l6 values are 180/225/270/450/450/450 (`router/tf-roles.yaml`).
 
-### Stage 3: skill gate (open)
-- `scripts/skill_gate.py` exists. `router/skills_candidates/` does not exist, so no candidate has been stored. Not verified in this pass.
+### Stage 3: skill gate (done 2026-10-28)
+- `scripts/skill_gate.py` exists. `router/skills_candidates/` and `router/skills_review/` are tracked (`.gitkeep`). Gate order and verdict rules are tested with stubbed calls in `tests/test_skill_gate.py`.
 - Spec: Haiku proposes a SKILL.md change; Sonnet 5.5 reviews L1-L3, Opus 5.5 reviews L4-L6. Gates in order: under 1.2k characters, offline tests, no regression on that level (n>=3), reviewer approval. Candidates go to `router/skills_candidates/<skill>/<ts>.md`. The reviewer cannot edit the skill. Approved text goes to the working tree and is never committed.
-- Done when: gate order and rejection reasons have offline tests that stub the model calls.
 - Not the same as `scripts/role_improve.py` (the self-improvement gate above).
 
 ### Stage 4: Haiku cloud baseline (closed 2026-10-28)
 - Closed. `scripts/haiku_run.py` and `tests/test_haiku_run.py` were deleted. The user confirmed the Haiku 5.5 run is in `benchmark.csv` and `cloud.csv` ("Haiku 80/81" above) and that only updated run results are kept.
 - Cloud results are never ranked.
 
-### Stage 5: Codex / cloud agents README (open)
-- `README.md` has the Codex section and the AGENTS.md template (lines 68-96). It is still marked "Not yet verified". Run a real Codex session, then remove that note.
 
 ### Stage 6: hard-suite and loose ends (open)
 - Add the hard section to `explorer.html` and `Benchmark.md`, and test the hard block in `run_benchmark.py` live.
@@ -364,12 +363,13 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 - Live coding results come from the normal bench path. A run with the `coding` role publishes its rows and re-summarizes on each run (`run_benchmark.py`, both the suite-only and main paths). No separate merge step is needed. The qwen3-4b coding 0/18 is a real suite result (the cases failed or timed out), not a missing merge. 30 of 40 CSV rows have a `coding_score`.
 - Explorer coverage (decided 2026-10-27): eight CSV models do not appear in `explorer.html`: `ts-qwen2-5vl-7b-65536`, `mannix/deepseek-coder-v2-lite-instruct:iq4_xs`, `hf.co/kkohtaka/starcoder2-7b`, `hf.co/akpsahan/starcoder2-15b`, `ts-gemma3-4b-65536`, `qwen2.5-coder-yarn:3b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `ts-hf-co-bartowski-google_gemma-3-12b`. This is intended. Other variants of these models are tested and shown in the CSV. Rank parity for the 31 models shown is verified: 0 mismatches.
 
-### Router clarity for Haiku (proposal; A approved, not implemented)
-- Checked 2026-10-27: `error_kind` and `first_call_unfinished` do not appear in `router/loop.py`, `router/server.py` or `router/store.py`.
+### Router clarity for Haiku (A built 2026-10-28; B and C open)
+- A is built: `error_kind` in `router/loop.py`, the store migration in `router/store.py`, and the FAILED hints in `router/server.py`. Tests: `tests/test_error_kind.py`. `first_call_unfinished` is not part of A and is not built.
 - A. Failure diagnostics (approved): a `started` counter in the loop; `error_kind` (`step_timeout`, `request_timeout`, `no_tool_call`, `max_steps`, `error`) on the `task_failed` event and the stored row; a short FAILED hint per kind (timeout with 0 calls: split the task, do not `resume_task`; timeout after some calls: `resume_task` or split; no tool call: name the tool and path; max steps: narrow the scope). Store migration next to `trail` and `heartbeat`. Unit tests for classification and counters.
 - B. Bench ideas: B1 `classify` / `TIMEOUT_MARKERS` become `error_kind`. B2 optional `required_tool` per role. B3 container pre-flight returns `error_kind=infra` at once. B4 abort on the first "Connection closed" (check `router/reconnect.py` first). B5 start-up sweep of stale MCP containers (hazard, unconfirmed: with two routers alive, `mcp_reap.leave()` could remove the other's new containers). B6 low value.
 - C. Options: C1 structured status line on every reply. C2 files-changed manifest on success. C3 optional `accept` argument on `dispatch_task`. C4 `list_roles` with measured evidence. C5 pre-dispatch size check. C6 repeat-failure escalation. C7 task-spec template in the tool docstring (measure with the coding suite first). C8 live status for a running task. C9 failure memory per agent.
 - Order: A, B1-B4, C1-C3 first. Then C4 and C5 once the final data is merged. C6-C9 afterwards.
+- Open now: B1-B4 and C1-C3. C2 is partly in place: `router/checker.py` `files_changed` is shown on success (`router/server.py`), not checked against the full C2 spec. C3 (an `accept` argument on `dispatch_task`) is not built; it changes the tool signature, so it needs its own review.
 
 ## Fix-first plan (approved 2026-10-19; partly implemented)
 
