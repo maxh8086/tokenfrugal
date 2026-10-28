@@ -473,6 +473,7 @@ if endpoint and not any(h in endpoint for h in LOCAL):
 real = data["results"]["realworld"]
 done = [real[cid] for cid, _, _ in bench_csv.LAYOUT if cid in real]
 temp = "omitted (rejected by model)" if meta.get("temperature_omitted") else meta.get("temperature", "")
+think = store.thinking_of(meta, row[0])
 stamp = data.get("stamp", "")
 date = datetime.strptime(stamp, "%Y%m%d-%H%M%S").isoformat(timespec="seconds") if stamp else ""
 def _peak_ram(d):
@@ -523,7 +524,7 @@ try:
     summary = store.summarize({"builder": rec["builder_model"], "thinker": rec["thinker_model"]},
                               store.load_details(results_dir))
     config = {
-        "model": rec["model"], "params": rec["params"], "endpoint": endpoint, "temperature": temp,
+        "model": rec["model"], "params": rec["params"], "endpoint": endpoint, "temperature": temp, "thinking_level": think,
         "harness_version": HARNESS_VERSION, "loop_version": LOOP_VERSION, "compression_level": mi.get("compression_level", ""),
         "valid_cases": rec["valid_cases"], "ran": ran,
         "context_used_peak_tokens": rec["context_used_peak_tokens"],

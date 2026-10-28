@@ -2,6 +2,7 @@
 import json
 import unittest
 
+from router import loop
 from router.loop import first_call_hint, infra_error, parse_text_calls, think_extra, wrapup_due
 
 N = {"read_file", "write_file"}
@@ -67,11 +68,28 @@ class InfraError(unittest.TestCase):
 
 
 class ThinkExtra(unittest.TestCase):
-    def test_off_for_thinking_role(self):
-        self.assertEqual(think_extra({"thinking": True}), {"extra_body": {"think": False}})
+    def setUp(self):
+        self._level, self._refused = loop.THINK_LEVEL, set(loop._NO_THINK)
+        loop._NO_THINK.clear()
 
-    def test_empty_otherwise(self):
-        self.assertEqual(think_extra({}), {})
+    def tearDown(self):
+        loop.THINK_LEVEL = self._level
+        loop._NO_THINK.clear()
+        loop._NO_THINK.update(self._refused)
+
+    def test_sends_level_to_every_role(self):
+        loop.THINK_LEVEL = "medium"
+        self.assertEqual(think_extra({"model": "m"}), {"extra_body": {"think": "medium"}})
+
+    def test_off_sends_nothing(self):
+        loop.THINK_LEVEL = "off"
+        self.assertEqual(think_extra({"model": "m"}), {})
+
+    def test_refused_model_gets_no_field(self):
+        loop.THINK_LEVEL = "high"
+        loop._NO_THINK.add("m")
+        self.assertEqual(think_extra({"model": "m"}), {})
+        self.assertEqual(think_extra({"model": "other"}), {"extra_body": {"think": "high"}})
 
 
 if __name__ == "__main__":

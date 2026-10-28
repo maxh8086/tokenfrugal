@@ -182,6 +182,23 @@ services:
       retries: 40
       start_period: 20s
 
+  db-oracle:
+    image: gvenzl/oracle-free:23-slim
+    profiles: [db-oracle]
+    # Wrapper: exports the secret file as the SYS and app-user passwords, then runs the image's entrypoint.
+    # Creates the `tf` user in the FREEPDB1 pluggable database that scripts/gen_db_profiles.py points dbhub at.
+    entrypoint: ["/bin/sh", "-c", "export ORACLE_PASSWORD=\"$$(cat /run/secrets/TF_DB_PASSWORD)\" APP_USER=tf APP_USER_PASSWORD=\"$$(cat /run/secrets/TF_DB_PASSWORD)\" && exec /opt/oracle/container-entrypoint.sh"]
+    secrets: [TF_DB_PASSWORD]
+    ports: ["127.0.0.1:1521:1521"]
+    mem_limit: 3g
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/oracle/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 240s
+
   db-mongo:
     image: mongo:7
     profiles: [db-mongo]

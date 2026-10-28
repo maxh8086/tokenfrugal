@@ -10,13 +10,14 @@ from types import SimpleNamespace
 from openai import OpenAI
 
 from . import events, mcp_reap
-from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
-                     TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
+from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, THINK_LEVEL,
+                     TOOL_TIMEOUT, TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
 from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
 
 _NO_TEMP: set[str] = set()  # models whose endpoint refuses `temperature`
+_NO_THINK: set[str] = set()  # models that have no thinking and refuse the `think` field
 _LOCAL = any(h in OLLAMA_URL for h in ("localhost", "127.0.0.1", "[::1]", "host.docker.internal"))
 # hosted endpoints rate-limit (429/529): let the SDK back off and honour retry-after; local stays at 0
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0 if _LOCAL else 4)
@@ -326,8 +327,10 @@ def error_kind(text: str) -> str:
 
 
 def think_extra(role: dict) -> dict:
-    """Ask thinking models to skip their reasoning phase; empty for other roles."""
-    return {"extra_body": {"think": False}} if role.get("thinking") else {}
+    """Send the thinking level (TOKENFRUGAL_THINK) to models that accept it; empty when off or refused."""
+    if THINK_LEVEL in ("", "off") or role["model"] in _NO_THINK:
+        return {}
+    return {"extra_body": {"think": THINK_LEVEL}}
 
 
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
@@ -361,6 +364,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
             open_role(role.get("profile"), role.get("native"), role.get("params")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
+        if role["tools"] and not tools:  # the MCP server did not start: a harness fault, not a model answer
+            raise LoopError(f"infra: no tools listed for {agent} (profile {role.get('profile')} failed to start)")
         names = {t["function"]["name"] for t in tools}
         text_mode = bool(tools) and (role.get("tool_mode") or TOOL_MODE) == "text"
         if text_mode and msgs and msgs[0].get("role") == "system" and "Tools are NOT available" not in msgs[0]["content"]:
@@ -422,7 +427,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     elif "tool_choice" in kw and "tool_choice" in s:
                         del kw["tool_choice"]  # model/endpoint cannot force a tool call
                     elif "extra_body" in kw and "think" in s.lower() and "400" in s:
-                        del kw["extra_body"]  # endpoint rejects the think flag: send the request without it
+                        _NO_THINK.add(role["model"])  # model has no thinking: send it without the flag from now on
+                        del kw["extra_body"]
                     elif infra_error(e):
                         if infra_retried:
                             raise LoopError(f"infra: {s[:300]}") from e

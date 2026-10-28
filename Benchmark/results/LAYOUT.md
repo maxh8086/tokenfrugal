@@ -9,14 +9,16 @@ Column order:
 | # | columns |
 | --- | --- |
 | 1 | `model` (run tag) |
-| 2-7 | `params`, `endpoint`, `temperature`, `harness_version`, `loop_version`, `compression_level` |
-| 8-13 | `rank`, `total_score`, `valid_cases`, `median_s`, `max`, `ran` |
-| 14-21 | `datetime_builder`, `builder_score`, `datetime_thinker`, `thinker_score`, `datetime_hard`, `thinker_hard_score`, `datetime_coding`, `coding_score` (one datetime and one score pair per test, in `TESTS` order) |
-| 22 | `mean_s_per_case` |
-| 23-29 | `context_used_peak_tokens`, `gpu_memory_capacity`, `gpu_memory_used_gb`, `system_ram_gb`, `shared_system_memory_capacity_gb`, `shared_system_memory_used_gb`, `peak_model_ram_gb` |
-| 30-32 | `raw_json`, `builder_model`, `thinker_model` (scorer keys; not in the expected list, kept at the end). A new role adds `<role>_model` here, at the end. |
+| 2-8 | `params`, `endpoint`, `temperature`, `thinking_level`, `harness_version`, `loop_version`, `compression_level` |
+| 9-14 | `rank`, `total_score`, `valid_cases`, `median_s`, `max`, `ran` |
+| 15-22 | `datetime_builder`, `builder_score`, `datetime_thinker`, `thinker_score`, `datetime_hard`, `thinker_hard_score`, `datetime_coding`, `coding_score` (one datetime and one score pair per test, in `TESTS` order) |
+| 23 | `mean_s_per_case` |
+| 24-30 | `context_used_peak_tokens`, `gpu_memory_capacity`, `gpu_memory_used_gb`, `system_ram_gb`, `shared_system_memory_capacity_gb`, `shared_system_memory_used_gb`, `peak_model_ram_gb` |
+| 31-33 | `raw_json`, `builder_model`, `thinker_model` (scorer keys; not in the expected list, kept at the end). A new role adds `<role>_model` here, at the end. |
 
-Placement rule: a new test's `datetime_<test>` and `<test>_score` pair goes right after the last test pair (after `coding_score`) and before `mean_s_per_case`. Blocks 23-29 and 30-32 stay at the end and shift right. Numbers in this table assume the current four tests. With a fifth test, block 14-21 becomes 14-23, and every later number moves by 2.
+`thinking_level` is the thinking level the run sent (`TOKENFRUGAL_THINK`): `medium`, `high`, `off`, `not supported` when the model refused the field, or `not sent` for rows from runs before the level was sent.
+
+Placement rule: a new test's `datetime_<test>` and `<test>_score` pair goes right after the last test pair (after `coding_score`) and before `mean_s_per_case`. Blocks 24-30 and 31-33 stay at the end and shift right. Numbers in this table assume the current four tests. With a fifth test, block 15-22 becomes 15-24, and every later number moves by 2.
 
 `shared_system_memory_used_gb` takes the value of `shared_system_memory_gb` in the old file.
 

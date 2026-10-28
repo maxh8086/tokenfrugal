@@ -20,6 +20,20 @@ class ComposeError(Exception):
 
 
 async def _compose(*args: str, timeout: int) -> None:
+    try:
+        await _compose_once(*args, timeout=timeout)
+    except ComposeError as first:
+        if args[0] != "up" or "timed out" in str(first):
+            raise
+        # a fast `up` failure is usually a race with a container still stopping from the previous run: retry once
+        await asyncio.sleep(5)
+        try:
+            await _compose_once(*args, timeout=timeout)
+        except ComposeError as second:
+            raise ComposeError(f"{second} (first attempt: {first})") from None
+
+
+async def _compose_once(*args: str, timeout: int) -> None:
     p = await asyncio.create_subprocess_exec(
         shutil.which("docker") or "docker", "compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE), *args,
         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT, env=dict(os.environ))

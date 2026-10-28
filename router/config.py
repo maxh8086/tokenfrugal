@@ -47,6 +47,9 @@ def _llm_api_key() -> str:
 LLM_API_KEY = _llm_api_key()
 # Sampling temperature for every tokenfrugal model call (loop, summaries, benchmarks). 0.0 unless LOCAL_LLM_TEMPERATURE says otherwise.
 LLM_TEMPERATURE = float(os.getenv("LOCAL_LLM_TEMPERATURE", "0.0"))
+# Thinking level sent to every model that supports thinking: low, medium or high. "off" sends nothing.
+# Models without thinking refuse the field (HTTP 400); the loop then stops sending it to that model.
+THINK_LEVEL = os.getenv("TOKENFRUGAL_THINK", "medium").strip().lower()
 
 
 def _git_root(start: str):

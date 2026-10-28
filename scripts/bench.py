@@ -27,7 +27,7 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
 from scripts.bench_team_tasks import TEAM_TASKS  # noqa: E402
-from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_tf_roles, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, THINK_LEVEL, load_tf_roles, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 SECTION_MARGIN = 600  # seconds
@@ -109,7 +109,7 @@ async def bench_roles(n, only=None):
             role_ok = ok(r) and len(body) >= 20
             if ok(r) and not role_ok:
                 r = f"FAILED reply too short ({len(body)} chars)"
-            runs.append({"s": round(dt, 1), "ok": role_ok, "out": r[:140]})
+            runs.append({"s": round(dt, 1), "ok": role_ok, "out": r[:400]})  # keep the full compose/infra error
             print(f"  roles/{role} #{i + 1} {dt:5.1f}s {'ok' if role_ok else failure_mode(r)}", flush=True)
         warm = [x["s"] for x in runs[1:] if x["ok"]]
         res[role] = {"cold_s": runs[0]["s"], "warm": stats(warm), "success": f"{sum(x['ok'] for x in runs)}/{n}",
@@ -351,6 +351,7 @@ async def main():
     sampler.stop()
     print("tail: sampler stopped", flush=True)
     data["meta"] = {"endpoint": OLLAMA_URL, "temperature": LLM_TEMPERATURE,"temperature_omitted": sorted(loop._NO_TEMP),
+                    "thinking": THINK_LEVEL, "thinking_refused": sorted(loop._NO_THINK),
                     "max_tokens": 2048, "builder": os.getenv("TOKENFRUGAL_MODEL_BUILDER", ""),
                     "thinker": os.getenv("TOKENFRUGAL_MODEL_THINKER", ""),
                     "git_sha": sh(["git", "rev-parse", "--short", "HEAD"]).strip()}

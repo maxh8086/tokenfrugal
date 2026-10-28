@@ -5,15 +5,58 @@ Last updated: 2026-10-28
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
-## TOP PRIORITY (next): per-team benchmarks for the 40-run models (set 2026-10-28, NOT started)
+## TOP PRIORITY (next): per-team benchmarks for the 40-run models (set 2026-10-28, IN PROGRESS since 2026-10-28 20:10)
 
-The user asked to run the team benchmarks for the models in `Benchmark/results/benchmark.csv` and to keep this as the next top priority. The user then stopped the run ("do not start run now, i have many changes to finish yet"). Nothing is running. No team results were written for these models.
+The user asked to run the team benchmarks for the models in `Benchmark/results/benchmark.csv` as the next top priority. The user had stopped an earlier start ("do not start run now, i have many changes to finish yet") and then asked to start the full run on 2026-10-28.
 
-- Script ready: `Benchmark/script/team_bench_queue.py` (untracked). Dry run: `python Benchmark/script/team_bench_queue.py --dry-run`. It lists 37 installed tags to run and skips `ts-qwen25c-32b-iq4xs-32768:latest` (not installed) and the Haiku cloud row.
-- Per model it runs `scripts.bench --only roles --team ui-ux,development,ops,security,research --n 3`, then `team_results.py`, and rebuilds the report at the end. One model at a time; the GPU is shared.
-- Cost: roughly 1 to 2 hours per model on the spark run timings, so this is a multi-day queue. Confirm with the user before starting, and start only when the user says so.
+- Status: **in progress.** Started with `Benchmark/script/team_bench_queue.py` (background run, one model at a time). Check progress with the `=== [i/37]` and `ALL_DONE` lines in its output.
+- Queue: 37 installed tags. Skips `ts-qwen25c-32b-iq4xs-32768:latest` (not installed) and the Haiku cloud row. Dry run: `python Benchmark/script/team_bench_queue.py --dry-run`.
+- Per model it runs `scripts.bench --only roles --team frontend,backend-sql-dba,backend-nosql-dba,dev-sql,dev-nosql,infra,orchestrator,dev-coding,dev-analyst,security,research --n 3`, then `team_results.py`. It rebuilds the report at the end. One model at a time; the GPU is shared.
+- Cost: roughly 1 to 2 hours per model on the spark run timings, so this is a multi-day queue.
 - Spark (`maternion/spark-x2.5:4b-q8_0`) already has team results (`results/team_results.csv`). It is not in the 40-run table.
-- Before starting: check Docker compose backends are up (`docker ps`), and that the index rank table columns (Hard score, ui-ux, development, ops, security, research) are still correct after the rebuild.
+- Done when: `ALL_DONE` appears in the queue output, every tag has rows in `results/team_results.csv`, and the report is rebuilt. Record any `!!! no json written` tags here.
+- Team names in this section now match the current `teams:` block in `router/tf-roles.yaml` (the older `ui-ux`, `development`, `ops` names are gone).
+
+### Issue tracker (queue run, 2026-10-28)
+
+Every issue seen during the queue run. Fixes go in before the next model run. Model-quality results are recorded, not fixed.
+
+| # | Issue | Status | Fix / evidence |
+| --- | --- | --- | --- |
+| 1 | Secret paths `TF_DB_PASSWORD` and `TF_DB_MSSQL_PASSWORD` were empty directories, so db containers failed with `ComposeError`. | Fixed | Replaced with scratch password files (`~/.docker/mcp/secrets`). Verified db-postgres, db-mysql and db-mssql start healthy. |
+| 2 | `TF_SECRETS_DIR=/c/...` (git-bash form) breaks compose bind mounts. | Fixed (ops note) | Use `TF_SECRETS_DIR="C:/Users/vaibh/.docker/mcp/secrets"`. |
+| 3 | Duplicate `tools:` key in `profiles/analyze.yaml`, `build-data.yaml`, `debug.yaml`, `docs.yaml`, `security.yaml`; profile install failed. | Fixed | Removed the second key in each file. YAML parses across `profiles/*.yaml`. |
+| 4 | `__REPO__` unreplaced in installed dbhub profiles (`unsafe docker volume`). | Fixed | Reinstalled with `scripts/install_profiles.py`. All profiles `ok`. |
+| 5 | Oracle admin roles recorded `ok` with 0 tools (false pass). | Fixed | `router/loop.py` `_run`: raises `LoopError("infra: no tools listed ...")` when the role has tools but the MCP server listed none. |
+| 6 | `test_md_empty_and_filled` stale assertion after the pass-block change. | Fixed | Test now checks the `hd` placeholder and `ranking.PASS_DATA["hd"]["rows"]`. Unit tests pass. |
+| 7 | `KeyError: 'date'` in `tests/test_ranking_hard.py` fixtures. | Fixed | `date` added to `FIELDS` and derived from the run_id. |
+| 8 | Penpot designer `ComposeError` with empty message. | Open (recheck) | Manual `docker compose up -d --wait penpot-mcp` succeeded. Check the queue log for recurrence. |
+| 9 | Granite 2B `no-tool-call` on designer and browser roles. | Recorded (model result) | Not a harness fault. No fix. |
+| 10 | `maternion/spark-x2.5` rows in `team_results.csv` show many `step_timeout` LoopErrors and a `TimeoutError after 600s` on security. | Recorded (model result) | Earlier spark run. Not a harness fault. Watch for the same pattern in the queue. |
+| 11 | Granite run: 6 db roles (postgres, mysql, mssql admin and dev) failed in about 2s with `infra: compose backend did not start`. The reason was cut to 140 characters, so the cause was not visible. Manual `up --wait` of db-postgres works. | Fixed (diagnosis plus retry) | `scripts/bench.py` keeps 400 characters of run output. `router/compose.py` `_compose` retries a fast `up` failure once after 5s and reports both attempts. Unit tests: 551 OK. Verified on llama 1B (model 2): postgres, mysql and mssql roles all reached the model with no compose error. The retry did not fire, so the retry path itself is not exercised yet. |
+| 13 | Oracle roles (`db-oracle-admin`, `db-oracle-dev`) get `infra: no tools listed` on every model. Dbhub logs `Can't start dbhub: calling "initialize": EOF`. | Fixed, verifying in queue (user approved) | Root cause: nothing listens on `127.0.0.1:1521`. No Oracle scratch container existed. Added `db-oracle` service (`gvenzl/oracle-free:23-slim`, user `tf` in `FREEPDB1`, password from `TF_DB_PASSWORD`) to `docker-compose.yml`, and `compose: [db-oracle]` on both oracle roles in `router/tf-roles.yaml`. Container healthy; `tf` login to `FREEPDB1` verified. dbhub run by hand with the oracle config connects and answers MCP `initialize`. But the queue's qwen `db-oracle-admin` still got `Can't start dbhub: calling "initialize": EOF` (3/3 infra), with the container up. Cause not found. Next: check the next queue oracle role; if it still fails, capture the dbhub stderr from inside the gateway run. The llama Oracle rows stay infra. |
+| 15 | `profiles/dbhub/oracle-admin.toml` and the other dbhub tomls hold the scratch DB password in plain text in the repo. | Open | `CLAUDE.md` says secrets live in Docker secret files, not the repo. The password is a throwaway scratch value, but the rule still applies. Move the DSN to a secret file or env var, once dbhub's config supports that. |
+| 14 | Granite `db-oracle-admin` and `db-oracle-dev` rows show 3/3 `ok`, but the replies say "I cannot directly list the tables" and no tool ran. These are false passes. | Open (data to correct) |
+| 16 | `github-read` and `github-actions-read` tasks ask for a local read of `/workspace/profiles/github.yaml`, but those roles have only GitHub MCP tools. Qwen 1.5B fails with `LoopError: you answered without calling any tool`. Task mismatch, not a model fault. | Fixed: task text in `scripts/bench_team_tasks.py` now uses `get_file_contents` / `actions_list` on `maxh8086/tokenfrugal`, so the role tool lists are unchanged. Models 1–3 ran the old text, so their two github rows need a re-run or a note. | The guard did not catch them, so tools were probably listed from a stale gateway capability cache. Not yet confirmed. Correct the granite oracle rows in `team_results.csv` to infra once the cause is confirmed. |
+| 17 | `db-elastic-admin` on `ts-deepseek-r1-distill-qwen-7b-65536` fails 3/3 with `LoopError: you answered without calling any tool`. The reasoning names tools that do not exist for Elastic (`show databases`, `show keys`, `show indexes`), while the offered tools are `esql, get_mappings, get_shards, list_indices, search`. Model result, not a harness fault: the tool list is correct. | Open (model result, observed 2026-10-29 03:00) | Also check whether thinking level `medium` contributes; this model's run used it. |
+| 18 | PostgreSQL read-only task (03:03 queue) fails after 3 steps. The model invents a `dblist` psql command, answers without a tool, then gives placeholder text. Its reasoning also proposes inserting sample rows into the throwaway database, which the task forbids. Model result, not a harness fault: the harness caught both the no-tool answer and the placeholder text. | Open (model result, observed 2026-10-29 03:04) | Check the tool allowlist and the read-only instruction for this role; the model should not plan writes. |
+| 19 | MySQL read-only task (03:06 queue) gets the same failure pattern. The model describes running `show tables;` in a terminal, reports "No results found", and answers without calling any tool. The harness rejects it twice. The run's step 3 ends with no result line. Model result, not a harness fault: the tool list is not in the run. | Open (observed 2026-10-29 03:08) | Check whether step 3 finished or stalled, and whether the tool list is loaded for this role. |
+| 12 | Granite `analyzer` `no-tool-call` on 2 of 3 runs, and llama 1B `browser` `no-tool-call` and `db-postgres-admin` `out-of-steps`. | Recorded (model result) | Not a harness fault. No fix. |
+
+---
+## Explorer dashboard proposal (proposed 2026-10-28, NOT started; waiting on user decision)
+
+From the Opus and Sonnet reviews of the explorer charts. Each item needs the user's yes before any code changes.
+
+1. **Builder vs thinker chart: change it, don't remove it.** Teams can't replace it yet, because the team results cover one model and every `benchmark.csv` row is still labelled `development`. Replace it with a "Role fit" chart: one row per model, four bars (Builder, Coding, Thinker, Thinker-hard), sorted by the role picked in the existing `fr` dropdown. Add a team-by-model heatmap of `pass_pct` from `team_results.csv` once several models have team results. The reviewer's score counts (builder 12 checks, coding 18) are from the review; I did not re-check them.
+2. **Size charts: merge.** "Model size vs pass rate" plots 39 points and "(ranked runs)" plots 17, a subset. Merge into one chart with a "ranked / all runs" toggle, default ranked, other runs as faint dots. Consider model file size in GB on x (parameter count hides quantization), with a Pareto line for "best model that fits my memory". `model_file_size_gb` is in the CSV.
+3. **Pie "Runs by score band": replace** with a band-count strip in the filters, or drop it. It repeats the pass-rate bars bucketed.
+4. **Pass-rate bars: keep**, limited to ranked runs.
+5. **Per-case chart: keep.** It is the only view by case.
+6. **Team filter does nothing.** All 40 rows in `benchmark.csv` still have team `development`. Relabel them with the new team names before relying on the filter.
+7. **Frontend dashboard:** placeholder "Upcoming" section added to the explorer (done 2026-10-28).
+
+---
 
 ---
 ## Pending decisions and designs (added 2026-10-22, nothing implemented)

@@ -502,12 +502,12 @@ def frac_cell(s):
 PASS_DATA = {}  # page key -> {labels, rows}; the page script draws each one with the same table code as the ranking
 
 
-def pass_entry(name, a, n, runs, cells, s, day=""):
-    """One model's row for pass_block: a/n passes, runs per case, one cell per column ('a/b' or a marker), median s/case, latest run date."""
+def pass_entry(name, a, n, runs, cells, s, day="", think=""):
+    """One model's row for pass_block: a/n passes, runs per case, one cell per column ('a/b' or a marker), median s/case, latest run date, thinking level."""
     p = _PARAMS.get(name, "")
     st = _MODEL_STATS.get(name, {})
     return {"name": name, "a": a, "n": n, "runs": runs, "cells": cells, "s": s, "day": day, "params": p, "pb": params_b(p, name),
-            "shared": st.get("shared"), "tps": st.get("tps")}
+            "shared": st.get("shared"), "tps": st.get("tps"), "think": think}
 
 
 def pass_block(key, entries, labels):
@@ -515,7 +515,7 @@ def pass_block(key, entries, labels):
     PASS_DATA[key] = {"labels": labels, "rows": [
         {"model": e["name"], "params": e["params"], "pb": e["pb"], "rank": i, "a": e["a"], "n": e["n"],
          "pct": round(100 * e["a"] / e["n"]) if e["n"] else None, "s": round(e["s"], 1) if e["s"] else None,
-         "runs": e["runs"], "cells": e["cells"], "day": e["day"], "shared": e["shared"], "tps": e["tps"]}
+         "runs": e["runs"], "cells": e["cells"], "day": e["day"], "shared": e["shared"], "tps": e["tps"], "think": e["think"]}
         for i, e in enumerate(entries, 1)]}
     return f'<div id="{key}-bar"></div>\n<div id="{key}" class="tbox"></div>'
 

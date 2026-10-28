@@ -83,6 +83,11 @@
   .bubble.log { font: 13px/1.55 ui-monospace, Consolas, monospace; min-height: 40px; max-height: 560px; overflow-y: auto; white-space: normal; }
   .bubble.log div { white-space: pre-wrap; word-break: break-word; }
   .bubble.log .ts { color: var(--muted); margin-right: 6px; }
+  .cp { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 24px; padding: 0; color: var(--muted); }
+  .cp:hover { color: var(--fg); }
+  .thinkwrap > .cp, .boxwrap > .cp { position: absolute; top: 4px; right: 4px; }
+  .thinkwrap .think { padding-right: 36px; }
+  .boxwrap .bubble.log { padding-right: 36px; }
   .bot.sleep { animation: breathe 3.5s ease-in-out infinite; opacity: .8; }
   .bot.sleep .eye, .bot.sleep .mouth, .bot.sleep .ant, .bot.sleep .arm { animation: none; }
   .bot.sleep .eye { transform: scaleY(.12); }
@@ -275,6 +280,30 @@ function fmt(sec) {
   return sec < 60 ? sec + 's' : Math.floor(sec / 60) + 'm ' + String(sec % 60).padStart(2, '0') + 's';
 }
 
+async function copyToClipboard(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* no clipboard API here: fall back to a hidden textarea */ }
+  const ta = el('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.append(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch { /* blocked */ }
+  ta.remove();
+  return ok;
+}
+
+const COPY_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+const CHECK_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+
+function copyButton(label, text) {
+  const b = el('button', 'cp'); b.type = 'button'; b.innerHTML = COPY_ICON;
+  b.title = label; b.setAttribute('aria-label', label);
+  b.onclick = async () => {
+    const ok = await copyToClipboard(text());
+    b.innerHTML = ok ? CHECK_ICON : COPY_ICON;
+    b.title = ok ? T('copied') : T('copy_blocked');
+    setTimeout(() => { b.innerHTML = COPY_ICON; b.title = label; }, 1500);
+  };
+  return b;
+}
+
 function makeStage(sleeping, log, think) {
   const stage = el('div', 'stage under');
   const wrap = el('div'); wrap.style.position = 'relative';
@@ -293,10 +322,17 @@ function makeStage(sleeping, log, think) {
     d.append(l.text);
     box.append(d);
   }
-  stage.append(wrap, box);
+  const boxWrap = el('div', 'boxwrap'); boxWrap.style.cssText = 'position:relative;flex:1;min-width:0';
+  boxWrap.append(box);
+  stage.append(wrap, boxWrap);
   const thought = el('div', 'think', sleeping ? T('sleeping_think') : (think || T('thinking_placeholder')));
   thought.dataset.label = T('thinking_label');
-  const all = el('div'); const tw = el('div', 'thinkwrap'); tw.append(thought, el('i', 'tail')); all.append(tw, stage);
+  const all = el('div'); const tw = el('div', 'thinkwrap'); tw.append(thought, el('i', 'tail'));
+  const copyThink = copyButton(T('copy_thinking'), () => (think ? thought.textContent : ''));
+  const copyExec = copyButton(T('copy_execution'), () => lines.map((l) => (l.ts ? new Date(l.ts * 1000).toLocaleTimeString([], { hour12: false }) + ' ' : '') + l.text).join('\n'));
+  tw.append(copyThink);
+  boxWrap.append(copyExec);
+  all.append(tw, stage);
   requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; thought.scrollTop = thought.scrollHeight; });
   return all;
 }
