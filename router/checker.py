@@ -61,10 +61,10 @@ def run_accept(cmd: list[str], repo: str, timeout: int = 120) -> tuple[bool, str
     return r.returncode == 0, out[-300:]
 
 
-def check_deterministic(repo: str, accept_cmd: list[str] | None, diff_text: str | None) -> dict:
+def check_deterministic(repo: str, accept_cmd: list[str] | None, diff_text: str | None, timeout: int = 120) -> dict:
     items = []
     if accept_cmd is not None:
-        ok, detail = run_accept(accept_cmd, repo)
+        ok, detail = run_accept(accept_cmd, repo, timeout)
         items.append({"name": "accept", "tag": "deterministic", "passed": ok, "detail": detail})
     changed = files_changed(repo)
     problems = lint_python(changed, repo)

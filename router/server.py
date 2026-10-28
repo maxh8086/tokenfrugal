@@ -6,6 +6,7 @@ Failure never falls back to cloud: a short capped error summary + task_id goes b
 import asyncio
 import atexit
 import contextlib
+import re
 import signal
 import sys
 import time
@@ -13,13 +14,14 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import compose, events, plan, reconnect, store, ui_launcher
+from . import checker, compose, events, plan, reconnect, store, ui_launcher
 from .config import WORKSPACE, load_tf_roles, resolve_role
 from .preflight import task_error
-from .loop import error_kind, failure_reason, leaf, run, take_started, take_usage
+from .loop import error_kind, failure_reason, leaf, role_timeout, run, take_started, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_tf_roles()
+DIFF_FENCE = re.compile(r"```diff\r?\n(.*?)```", re.S)
 STALE_REASON = "router stopped while task was running (no heartbeat)"
 HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
 RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # other reasons: re-scope instead
@@ -136,6 +138,62 @@ async def _sweep_loop() -> None:
         await asyncio.to_thread(store.sweep_stale, STALE_REASON)
 
 
+class CheckFailed(Exception):
+    """The checker still failed after its one correction; the message is the failed checks."""
+
+
+def accept_cmd(text: str) -> list[str] | None:
+    """argv of the task's acceptance command: the last 'Accept:' line, split on spaces. None when the task has none."""
+    cmd = None
+    for line in text.splitlines():
+        if line.strip().lower().startswith("accept:"):
+            cmd = line.strip()[len("accept:"):].split() or None
+    return cmd
+
+
+def diff_block(text: str) -> str | None:
+    """The first ```diff block of a reply, without its fences. None when the reply has none."""
+    m = DIFF_FENCE.search(text or "")
+    return m.group(1) if m else None
+
+
+def _check(role: dict, prompt: str, detail: str, t0: float) -> dict | None:
+    """Deterministic checks, run only when the task names an Accept: command or the reply holds a ```diff block.
+    The accept command gets what is left of the role's timeout_s after the run, so run and checks share one budget."""
+    accept = accept_cmd(prompt)
+    diff = diff_block(detail)
+    if accept is None and diff is None:
+        return None
+    left = int(role_timeout(role) - (time.monotonic() - t0))
+    return checker.check_deterministic(WORKSPACE, accept, diff, timeout=max(5, left))
+
+
+def _failed_text(verdict: dict) -> str:
+    return "; ".join(f"{i['name']}: {i['detail']}" for i in verdict["items"] if not i["passed"])
+
+
+def _fix_prompt(verdict: dict) -> str:
+    return (f"Checker failed: {_failed_text(verdict)}. Reply with a diff only, in a ```diff block, "
+            "that fixes these. Do not explain.")
+
+
+def _report(verdict: dict | None, role: dict) -> str:
+    """Checker line appended to the summary; the judgement items go to the client to decide."""
+    if verdict is None:
+        return ""
+    parts = []
+    for i in verdict["items"]:
+        state = "ok" if i["passed"] else "FAILED"
+        shown = i["name"] == "files_changed" or not i["passed"]
+        parts.append(f"{i['name']} {state}" + (f" ({i['detail']})" if shown else ""))
+    text = "\nChecks: " + "; ".join(parts) + "."
+    contract = (CFG.get("contracts") or {}).get(role["role"], {})
+    judge = [c["text"] for c in contract.get("checklist") or [] if c.get("kind") == "judgement"]
+    if judge:
+        text += "\nJudge (client): " + " / ".join(judge) + "."
+    return text
+
+
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0) -> str:
     row = store.get(tid)
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
@@ -148,7 +206,14 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     try:
         detail, msgs = await run(agent, role, prompt, messages, tid)
         take_started(tid)
-        summary = summarize(role["model"], detail, prompt)
+        verdict = await asyncio.to_thread(_check, role, prompt, detail, t0)
+        if verdict and not verdict["passed"]:  # one correction, continuing the same message history
+            detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid)
+            take_started(tid)
+            verdict = await asyncio.to_thread(_check, role, prompt, detail, t0)
+            if verdict and not verdict["passed"]:
+                raise CheckFailed(_failed_text(verdict))
+        summary = summarize(role["model"], detail, prompt) + _report(verdict, role)
         events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
         store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None)
@@ -160,12 +225,15 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             summary += "" if ok else f" (plan: {msg})"
         return f"[{tid}] {summary}"
     except Exception as e:  # noqa: BLE001
-        e = leaf(e)
-        full = f"{type(e).__name__}: {e}"
-        reason = failure_reason(full)
-        kind = error_kind(full)
+        if isinstance(e, CheckFailed):
+            full, reason, kind = str(e), "checker", "checker"
+        else:
+            e = leaf(e)
+            full = f"{type(e).__name__}: {e}"
+            reason = failure_reason(full)
+            kind = error_kind(full)
         started = take_started(tid)
-        err = hard_trim(full, 120)
+        err = hard_trim(full, 300 if kind == "checker" else 120)
         store.update(tid, status="failed", error=err, error_kind=kind)
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind,
                     saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
@@ -195,7 +263,8 @@ async def dispatch_task(agent: str = "", task: str = "", plan_id: int = 0, role:
         ok, msg = await _plan(plan.claim, plan_id, "router")
         if not ok:
             return f"plan task {plan_id} not started: {msg}"
-    return await _execute(store.create(agent, role["role"], task), agent, role, task, plan_id=plan_id)
+    prompt = store.with_templates(role["role"], task)  # approved templates go before the task text; the row keeps the task
+    return await _execute(store.create(agent, role["role"], task), agent, role, prompt, plan_id=plan_id)
 
 
 @mcp.tool()
