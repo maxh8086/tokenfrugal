@@ -109,8 +109,10 @@ def trail_conn_error(trail):
 
 
 def connection_closed(r, trail):
-    """True when the reply is a connection-closed failure (router failure_reason) or the trail has one (see trail_conn_error)."""
-    return loop.failure_reason(r) == "connection" or trail_conn_error(trail)
+    """True when a failed reply says the connection closed, or the trail has a connection error (see trail_conn_error).
+    Only the exact phrase counts: a real answer that mentions a broken pipe or a stopped container does not abort."""
+    failed = re.search(r"\]\s*FAILED", r or "") is not None
+    return (failed and "connection closed" in (r or "").lower()) or trail_conn_error(trail)
 
 
 def _all_has(*words):
@@ -552,6 +554,7 @@ def path_preflight():
 
 async def run(n, timed, ok, failure_mode, stats):
     res = {}
+    aborted = None  # set on the first connection-closed repeat: the case keeps its partial runs, later cases do not run
     pick = [c for c in os.getenv("BENCH_CASES", "").split(",") if c]  # e.g. BENCH_CASES=write_tests,role_browser
     for cid, agent, setup, task, check in active_cases():
         if pick and cid not in pick:
@@ -620,7 +623,8 @@ async def run(n, timed, ok, failure_mode, stats):
             print(f"  realworld/{cid} #{i + 1} {dt:5.1f}s {status} ran={ran} verified={bool(good)} {'' if good else note}"[:200],
                   flush=True)
             if connection_closed(r, trail):  # the router's connection is gone: every later repeat would fail the same way
-                raise RuntimeError(f"connection closed on {cid} repeat {i + 1}: the bench stopped here, rerun the realworld section")
+                aborted = f"connection closed on {cid} repeat {i + 1}"
+                break
         live = [x for x in runs if x["status"] != "infra"]
         nl = len(live)
         live_s = [x["s"] for x in live]
@@ -632,4 +636,8 @@ async def run(n, timed, ok, failure_mode, stats):
                     "output": round(sum(x["output"] for x in live) / max(nl, 1)),
                     "timeout_s": case_limits(agent)[0] or CASE_TIMEOUT,
                     "notes": sorted({x["note"] for x in runs if not x["verified"]})[:3], "runs": runs}
+        if aborted:
+            res[cid]["aborted"] = aborted
+            print(f"  realworld stopped: {aborted}; cases after {cid} did not run. Rerun the section.", flush=True)
+            break
     return res

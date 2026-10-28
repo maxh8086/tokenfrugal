@@ -56,10 +56,16 @@ class ConnectionClosed(unittest.TestCase):
         self.assertTrue(bench_real.connection_closed("[abc] FAILED Connection closed by the gateway", []))
 
     def test_case_insensitive(self):
-        self.assertTrue(bench_real.connection_closed("connection CLOSED unexpectedly", []))
+        self.assertTrue(bench_real.connection_closed("[abc] FAILED: CONNECTION CLOSED unexpectedly", []))
 
     def test_normal_answer_is_false(self):
         self.assertFalse(bench_real.connection_closed("The function returns the slug in lower case.", []))
+
+    def test_broken_pipe_or_not_running_in_a_failed_reply_does_not_abort(self):
+        # tightened: only the exact "connection closed" phrase aborts the section
+        self.assertFalse(bench_real.connection_closed("[abc] FAILED reason: broken pipe", []))
+        self.assertFalse(bench_real.connection_closed("[abc] FAILED: container is not running", []))
+        self.assertFalse(bench_real.connection_closed("the answer says connection closed is a status", []))
 
     def test_trail_connection_error_is_true(self):
         trail = [{"kind": "tool_error", "name": "x", "error": "Connection closed"}]

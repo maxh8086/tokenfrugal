@@ -97,10 +97,11 @@ class RunCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(case["runs"][0]["status"], "infra")
 
     async def test_connection_closed_with_restart_aborts_run(self):
-        # B4: a connection-closed reply stops the realworld loop (RuntimeError); the status rules are covered by classify tests
+        # B4: a connection-closed reply stops the realworld loop; the case keeps its partial runs and is marked aborted
         reply = "[t1] FAILED (engineering-backend-architect/x): Connection closed"
-        with self.assertRaisesRegex(RuntimeError, "connection closed on find_symbol repeat 1"):
-            await self.run_case(states=[HEALTHY, RESTARTED], reply=reply)
+        case, _, _ = await self.run_case(states=[HEALTHY, RESTARTED], reply=reply)
+        self.assertEqual(case["aborted"], "connection closed on find_symbol repeat 1")
+        self.assertEqual(len(case["runs"]), 1)
 
     async def test_loop_error_with_healthy_container_is_valid(self):
         reply = "[t2] FAILED (engineering-backend-architect/x): no final answer in 8 steps"
@@ -142,9 +143,9 @@ class TrailChecks(unittest.IsolatedAsyncioTestCase):
     async def test_connection_error_in_trail_aborts_run_even_when_reply_is_answer(self):
         # B4: a connection error in the trail stops the realworld loop, even though the reply is an answer
         reply = f"[{HEX}] resolve_role is defined in router/config.py"
-        with mock.patch.object(bench_real.store, "get", return_value={"trail": CONN_TRAIL}), \
-                self.assertRaisesRegex(RuntimeError, "connection closed on find_symbol repeat 1"):
-            await self.run_case(states=[HEALTHY, HEALTHY], reply=reply)
+        with mock.patch.object(bench_real.store, "get", return_value={"trail": CONN_TRAIL}):
+            case, _, _ = await self.run_case(states=[HEALTHY, HEALTHY], reply=reply)
+        self.assertEqual(case["aborted"], "connection closed on find_symbol repeat 1")
 
     async def test_required_tool_missing_from_trail_is_not_verified(self):
         reply = f"[{HEX}] Plan has 3 tasks, 1 done, 2 open."
