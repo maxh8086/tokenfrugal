@@ -247,3 +247,301 @@ self_improve:
   enabled: true
   gate: approval
   scope: [skills]
+
+
+# Role contracts: every active role in `roles:` has one. Read by preflight.contract_errors.
+# purpose / inputs / output_format / stop_condition describe the role; checklist items are
+# tagged `deterministic` (the router can check it: command exit, git state, lint, cited paths)
+# or `judgement` (the client reviewer decides). Fields are validated, not used by the loop.
+contracts:
+  builder:
+    purpose: Write or edit application source code for one named change.
+    inputs: [named file paths in the workspace, the change to make, the Accept command]
+    output_format: changed file paths, then the Accept result line.
+    stop_condition: Accept command exits 0, or 12 steps used.
+    checklist:
+      - {text: "Only the task's named files changed (git status).", kind: deterministic}
+      - {text: "Accept command exits 0.", kind: deterministic}
+      - {text: "Python files pass router.lint.check_python.", kind: deterministic}
+      - {text: "The change does what the task asked and nothing more.", kind: judgement}
+  data-engineer:
+    purpose: Transform, load or inspect data files and pipelines.
+    inputs: [input file paths, the transform, the expected output]
+    output_format: output file paths and row counts.
+    stop_condition: expected output exists, or 12 steps used.
+    checklist:
+      - {text: "Output file exists and its row count matches the task.", kind: deterministic}
+      - {text: "Input files are unchanged (git status).", kind: deterministic}
+      - {text: "Python files pass router.lint.check_python.", kind: deterministic}
+      - {text: "The transform follows the stated rule, not a guess at it.", kind: judgement}
+  analyzer:
+    purpose: Explain how named code works, with file:line for every claim.
+    inputs: [symbol or topic, the question]
+    output_format: "one line per finding: file:line - finding."
+    stop_condition: question answered, or "not found" after two searches.
+    checklist:
+      - {text: "Every cited file:line appears in a tool result.", kind: deterministic}
+      - {text: "No file was written.", kind: deterministic}
+      - {text: "Each finding answers the question asked.", kind: judgement}
+  security:
+    purpose: Report security issues in named code, using SonarQube results and file reads.
+    inputs: [SonarQube project key, paths in scope]
+    output_format: "findings as file:line - severity - issue - failing input."
+    stop_condition: scope covered, or 10 steps used.
+    checklist:
+      - {text: "Each finding cites a file:line from a tool result.", kind: deterministic}
+      - {text: "Severity matches the Sonar rule level when one exists.", kind: deterministic}
+      - {text: "Each finding is a real exploit path, not a style point.", kind: judgement}
+  reviewer:
+    purpose: Judge a diff or file for defects.
+    inputs: [diff range or file, task scope]
+    output_format: "file:line - severity - problem - failing input, highest first; or 'no defects found'."
+    stop_condition: diff reviewed, or 8 steps used.
+    checklist:
+      - {text: "Each finding cites a file:line inside the diff or the named file.", kind: deterministic}
+      - {text: "Output follows the line pattern exactly.", kind: deterministic}
+      - {text: "Each finding has a concrete failing input.", kind: judgement}
+  debugger:
+    purpose: Find the cause of one reported failure.
+    inputs: [error text or failing test, the code path]
+    output_format: cause as file:line, the evidence, and a one-line fix suggestion.
+    stop_condition: cause found with evidence, or 12 steps used.
+    checklist:
+      - {text: "The cause cites a file:line from a tool result.", kind: deterministic}
+      - {text: "No file was changed.", kind: deterministic}
+      - {text: "The cause explains every symptom in the error text.", kind: judgement}
+  docs:
+    purpose: Write or check documentation against the code it describes.
+    inputs: [doc paths, the code they describe]
+    output_format: changed doc paths and a list of corrections made.
+    stop_condition: doc matches the code, or 8 steps used.
+    checklist:
+      - {text: "Only documentation files changed.", kind: deterministic}
+      - {text: "Every command or path named in the doc exists in the repo.", kind: deterministic}
+      - {text: "The wording is clear to a new reader.", kind: judgement}
+  designer:
+    purpose: Produce or check a Penpot design through its API.
+    inputs: [design file reference, the design goal]
+    output_format: design changes made, with shape ids.
+    stop_condition: goal met, or 10 steps used.
+    checklist:
+      - {text: "Every shape id in the output appears in an export_shape result.", kind: deterministic}
+      - {text: "The layout meets the stated design goal.", kind: judgement}
+      - {text: "The text and colours follow the design tokens in the task.", kind: judgement}
+  browser:
+    purpose: Load a page and report console, network and Lighthouse findings.
+    inputs: [URL, checks to run]
+    output_format: one line per finding with the metric or message.
+    stop_condition: checks run, or 8 steps used.
+    checklist:
+      - {text: "Each finding quotes a console, network or audit result.", kind: deterministic}
+      - {text: "No form was submitted.", kind: deterministic}
+      - {text: "Findings are relevant to the stated check.", kind: judgement}
+  tracker:
+    purpose: Read and update plan task state.
+    inputs: [plan id, the task action]
+    output_format: task id, new status, and evidence.
+    stop_condition: action done, or 6 steps used.
+    checklist:
+      - {text: "A done status has evidence (git sha or finished task id).", kind: deterministic}
+      - {text: "Only the named task changed.", kind: deterministic}
+      - {text: "The note states what was done, not a guess.", kind: judgement}
+  code-l1:
+    purpose: Implement one small function to a stated spec.
+    inputs: [file path, spec, Accept command]
+    output_format: changed paths and the Accept result line.
+    stop_condition: Accept command exits 0, or 8 steps used.
+    checklist: &code_checklist
+      - {text: "Only the named files changed (git status).", kind: deterministic}
+      - {text: "Accept command exits 0.", kind: deterministic}
+      - {text: "Python files pass router.lint.check_python.", kind: deterministic}
+      - {text: "The change matches the spec and adds no behaviour.", kind: judgement}
+  code-l2:
+    purpose: Implement a function or small module, with tests.
+    inputs: [file paths, spec, Accept command]
+    output_format: changed paths and the Accept result line.
+    stop_condition: Accept command exits 0, or 10 steps used.
+    checklist: *code_checklist
+  code-l3:
+    purpose: Change several related files to a spec.
+    inputs: [file paths, spec, Accept command]
+    output_format: changed paths and the Accept result line.
+    stop_condition: Accept command exits 0, or 12 steps used.
+    checklist: *code_checklist
+  code-l4:
+    purpose: Rename or refactor one pattern across files.
+    inputs: [file paths, pattern to change, Accept command]
+    output_format: changed paths, match count before and after, and the Accept result line.
+    stop_condition: Accept command exits 0, or 16 steps used.
+    checklist: *code_checklist
+  code-l5:
+    purpose: Fix one logic bug with a reproducing test.
+    inputs: [file path, bug report, Accept command]
+    output_format: changed paths and the Accept result line.
+    stop_condition: Accept command exits 0, or 14 steps used.
+    checklist: *code_checklist
+  code-l6:
+    purpose: Make a multi-file change, with callers checked in the graph.
+    inputs: [file paths, symbol, Accept command]
+    output_format: changed paths, callers checked, and the Accept result line.
+    stop_condition: Accept command exits 0, or 14 steps used.
+    checklist: *code_checklist
+  github-read:
+    purpose: Read pull requests, issues and file contents on GitHub. Read-only.
+    inputs: [repo, PR or issue number, or file path]
+    output_format: read-only summary with numbers and file:line references.
+    stop_condition: answer given, or 8 steps used.
+    checklist:
+      - {text: "No write action was called.", kind: deterministic}
+      - {text: "Every cited PR or issue number appears in a tool result.", kind: deterministic}
+      - {text: "The summary answers the question asked.", kind: judgement}
+  github-actions-read:
+    purpose: Read CI runs and job logs. Read-only.
+    inputs: [repo, run id or workflow name]
+    output_format: run status, failing job names, and log excerpt lines.
+    stop_condition: failing job identified, or 8 steps used.
+    checklist:
+      - {text: "No rerun or cancel action was called.", kind: deterministic}
+      - {text: "Every job name appears in a tool result.", kind: deterministic}
+      - {text: "The named failure is the cause of the failed run.", kind: judgement}
+  devops:
+    purpose: Edit CI, Docker, compose and config files. Not application source.
+    inputs: [named config paths, the change, validation command]
+    output_format: changed paths and the validation command result.
+    stop_condition: validation passes, or 12 steps used.
+    checklist:
+      - {text: "Only CI, Docker, compose or config files changed.", kind: deterministic}
+      - {text: "The validation command named in the task exits 0.", kind: deterministic}
+      - {text: "The change does only what the task asked.", kind: judgement}
+  finance:
+    purpose: Gather public financial data with cited sources. No trades and no personal investment advice.
+    inputs: [question, tickers or topics]
+    output_format: figures with source URL and date.
+    stop_condition: question answered from cited sources, or 8 steps used.
+    checklist:
+      - {text: "Every figure has a source URL from a tool result.", kind: deterministic}
+      - {text: "No trade, transfer or order action was taken.", kind: deterministic}
+      - {text: "Caveats about data age and quality are stated.", kind: judgement}
+  research:
+    purpose: Answer a question from web sources, with citations.
+    inputs: [question]
+    output_format: answer with numbered source URLs.
+    stop_condition: answer supported by sources, or 8 steps used.
+    checklist:
+      - {text: "Every claim cites a numbered source URL from a tool result.", kind: deterministic}
+      - {text: "The cited sources support the claim they are cited for.", kind: judgement}
+      - {text: "The answer states what the sources do not cover.", kind: judgement}
+  db-postgres-dev:
+    purpose: Run read and write statements in a named dev database for one change.
+    inputs: [database name, statements or query, expected result]
+    output_format: statements run, and row counts or result lines.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: &db_dev_checklist
+      - {text: "The target database is a dev database named in the task.", kind: deterministic}
+      - {text: "Row counts or results match the expected result in the task.", kind: deterministic}
+      - {text: "The statements do only what the task asked.", kind: judgement}
+  db-postgres-admin:
+    purpose: Inspect database health, schema and configuration. Read-only.
+    inputs: [database name, question]
+    output_format: findings, each with the query or stat that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: &db_admin_checklist
+      - {text: "Only read statements were run.", kind: deterministic}
+      - {text: "Each finding cites the stat or query result.", kind: deterministic}
+      - {text: "The finding explains its impact, not just the number.", kind: judgement}
+  db-mysql-dev:
+    purpose: Run read and write statements in a named dev database for one change.
+    inputs: [database name, statements or query, expected result]
+    output_format: statements run, and row counts or result lines.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-mysql-admin:
+    purpose: Inspect database health, schema and configuration. Read-only.
+    inputs: [database name, question]
+    output_format: findings, each with the query or stat that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist
+  db-mssql-dev:
+    purpose: Run read and write statements in a named dev database for one change.
+    inputs: [database name, statements or query, expected result]
+    output_format: statements run, and row counts or result lines.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-mssql-admin:
+    purpose: Inspect database health, schema and configuration. Read-only.
+    inputs: [database name, question]
+    output_format: findings, each with the query or stat that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist
+  db-oracle-dev:
+    purpose: Run read and write statements in a named dev database for one change.
+    inputs: [database name, statements or query, expected result]
+    output_format: statements run, and row counts or result lines.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-oracle-admin:
+    purpose: Inspect database health, schema and configuration. Read-only.
+    inputs: [database name, question]
+    output_format: findings, each with the query or stat that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist
+  db-elastic-dev:
+    purpose: Run ES|QL queries and index checks against a named dev cluster.
+    inputs: [index name, query, expected result]
+    output_format: query run, and hit counts or mapping lines.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-elastic-admin:
+    purpose: Inspect cluster shards, mappings and indices. Read-only.
+    inputs: [cluster or index name, question]
+    output_format: findings, each with the API result that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist
+  db-mongo-dev-l1:
+    purpose: Run find and aggregate queries against a named dev collection.
+    inputs: [database and collection, query, expected result]
+    output_format: query run, and document counts or result lines.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-mongo-dev-l2:
+    purpose: Insert, update or index documents in a named dev collection for one change.
+    inputs: [database and collection, documents or filter, expected count]
+    output_format: write run, and matched or modified counts.
+    stop_condition: expected count seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-mongo-admin-l1:
+    purpose: Inspect MongoDB databases, collections, indexes and storage. Read-only.
+    inputs: [database name, question]
+    output_format: findings, each with the stat that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist
+  db-mongo-admin-l2:
+    purpose: Inspect MongoDB query plans, logs and indexes. Read-only.
+    inputs: [database and collection, slow query or question]
+    output_format: findings, each with the explain or log line that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist
+  db-redis-dev-l1:
+    purpose: Read and write simple Redis keys in a named dev database for one change.
+    inputs: [key names, values, expected result]
+    output_format: keys touched, and returned values.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-redis-dev-l2:
+    purpose: Use Redis lists, sets, expiry and JSON for one change in a dev database.
+    inputs: [key names, operations, expected result]
+    output_format: keys touched, and returned values.
+    stop_condition: expected result seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-redis-dev-l3:
+    purpose: Create and query Redis vector indexes in a named dev database.
+    inputs: [index name, vector field, query, expected hits]
+    output_format: index created, and hit count with keys.
+    stop_condition: expected hits seen, or 12 steps used.
+    checklist: *db_dev_checklist
+  db-redis-admin-l1:
+    purpose: Inspect Redis server info, clients and indexes. Read-only.
+    inputs: [question]
+    output_format: findings, each with the INFO or command line that proves it.
+    stop_condition: question answered, or 6 steps used.
+    checklist: *db_admin_checklist

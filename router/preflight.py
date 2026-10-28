@@ -173,6 +173,37 @@ def unverified_roles(roles: dict, root: Path) -> dict:
     return out
 
 
+CONTRACT_FIELDS = ("purpose", "inputs", "output_format", "stop_condition", "checklist")
+CHECK_KINDS = ("deterministic", "judgement")
+
+
+def contract_errors(roles: dict, contracts: dict) -> dict:
+    """{role: [problem, ...]} for an active role whose contract is missing or incomplete, and for contracts naming no role.
+    A contract needs every field, and a checklist of 3+ items, each with text and a kind of deterministic or judgement."""
+    out = {}
+    for name in roles:
+        c = contracts.get(name)
+        if not isinstance(c, dict):
+            out[name] = ["no contract"]
+            continue
+        probs = [f"missing {f}" for f in CONTRACT_FIELDS if not c.get(f)]
+        items = c.get("checklist")
+        if items and not isinstance(items, list):
+            probs.append("checklist must be a list")
+        elif isinstance(items, list):
+            if len(items) < 3:
+                probs.append("checklist needs 3 or more items")
+            for item in items:
+                if not isinstance(item, dict) or not str(item.get("text") or "").strip() or item.get("kind") not in CHECK_KINDS:
+                    probs.append(f"checklist item needs text and a kind of {' or '.join(CHECK_KINDS)}: {item!r}")
+        if probs:
+            out[name] = probs
+    for name in contracts:
+        if name not in roles:
+            out[name] = ["contract has no active role"]
+    return out
+
+
 if __name__ == "__main__":
     import sys
     from .config import ROOT, load_tf_roles
