@@ -14,6 +14,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Status dots are round in every table: 🟢 all passed, 🟡 some passed, 🔴 none passed, ⚪ not run (`dotOf` in `build_report.py`, `DOT` in `ranking.py`).
 - `results/team_results.csv`: `date` column (`run_date()` in `script/team_results.py` reads it from the bench file stamp).
 - `handoff.md`: parked item to move the Coding table from `explorer.html` to `index.html`.
+- Team and Hard tables on `index.html` now show "Shared memory GB" and "t/s (info)", in the same order as the role tables (`pass_entry` / `pass_block` in `script/ranking.py`, `passDraw` in `script/build_report.py`). Values come from `benchmark.csv` by builder tag.
+
+### Fixed
+
+- Ranking "Shared memory GB" column was always blank: `benchmark.csv` stores `shared_system_memory_used_gb`, and the page read `shared_system_memory_gb`. `ranking.py` now maps the one to the other.
 
 ### Changed
 

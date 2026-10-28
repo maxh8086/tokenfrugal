@@ -95,7 +95,7 @@ One format for every table: ranking, builder, thinker, team, Hard, coding.
 1. **Tables on `explorer.html`:** the Coding table (`cd`) and the Find-my-model result table (`fo`). Coding moves to `index.html`. Find-my-model stays as an exploratory widget **OPEN**, since it is a filtered view of the user's own input.
 2. **JSON and Markdown reports:** `results/raw/*.json`, `results/archive/*.json|md`, `bench/*.json|md`, `results/runs.jsonl`.
 3. **Writers:** `run_benchmark.py` (raw JSON, line ~226) and `csvstore.py` (JSONL, line ~59).
-4. **Shared memory GB and t/s (info)** are missing from the ranking, team and Hard tables. The owner asked for both in every table. Source data for team and Hard needs checking first; show ⬜ NA where it is absent.
+4. ~~**Shared memory GB and t/s (info)** missing from the team and Hard tables.~~ **Done** for team and Hard: both come from `benchmark.csv` by builder tag. The ranking's Shared memory GB column was blank (wrong column name) and is now fixed. Blank where a model has no benchmark row, as in the role tables.
 5. **`model-selection-guide.html`** is not covered by the rules yet.
 
 Done since the last review: `Latest run` is on the team and Hard tables (`team_results.csv` has a `date` column). The model-selection guide lives under the Ranking dropdown (`GUIDE_MD`).

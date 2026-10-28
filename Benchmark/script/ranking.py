@@ -269,6 +269,13 @@ for r in rows:
     r["source"], r["pull"] = origin(r["builder_model"])
     r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
     r["params_b"] = params_b(r["params"], r["builder_model"])
+    r["shared_system_memory_gb"] = r.get("shared_system_memory_used_gb") or ""  # the column the page reads as "Shared memory GB"
+
+
+# Shared memory GB and t/s per builder tag, for the pass tables (team and Hard) that have no benchmark row of their own.
+_MODEL_STATS = {}
+for r in rows:
+    _MODEL_STATS.setdefault(r["builder_model"], {"shared": num(r, "shared_system_memory_gb") if r["shared_system_memory_gb"] else None, "tps": r["tps"]})
 
 
 # Complete local runs: the full check count, as benchmark.csv scores them.
@@ -498,7 +505,9 @@ PASS_DATA = {}  # page key -> {labels, rows}; the page script draws each one wit
 def pass_entry(name, a, n, runs, cells, s, day=""):
     """One model's row for pass_block: a/n passes, runs per case, one cell per column ('a/b' or a marker), median s/case, latest run date."""
     p = _PARAMS.get(name, "")
-    return {"name": name, "a": a, "n": n, "runs": runs, "cells": cells, "s": s, "day": day, "params": p, "pb": params_b(p, name)}
+    st = _MODEL_STATS.get(name, {})
+    return {"name": name, "a": a, "n": n, "runs": runs, "cells": cells, "s": s, "day": day, "params": p, "pb": params_b(p, name),
+            "shared": st.get("shared"), "tps": st.get("tps")}
 
 
 def pass_block(key, entries, labels):
@@ -506,7 +515,7 @@ def pass_block(key, entries, labels):
     PASS_DATA[key] = {"labels": labels, "rows": [
         {"model": e["name"], "params": e["params"], "pb": e["pb"], "rank": i, "a": e["a"], "n": e["n"],
          "pct": round(100 * e["a"] / e["n"]) if e["n"] else None, "s": round(e["s"], 1) if e["s"] else None,
-         "runs": e["runs"], "cells": e["cells"], "day": e["day"]}
+         "runs": e["runs"], "cells": e["cells"], "day": e["day"], "shared": e["shared"], "tps": e["tps"]}
         for i, e in enumerate(entries, 1)]}
     return f'<div id="{key}-bar"></div>\n<div id="{key}" class="tbox"></div>'
 

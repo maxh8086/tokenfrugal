@@ -499,8 +499,10 @@ function passDraw(id){
   {k:"score",l:"Score",v:r=>r.n?r.a/r.n:-1,f:r=>r.n?markF(r.a+"/"+r.n):"⬜ NA"},
   {k:"pct",l:"Pass rate %",v:r=>r.pct??-1,f:r=>pctBar(r.pct)},
   {k:"day",l:"Latest run",str:1,v:r=>r.day,f:r=>r.day},
-  {k:"s",l:"s/case",v:r=>r.s||1e9,f:r=>r.s??""},
   {k:"runs",l:"Runs",v:r=>+r.runs||0,f:r=>r.runs??""},
+  {k:"shared",l:"Shared memory GB",v:r=>r.shared??-1,f:r=>r.shared??""},
+  {k:"s",l:"s/case",v:r=>r.s||1e9,f:r=>r.s??""},
+  {k:"tps",l:"t/s (info)",v:r=>r.tps||-1,f:r=>r.tps??""},
   ...P.labels.map((c,i)=>({k:"c"+i,cs:1,l:c.replace(/_/g," "),v:r=>{const m=/^(\d+)\/(\d+)$/.exec(r.cells[i]||"");return m?+m[1]/+m[2]:-1},f:r=>/^\d+\/\d+$/.test(r.cells[i]||"")?markF(r.cells[i]):esc(r.cells[i]||"⬜ NA")}))];
  const R=P.rows.filter(r=>(!f.q||r.model.toLowerCase().includes(f.q))&&(!f.size||(r.pb!=null&&r.pb<=+f.size)));
  R.sort((x,y)=>(x.rank??1e9)-(y.rank??1e9));
