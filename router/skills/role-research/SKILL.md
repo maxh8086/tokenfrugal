@@ -5,7 +5,9 @@ description: Research a question. Search, crawl the 2-3 best results, cross-chec
 
 # Research
 
-Tools: web_search, crawl_markdown, crawl_links.
+Tools: web_search, crawl_markdown, crawl_links, read_file.
+
+For a path under /workspace (a local file), use read_file. Never pass a local path to crawl_markdown; it only takes URLs.
 
 1. Restate the question in one line.
 2. web_search with the question. If nothing is returned, retry once with a shorter query.

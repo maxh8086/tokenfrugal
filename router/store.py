@@ -15,7 +15,8 @@ TEMPLATE_BUDGET_TOKENS = 1500  # their combined size; the rest of the 16-32k win
 
 
 def _db():
-    c = sqlite3.connect(DB_PATH)
+    c = sqlite3.connect(DB_PATH, timeout=30)  # wait for concurrent writers instead of failing after Python's 5s default
+    c.execute("PRAGMA journal_mode=WAL")  # readers and writers stop blocking each other
     c.execute("""CREATE TABLE IF NOT EXISTS tasks(
         id TEXT PRIMARY KEY, agent TEXT, role TEXT, prompt TEXT, status TEXT,
         summary TEXT, detail TEXT, messages TEXT, error TEXT, attempts INTEGER DEFAULT 0)""")
