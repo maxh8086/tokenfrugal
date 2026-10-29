@@ -14,7 +14,7 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import checker, compose, events, plan, reconnect, store, ui_launcher
+from . import checker, compose, events, kalamanch_cleanup, plan, reconnect, store, ui_launcher
 from .config import NATIVE_BACKENDS, WORKSPACE, load_tf_roles, resolve_role
 from .mcp_client import ensure_backend
 from .preflight import task_error
@@ -317,6 +317,7 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
         ok, msg = await _plan(plan.claim, plan_id, "router")
         if not ok:
             return f"plan task {plan_id} not started: {msg}"
+    kalamanch_cleanup.maybe_run()  # at most once a day, in a background thread; never blocks or fails the dispatch
     prompt = store.with_templates(role["role"], task, task_type.strip())  # approved templates go before the task text; the row keeps the task
     return await _execute(store.create(agent, role["role"], task), agent, role, prompt, plan_id=plan_id,
                           accept_override=accept_argv)

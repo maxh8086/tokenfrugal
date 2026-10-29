@@ -1,0 +1,25 @@
+version: 1
+id: kalamanch
+name: kalamanch
+servers:
+- type: image
+  tools:
+  - run_voice
+  - run_animate
+  - run_assemble
+  - run_upscale
+  image: maxh8086/kalamanch@sha256:25a35230664faa6b5beb4ef783dad904b676323263d566496a553eef94bfde87
+  volumes:
+  - __WORKSPACE__:/workspace:rw
+  disableNetwork: false
+  snapshot:
+    server:
+      name: kalamanch
+      type: server
+      image: maxh8086/kalamanch@sha256:25a35230664faa6b5beb4ef783dad904b676323263d566496a553eef94bfde87
+      description: KalaManch five-stage local video pipeline
+      title: kalamanch
+      remote: {}
+      volumes:
+      - __WORKSPACE__:/workspace:rw
+      disableNetwork: false

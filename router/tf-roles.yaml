@@ -27,6 +27,7 @@ roles:
   code-l4:  {model: builder, profile: code-l4, max_steps: 16, timeout_s: 450, native: [sandbox], required_tool: read_file, tools: [ast-grep, read_file, edit_file, write_file, search_files, run_tests], skills: [code-l4], improve: gated}
   code-l5:  {model: builder, profile: code-l5, max_steps: 14, timeout_s: 450, native: [sandbox], required_tool: read_file, tools: [sequentialthinking, git_diff, read_file, edit_file, run_tests, run_python], skills: [code-l5], improve: gated}
   code-l6:  {model: builder, profile: code-l6, max_steps: 14, timeout_s: 450, native: [synaptree, sandbox], required_tool: read_file, tools: [search_graph, trace_path, read_file, write_file, edit_file, run_tests], skills: [code-l6], improve: gated}
+  kalamanch: {model: builder, profile: kalamanch, max_steps: 12, timeout_s: 450, tools: [run_voice, run_animate, run_assemble, run_upscale], skills: [kalamanch], improve: gated}
   github-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, required_tool: list_pull_requests, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read], improve: gated}  # read-only; create/close/merge PRs stay with Haiku
   github-actions-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, required_tool: actions_list, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read], improve: gated}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, required_tool: read_file, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops], improve: gated}
@@ -258,6 +259,9 @@ teams:
   research:
     description: Research, finance analysis and documentation.
     roles: [research, finance, docs]
+  mediahouse:
+    description: Media production. Local five-stage video pipeline from script to 1080p.
+    roles: [kalamanch]
 
 # Self-improvement gate (scripts/role_improve.py). A role may propose a diff to its own skill files.
 # Nothing is applied automatically: only 'python -m scripts.role_improve approve <id>' applies one.
@@ -404,6 +408,16 @@ contracts:
     output_format: changed paths, callers checked, and the Accept result line.
     stop_condition: run_tests passes, or 14 steps used.
     checklist: *code_checklist
+  kalamanch:
+    purpose: Run one approved KalaManch pipeline stage (voice, animate, assemble or upscale) through its MCP tool.
+    inputs: [stage name, approved inputs for that stage, paths in the workspace]
+    output_format: output file path, then the stage result line.
+    stop_condition: the stage tool returns a file path without an error, or 4 failed attempts. 12 steps max.
+    checklist:
+      - {text: "Exactly one stage tool called per stage.", kind: deterministic}
+      - {text: "The tool returned an output path and no error.", kind: deterministic}
+      - {text: "The output file exists in the workspace.", kind: deterministic}
+      - {text: "The stage ran with the approved inputs and nothing more.", kind: judgement}
   github-read:
     purpose: Read pull requests, issues and file contents on GitHub. Read-only.
     inputs: [repo, PR or issue number, or file path]
