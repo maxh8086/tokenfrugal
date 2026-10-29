@@ -2,6 +2,7 @@
 import asyncio
 import contextlib
 import os
+import tempfile
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -13,7 +14,8 @@ from .config import MCP_CPUS, MCP_MEMORY, NATIVE_BACKENDS, NATIVE_SERVERS, SYNAP
 # Arguments small models routinely omit; filled in before the call.
 ARG_DEFAULTS = {"navigate_page": {"type": "url"}}
 
-CONN_ERROR_MARKERS = ("connection closed", "is not running", "broken pipe", "brokenpipe")
+CONN_ERROR_MARKERS = ("connection closed", "is not running", "broken pipe", "brokenpipe", "server is closing")  # dbhub exits with "server is closing: EOF"
+STDERR_TAIL = 600  # bytes of gateway stderr added to a failed open
 MAX_HEALS_PER_CALL = 2
 OPEN_ATTEMPTS = 3  # initial open of a session: 1 try + 2 retries on connection errors
 BACKEND_WAIT_S = 90  # max time to wait for a native server's containers to be running and healthy
@@ -216,13 +218,28 @@ async def open_profile(profile: str, params: dict | None = None):
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOWED_PATHS": WORKSPACE,
                                         "MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS": WORKSPACE})
     await asyncio.to_thread(mcp_reap.enter, docker)
+    errlog = tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace")  # gateway stderr, read if the open fails
     try:
-        async with stdio_client(sp) as (r, w):
+        async with stdio_client(sp, errlog=errlog) as (r, w):
             async with ClientSession(r, w) as s:
-                await s.initialize()
+                try:
+                    await s.initialize()
+                except Exception as exc:
+                    tail = _stderr_tail(errlog) if conn_error(exc) else ""
+                    if not tail:
+                        raise
+                    raise RuntimeError(f"{exc} | gateway stderr: {tail}") from exc  # same text, so open retries still match
                 yield s
     finally:
+        errlog.close()
         await asyncio.to_thread(mcp_reap.leave, docker)  # gateway stdio containers stay inside this session
+
+
+def _stderr_tail(errlog) -> str:
+    errlog.flush()
+    end = errlog.seek(0, os.SEEK_END)
+    errlog.seek(max(0, end - STDERR_TAIL))
+    return errlog.read().strip()
 
 
 def _schema(t) -> dict:

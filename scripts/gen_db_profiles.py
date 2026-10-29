@@ -3,8 +3,8 @@
 One profile per role or level, each exposing at most 6 tools and no destructive ones (drop/delete/rename).
 Dev roles write only to the scratch databases started from docker-compose.yml (127.0.0.1, reached through
 host.docker.internal). Admin roles are read-only. SQL engines share the bytebase/dbhub image; admin profiles
-mount a TOML with `readonly = true` (dbhub dropped its --readonly flag). The scratch password below is a
-throwaway test value for the compose containers, never a real credential.
+mount a TOML with `readonly = true` (dbhub dropped its --readonly flag). The scratch password is the Docker
+secret TF_DB_PASSWORD (TF_DB_MSSQL_PASSWORD for mssql), never a literal in the generated files.
 """
 from pathlib import Path
 
@@ -12,8 +12,10 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ROOT / "profiles"
-SCRATCH_PW = "tf_scratch_pw"  # must match the docker-compose.yml defaults
-MSSQL_PW = "tf_Scratch_pw1"  # SQL Server demands a complex password; must match db-mssql in docker-compose.yml
+# dbhub expands ${VAR} from the container environment; the value comes from the Docker secret of that name, not from this file.
+SCRATCH_PW = "${TF_DB_PASSWORD}"
+# SQL Server demands a complex password; the value comes from the Docker secret of that name, not from this file.
+MSSQL_PW = "${TF_DB_MSSQL_PASSWORD}"
 HOST = "host.docker.internal"
 MAX_TOOLS = 6
 FORBIDDEN = ("drop", "delete", "rename", "remove", "truncate", "flush")  # no allowlist may contain these
@@ -61,12 +63,15 @@ def _env(pairs: dict) -> list:
 
 
 def _server(name: str, image: str, desc: str, tools: list[str], env: dict | None = None,
-            command: list[str] | None = None, volumes: list[str] | None = None) -> dict:
+            command: list[str] | None = None, volumes: list[str] | None = None,
+            secrets: list[dict] | None = None) -> dict:
     snap = {"name": name, "type": "server", "image": image, "description": desc, "title": name, "remote": {}}
     if command:
         snap["command"] = command
     if volumes:
         snap["volumes"] = volumes
+    if secrets is not None:
+        snap["secrets"] = secrets
     if env:
         snap["env"] = _env(env)
     return {"type": "image", "secrets": "default", "tools": list(tools), "image": image, "snapshot": {"server": snap}}
@@ -83,9 +88,11 @@ def build(pid: str) -> dict:
     engine, kind, tools = ROLES[pid]
     if engine in DSN:
         rel = f"dbhub/{engine}-{kind}.toml"
+        pw_name = "TF_DB_MSSQL_PASSWORD" if engine == "mssql" else "TF_DB_PASSWORD"
         srv = _server("dbhub", IMAGES["dbhub"], f"DBHub SQL access ({engine}, {kind})", tools,
                       command=["--transport", "stdio", "--config", "/dbhub.toml"],
-                      volumes=[f"__REPO__/profiles/{rel}:/dbhub.toml:ro"])
+                      volumes=[f"__REPO__/profiles/{rel}:/dbhub.toml:ro"],
+                      secrets=[{"name": pw_name, "env": pw_name}])
     elif engine == "mongo":
         env = {"MDB_MCP_CONNECTION_STRING": f"mongodb://{HOST}:27017/tf_scratch"}
         if kind == "admin":

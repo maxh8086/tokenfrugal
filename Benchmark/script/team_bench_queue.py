@@ -40,16 +40,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--start-at", default="", help="first tag to run; earlier tags are skipped (keeps the numbering)")
     a = ap.parse_args()
     have = installed()
     todo = [t for t in run_tags() if t in have]
     skipped = [t for t in run_tags() if t not in have]
     print(f"{len(todo)} to run; skipped (not installed): {skipped}", flush=True)
+    if a.start_at and a.start_at not in todo:
+        raise SystemExit(f"--start-at {a.start_at} is not an installed tag in results/benchmark.csv")
+    start = todo.index(a.start_at) if a.start_at else 0
     if a.dry_run:
         return
+    # every role gets an explicit whole-task limit; roles that set timeout_s keep their own value
     env = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONIOENCODING="utf-8", BENCH_OUT_DIR="bench",
-               TOKENFRUGAL_TF_ROLES_MODELS="0")
+               TOKENFRUGAL_TF_ROLES_MODELS="0", TOKENFRUGAL_TASK_TIMEOUT="600")
     for i, tag in enumerate(todo, 1):
+        if i - 1 < start:
+            continue
         safe = _sanitize(tag) + "-team"
         print(f"=== [{i}/{len(todo)}] {tag}", flush=True)
         e = dict(env, TOKENFRUGAL_MODEL_BUILDER=tag, TOKENFRUGAL_MODEL_THINKER=tag)

@@ -18,7 +18,8 @@ class RoleTimeout(unittest.TestCase):
         expect = {
             "engineering-backend-architect": 130, "gis-analyst": 80, "engineering-software-architect": 90,
             "security-auditor": 300, "testing-code-reviewer": 90, "engineering-sre": 300,
-            "engineering-technical-writer": 150, "design-ui-designer": 240, "testing-evidence-collector": 80,
+            "engineering-technical-writer": 150, "design-ui-designer": 300,  # designer raised 240 -> 300 (2026-10-29)
+            "testing-evidence-collector": 120,  # browser role raised 80 -> 120 (2026-10-29)
             "project-management-project-shepherd": 60, "support-docs-writer": 90,
         }
         for agent, t in expect.items():

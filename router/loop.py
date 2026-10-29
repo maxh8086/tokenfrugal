@@ -299,7 +299,7 @@ def failure_reason(text: str) -> str:
         return "connection"
     if "timed out" in s or "timeouterror" in s or "apitimeouterror" in s:
         return "timeout"
-    if "without calling any tool" in s:
+    if "without calling any tool" in s or re.search(r"you have not (called|read)", s):
         return "no-tool-call"
     if "tool call" in s and ("malformed" in s or "could not be run" in s or "wrote a tool call" in s):
         return "malformed-tool-call"
@@ -312,8 +312,8 @@ def failure_reason(text: str) -> str:
 
 def error_kind(text: str) -> str:
     """Failure kind stored as error_kind: step_timeout (role time limit hit), request_timeout (one model request timed out),
-    no_tool_call, max_steps, infra (backend or runner failure), or error for everything else (connection, bad answers, ...).
-    Built on failure_reason."""
+    no_tool_call, max_steps, bad_answer (empty or placeholder reply), infra (backend or runner failure), or error for
+    everything else (connection, ...). Built on failure_reason."""
     reason = failure_reason(text)
     if reason == "infra":
         return "infra"
@@ -323,6 +323,8 @@ def error_kind(text: str) -> str:
         return "no_tool_call"
     if reason == "out-of-steps":
         return "max_steps"
+    if reason == "bad-answer":
+        return "bad_answer"
     return "error"
 
 
@@ -394,6 +396,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 ok_calls += 1
                 used_tools = True
         hinted = False  # the first "answered without reading" retry names read_file (2A)
+        hint_retries = 0  # first-call hint retries: their own budget of 2, separate from slop_retries
         wrapped = False  # the wrap-up nudge is sent once
         for step in range(1, role["max_steps"] + 1):
             events.emit("step", id=tid, n=step)
@@ -451,16 +454,21 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                                + ", ".join(sorted(names)))
                     else:
                         bad += ". Unknown tool name? Valid tool names: " + ", ".join(sorted(names))
+                hint_turn = False  # a first-call nudge: counted in hint_retries, not slop_retries
                 if not bad and tools and not used_tools:
                     bad = (first_call_hint(task_text, names, role.get("required_tool") or "") if not hinted else None) or \
                         "you answered without calling any tool; call a tool to read real data first"
                     hinted = True
+                    hint_turn = True
                 failed = not bad and used_tools and not ok_calls and fail_retries < 2
                 if failed:
                     fail_retries += 1
                     bad = "every tool call failed; fix the arguments and call the tool again before answering"
-                if bad and (failed or slop_retries < 2):
-                    slop_retries += 0 if failed else 1
+                if bad and (failed or (hint_turn and hint_retries < 2) or (not hint_turn and slop_retries < 2)):
+                    if hint_turn:
+                        hint_retries += 1
+                    elif not failed:
+                        slop_retries += 1
                     events.emit("retry", id=tid, n=slop_retries, reason=bad[:200])
                     msgs += [{"role": "assistant", "content": m.content or ""}, {"role": "user", "content": bad}]
                     continue

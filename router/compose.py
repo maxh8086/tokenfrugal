@@ -13,6 +13,8 @@ PERSISTENT = {"neo4j"}  # started with the router, only stopped by stop_all_sync
 LEASES = DB_PATH.parent / "leases"  # one file per (service, router pid, task) using a backend
 _users: dict[str, int] = {}  # backend -> concurrent tasks using it (in this router process)
 _lock = asyncio.Lock()
+IDLE_S = int(os.getenv("TOKENFRUGAL_BACKEND_IDLE_S", "600"))  # an unused backend stops after this many idle seconds
+_idle: dict[str, asyncio.Task] = {}  # backend -> pending idle stop (cancelled when the backend is reused)
 
 
 class ComposeError(Exception):
@@ -57,11 +59,12 @@ async def backends(services: list[str], keep_alive: bool = False, timeout: int =
     async with _lock:
         for s in services:
             _users[s] = _users.get(s, 0) + 1
+            _cancel_idle(s)  # still running from a recent task: reuse it, do not restart
         try:
             leases = lease_acquire(services)
             await _compose("up", "-d", "--wait", *services, timeout=timeout)
         except BaseException:
-            await _release(services, leases, False)
+            await _release(services, leases, False, now=True)  # a failed start is not kept warm
             raise
     try:
         yield
@@ -70,15 +73,50 @@ async def backends(services: list[str], keep_alive: bool = False, timeout: int =
             await _release(services, leases, keep_alive or KEEP_ALIVE)
 
 
-async def _release(services: list[str], leases: list[Path], keep: bool) -> None:
+async def _release(services: list[str], leases: list[Path], keep: bool, now: bool = False) -> None:
     for s in services:
         _users[s] = _users.get(s, 1) - 1
         if _users[s] <= 0:
             _users.pop(s, None)
     idle = [s for s in lease_release(leases) if s not in PERSISTENT]
     if idle and not keep:
+        if now:
+            with contextlib.suppress(Exception):
+                await _compose("stop", *idle, timeout=120)
+        else:
+            for s in idle:
+                _schedule_idle_stop(s)
+
+
+def _cancel_idle(s: str) -> None:
+    pending = _idle.pop(s, None)
+    if pending:
+        pending.cancel()
+
+
+def _schedule_idle_stop(s: str) -> None:
+    """Stop `s` after IDLE_S seconds with no task using it; a task that starts in that window cancels the stop."""
+    _cancel_idle(s)
+    _idle[s] = asyncio.get_running_loop().create_task(_stop_when_idle(s))
+
+
+async def _stop_when_idle(s: str) -> None:
+    await asyncio.sleep(IDLE_S)
+    async with _lock:
+        _idle.pop(s, None)
+        if _users.get(s) or _has_live_lease(s):
+            return
         with contextlib.suppress(Exception):
-            await _compose("stop", *idle, timeout=120)
+            await _compose("stop", s, timeout=120)
+
+
+def _has_live_lease(s: str) -> bool:
+    """True when another live router process holds a lease on `s`."""
+    for f in LEASES.glob(f"{s}.*") if LEASES.exists() else []:
+        pid = f.name.split(".")[1]
+        if pid.isdigit() and _alive(int(pid)):
+            return True
+    return False
 
 
 def lease_acquire(services: list[str]) -> list[Path]:

@@ -7,7 +7,7 @@ description: Develop against a scratch database. Inspect the schema first, then 
 
 Use only the tools listed for this role. The database is a throwaway scratch instance.
 
-Your first call is the discovery tool for your engine: `search_objects` (SQL), `list_indices` (Elasticsearch), `list-collections` (MongoDB), or `scan_keys` (Redis). No shell or database CLI: do not type commands into a terminal.
+Your first tool call must be the discovery tool for your engine, before any other call: `search_objects` (SQL), `list_indices` (Elasticsearch), `list-collections` (MongoDB), or `scan_keys` (Redis). No shell or database CLI: do not type commands into a terminal.
 
 1. Inspect first: make that first discovery call and read the schema or keys before any write.
 2. State the plan in one line: target object and the change.

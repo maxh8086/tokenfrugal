@@ -102,9 +102,11 @@ class Classify(unittest.TestCase):
         self.assertEqual(loop.error_kind("LoopError: no final answer in 12 steps"), "max_steps")
 
     def test_everything_else_is_error(self):
-        for text in ("ValueError: something else", "MCPError: Connection closed",
-                     "LoopError: empty answer", ""):
+        for text in ("ValueError: something else", "MCPError: Connection closed", ""):
             self.assertEqual(loop.error_kind(text), "error", text)
+
+    def test_empty_or_placeholder_answer_is_bad_answer(self):
+        self.assertEqual(loop.error_kind("LoopError: empty answer"), "bad_answer")
 
     def test_infra_text_is_infra_kind(self):
         for text in ("LoopError: infra: Error code: 500 - internal error", "infra: task timed out after 5s, Connection closed"):

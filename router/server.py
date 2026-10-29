@@ -43,6 +43,8 @@ def kind_hint(kind: str, started: int, required_tool: str = "") -> str:
         return "Step budget used up. Narrow the scope of the task."
     if kind == "infra":
         return "The backend containers did not start. Do not resume_task; check Docker, then dispatch again."
+    if kind == "bad_answer":
+        return "The answer was empty or placeholder text. Re-scope the task smaller and dispatch again."
     return ""
 
 
