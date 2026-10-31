@@ -449,7 +449,7 @@ def _sandbox_tests(files):
 
 def coding_cases():
     """Opt-in CODING suite (BENCH_SUITE=coding): levels L1-L6, each dispatched to its own role (coding-l1..l6, own
-    Docker MCP profile and at most 6 tools). Each case seeds a project with failing unittests; the model must fix the
+    Docker MCP profile and at most 12 tools, 6 recommended). Each case seeds a project with failing unittests; the model must fix the
     code, and the check re-writes the tests and runs them in the sandbox container."""
     def case(cid, agent, files, tests, task):
         def seed():
