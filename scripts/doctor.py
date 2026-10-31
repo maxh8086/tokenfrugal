@@ -49,6 +49,7 @@ def main() -> int:
         up = subprocess.run(["docker", "info"], capture_output=True).returncode == 0
         report("docker daemon running", up, "start Docker Desktop / the docker service")
     url = llm_url()
+    have = None  # installed model ids, None when the endpoint is unreachable
     try:
         urllib.request.urlopen(url.rstrip("/") + "/models", timeout=3)
         report(f"LLM endpoint {url}", True)
@@ -57,6 +58,12 @@ def main() -> int:
             report(f"model {tag}", tag in have, f"ollama pull <base> && ollama create {tag} -f models/{modelfile}")
     except Exception:
         report(f"LLM endpoint {url}", False, "start Ollama (" + HINTS["ollama"].get(osn, "") + ") or set TOKENFRUGAL_LLM_URL in .env")
+    if have is not None:  # content-pipeline stage models: report only, never pulled, not counted as failures
+        sys.path.insert(0, str(ROOT))
+        from router.config import load_tf_roles
+        from router.preflight import stage_model_gaps
+        for agent, tag in stage_model_gaps(load_tf_roles(), have):
+            print(f"[stage] {agent} needs {tag}, not installed  ->  ollama pull {tag} (not pulled automatically)")
     if bad:
         print("\nTell your agent (Claude Code/Codex) or run the hints above yourself. Nothing was installed.")
     return 1 if bad else 0
