@@ -32,7 +32,8 @@ class Roles(unittest.TestCase):
     def test_only_two_models_and_tool_cap(self):
         self.assertEqual(set(CFG["models"]), {"builder", "thinker"})  # defaults are benchmark-driven, so tags are not pinned
         for name, r in CFG["roles"].items():
-            self.assertLessEqual(len(r["tools"]), 6, name)
+            # content-analyst is the documented exception to the recommended 6 (docs/content-analyst.md); 12 is the hard cap.
+            self.assertLessEqual(len(r["tools"]), 12 if name == "content-analyst" else 6, name)
             self.assertIn(r["model"], CFG["models"], name)
 
     def test_division_and_override_roles_exist(self):

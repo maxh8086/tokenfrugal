@@ -1,6 +1,6 @@
 """Generate profiles/db-*.yaml (Docker MCP profiles) and profiles/dbhub/*.toml for the database roles.
 
-One profile per role or level, each exposing at most 6 tools and no destructive ones (drop/delete/rename).
+One profile per role or level, each exposing at most 12 tools (6 recommended) and no destructive ones (drop/delete/rename).
 Dev roles write only to the scratch databases started from docker-compose.yml (127.0.0.1, reached through
 host.docker.internal). Admin roles are read-only. SQL engines share the bytebase/dbhub image; admin profiles
 mount a TOML with `readonly = true` (dbhub dropped its --readonly flag). The scratch password is the Docker
@@ -17,7 +17,7 @@ SCRATCH_PW = "${TF_DB_PASSWORD}"
 # SQL Server demands a complex password; the value comes from the Docker secret of that name, not from this file.
 MSSQL_PW = "${TF_DB_MSSQL_PASSWORD}"
 HOST = "host.docker.internal"
-MAX_TOOLS = 6
+MAX_TOOLS = 12  # hard ceiling per role; 6 is the recommendation
 FORBIDDEN = ("drop", "delete", "rename", "remove", "truncate", "flush")  # no allowlist may contain these
 
 IMAGES = {

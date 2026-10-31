@@ -60,9 +60,11 @@ def heal_skill(skill_file: Path, expected_text: str) -> str:
     return f"restored {skill_file} to the baseline text"
 
 
-MAX_TOOLS = 6  # the same cap the role tests enforce
+RECOMMENDED_TOOLS = 6  # the local models are 3B; a role should stay at or under this
+MAX_TOOLS = 12  # hard ceiling for any role; role_errors reports a role above it
 MODELS = {"builder", "thinker"}  # the two local models; the role's `model` key names one of them
-NATIVE = {"synaptree", "sandbox", "plan", "sonarqube", "crawl4ai"}  # native servers a role may use
+NATIVE = {"synaptree", "sandbox", "plan", "sonarqube", "crawl4ai", "video-editor",
+          "qdrant", "reddit", "hn", "rss", "youtube", "postgres"}  # native servers a role may use
 
 # In-repo native servers: their tool names are read from the @mcp.tool() definitions, so no model or Docker is needed.
 # synaptree and sonarqube run elsewhere, so their tools cannot be read offline and stay "unverified".
@@ -70,6 +72,7 @@ NATIVE_SOURCES = {
     "sandbox": "router/sandbox_mcp.py",
     "plan": "router/plan_mcp.py",
     "crawl4ai": "docker/crawl4ai-mcp/server.py",
+    "video-editor": "router/video_editor_mcp.py",
 }
 _TOOL_DEF = re.compile(r"@mcp\.tool\([^)]*\)\s*\n(?:async\s+)?def\s+(\w+)")
 
@@ -142,7 +145,7 @@ def role_errors(roles: dict, root: Path) -> dict:
             probs.append(f"model '{role.get('model')}' is not builder or thinker")
         tools = _as_list(role.get("tools"))
         if len(tools) > MAX_TOOLS:
-            probs.append(f"{len(tools)} tools, cap is {MAX_TOOLS}")
+            probs.append(f"{len(tools)} tools, maximum is {MAX_TOOLS} (recommended {RECOMMENDED_TOOLS})")
         for p in _as_list(role.get("profile")):
             if not (root / "profiles" / f"{p}.yaml").exists():
                 probs.append(f"profile file profiles/{p}.yaml is missing")
@@ -207,11 +210,19 @@ def contract_errors(roles: dict, contracts: dict) -> dict:
     return out
 
 
-if __name__ == "__main__":
-    import sys
-    from .config import ROOT, load_tf_roles
+def stage_model_gaps(cfg: dict, installed) -> list:
+    """(agent, tag) for each content stage whose Ollama tag is not in installed. Report only: nothing is pulled."""
+    return [(a, t) for a, t in sorted((cfg.get("agent_models") or {}).items()) if a.startswith("content-") and t not in installed]
 
-    roles = load_tf_roles().get("roles") or {}
+
+if __name__ == "__main__":
+    import json
+    import sys
+    import urllib.request
+    from .config import OLLAMA_URL, ROOT, load_tf_roles
+
+    cfg = load_tf_roles()
+    roles = cfg.get("roles") or {}
     bad = role_errors(roles, ROOT)
     for name, probs in sorted(bad.items()):
         print(f"{name}: " + "; ".join(probs))
@@ -219,4 +230,10 @@ if __name__ == "__main__":
     for name, srcs in sorted(unv.items()):
         print(f"{name}: unverified (cannot read tools offline from {', '.join(srcs)})")
     print(f"{len(roles)} roles checked, {len(bad)} need fixing, {len(unv)} unverified")
+    try:  # stage models: report only, never pulled
+        have = {m.get("id") for m in json.load(urllib.request.urlopen(OLLAMA_URL.rstrip("/") + "/models", timeout=3)).get("data", [])}
+        for agent, tag in stage_model_gaps(cfg, have):
+            print(f"stage {agent}: model {tag} not installed; run ollama pull {tag} (not pulled automatically)")
+    except Exception:
+        print("stage models: endpoint unreachable, not checked")
     sys.exit(1 if bad else 0)

@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 from router import sandbox_mcp as s
+from router import video_editor_mcp as v
 
 
 class SandboxTests(unittest.TestCase):
@@ -40,3 +41,44 @@ class SandboxTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VideoEditorTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.env = mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": self.tmp.name})
+        self.env.start()
+        os.makedirs(os.path.join(self.tmp.name, "Raw"))
+
+    def tearDown(self):
+        self.env.stop()
+        self.tmp.cleanup()
+
+    def test_path_like_names_refused_without_docker(self):
+        with mock.patch.object(v.subprocess, "run") as run:
+            for bad in ("../x.mp4", "a/b.mp4", "a\\b.mp4", "x..y.mp4", "-x.mp4", ""):
+                self.assertTrue(v.vedit(bad).startswith("error: bad clip name"), bad)
+            self.assertTrue(v.vedit("ok.mp4", out_name="../o").startswith("error: bad output name"))
+            run.assert_not_called()
+
+    def test_missing_clip_refused_without_docker(self):
+        with mock.patch.object(v.subprocess, "run") as run:
+            self.assertEqual(v.vedit("nope.mp4"), "error: clip not found in Raw")
+            run.assert_not_called()
+
+    def test_runs_compose_vedit_with_options(self):
+        open(os.path.join(self.tmp.name, "Raw", "talk.mp4"), "w").close()
+        with mock.patch.object(v.subprocess, "run") as run:
+            run.return_value = mock.Mock(returncode=0, stdout="done\n", stderr="")
+            out = v.vedit("talk.mp4", out_name="short", no_music=True)
+        argv = run.call_args[0][0]
+        self.assertEqual(argv[-5:], ["vedit", "talk.mp4", "--out", "short", "--no-music"])
+        self.assertIn("video-editor", argv)
+        self.assertEqual(run.call_args[1]["timeout"], 900)
+        self.assertTrue(out.startswith("exit=0"))
+        self.assertIn("Render:", out)
+
+    def test_list_raw_and_renders(self):
+        open(os.path.join(self.tmp.name, "Raw", "a.mp4"), "w").close()
+        self.assertEqual(v.list_raw(), "a.mp4")
+        self.assertEqual(v.list_renders(), "no files in Render")

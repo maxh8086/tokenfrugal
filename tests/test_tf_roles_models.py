@@ -23,7 +23,7 @@ def load(override=None):
 class AgentModelTests(unittest.TestCase):
     def test_yaml_default_is_empty_so_role_model_applies(self):
         cfg = load()
-        self.assertEqual(cfg["agent_models"], {})
+        self.assertEqual({k for k in cfg["agent_models"] if not k.startswith("content-")}, set())
         self.assertEqual(resolve_role("engineering-backend-architect", cfg)["model"], cfg["models"]["builder"])
         self.assertEqual(resolve_role("gis-analyst", cfg)["model"], cfg["models"]["builder"])
 

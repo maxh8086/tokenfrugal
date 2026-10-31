@@ -76,6 +76,13 @@ def sweep_stale(reason: str, stale_after: float = STALE_AFTER) -> int:
                          (reason, cutoff)).rowcount
 
 
+def last_for(agent) -> dict | None:
+    """Newest task row for one agent slug (id and status only), or None. Used to resume a pipeline stage."""
+    with _db() as c:
+        r = c.execute("SELECT id, status FROM tasks WHERE agent=? ORDER BY rowid DESC LIMIT 1", (agent,)).fetchone()
+    return {"id": r[0], "status": r[1]} if r else None
+
+
 def get(tid) -> dict | None:
     with _db() as c:
         c.row_factory = sqlite3.Row

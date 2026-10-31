@@ -7,6 +7,7 @@ these tests and the matching CHANGELOG.md entry together.
 import contextlib
 import io
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -85,6 +86,7 @@ def _write_tf_roles_yaml(d: Path, models_key: str, skills_key: str) -> None:
     """Minimal tf-roles.yaml copy with the given keys; the rest is the shipped file."""
     text = (ROUTER / "tf-roles.yaml").read_text(encoding="utf-8")
     text = text.replace("\ntf_roles_models: {}", "")
+    text = re.sub(r"\ntf_roles_models:\n(?:  [^\n]*\n)*", "\n", text)  # drop the whole mapping block
     text = text.replace("\ntf_roles_skills:", f"\n{skills_key}:", 1)
     body = "".join(f"  {k}: {v}\n" for k, v in MODELS.items())
     text += f"\n{models_key}:\n{body}"

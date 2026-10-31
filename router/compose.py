@@ -21,18 +21,31 @@ class ComposeError(Exception):
     pass
 
 
+DOCKER_API_500 = "request returned 500"  # Docker Desktop API blip during container start: transient, worth waiting out
+UP_RETRY_WAITS = (5, 15, 30)  # seconds before each retry of a failed `up`; a 500 keeps retrying, other failures stop after the first
+
+
 async def _compose(*args: str, timeout: int) -> None:
     try:
         await _compose_once(*args, timeout=timeout)
     except ComposeError as first:
         if args[0] != "up" or "timed out" in str(first):
             raise
-        # a fast `up` failure is usually a race with a container still stopping from the previous run: retry once
-        await asyncio.sleep(5)
-        try:
-            await _compose_once(*args, timeout=timeout)
-        except ComposeError as second:
-            raise ComposeError(f"{second} (first attempt: {first})") from None
+        # a fast `up` failure is usually a race with a container still stopping from the previous run, or a Docker API 500
+        waits = UP_RETRY_WAITS if DOCKER_API_500 in str(first) else UP_RETRY_WAITS[:1]
+        last = first
+        for wait in waits:
+            await asyncio.sleep(wait)
+            try:
+                await _compose_once(*args, timeout=timeout)
+                return
+            except ComposeError as exc:
+                last = exc
+                if DOCKER_API_500 not in str(exc):
+                    break
+        if last is first:
+            raise
+        raise ComposeError(f"{last} (first attempt: {first})") from None
 
 
 async def _compose_once(*args: str, timeout: int) -> None:

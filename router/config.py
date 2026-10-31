@@ -85,11 +85,14 @@ COMPOSE_FILE = Path(os.getenv("MCP_COMPOSE_FILE", Path(__file__).resolve().paren
 COMPOSE_PROJECT = "tokenfrugal"
 os.environ.setdefault("TF_SECRETS_DIR", str(secrets_store.SECRETS_DIR))  # read by docker-compose.yml secrets:
 KEEP_ALIVE = os.getenv("MCP_KEEP_ALIVE", "") == "1"  # leave backends running after a task
-for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube")):
+for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube"),
+                 ("qdrant", "mcp-qdrant"), ("reddit", "mcp-reddit"), ("hn", "mcp-hn"), ("rss", "mcp-rss"),
+                 ("youtube", "mcp-youtube"), ("postgres", "mcp-postgres")):
     NATIVE_SERVERS[_n] = {"command": "docker", "args": ["compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE),
                                                          "run", "--rm", "-T", _svc]}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "router.plan_mcp"]}
 NATIVE_SERVERS["sandbox"] = {"command": sys.executable, "args": ["-m", "router.sandbox_mcp"]}  # run_tests / run_python in a network-less container
+NATIVE_SERVERS["video-editor"] = {"command": sys.executable, "args": ["-m", "router.video_editor_mcp"]}  # Raw/Render list and vedit in the video-editor container
 # synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
 for _n, _spec in claude_import.load()["servers"].items():  # Claude-JSON imports (python -m router.claude_import)
     NATIVE_SERVERS.setdefault(_n, _spec)

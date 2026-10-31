@@ -127,5 +127,42 @@ class LeaseTest(unittest.TestCase):
         self.assertFalse((compose.LEASES / "crawl4ai.99999.peer").exists())
 
 
+class ComposeUpRetry(unittest.TestCase):
+    """A failed `up` is retried; a Docker API 500 keeps retrying through the wait list, other failures stop after one retry."""
+
+    def _run(self, outcomes):
+        calls = []
+
+        async def fake_once(*args, timeout):
+            calls.append(args)
+            res = outcomes[len(calls) - 1]
+            if res is not None:
+                raise compose.ComposeError(res)
+
+        with mock.patch.object(compose, "_compose_once", fake_once), mock.patch.object(compose, "UP_RETRY_WAITS", (0, 0, 0)):
+            err = None
+            try:
+                asyncio.run(compose._compose("up", "-d", timeout=5))
+            except compose.ComposeError as exc:
+                err = exc
+        return calls, err
+
+    def test_api_500_then_success(self):
+        calls, err = self._run(["compose up failed: request returned 500 Internal Server Error", "compose up failed: request returned 500", None])
+        self.assertIsNone(err)
+        self.assertEqual(len(calls), 3)
+
+    def test_api_500_every_time_uses_all_waits(self):
+        calls, err = self._run(["request returned 500"] * 4)
+        self.assertIsNotNone(err)
+        self.assertEqual(len(calls), 4)  # first try plus all three waits
+
+    def test_other_failure_retried_once_only(self):
+        calls, err = self._run(["compose up failed: port is already allocated", "compose up failed: port is already allocated", None])
+        self.assertIsNotNone(err)
+        self.assertEqual(len(calls), 2)
+        self.assertIn("first attempt", str(err))
+
+
 if __name__ == "__main__":
     unittest.main()
