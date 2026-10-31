@@ -72,7 +72,7 @@ class VideoEditorTests(unittest.TestCase):
             run.return_value = mock.Mock(returncode=0, stdout="done\n", stderr="")
             out = v.vedit("talk.mp4", out_name="short", no_music=True)
         argv = run.call_args[0][0]
-        self.assertEqual(argv[-5:], ["vedit", "talk.mp4", "--out", "short", "--no-music"])
+        self.assertEqual(argv[-7:], ["vedit", "talk.mp4", "--captions", "auto", "--out", "short", "--no-music"])
         self.assertIn("video-editor", argv)
         self.assertEqual(run.call_args[1]["timeout"], 900)
         self.assertTrue(out.startswith("exit=0"))
@@ -82,3 +82,17 @@ class VideoEditorTests(unittest.TestCase):
         open(os.path.join(self.tmp.name, "Raw", "a.mp4"), "w").close()
         self.assertEqual(v.list_raw(), "a.mp4")
         self.assertEqual(v.list_renders(), "no files in Render")
+
+    def test_captions_flag_defaults_to_auto_and_rejects_bad_values(self):
+        open(os.path.join(self.tmp.name, "Raw", "talk.mp4"), "w").close()
+        with mock.patch.object(v.subprocess, "run") as run:
+            run.return_value = mock.Mock(returncode=0, stdout="done\n", stderr="")
+            v.vedit("talk.mp4")
+            argv = run.call_args[0][0]
+            self.assertEqual(argv[argv.index("--captions") + 1], "auto")
+            v.vedit("talk.mp4", captions="off")
+            argv = run.call_args[0][0]
+            self.assertEqual(argv[argv.index("--captions") + 1], "off")
+            out = v.vedit("talk.mp4", captions="loud")
+            self.assertTrue(out.startswith("error: bad captions value"), out)
+            self.assertEqual(run.call_count, 2)

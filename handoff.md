@@ -5,6 +5,13 @@ Last updated: 2026-10-30
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
+## Priority next (set 2026-11-01, NOT started)
+
+1. **GPU image / ComfyUI container with GPU lease.** Design is in `concepts_brief.md` (repo root, not yet committed). Next step: `/egm-draft`.
+2. **Studio tab for content review and content writer roles.** Plan the design with the `ui-ux-pro-max` skill before any code (see the Studio item in the PRIORITY section below).
+3. **Split content-analyst into six roles.** Roles and held sources are in the PRIORITY section (item 1) and section 11.
+
+---
 ## PRIORITY (set 2026-10-31, NOT started): split content-analyst and add a control UI
 
 Both items come from the user. Nothing implemented; the UI design is planned with the `ui-ux-pro-max` skill before any code.

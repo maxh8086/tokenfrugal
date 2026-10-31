@@ -51,19 +51,21 @@ def list_renders() -> str:
 
 
 @mcp.tool()
-def vedit(clip: str, out_name: str = "", no_music: bool = False) -> str:
+def vedit(clip: str, out_name: str = "", no_music: bool = False, captions: str = "auto") -> str:
     """Turn one clip from Raw into a captioned 9:16 short in Render. clip = bare file name in Raw.
-    out_name = optional output name. no_music = True skips the music bed. Returns the last output lines and the Render path."""
+    out_name = optional output name. no_music = True skips the music bed. captions = auto (default, skips word captions when the clip has burned-in subtitles), on (always add them) or off (never add them). Returns the last output lines and the Render path."""
     try:
         clip = _check(clip, "clip")
         out_name = _check(out_name, "output") if out_name else ""
+        if captions not in ("auto", "on", "off"):
+            raise ValueError("bad captions value")
         ws = _workspace()
         if not (ws / "Raw" / clip).is_file():
             return "error: clip not found in Raw"
         render = ws / "Render"
         before = set(_names(render))
         argv = ["docker", "compose", "-f", str(COMPOSE_FILE), "--profile", "video", "run", "--rm", "-T",
-                "video-editor", "vedit", clip]
+                "video-editor", "vedit", clip, "--captions", captions]
         if out_name:
             argv += ["--out", out_name]
         if no_music:
