@@ -15,8 +15,22 @@ secrets:
   NEO4J_AUTH: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/NEO4J_AUTH"}
   TF_DB_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_PASSWORD"}
   TF_DB_MSSQL_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_MSSQL_PASSWORD"}
+  YOUTUBE_API_KEY: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/YOUTUBE_API_KEY"}
+  DATABASE_URI: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/DATABASE_URI"}
 
 services:
+  video-editor:
+    build:
+      context: ./docker/video-editor
+      additional_contexts:
+        scripts: ./kalamanch
+    image: ${VIDEO_EDITOR_IMAGE:-maxh8086/video-editor:1@sha256:cbda433dd6be3e90955e22547c00addca7573cee1f68409d59f67d74e16d78d2}   # pulled from Docker Hub; "docker compose build video-editor" rebuilds from docker/video-editor
+    profiles: [video]
+    working_dir: /work
+    volumes:
+      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/video_editor_mcp.py (vedit) and resolved by router/media_workspace.py; this default is the fallback when run by hand
+    restart: "no"
+
   crawl4ai:
     image: unclecode/crawl4ai:latest
     profiles: [research]
@@ -132,6 +146,81 @@ services:
       retries: 20
       start_period: 5s
 
+  # Content-analyst sources (profile content). Each mcp-* is a stdio wrapper with no ports. Each Dockerfile fetches
+  # and sha-checks its upstream source (see docker/<name>/SOURCE.md). Only qdrant is a backend.
+  qdrant:
+    image: qdrant/qdrant:v1.16.0@sha256:1005201498cf927d835383d0f918b17d8c9da7db58550f169f694455e42d78f4
+    profiles: [content]
+    ports: ["127.0.0.1:6333:6333"]
+    volumes:
+      - qdrant_data:/qdrant/storage
+    mem_limit: 1g
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  mcp-qdrant:
+    image: tokenfrugal/qdrant-mcp:1
+    build: ./docker/qdrant-mcp   # built on first use, then reused
+    profiles: [content]
+    depends_on:
+      qdrant: {condition: service_healthy}
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_READ_ONLY: "true"   # removes qdrant-store; the content-analyst role only searches
+    mem_limit: 1g
+    stdin_open: true
+
+  mcp-reddit:
+    image: tokenfrugal/reddit-mcp:1
+    build: ./docker/reddit-mcp   # built on first use, then reused
+    profiles: [content]
+    mem_limit: 256m
+    stdin_open: true
+
+  mcp-hn:
+    image: tokenfrugal/hn-mcp:1
+    build: ./docker/hn-mcp   # built on first use, then reused
+    profiles: [content]
+    mem_limit: 256m
+    stdin_open: true
+
+  mcp-rss:
+    image: tokenfrugal/rss-mcp:1
+    build: ./docker/rss-mcp   # built on first use, then reused
+    profiles: [content]
+    # Own network: cannot reach the backends on the default network. It can still reach LAN addresses; see docs/content-analyst.md.
+    networks: [rss_egress]
+    mem_limit: 256m
+    stdin_open: true
+
+  mcp-youtube:
+    image: tokenfrugal/youtube-mcp:1
+    build: ./docker/youtube-mcp   # built on first use, then reused
+    profiles: [content]
+    # The image's entrypoint reads the key file itself, so the key is not in the environment.
+    environment:
+      YOUTUBE_API_KEY_FILE: /run/secrets/YOUTUBE_API_KEY
+    secrets: [YOUTUBE_API_KEY]
+    mem_limit: 256m
+    stdin_open: true
+
+  mcp-postgres:
+    image: tokenfrugal/postgres-mcp:1
+    build: ./docker/postgres-mcp   # built on first use, then reused
+    profiles: [content]
+    # Wrapper: exports the secret file as DATABASE_URI (the server reads only the environment), then runs the server.
+    # The URI must use a read-only database role; see docs/content-analyst.md.
+    entrypoint: ["/bin/sh", "-c", "export DATABASE_URI=\"$$(cat /run/secrets/DATABASE_URI)\" && exec /app/.venv/bin/postgres-mcp \"$$@\"", "sh"]
+    command: ["--access-mode=restricted", "--transport=stdio"]
+    secrets: [DATABASE_URI]
+    mem_limit: 256m
+    stdin_open: true
+
   # Scratch databases for the db-* roles. Ephemeral (no volumes), loopback only. Their passwords are the files
   # TF_DB_PASSWORD and TF_DB_MSSQL_PASSWORD in the secrets directory and must match the DSNs in scripts/gen_db_profiles.py.
   # Never point real data at these.
@@ -245,3 +334,9 @@ volumes:
   sonarqube_data: {external: true}
   sonarqube_logs: {external: true}
   sonarqube_ext: {external: true}
+  # Qdrant vector store for the content-analyst role (fresh volume, no external data).
+  qdrant_data: {}
+
+networks:
+  # Only mcp-rss joins this network, so it cannot open connections to the other services on the default network.
+  rss_egress: {driver: bridge}

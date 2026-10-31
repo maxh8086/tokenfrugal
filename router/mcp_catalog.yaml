@@ -18,6 +18,14 @@ mcps:
   plan:               {label: "Task plan store (Neo4j)",                   native: plan,      compose: [neo4j], tools: [plan_next, plan_claim, plan_status, plan_blockers, plan_done, plan_note]}
   github:             {label: "GitHub (official MCP)",                     profile: github,   tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents, create_pull_request]}
   github-actions:     {label: "GitHub Actions (read-only, official MCP)", profile: github, tools: [actions_list, actions_get, get_job_logs]}
+  # Content sources (images built from docker/<name>-mcp, see docker/pins.yaml). The tool lists are the subsets the
+  # content-analyst role uses: qdrant-store, get_trending/getTranscripts/getChannelTopVideos, and other tools are left out.
+  reddit:             {label: "Reddit posts/comments (Arctic Shift archive, no key)", native: reddit, tools: [search_posts]}
+  hn:                 {label: "Hacker News (Algolia, no key)",                       native: hn,     tools: [search_stories]}
+  rss:                {label: "RSS / Atom feeds (no key)",                           native: rss,    tools: [get_feed]}
+  youtube:            {label: "YouTube Data API (key; quota 100/search page, 1/other)", native: youtube, tools: [searchVideos, getVideoDetails]}
+  qdrant:             {label: "Qdrant vector search (read-only)",                   native: qdrant, compose: [qdrant], tools: [qdrant-find]}
+  postgres:           {label: "PostgreSQL (restricted; needs read-only DB role)",   native: postgres, tools: [execute_sql]}
 # Profile type -> agents that suit it; `default` is pre-selected.
 profile_types:
   financial-analyst:  {label: "Financial analyst",  default: finance-analyst,                tf_roles: [finance-analyst, support-finance-tracker, chief-financial-officer, accounts-payable-agent]}

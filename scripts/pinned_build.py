@@ -44,6 +44,12 @@ def clone_at(repo: str, sha: str, dest: Path) -> None:
 
 
 def build(name: str, p: dict, keep: bool = False) -> None:
+    if p.get("context") == "folder":
+        # The Dockerfile fetches and sha-checks its own upstream source; build from its folder.
+        ctx = ROOT / Path(p["dockerfile"]).parent
+        print(f"{name}: building {p['image']} from {ctx.relative_to(ROOT)} (Dockerfile fetches {p['sha'][:12]})")
+        subprocess.run(["docker", "build", "-t", p["image"], "-f", str(ROOT / p["dockerfile"]), str(ctx)], check=True)
+        return
     tmp = Path(tempfile.mkdtemp(prefix=f"tf-{name}-"))
     try:
         clone_at(p["repo"], p["sha"], tmp)

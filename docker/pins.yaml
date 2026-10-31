@@ -13,3 +13,60 @@ pins:
     sha: d49fa51fefc2faaafa69bd46ec273ba48d682731   # tag 2.15.4
     image: tokenfrugal/penpot-mcp:1
     dockerfile: docker/penpot-mcp/Dockerfile
+  # Content-analyst sources. Dockerfiles fetch the upstream source themselves and verify the sha, so the build
+  # context is the folder (context: folder), not the clone. tag_regex '^$' = no release tag matches the pinned
+  # commit (check_pins skips these); see each SOURCE.md.
+  qdrant-mcp:
+    repo: https://github.com/qdrant/mcp-server-qdrant.git
+    tag_regex: '^$'
+    sha: c56ae5adf62bb78d852bf7bbcbc5d7b75e2bbe41   # untagged; package 0.8.1
+    image: tokenfrugal/qdrant-mcp:1
+    dockerfile: docker/qdrant-mcp/Dockerfile
+    context: folder
+    licence: Apache-2.0
+    base_image: python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
+  postgres-mcp:
+    repo: https://github.com/crystaldba/postgres-mcp.git
+    tag_regex: '^$'
+    sha: 15c8e33353546148acc2d8bd784551cf3905d1e2   # untagged; package 0.3.0
+    image: tokenfrugal/postgres-mcp:1
+    dockerfile: docker/postgres-mcp/Dockerfile
+    context: folder
+    licence: MIT
+    base_image: python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
+  reddit-mcp:
+    repo: https://github.com/ekatiyar/simple-reddit-mcp.git
+    tag_regex: '^v(\d+)\.(\d+)\.(\d+)$'
+    sha: 6011105882d447847265dc040823261dbd14d011   # tag v0.0.1
+    image: tokenfrugal/reddit-mcp:1
+    dockerfile: docker/reddit-mcp/Dockerfile
+    context: folder
+    licence: MIT
+    base_image: python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
+  hn-mcp:
+    repo: https://github.com/erithwik/mcp-hn.git
+    tag_regex: '^$'
+    sha: a454f624e6b1171e0e3dbe0c9eafd2830565190f   # untagged (2025-07-13 commit)
+    image: tokenfrugal/hn-mcp:1
+    dockerfile: docker/hn-mcp/Dockerfile
+    context: folder
+    licence: MIT
+    base_image: python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
+  rss-mcp:
+    repo: https://github.com/veithly/rss-mcp.git
+    tag_regex: '^$'
+    sha: f0713aaeebef6129f277f2f4d524361751606011   # untagged (2025-12-12 commit)
+    image: tokenfrugal/rss-mcp:1
+    dockerfile: docker/rss-mcp/Dockerfile
+    context: folder
+    licence: Apache-2.0
+    base_image: node:22-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+  youtube-mcp:
+    repo: https://github.com/kirbah/mcp-youtube.git
+    tag_regex: '^$'
+    sha: 0ba98f673cf4f2ebdd21edb0ac9d3337c77f4531   # untagged (2026-10-31 commit)
+    image: tokenfrugal/youtube-mcp:1
+    dockerfile: docker/youtube-mcp/Dockerfile
+    context: folder
+    licence: MIT
+    base_image: node:22-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
