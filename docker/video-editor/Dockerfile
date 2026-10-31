@@ -26,6 +26,20 @@ RUN git clone --depth 1 --branch "${WHISPER_CPP_TAG}" https://github.com/ggml-or
 RUN npm install -g "remotion@${REMOTION_VERSION}" "@remotion/cli@${REMOTION_VERSION}" "hyperframes@${HYPERFRAMES_VERSION}" \
     && npm cache clean --force
 
+# Remotion 4.x downloads chrome-headless-shell from remotion.media on the first render, which fails offline.
+# Make the global CLI default to the baked Debian chromium (--browser-executable still overrides it). The
+# guards fail the build if the pinned source line changes. A project with its own local remotion install must
+# set Config.setBrowserExecutable('/usr/bin/chromium') in remotion.config.ts instead.
+RUN f=$(find /usr/local/lib/node_modules -path '*/renderer/dist/options/browser-executable.js') \
+    && [ "$(printf '%s\n' "$f" | wc -l)" = 1 ] \
+    && grep -q 'let currentBrowserExecutablePath = null;' "$f" \
+    && sed -i "s#let currentBrowserExecutablePath = null;#let currentBrowserExecutablePath = '/usr/bin/chromium';#" "$f" \
+    && grep -q "currentBrowserExecutablePath = '/usr/bin/chromium';" "$f"
+
+# Default yt-dlp options for every download in the image (read from the system config): best video + best audio,
+# merged to mp4. A -f on the command line overrides it.
+RUN printf '%s\n' '-f bv*+ba/b' '--merge-output-format mp4' > /etc/yt-dlp.conf
+
 # Manim Community, built from the pinned commit (no LaTeX: Text/shapes work, Tex/MathTex need texlive added).
 RUN apt-get update && apt-get install -y --no-install-recommends       python3-dev pkg-config libcairo2-dev libpango1.0-dev libglib2.0-dev     && rm -rf /var/lib/apt/lists/*     && git clone --branch "${MANIM_TAG}" https://github.com/ManimCommunity/manim /opt/manim     && git -C /opt/manim checkout --detach "${MANIM_COMMIT}"     && pip3 install --no-cache-dir --break-system-packages /opt/manim
 
@@ -44,6 +58,7 @@ RUN printf '%s\n' 'CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromiu
 
 ENV WHISPER_MODEL_PATH=/opt/whisper.cpp/models/ggml-${WHISPER_MODEL}.bin \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    HYPERFRAMES_BROWSER_PATH=/usr/bin/chromium \
     VIDEO_PUBLISH_DIR=0 \
     PYTHONUTF8=1
 

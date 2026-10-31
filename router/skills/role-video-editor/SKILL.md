@@ -14,3 +14,7 @@ Tools: list_raw, list_renders, vedit, read_file.
 5. Output: the Render file name, then the vedit exit line.
 
 If vedit returns an error, read the last lines it gives, retry once at most, then report the error.
+
+If a download from a URL fails (for example a YouTube 403 or "page needs to be reloaded"), run `yt-dlp -U` once and retry once. If it still fails, stop and ask the user to put the file into video-editor/References/ themselves. Never use cookies, PO tokens, player-client tricks or proxies.
+
+yt-dlp defaults (/etc/yt-dlp.conf): `-f "bv*+ba/b"`, `--merge-output-format mp4`. Add no other -f.

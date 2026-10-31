@@ -24,8 +24,9 @@ services:
       context: ./docker/video-editor
       additional_contexts:
         scripts: ./kalamanch
-    image: ${VIDEO_EDITOR_IMAGE:-maxh8086/video-editor:1@sha256:cbda433dd6be3e90955e22547c00addca7573cee1f68409d59f67d74e16d78d2}   # pulled from Docker Hub; "docker compose build video-editor" rebuilds from docker/video-editor
+    image: ${VIDEO_EDITOR_IMAGE:-maxh8086/video-editor:1@sha256:a7a53bf2611a9414d57268a07b24224a1178225906e10933e27f49806655561a}   # pulled from Docker Hub; "docker compose build video-editor" rebuilds from docker/video-editor
     profiles: [video]
+    shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
     volumes:
       - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/video_editor_mcp.py (vedit) and resolved by router/media_workspace.py; this default is the fallback when run by hand
