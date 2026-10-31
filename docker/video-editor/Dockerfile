@@ -43,6 +43,17 @@ RUN printf '%s\n' '-f bv*+ba/b' '--merge-output-format mp4' > /etc/yt-dlp.conf
 # Manim Community, built from the pinned commit (no LaTeX: Text/shapes work, Tex/MathTex need texlive added).
 RUN apt-get update && apt-get install -y --no-install-recommends       python3-dev pkg-config libcairo2-dev libpango1.0-dev libglib2.0-dev     && rm -rf /var/lib/apt/lists/*     && git clone --branch "${MANIM_TAG}" https://github.com/ManimCommunity/manim /opt/manim     && git -C /opt/manim checkout --detach "${MANIM_COMMIT}"     && pip3 install --no-cache-dir --break-system-packages /opt/manim
 
+# Layers below the Manim build are added last so the earlier layers stay cached.
+# tesseract-ocr + English traineddata only (no other language packs; tesseract-ocr-osd comes in as a Debian dependency):
+# vedit --captions auto reads burned-in subtitles.
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
+
+# yt-dlp JavaScript challenge solver. The [default] extra of yt-dlp 2026.10.26 pins yt-dlp-ejs==0.8.0; the exact pin is
+# repeated here. Node 22 (already in the base image) is the JS runtime: yt-dlp's default is deno, which is not installed.
+RUN pip3 install --no-cache-dir --break-system-packages "yt-dlp[default]==${YT_DLP_VERSION}" "yt-dlp-ejs==0.8.0" \
+    && printf '%s\n' '--js-runtimes node' >> /etc/yt-dlp.conf
+
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/
 COPY pipeline.py /opt/pipeline/pipeline.py
 RUN sed -i "s/$//" /opt/pipeline/pipeline.py && chmod +x /opt/pipeline/pipeline.py && ln -s /opt/pipeline/pipeline.py /usr/local/bin/vedit
