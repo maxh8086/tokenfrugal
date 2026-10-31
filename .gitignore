@@ -13,6 +13,14 @@ ui/node_modules/
 # runtime lock files
 router/gateways/
 
+# model weights, renders: fetched on demand (python kalamanch/preflight.py --fetch), never committed
+models/video_generation/*/
+logs/
+models/image_generation/*/
+models/image_enhancement/*/
+models/talking_head/*/
+models/lipsync/*/
+
 # virtualenvs
 .venv/
 venv/
@@ -58,3 +66,12 @@ Benchmark/results/tracker/*.lst
 Benchmark/results/tracker/failed.list
 Benchmark/results/tracker/failed_candidates.txt
 Benchmark/results/tracker/ollama_tags.txt
+
+# video-editor now lives in OneDrive/video-editor (VIDEO_EDITOR_DIR); keep stray local copies out of git
+video-editor/
+
+# local SQLite WAL/SHM sidecars for the router task store
+router/tasks.db*
+
+# gfpgan face-restore model weights (large, fetched on demand)
+gfpgan/
