@@ -1,8 +1,27 @@
 ﻿# Handoff: tokenfrugal
 
-Last updated: 2026-10-28
+Last updated: 2026-10-30
 
 This file holds the working handoff notes. Closed items are removed once verified.
+
+---
+## PRIORITY (set 2026-10-31, NOT started): split content-analyst and add a control UI
+
+Both items come from the user. Nothing implemented; the UI design is planned with the `ui-ux-pro-max` skill before any code.
+
+1. **Split content-analyst into six roles, backend unchanged.** Same MCP servers, images, compose services, secrets, shared media folder and stage pipeline; only the role layer changes (`router/tf-roles.yaml`, one skill each, tests, docs). Each role gets its own tool allowlist, which also removes the 12-tool exception (cap 6 recommended, 12 maximum). Roles:
+   1. Reddit and Hacker News (reddit-mcp, hn-mcp)
+   2. RSS (rss-mcp)
+   3. YouTube (youtube-mcp)
+   4. LinkedIn (held: stays "not collected" until the user decides; see item 11)
+   5. Instagram and Facebook (no server chosen yet; needs a licence-checked Apache-2.0 or MIT repo, and the same ToS and API-tier questions as X and LinkedIn)
+   6. Twitter / X (held: paid API tier; see item 11)
+   Open: shared Qdrant and Postgres tools go to each role that needs them, or to one collector-neutral role; the existing `content-analyst` slug and `mediahouse` team membership must be mapped to the six new names (decide before renaming).
+2. **"Studio": control UI in a new tab in the tokenfrugal UI** (name decided 2026-10-31; analyse, process, edit and create content; use the `ui-ux-pro-max` skill to plan the design first, then build). The user can instruct a role to:
+   - **Collect / scrape** data from its source,
+   - **Publish** the collected data internally (to the shared media folder and Qdrant/Postgres),
+   - **Act on** its content (hand it to the content pipeline stages).
+   Must go through the router (tracked, resumable tasks), never call models or servers directly. Show per-role status, last run, "not collected" state for the held sources, YouTube quota use, and missing-secret warnings.
 
 ---
 ## TOP PRIORITY (next): per-team benchmarks for the 40-run models (set 2026-10-28, IN PROGRESS since 2026-10-28 20:10)
@@ -29,6 +48,8 @@ Every issue seen during the queue run. Fixes go in before the next model run. Mo
 | 4 | `__REPO__` unreplaced in installed dbhub profiles (`unsafe docker volume`). | Fixed | Reinstalled with `scripts/install_profiles.py`. All profiles `ok`. |
 | 5 | Oracle admin roles recorded `ok` with 0 tools (false pass). | Fixed | `router/loop.py` `_run`: raises `LoopError("infra: no tools listed ...")` when the role has tools but the MCP server listed none. |
 | 6 | `test_md_empty_and_filled` stale assertion after the pass-block change. | Fixed | Test now checks the `hd` placeholder and `ranking.PASS_DATA["hd"]["rows"]`. Unit tests pass. |
+| 6c | Kandinsky 6.0 Lite distill 3B (`kandinskylab/Kandinsky-6.0-Lite-distill-5s-Diffusers`, 26.7 GB), runner branch `kand` in `chain_gen.py`, 480x864, 121 frames, 10 steps, CPU offload | Runs but impractical: first denoise step took 559 s (Qwen2.5-VL 7B encoder plus 3B transformer spill past 8 GB), so about 93 min per 5 s segment, about 8 h for 20 s. Stopped after step 1; files deleted. No clip. |
+| 6d | CogVideoX1.5 5B I2V (`zai-org/CogVideoX1.5-5B-I2V`, 31 GB), runner branch `cog15`, 30 steps | Failed after 3 attempts. 1: 480x832 rope error (grid capped at 48 patches, height must be <= 768). 2: 432x768 nf4 transformer ran 4733 s for 20 s but the output is green noise with a faint figure (invalid, clip removed). 3: 8-bit transformer quick test (33 frames, 20 steps) ran 600 s per step, stopped. Not usable on 8 GB with bitsandbytes. Files deleted. |
 | 7 | `KeyError: 'date'` in `tests/test_ranking_hard.py` fixtures. | Fixed | `date` added to `FIELDS` and derived from the run_id. |
 | 8 | Penpot designer `ComposeError` with empty message. | Open (recheck) | Manual `docker compose up -d --wait penpot-mcp` succeeded. Check the queue log for recurrence. |
 | 9 | Granite 2B `no-tool-call` on designer and browser roles. | Recorded (model result) | Not a harness fault. No fix. |
@@ -49,6 +70,13 @@ Every issue seen during the queue run. Fixes go in before the next model run. Mo
 | 24 | MINOR fix 3 (db-* `timeout_s`), MINOR fix 4 (browser `timeout_s` 80 to 120), MINOR fix 5 (db skill "first call" lines). Each changes measured results. | Applied 2026-10-29 (user approved): db roles `timeout_s: 600`, browser `timeout_s: 80 -> 120`, db-dev and db-admin skills state the first tool call explicitly. Models 1–5 ran under the old values. | Applied. |
 | 25 | MAJOR fixes, held for approval: 6 keep-alive MCP containers; 7 separate hint retry counter in `loop.py` (~454-468); 8 dbhub/oracle/mssql up before the queue, or classify `server is closing: EOF` as infra; 9 `TOKENFRUGAL_TASK_TIMEOUT` for all roles in `team_bench_queue.py`. | Fixes 7 and 9 applied 2026-10-29 (user approved): separate `hint_retries` budget of 2 in `router/loop.py`, and `TOKENFRUGAL_TASK_TIMEOUT=600` in the queue. Fix 8 applied 2026-10-29 (user approved): `server is closing` added to `CONN_ERROR_MARKERS`, so the existing open retry and call heal fire on dbhub EOF; a failed open adds the gateway stderr tail (`router/mcp_client.py` `open_profile`). Fix 6 applied 2026-10-29 (user approved, 10 minutes): `router/compose.py` stops an unused backend after `TOKENFRUGAL_BACKEND_IDLE_S` (default 600); a task that starts inside that window reuses it. Failed starts still stop at once. | Applied. |
 | 26 | Designer (Penpot) `APITimeoutError` after about 183s: the model echoes the tool schemas as text, then times out. | Applied 2026-10-29 (user approved: raise first): designer `timeout_s` 240 -> 300 in `router/tf-roles.yaml`. If it still times out, drop the model from the designer role. | Applied. |
+| 27 | `support-docs-writer` (research role) passes `/workspace/README.md` to `crawl_markdown`, which returns 401 Unauthorized, 9 times. The role had no file-reading tool. | Applied 2026-10-29 (user approved, commit fdcaf57) | `research` role gets `read_file` and `profile: docs`; `role-research` skill says to use `read_file` for local paths. Verify on the next docs-writer case. |
+| 28 | `OperationalError: database is locked` on `db-mongo-admin-l2 #2` (model 8 run). SQLite connect used Python's 5s default timeout. | Applied 2026-10-29 (user approved, commit fdcaf57) | `router/store.py` `_db()`: 30s busy timeout and WAL. Lock errors are 0 since the restart; keep checking. |
+| 29 | Model 9 (`Qwen3.5-9B-GGUF:IQ4_XS`): `browser` fails 3/3 with `no_tool_call`. | Open (investigate) | Probably a model result, as with row 9. Check the first reply in the log before deciding. |
+| 30 | Model 9: `db-oracle-admin #1` fails with `infra: ComposeError`. | Applied 2026-10-29 (user approved). The stored error is a Docker Desktop API `request returned 500` during `up`, then the container exited (41). The healthcheck was already tuned (start_period 240s). | `router/compose.py` `_compose`: a 500 from `up` is retried after 5s, 15s and 30s; other failures keep the single 5s retry. Tests in `tests/test_compose.py` (`ComposeUpRetry`). Not yet verified on a live Oracle run; exit 41 is still unexplained. |
+| 31 | Model 9: `github-read` (3/3) and `github-actions-read` (2/2) hit `step_timeout` at about 90s. Related to row 16: the tasks ask for a local read the role cannot do. | Open (investigate) | Read the tool calls in the log: a timeout loop or a slow model. Do not change `timeout_s` until the cause is known. |
+| 32 | Model 9: `code-l2 #2` hits `TimeoutError after 600s` (201.9s logged). Its `timeout_s` is 225, so the 600s is the global watchdog, not the role limit. A `RuntimeError: Attempted to exit cancel scope in a different task` line appears near it in the log. | Open (investigate) | Possibly a hang in one MCP session, plus an anyio cancel-scope teardown error in `mcp_client.open_role` or the idle backend stop. Check the traceback before changing anything. |
+| 33 | Model 9: `analyzer #1` and `#2` time out at about 95s (`timeout_s` 90); `#3` passes in 59.4s. Same pattern as row 31: latency, not a loop, so far. | Open (investigate) | Compare tool-call counts across the three runs. Do not change `timeout_s` yet. |
 
 ---
 ## Explorer dashboard proposal (proposed 2026-10-28, NOT started; waiting on user decision)
@@ -461,3 +489,105 @@ Done (2026-10-27): the wrapper is public as `open_native_ensured` (`router/mcp_c
 ## Parked: Coding table on index (set 2026-10-28)
 
 Move the Coding table (`cd`, L1-L6 realworld suite, `results/coding/`) from `explorer.html` to `index.html`, placed above the model run tables under its own heading that says it is a separate suite. Parked until the other index and explorer changes in `Benchmark/REPORT_DESIGN.md` are concluded.
+
+## Portability of all roles, teams and MCP profiles (set 2026-10-30)
+
+Requirement: everything under tokenfrugal (every role, team, Docker MCP profile and local pipeline, including the image-to-video work in `models/video_generation`) must install and run on another machine once the repo and MCP are set up there. Nothing may depend on this PC's paths or manual steps. Full note: memory `video-generation-portability`.
+
+Rules for new work:
+- No hardcoded user paths in code, profiles or configs. Resolve paths relative to the repo; take overrides from env vars or CLI args. Output folders: `OneDrive\Videos`, falling back to `~\Videos`.
+- Pin dependencies per pipeline in a requirements file (video pins: torch 2.6.0+cu124, diffusers 0.42.1, transformers 5.22.0, bitsandbytes 0.50.2, gguf 0.19.0, ftfy 6.3.1, imageio-ffmpeg 0.7.0).
+- Each role or pipeline has a setup step that fetches its models from their Hugging Face repos, plus a doctor check. Prefer bundled binaries (imageio-ffmpeg) over system tools.
+- Docker MCP profiles stay templated with the workspace placeholder (`scripts/install_profiles.py`). Secrets stay as Docker secret files, never in repo files.
+- Local venv by default; containers only if asked. Installs run only after the user agrees (per the tokenfrugal CLAUDE.md).
+
+Status:
+- Video pipeline (`models/video_generation`): in progress. Still hardcoded: the photo path in the `*_test.py` scripts; `generate_ltx.py` and `wan_test.py` already write to OneDrive. Missing: a setup script, a requirements file, a shared path config, and a doctor check. The LTX 0.9.8 VAE is extracted from `ltxv-2b-0.9.8-distilled.safetensors` (`vae.` key prefix), not downloaded as its own file.
+- Model sources: `Lightricks/LTX-Video` (ltxv-2b-0.9.8-distilled.safetensors, text_encoder, tokenizer, scheduler, vae); `QuantStack/Wan2.2-TI2V-5B-GGUF` (Wan2.2-TI2V-5B-Q4_K_M.gguf); `Wan-AI/Wan2.2-TI2V-5B-Diffusers` (vae, text_encoder, tokenizer, scheduler, configs). File names verified on Hugging Face 2026-10-30.
+- Other roles, teams and MCP profiles: not audited yet against these rules.
+
+## Next priority: OmniAvatar quality revision (set 2026-10-30)
+
+Goal: keep OmniAvatar 1.3B as the lip-sync model, but reduce facial expressions slightly and stop the teeth biting seen in run6.
+
+- Input: copy `scratchpad\omni_input.txt` to a v2 file. Remove "animated and full of emotion" and "clear eyebrow raises, smiles and serious looks". Keep the gestures and the framing lines.
+- Config: copy `scratchpad\omni_fast.yaml` to a v2 file. Add to `negative_prompt`: teeth biting, clenched teeth, visible teeth grimace, exaggerated expression, open mouth. Keep num_steps 20, guidance_scale 4.5, seed 42.
+- Test: 20 s clip with the same photo and audio as run6, run from `modelsideo_generationomniavatar-1.3b\code` with the RANK/WORLD_SIZE/LOCAL_RANK/MASTER_ADDR/MASTER_PORT/USE_LIBUV env vars. About 70 min on the RTX 4060. Compare with run6 (`result_000_000_wav.mp4`, 21.24 s).
+- Needs the GPU free. Run after the MuseTalk and VACE tests.
+
+## Video model evaluation (set 2026-10-30, IN PROGRESS)
+
+Goal: pick the best local video model on 8 GB VRAM / 31 GB RAM for talking-avatar and image-to-video use. Criteria: performance (15 s clip time, peak VRAM/RAM), quality (identity, seams, lip-sync), effort to use. Record in `docs/video-model-shortlist.md`, name the best at the end. The user said: run the tests in sequence without waiting for confirmation; deletion decisions come later.
+
+Inputs for every test: `scratchpad/prev/photo_upright_1280.jpg`, `scratchpad/omni_audio.wav` (20.88 s), prompt `chain_gen.PROMPT`, anchored segments, same seeds. Runner: `kalamanch/pipeline/chain_gen.py` (env `LTX_TE=gguf`, `WAN_TE=8bit|nf4` pick trimmed variants).
+
+Verdict so far (user, 2026-10-30): only OmniAvatar 1.3B, Wan 2.2 TI2V 5B (Q4_K_M) and LTX 0.9.8 2B distilled (anchored, 1024x1408 60fps) came out near perfect. Deleted as failures: avatarforcing, wan2.1-t2v-1.3b, nimvideo-cogvideox-2b-img2vid, wan2.1-vace-1.3b, svd-xt-1.1. MuseTalk (lipsync/, ~10 GB) undecided.
+
+| # | Step | Status |
+| --- | --- | --- |
+| 1 | A/B trimmed vs full: LTX with Q4_K_M T5 vs bf16 T5 (baseline clip in OneDrive\Videos) | Done 2026-10-30 23:01: 427 s vs 242 s baseline (GGUF T5 is dequantized at load, so slower). Identity and image quality match the baseline; gestures differ (PSNR 17.5, SSIM 0.83 vs baseline, expected since the prompt embedding changes the motion); gestures look a little less wide. Clip `scratchpad/ab/ltx-gguft5.mp4`. Verdict pending the user's look |
+| 2 | A/B Wan 2.2 with 8-bit UMT5 vs bf16 UMT5 | Done 2026-10-31 00:18, 2013.7 s generation (first attempt with the 8-bit encoder resident on the GPU took 6 min per step; fixed by encoding once and freeing it). Clip `wan2.2-ti2v-5b-q4km-20s-umt5-8bit-native.mp4` and a side-by-side in OneDrive Videos |
+| 3 | Compare A/B clips with baselines (frame diff + eyes); decide which files can be deleted. Zero-risk unused files: LTX `vae/`, fp8 transformer, `text_encoder_8bit`; Wan `VAE/Wan2.2_VAE.safetensors` | Wan 8-bit vs bf16 UMT5: at the 10 s frame the 8-bit clip looks cleaner (baseline shows a smeared background); judge the full clip. LTX prompt v2: 244 s, same identity, calmer gestures, not clearly better. Delete only after you decide |
+| 3b | LTX quality: rewrite the prompt per https://docs.ltx.io/api-documentation/implementation-guides/prompting-guide (present-tense flowing paragraph, shot scale, one light logic, action beats with pauses, physical emotion cues, camera). Prompt in `scratchpad/ab/ltx_prompt_v2.txt`; run `scratchpad/ab/run_ltx_prompt.sh` (waits for the Wan A/B, same seeds, output `ab/ltx-prompt-v2.mp4`); compare with baseline | Queued 2026-10-31 |
+| 3c | LTX 0.9.8 T5 precision A/B (user request 2026-10-31): raw bf16 (baseline 242 s) vs FP8 (e4m3 weights, bf16 compute) vs bnb FP4 vs GGUF Q4_K_M (427 s, done). `LTX_TE=fp8|fp4` in chain_gen, encode once then free. Script `scratchpad/ab/run_ltx_te.sh` (queued after 3b) | FP4 (bnb) done 00:26: 105 s, clip + side-by-side in OneDrive Videos (judge quality by eye). FP8 attempt 1 failed at 00:23 (T5 casts the Linear input to the weight dtype, so fp8 weights gave an fp8 input); attempt 2 (fp8 copy, bf16 stub weight) failed 00:28 (the fp8 copy was a plain attribute, stayed on the CPU); attempt 3 (register it as a buffer) worked: 217 s, nearly identical to baseline at the 10 s frame (same gestures). Clip and side-by-side in OneDrive Videos |
+| 3d | LTX 13B at FP4 (user request 2026-10-31, compare with the 2B FP8/FP4 results): QuantStack LTX-Video 13B distilled GGUF Q4 (or bnb FP4) with FP4 T5; test fit on 8 GB, time and quality vs 2B baseline | Done (smoke, 1 segment = 4 s): 13B Q4_K_M GGUF (QuantStack, 8.2 GB) + bnb FP4 T5, runner `scratchpad/ltx13/run_ltx13.py`, loaded in 34 s. 1889.5 s for ONE 4 s segment (235 s per step), peak VRAM 12.69 GB reported (spills past 8 GB). Frame sharp, identity kept. A 20 s clip would take about 2.6 h vs 242 s for the 2B: far too slow. Clip in OneDrive Videos. |
+| 4 | LTX 0.9.6 GGUF run (`scratchpad/ltx_gguf/run_ltx_gguf.py`, smoke then 15 s) | Attempt 1 failed 00:59: `LTX-Video-0.9.6-VAE-BF16.safetensors` is decoder-only (229 keys, no encoder) with a decoder that does not fit the 0.9.8 config (`DownEncoderBlock2D` / size mismatch). Attempt 2 smoke OK 01:16 (55 s per segment, clean frame, identity kept). Full run started 01:19 (`ab/run_gguf096_full.sh`, output `ab/ltx096-full.mp4`). Setup: 0.9.6 transformer + 0.9.8 VAE (`ab/run_gguf096.sh`); watch for latent mismatch artefacts. Done: 179.8 s for 15 s, clean, eyes slightly half-closed at 10 s; clip in OneDrive Videos |
+| 5 | HunyuanVideo 1.5 480p I2V distilled (GGUF Q4_K_M + unsloth bnb-4bit Qwen2.5-VL encoder). Downloads finished; needs the text-encoder load check (full VL checkpoint vs `Qwen2_5_VLTextModel`) and a run script | Runs but impractical. Attempts: (1) `from_single_file` unsupported; (2) own loader (`scratchpad/hy/hy_loader.py`: GGUF keys -> diffusers via converter, split fused qkv, assign GGUFParameter) loaded in 8 s; (3) truncated `image_encoder` file re-downloaded; (4) guider scale 1.0 (cfg-distilled, no negative pass). Smoke 33 frames 480x640: 446 s per step, 8 steps = about 1 h for 1.4 s of video, VRAM full at 7.9 GB (spilling). Stopped; no clip. A 20 s clip would take days. |
+| 6 | Remaining shortlist, smallest first: Wan2.2 TI2V 5B Turbo GGUF (#8), Wan2.2 Fun 5B InP GGUF (#9), Kandinsky 6.0 Lite distill (#5), CogVideoX1.5 5B I2V (#7), Wan2.2 I2V A14B nf4 (#2), Wan2.1 VACE GGUF (#6). Each: download, run, record, delete its files | Done (6a-6f below) |
+| 6a | Wan2.2 TI2V 5B Turbo Q4_K_M GGUF (hum-ma), 4 steps, cfg 1.0, 8-bit UMT5, same runner via `WAN_GGUF`/`WAN_STEPS`/`WAN_CFG` env | Done: 289.2 s for the 20 s clip (baseline 30 steps: about 2000 s, 7x faster). Frame at 10 s clean, identity kept, hands natural. Clip in OneDrive Videos. Strong candidate. |
+| 6b | Wan2.2 Fun 5B InP Q4_K_M GGUF, runner branch `wanfun` in `chain_gen.py` | Attempt 1 failed: TI2V config has 48 input channels, checkpoint has 100. Attempt 2 worked: config `transformer_fun` (`in_channels=100`), hand-built input noise 48 + mask 4 + masked-video latents 48, own CFG loop, shift 5, 20 steps, cfg 5. Done: 1456.8 s for 20 s. Quality worse than TI2V: face drifts at 10 s and 19 s (different person look), background turns to colour swirls. Not a candidate. Clip in OneDrive Videos. |
+| 6e | Wan2.2 I2V A14B Q4_K_S GGUF (HighNoise + LowNoise, QuantStack), runner branch `wana14b` (block-level group offload, 8-bit UMT5, Wan 2.1 VAE) | Runs but impractical. Smoke 320x576, 33 frames, 4 steps: 30 s per step (131.6 s total), identity kept, frame blurry at 4 steps. A 480x832 clip has about 5x the tokens, so the cost per step is far higher; a 20 s clip is not feasible. Files deleted |
+| 6f | Wan2.1 VACE 14B Q4_K_M GGUF | Not run: same 14B class as 6e, so it would spill past 8 GB the same way; skipped on that inference, not measured |
+| 7 | Update `docs/video-model-shortlist.md` (failure reasons, results, outdated disk line) and `.claude/skills/hunyuanvideo-1-5/SKILL.md` (encoder source); name the best model | Done |
+
+Output rule (user, 2026-10-30): every generated sample is moved into `C:/Users/vaibh/OneDrive/Videos` (native, 30 fps and 60 fps copies where made), named `<model>-<variant>-20s-...`. A/B clips are written to `scratchpad/ab/` and moved after the comparison.
+
+NOTES: C: HAD ABOUT 102 GB FREE after the deletions. A 15-minute status loop reads `scratchpad/queue/queue.log`. Humo (105 GB) stays excluded. s2v-2b-realtime was skipped (no loadable code).
+
+## Video-editor image and model layout follow-ups (set 2026-10-31, PENDING)
+
+User has a few more changes coming and the full image test is still pending. Do the image test first, then these.
+
+| # | Step | Status |
+| --- | --- | --- |
+| 1 | Full test of `tokenfrugal/video-editor:1` (versions, `vedit` end to end, Manim, Chromium, Hub digest pull) | In progress |
+| 2 | yt-dlp is pinned to 2025.10.22 in `docker/video-editor/Dockerfile` (`ARG YT_DLP_VERSION`) and the image copy fails on YouTube (403, SABR, "page needs to be reloaded"). Host `ml-venv` yt-dlp 2026.10.26 works with plain `-f "bv*[height<=1080]+ba/b"`. Fix: bump or unpin (`--build-arg YT_DLP_VERSION=latest`), add a `yt-dlp -U` step before downloads, and make the skill say "update yt-dlp, else ask the user to drop the file into `video-editor/References/`". Never use PO tokens, cookies or player-client tricks (blocked as bot-check circumvention). Rebuild and re-push to `maxh8086/video-editor:1`, then update the pinned digest in `docker-compose.yml`. | Not started |
+| 3 | Models regrouped 2026-10-31 by function: `models/video_generation` (was `diffusion_models`), `image_generation`, `image_enhancement`, `talking_head` (LivePortrait), `lipsync` (MuseTalk). Paths updated in `.gitignore`, `docker-compose.yml`, docs and skills; moved scripts not yet re-run. | Done, unverified |
+| 4 | Separate code from weights and logs: tracked scripts into `pipelines/`, `logs/` and `outputs/` git-ignored, `models/` weights only. | Proposed, not started |
+| 5 | `models/manifest.yaml` (source, pinned revision, size, license, alternatives) plus one `fetch_models.py` for every model including LivePortrait and MuseTalk (pinned clone and venv). Preflight in each pipeline script stops with the model name, size and fetch command. Agent rule: tell the user the size and ask before downloading; if declined or it will not fit the GPU, offer the manifest alternative and ask again. `doctor.py` gets a video section and a VRAM check. | Proposed, not started |
+| 6 | Reference videos 3 and 4 (Vaibhav Sisinty tech-news shorts) are downloaded into `video-editor/References/` and listed in `docs/reference-videos.md`. Analysis (format, cut rate, captions, transcript, hook) and a tech-news style skill are not done. | Downloaded only |
+| 7 | LivePortrait on Windows needs both ffmpeg and ffprobe on PATH; the host has neither. Workaround used: copy `ffmpeg.exe` as `ffprobe.exe` into a folder on PATH (`C:/lp_tmp/ffshim`), and set `PYTHONIOENCODING=utf-8 PYTHONUTF8=1` (its progress bar prints an emoji). MuseTalk needs `--vae_type sd-vae-ft-mse` because the folder is not named `sd-vae`. Put these in the setup script. | Open |
+| 8 | Avatar test: Kontext avatar, LivePortrait, MuseTalk, `compose_intro.py`, `make_score.py mix` ran end to end; output `OneDrive/Videos/avatar_final.mp4` (not listened to). | Done |
+| 9 | Workspace moved to `~/OneDrive/Videos/video-editor` (Raw / References / Render), override with `VIDEO_EDITOR_DIR`. `models/video_generation/_paths.py` creates the structure; `_publish.py` and the generate/test scripts write to its `Render`. Compose mounts it at `/work`; `pipeline.py` creates the subfolders (needs an image rebuild to pick that up). Not yet re-run after the move. | Done, unverified |
+| 10 | Video-generation scripts moved out of `models/video_generation/` into `kalamanch/` (common, pipeline, generators, experiments, docs; see `kalamanch/README.md`). Weights stay in `models/video_generation/` (override `KALAMANCH_MODELS`). Run scripts through `python kalamanch/run.py <script> <args>`: it checks the model manifest first, lists missing files with download size and asks before fetching. `python kalamanch/preflight.py [--fetch]` checks or pulls every required model. Not run on GPU after the move; wan2.2 manifest expects `Wan2.2-TI2V-5B-Q4_K_M.gguf` but the local file is the Turbo variant. | Done (GPU runs pending) |
+
+## 11. Content-analyst data sources (set 2026-10-31, OPEN)
+
+- **Rule (decided 2026-10-31):** content-analyst MCP servers must be open-source (Apache-2.0 or MIT) GitHub repos, built as local Docker images. No invented servers.
+- **HOLD, status "not collected" until the user decides:**
+  - X/Twitter: candidates `rafaljanicki/x-twitter-mcp-server` (MIT) and `DataWhisker/x-mcp-server` (MIT). Search and trends need a paid X API v2 tier. The trends tool is unconfirmed.
+  - LinkedIn: candidate `stickerdaniel/linkedin-mcp-server` (Apache-2.0). It works by scraping a logged-in browser session, which likely violates LinkedIn's terms and risks the account.
+- **Update 2026-10-31:** YouTube is covered by `kirbah/mcp-youtube` (MIT, Data API), replacing the transcript-only server. All six images are built, pinned and wired (see item 12).
+
+## 12. Content pipeline and sources: not done or not verified (set 2026-10-31, OPEN)
+
+State: built and wired, suite green (611 tests, 5 skipped), nothing committed. No stage, image or source has run live.
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Stage models switched 2026-10-31 to installed Q4_K_M tags, nothing pulled (RTX 4060 Laptop, 8 GB): outline and executive `ts-qwen3-8b-40960`; draft and humanize `ts-hf-co-bandtor-gemma-4-E4B-it-GGUF-65536` (gemma4 E4B, because `ts-gemma3-4b-65536` has no tools and gemma3 12B does not fit); critic, antislop, factcheck `ts-llama3-1-8b-65536`. Each answered a one-word smoke test; output quality on real stage prompts is unverified, and gemma4 untested under real load on Ollama 0.40.11. | Done, unverified |
+| 2 | Context spill: at the Modelfile defaults both 8B builds spill to CPU (qwen3 at 40960 ctx: 29% CPU; llama3.1 at 65536: 39% CPU). At `num_ctx` 16384 both fit 100% on GPU (measured with a tiny prompt, long stage prompts may still spill). The stage dispatch must send `num_ctx` 16384 or lower; not wired. The 32768 payload standard in the global CLAUDE.md may spill for 8B builds. | Open |
+| 3 | qwen3 thinking: the router sends one `think` setting (TOKENFRUGAL_THINK) to every model and timeouts are per role (content-writer is shared by draft, humanize, executive). No per-model setting. Risk: slow or timed-out qwen3 stages. | Known gap |
+| 4 | `content-factcheck` stage uses the `content-editor` profile, which has no web tools, so it checks only against `01-research.md`. Use the web-enabled `content-factcheck` role if live verification is wanted. | Decide |
+| 5 | `scripts/content_pipeline.py` (dry plan by default, `--confirm` to run) has never been run against models. `scripts/content_e2e.py` is not written; run it after 2026-11-05 when tokenfrugal is available again. | Open |
+| 6 | content-analyst has 12 tools (hard cap, recommended 6). Stated exception in tests. Trim or split if it hurts model quality. | Decide |
+| 7 | Missing `YOUTUBE_API_KEY` or `DATABASE_URI` secret file makes the whole content-analyst role fail to open. | Known |
+| 8 | No live calls to Qdrant, Postgres, YouTube, Reddit, HN or RSS. qdrant-store/find against a live Qdrant, and the Qdrant healthcheck (assumes bash in the image), are unverified. | Open |
+| 9 | Postgres restricted mode (`--access-mode=restricted`, 9 read-only tools) not tested against a live database. Test on a scratch DB and give the app a read-only DB role. | Open |
+| 10 | hn-mcp: no request timeouts (needs an upstream patch); one documented patch removes a stray `print`. Other findings left: http to Algolia, no URL encoding, stale mcp lock. | Known gap |
+| 11 | rss-mcp: no URL allow-list (SSRF). The `rss_egress` network only blocks other compose services; a host DOCKER-USER firewall rule is still needed to block LAN addresses. Also `npm audit`: 12 advisories (2 critical, 7 high) in locked deps, not fixed. | Open |
+| 12 | youtube-mcp: `getTranscripts` scrapes youtube.com (unofficial, may break or breach terms), best-effort only. Pinned commit is from 2026-10-31 (little review). Quota: search 100 per page, channel top videos about 101, others 1, default 10,000 per day. Keep `MDB_MCP_CONNECTION_STRING` unset. | Known |
+| 13 | Image pinning: local `tokenfrugal/*-mcp:1` images have no registry digest. Commits and base images are pinned. `scripts/pinned_build.py` `context: folder` option and `check_pins` were never run against the network. | Open |
+| 14 | X and LinkedIn stay "not collected" (see item 11). | Held |
+| 15 | Existing `content/<slug>/` files in the repo checkout are not visible to roles now; they use the shared media folder `OneDrive/Videos/video-editor` (`python scripts/ensure_media_workspace.py`). Move them if needed. | Open |
+| 16 | Commit plan not done: add `.gitignore` for `router/tasks.db*` and `gfpgan/`, then commit in groups (router core, content pipeline, video editor, MCP images, benchmark, docs, kalamanch) with explicit paths. Exclude `Benchmark/results/team_results.before-redo.csv`. No Co-Authored-By lines. | Not started |

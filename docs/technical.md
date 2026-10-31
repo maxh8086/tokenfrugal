@@ -52,7 +52,7 @@ Roles are defined in `router/tf-roles.yaml`. Each role runs on the local model s
 | devops | builder | build, analyze, debug | Edit files and run commands for ops tasks |
 | finance / research | thinker | docs / none | Web search and page crawling (crawl4ai, SearXNG) |
 
-Each role exposes only its allowlisted tools (4-6 for most roles). Small models do better with few tools. The router writes the live list to `router/roles.json`.
+Each role exposes only its allowlisted tools (6 recommended, 12 at most, for any role). Small models do better with few tools. The router writes the live list to `router/roles.json`.
 
 ## Setup
 
@@ -144,7 +144,7 @@ The easiest way to make these changes is to give your agent a prompt. Paste one 
 
 > In this repo, add the Docker MCP catalogue server `<server-name>` to the `<role>` role.
 > 1. Add it to the matching profile in `profiles/*.yaml`. Follow the format of the existing profiles. Create a new profile file only if no existing profile fits.
-> 2. In `router/tf-roles.yaml`, allowlist 4-6 of the server's tools for `<role>`. If the server exposes more than 6 tools, list them and ask me which to keep.
+> 2. In `router/tf-roles.yaml`, allowlist up to 6 of the server's tools for `<role>` (12 at most). If the server exposes more than 6 tools, list them and ask me which to keep.
 > 3. Run `python scripts/install_profiles.py`, then `python scripts/smoke.py` and report the result for `<role>`.
 > 4. If the server needs a token, name the variable and say where it goes (`~/.docker/mcp/secrets/NAME`, written with `python -m router.secrets_store set NAME`). Never write a secret into a repo file or into chat.
 > Show me the diff. Then tell me to restart the MCP client.
@@ -157,7 +157,7 @@ Manual steps: edit `profiles/*.yaml` and `router/tf-roles.yaml`, then run `pytho
 > 1. Read `docker/pins.yaml` and one existing helper directory under `docker/` (for example `docker/penpot-mcp/`). Follow their layout.
 > 2. Add an entry to `docker/pins.yaml` with `repo`, `sha` (the full 40 characters, never a branch name), `image`, and `dockerfile`. Add a `tag_regex` if the upstream uses release tags.
 > 3. Create the Dockerfile at the path you set in `dockerfile`. It builds from the cloned repo as its context.
-> 4. Add the service to `docker-compose.yml` (project `tokenfrugal`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/tf-roles.yaml`, and allowlist 4-6 of its tools.
+> 4. Add the service to `docker-compose.yml` (project `tokenfrugal`). Add the server to a profile in `profiles/*.yaml`. Add the helper to the role's `compose:` list in `router/tf-roles.yaml`, and allowlist up to 6 of its tools (12 at most).
 > 5. Run `python scripts/pinned_build.py <name>`, then `python scripts/install_profiles.py`.
 > Report the image tag and the SHA. Do not change other pins or roles. Show me the diff.
 
@@ -180,6 +180,33 @@ python scripts/pinned_build.py chrome-devtools-mcp  # one pin; --keep leaves the
 ```
 
 `check_pins.py` only reports unless you add `--write`. Nothing is rebuilt until you run `pinned_build.py`.
+
+## Shared media workspace
+
+content-writer, content-analyst and the video-editor share one folder. Its path comes from `router/media_workspace.py` `media_dir()`, resolved in this order:
+
+1. env `VIDEO_EDITOR_DIR`
+2. `%OneDrive%\Videos\video-editor` when the `OneDrive` env var is set
+3. `<user profile>\OneDrive\Videos\video-editor` when `<user profile>\OneDrive` exists
+4. `<user profile>\Videos\video-editor`
+
+Layout (created by `python scripts/ensure_media_workspace.py`):
+
+```text
+video-editor/
+  Raw/          clips for video-editor (vedit reads from here)
+  References/   reference material
+  Render/       finished videos (the final video goes here)
+  content/      content/<slug>/ per script; stage files and scripts go here (created by the roles)
+  analyst/
+    daily/      daily top-5 analyst reports
+```
+
+- `python scripts/ensure_media_workspace.py` creates missing folders and prints the tree with OK or CREATED. It is idempotent.
+- `--check` verifies only and exits 1 if anything is missing. It creates nothing.
+- `--print-path` prints the resolved path and creates nothing.
+
+The profiles `content-writer`, `content-analyst` and `video-editor` mount `__MEDIA__:/workspace:rw`. `scripts/install_profiles.py` and `router/profile_sync.py` fill `__MEDIA__` with `media_dir()` after ensuring the tree. `vedit` exports the same path as `VIDEO_EDITOR_DIR` so the compose service mounts the same folder.
 
 ## Plan store
 

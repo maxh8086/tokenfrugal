@@ -91,7 +91,7 @@ Adding an MCP from the dashboard follows the Claude-style import flow: **Add plu
 ### Step 7: Tool allowlists (two layers)
 
 1. **Profile level** (Docker): enable only the tools the role needs with `docker mcp profile tools <profile> --enable <server>.<tool>`. Do not use `--enable-all` for a new server.
-2. **Role level** (tokenfrugal): add the tool names to `router/tf-roles.yaml` under the role, at most 6 per role. Do not add a tool at role level that the profile does not enable.
+2. **Role level** (tokenfrugal): add the tool names to `router/tf-roles.yaml` under the role, 6 recommended, 12 at most per role. Do not add a tool at role level that the profile does not enable.
 
 Confirm with `docker mcp tools ls` that the tool is exposed, and `docker mcp tools inspect <tool>` for its schema.
 
@@ -131,7 +131,7 @@ Remove it in reverse order: `tf-roles.yaml` roles, then `mcp_catalog.yaml`, then
 - **Two-layer allowlist:** profile enables, role allows, and both are small.
 - **Dynamic tools off for tokenfrugal roles:** the `dynamic-tools` gateway feature lets the model add servers at runtime, which bypasses the allowlists. Recommend disabling it for the tokenfrugal gateway. Not yet changed.
 - **Naming:** `ts-` prefix for our instances; tool names unprefixed, matching the catalogue.
-- **Limits:** keep a role at 6 or fewer tools, because the local models are 3B.
+- **Limits:** keep a role at 6 tools or fewer (recommended), because the local models are 3B. No role may exceed 12 tools.
 
 ## 5. Current gaps against this standard
 
