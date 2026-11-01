@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 from openai import OpenAI
 
-from . import events, mcp_reap
+from . import events, gpu_lease, mcp_reap
 from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, THINK_LEVEL,
                      TOOL_TIMEOUT, TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
@@ -325,6 +325,10 @@ def error_kind(text: str) -> str:
         return "max_steps"
     if reason == "bad-answer":
         return "bad_answer"
+    if reason == "no-tools":
+        return "no_tools"
+    if reason == "malformed-tool-call":
+        return "malformed_tool_call"
     return "error"
 
 
@@ -409,6 +413,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 msgs.append({"role": "user", "content": "Step limit reached. Do not call any more tools. "
                                                         "Answer now using only the tool results above."})
             use_tools = bool(tools) and not text_mode and not force_answer
+            gpu_lease.guard_ollama(OLLAMA_URL)  # GpuBusy goes up to _execute: it is not a model error, so no retry block here
             t0 = time.monotonic()
             kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, **think_extra(role)}
             if use_tools and tools:

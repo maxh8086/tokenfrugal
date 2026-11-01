@@ -14,8 +14,8 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import checker, compose, events, kalamanch_cleanup, plan, reconnect, store, ui_launcher
-from .config import NATIVE_BACKENDS, WORKSPACE, load_tf_roles, resolve_role
+from . import checker, compose, events, gpu_lease, kalamanch_cleanup, plan, reconnect, store, ui_launcher
+from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role
 from .mcp_client import ensure_backend
 from .preflight import task_error
 from .loop import error_kind, failure_reason, leaf, role_timeout, run, take_started, take_usage
@@ -49,9 +49,9 @@ def kind_hint(kind: str, started: int, required_tool: str = "") -> str:
 
 
 def failure_message(tid: str, role: dict, err: str, reason: str, kind: str = "error", started: int = 0,
-                    required_tool: str = "") -> str:
+                    required_tool: str = "", hint_text: str = "") -> str:
     """The short failure reply Haiku reads: reason class, error_kind, and the next step it should take."""
-    hint = kind_hint(kind, started, required_tool)
+    hint = hint_text or kind_hint(kind, started, required_tool)
     if not hint:
         if reason in RESUME_HINT:
             hint = f"Call resume_task('{tid}') to retry."
@@ -245,6 +245,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     beat = asyncio.create_task(_heartbeat(tid))
     calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
     try:
+        gpu_lease.guard_ollama(OLLAMA_URL)  # a held GPU lease refuses the task before any model or backend work
         detail, msgs = await run(agent, role, prompt, messages, tid)
         calls += take_started(tid)
         verdict = await asyncio.to_thread(_check, role, prompt, detail, t0, accept_override)
@@ -276,7 +277,10 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             reason = failure_reason(full)
             kind = error_kind(full)
         started = calls + take_started(tid)
-        err = hard_trim(full, 300 if kind == "checker" else 120)
+        gpu = isinstance(e, gpu_lease.GpuBusy)  # its message is short and carries the holder: not trimmed
+        if gpu:
+            reason = "gpu-busy"
+        err = full if gpu else hard_trim(full, 300 if kind == "checker" else 120)
         store.update(tid, status="failed", error=err, error_kind=kind)
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind,
                     saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
@@ -284,7 +288,8 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "router", err)
-        return (failure_message(tid, role, err, reason, kind, started, role.get("required_tool") or "") + "\n"
+        return (failure_message(tid, role, err, reason, kind, started, role.get("required_tool") or "",
+                               hint_text=e.hint if gpu else "") + "\n"
                 + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
     finally:
         beat.cancel()

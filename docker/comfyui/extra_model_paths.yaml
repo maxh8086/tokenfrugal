@@ -1,0 +1,15 @@
+# Stub for ComfyUI's extra_model_paths. Piece 4 fills the real mappings after the 2b spike fixes the file names.
+# /models is the read-only mount of models/video_generation on the host (docker-compose.gpu.yml). Every folder below
+# is relative to base_path; a folder that does not exist yet is simply not found by ComfyUI.
+tokenfrugal:
+  base_path: /models
+  checkpoints: checkpoints/
+  diffusion_models: diffusion_models/
+  unet: unet/
+  text_encoders: text_encoders/
+  clip: clip/
+  vae: vae/
+  loras: loras/
+  upscale_models: upscale_models/
+  latent_upscale_models: latent_upscale_models/
+  embeddings: embeddings/

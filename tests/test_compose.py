@@ -164,5 +164,43 @@ class ComposeUpRetry(unittest.TestCase):
         self.assertIn("first attempt", str(err))
 
 
+class StopAllTest(unittest.TestCase):
+    def test_stop_skips_the_gpu_project(self):
+        import subprocess
+        containers = {"a1": compose.COMPOSE_PROJECT, "g1": f"{compose.COMPOSE_PROJECT}-gpu"}
+        stopped = []
+
+        def fake_run(args, **kw):
+            if "ps" in args:  # docker ps -q --filter label=<project>: exact label match, as docker does
+                want = args[args.index("--filter") + 1].split("=", 2)[2]
+                ids = [cid for cid, proj in containers.items() if proj == want]
+                return subprocess.CompletedProcess(args, 0, "\n".join(ids), "")
+            stopped.extend(args[2:])
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        with mock.patch.object(compose.subprocess, "run", fake_run):
+            compose.stop_all_sync()
+        self.assertEqual(stopped, ["a1"])
+
+
+class GpuLeaseFilesTest(unittest.TestCase):
+    """router/gpu_lease.py files share the leases folder; compose must neither unlink nor count them."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        p = mock.patch.object(compose, "LEASES", Path(self.tmp.name))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_lease_release_keeps_gpu_json(self):
+        (compose.LEASES / "gpu.json").write_text("{}")
+        mine = compose.lease_acquire(["gpu"])
+        compose.lease_release(mine)
+        self.assertTrue((compose.LEASES / "gpu.json").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

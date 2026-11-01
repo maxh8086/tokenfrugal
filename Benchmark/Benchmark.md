@@ -49,3 +49,32 @@ Run a new cloud baseline for TokenFrugal with model <CLOUD_MODEL> at <BASE_URL>.
 ```
 
 Optional review prompt: see [script/README.md](script/README.md).
+
+## ComfyUI baseline (GPU)
+
+Measures the LTX 0.9.8 distilled workflow in ComfyUI (`docker/comfyui/workflows/ltx098.json`). It needs the RTX 4060 with no Ollama model loaded and no other GPU process. The scripts refuse to run (exit 2) otherwise, and also when the GPU lease is not held by `comfyui`.
+
+- `scripts/comfy_spike.py`: one run, one row in `results/comfy_baseline.csv`. `--dry-run` validates the workflow and prints the plan without contacting anything.
+- `scripts/comfy_quality.py --workflow ltx098 --seeds 3`: reference and repeat runs at fixed seeds, PSNR and SSIM against the reference clip, then Tier A and Tier B variants.
+
+`results/comfy_baseline.csv` columns:
+
+| Column | Meaning |
+| --- | --- |
+| `workflow_hash` | SHA-256 of the workflow file (of the patched workflow for a variant) |
+| `seed` | noise seed injected into the node titled `seed` |
+| `settings` | `key=value` pairs joined by `;`: the run kind (`spike=baseline`, `reference=unchanged`, `repeat=1`, `variant=NAME;tier=A|B`), the thresholds for variants, and the environment (torch, CUDA, ComfyUI version, whether `nvidia-smi` lists the container's processes, `.wslconfig` memory limit, driver, prompt hash, steps) |
+| `wall_s` | seconds from `POST /prompt` until `/history` lists the job |
+| `load_s` | seconds from job start until the loader nodes finish (model load over the Windows mount) |
+| `sampler_s_per_step` | sampler node time divided by the step count |
+| `peak_vram_mb` | highest `nvidia-smi` memory.used during the job (sampled every 1 s) |
+| `peak_ram_mb` | highest `docker stats` memory of the ComfyUI container during the job |
+| `spill` | `true` when the shared GPU memory (`typeperf`, `\GPU Adapter Memory(*)\Shared Usage`) peaked more than 0.5 GB above its idle value |
+| `output_path`, `sha256` | the saved clip and its hash (clips are git-ignored in `results/comfy_reference/`) |
+| `psnr`, `ssim` | empty for the spike and the reference; for repeats and variants, the mean over frames against the reference clip of the same seed |
+
+Quality rules:
+
+- **Tier A** (neutral knobs: attention kernel, offload, prompt cache, precision of non-model nodes) is expected to leave the picture unchanged. It passes when the mean PSNR and the mean SSIM over the seeds are at or above their thresholds. Thresholds come from the repeat runs of the unchanged workflow: mean minus three standard deviations, but never tighter than a floor of 0.5 dB PSNR and 0.002 SSIM. A Tier A change that fails is dropped even when it is faster.
+- **Tier B** (lossy knobs: TeaCache, fewer steps, other quantizations) never passes automatically. The script writes a side-by-side pair and the author signs off in `results/comfy_signoff.md`. Only signed-off settings may become defaults.
+- PSNR is on the luma plane. SSIM is a simplified version (8x8 blocks, not the Gaussian window), so its numbers are only comparable with other runs of this script. Neither metric compares ComfyUI with `kalamanch/generators/generate_ltx.py`; that comparison is wall time and peak VRAM, plus a human check.

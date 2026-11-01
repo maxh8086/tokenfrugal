@@ -1,0 +1,65 @@
+# ComfyUI for the GPU video lease. Separate from docker-compose.yml on purpose: project tokenfrugal-gpu, label
+# tokenfrugal.gpu=1, no top-level secrets. The router never adds these services to its PERSISTENT list, so stop_all_sync
+# (project tokenfrugal) cannot stop a running render.
+# Images come from scripts/pinned_build.py (pull_policy: never). Build: python scripts/pinned_build.py comfyui forwarder
+# Start: docker compose -f docker-compose.gpu.yml up -d --wait
+name: tokenfrugal-gpu
+
+services:
+  comfyui:
+    image: tokenfrugal/comfyui:1
+    pull_policy: never
+    labels: ["tokenfrugal.gpu=1"]
+    # No outbound network at run time: only the internal network. The forwarder publishes the port.
+    networks: [comfy_internal]
+    command: ["python", "main.py", "--listen", "0.0.0.0", "--port", "8188", "--disable-auto-launch",
+              "--output-directory", "/data/output", "--input-directory", "/data/input", "--user-directory", "/data/user",
+              "--temp-directory", "/tmp/comfy", "--extra-model-paths-config", "/app/extra_model_paths.yaml"]
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    volumes:
+      - ./models/video_generation:/models:ro
+      - ./comfy_data:/data
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: 2147483648   # 2 GB scratch
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8188/system_stats', timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  forwarder:
+    image: tokenfrugal/forwarder:1
+    pull_policy: never
+    labels: ["tokenfrugal.gpu=1"]
+    # On the default network (publishes the port) and on the internal network (reaches comfyui).
+    networks: [default, comfy_internal]
+    ports:
+      - "127.0.0.1:8188:8188"
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    depends_on:
+      comfyui:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://comfyui:8188/system_stats"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+
+networks:
+  comfy_internal:
+    internal: true

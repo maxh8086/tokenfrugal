@@ -1,0 +1,34 @@
+# NOT YET A LOCKFILE. This is a placeholder listing the intended top-level packages for ComfyUI v0.43.2 and the
+# pinned custom nodes (ComfyUI-LTXVideo v1.1.0, ComfyUI-GGUF). It has no versions and no hashes, so
+# scripts/pinned_build.py refuses to build with it ("has no hashes").
+#
+# At the first build, on a machine with network access:
+#   1. Put the ComfyUI and node requirements in a source file (requirements.in). Include the torch index line:
+#        --extra-index-url https://download.pytorch.org/whl/cu126
+#   2. pip-compile --generate-hashes --output-file docker/comfyui/requirements.lock docker/comfyui/requirements.in
+#   3. Review the output by hand (versions and hashes), then commit it. Do not hand-edit hashes.
+#   4. Run python scripts/pinned_build.py comfyui. Every node requirements.txt name must appear here.
+#
+# torch must match the CUDA 12.6 runtime in the base image (docker/pins.yaml, base_image). The exact torch
+# version is fixed by the first build, not here.
+#
+# Intended top-level packages (names only, to be pinned by pip-compile):
+torch
+torchvision
+torchaudio
+numpy
+pillow
+scipy
+tqdm
+psutil
+safetensors
+aiohttp
+pyyaml
+einops
+transformers
+tokenizers
+sentencepiece
+kornia
+spandrel
+soundfile
+gguf

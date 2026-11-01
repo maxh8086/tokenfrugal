@@ -9,6 +9,21 @@ title_parts: [token, frugal]
 bar: {status: Status, ollama: Ollama, model: Model, agent: Agent, docker: Docker, mcp: MCP, graph: synaptree-mcp}
 state: {idle: idle, running: running, disconnected: disconnected, unavailable: unavailable}
 bar_none: "-"
+comfy_title: "ComfyUI"
+comfy_start: "Start ComfyUI and take the GPU"
+comfy_stop: "Stop ComfyUI"
+comfy_force: "Force release the GPU lease"
+comfy_force_note: "Stop ends the session once the queue is empty. Force release only deletes the lease: ComfyUI and any running job keep going, so the GPU may still be in use."
+comfy_force_warn: "Force release deletes the GPU lease while ComfyUI may still be running a job. The router may then start work on the GPU at the same time. Continue?"
+comfy_idle: "ComfyUI is not holding the GPU. Start to take the GPU again."
+comfy_editor_off: "The editor opens when ComfyUI holds the GPU. Press Start to take the GPU again."
+comfy_states: {queued: "Queued", idle: "Idle", loading: "Loading models", running: "Running", finishing: "Finishing"}
+comfy_step: "step {step} of {max}"
+comfy_elapsed: "elapsed {t}"
+comfy_eta: "about {t} left"
+comfy_eta_partial: "(partial: no history for this workflow yet)"
+comfy_eta_none: "time left: unknown yet"
+comfy_holder: "Lease held by {task}, last heartbeat {age} ago"
 bar_names: {claude: Claude, codex: Codex}
 tokens_saved: "Tokens saved"
 idle: Idle. Nothing is running right now.

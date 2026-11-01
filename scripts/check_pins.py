@@ -29,9 +29,22 @@ def latest(repo, regex):
     return (best[1], shas[best[1]]) if best else (None, None)
 
 
+def node_drift(name, p):
+    """Report newer tags for tagged custom nodes (a node with tag_regex). Node pins are never rewritten."""
+    for n in p.get("nodes") or []:
+        if not n.get("tag_regex"):
+            continue
+        tag, sha = latest(n["repo"], n["tag_regex"])
+        if tag and sha != n["node_sha"]:
+            print(f"{name} node {n['folder']}: {n['node_sha'][:12]} -> {sha[:12]} ({tag}); edit node_sha by hand, not rewritten")
+
+
 def main(argv):
     pins, text, changed = load_pins(PINS), PINS.read_text(encoding="utf-8"), False
     for name, p in pins.items():
+        if "repo" not in p:  # base-image pins (forwarder) have no upstream repo to compare
+            continue
+        node_drift(name, p)
         tag, sha = latest(p["repo"], p["tag_regex"])
         if not tag or sha == p["sha"]:
             continue

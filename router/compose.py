@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 
 from .config import COMPOSE_FILE, COMPOSE_PROJECT, DB_PATH, KEEP_ALIVE
+from .proc_alive import _alive  # kept as a name here: tests patch router.compose._alive
 
 PERSISTENT = {"neo4j"}  # started with the router, only stopped by stop_all_sync() on router exit
 LEASES = DB_PATH.parent / "leases"  # one file per (service, router pid, task) using a backend
@@ -152,6 +153,8 @@ def lease_release(paths: list[Path]) -> list[str]:
     for s in dict.fromkeys(p.name.split(".")[0] for p in paths):
         live = False
         for f in LEASES.glob(f"{s}.*") if LEASES.exists() else []:
+            if f.name.startswith(("gpu.", "comfy_")):  # GPU lease files (router/gpu_lease.py) are never touched here
+                continue
             pid = f.name.split(".")[1]
             if pid.isdigit() and _alive(int(pid)):
                 live = True
@@ -179,6 +182,7 @@ async def recreate(services: list[str], timeout: int = 300) -> None:
 def stop_all_sync() -> None:
     """Stop every running container of the tokenfrugal project (backends and stdio wrappers). Safe to call twice."""
     docker = shutil.which("docker") or "docker"
+    # The label filter must stay exact: project tokenfrugal-gpu (ComfyUI, GPU lease holder) is not stopped here.
     with contextlib.suppress(Exception):
         ids = subprocess.run([docker, "ps", "-q", "--filter", f"label=com.docker.compose.project={COMPOSE_PROJECT}"],
                              capture_output=True, text=True, timeout=30).stdout.split()
@@ -188,25 +192,6 @@ def stop_all_sync() -> None:
 
 # --- last-one-out shutdown: every router process (Claude, Codex, ...) drops a pid file; only the last stops containers
 REGISTRY = DB_PATH.parent / "gateways"
-
-
-def _alive(pid: int) -> bool:
-    if os.name == "nt":  # os.kill(pid, 0) would terminate the process on Windows
-        import ctypes
-        h = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
-        if not h:
-            return False
-        code = ctypes.c_ulong()
-        ok = ctypes.windll.kernel32.GetExitCodeProcess(h, ctypes.byref(code))
-        ctypes.windll.kernel32.CloseHandle(h)
-        return bool(ok) and code.value == 259  # STILL_ACTIVE
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
 
 
 def register() -> None:

@@ -424,6 +424,139 @@ function benchStart(b) {
   return tag;
 }
 
+// ---- ComfyUI tab: start/stop the GPU session, read its lease and status, proxy the editor under /comfy/.
+// The lease and status files are written by router/gpu_lease.py and router/comfy_bridge.py (router/leases by default).
+const LEASE_DIR = process.env.GPU_LEASE_DIR
+  || path.join(path.dirname(process.env.GATEWAY_DB || path.join(REPO, 'router', 'tasks.db')), 'leases');
+const COMFY_URL = process.env.COMFY_URL || 'http://127.0.0.1:8188';
+const COMFY_PORT = Number(new URL(COMFY_URL).port || 80);
+const COMPOSE = ['compose', '-p', 'tokenfrugal-gpu', '-f', path.join(REPO, 'docker-compose.gpu.yml')];
+const STOP_REQUEST = path.join(LEASE_DIR, 'comfy_stop.request');
+const UPLOAD_LIMIT = 100 * 1024 * 1024;
+const LOCAL_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
+const LOCAL_ORIGINS = new Set([`http://127.0.0.1:${PORT}`, `http://localhost:${PORT}`]);
+// Host and Origin must name this dashboard: a web page on another origin cannot reach ComfyUI through DNS rebinding.
+const hostOk = (req) => LOCAL_HOSTS.has(req.headers.host || '')
+  && (req.headers.origin === undefined || LOCAL_ORIGINS.has(req.headers.origin));
+const NODE_PATHS = new Set(['/', '/events', '/health', '/logo.svg', '/post.html']);
+const NODE_API = ['/api/state', '/api/config', '/api/mcp/', '/api/usage', '/api/modeltest', '/api/bench/', '/api/comfy/'];
+
+function readJsonFile(file) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; } }
+
+// held: the lease names comfyui and its heartbeat is inside ttl + refusal window (the same rule the router uses).
+function comfyState() {
+  const lease = readJsonFile(path.join(LEASE_DIR, 'gpu.json'));
+  const status = readJsonFile(path.join(LEASE_DIR, 'comfy_status.json'));
+  const age = lease ? Date.now() / 1000 - Date.parse(lease.heartbeat_at) / 1000 : Infinity;
+  const held = !!(lease && lease.holder === 'comfyui' && age < (Number(lease.ttl_s) || 30) + 30);
+  return { held, lease: lease || null, status: status || null, bridge: !!(status && status.pid && alive(status.pid)) };
+}
+
+let lastComfy = '';
+function comfyPayload() { return JSON.stringify(comfyState()); }
+function pollComfy() { // push the state to the page when it changes (named SSE event "comfy")
+  const body = comfyPayload();
+  if (body === lastComfy) return;
+  lastComfy = body;
+  for (const c of clients) c.write(`event: comfy\ndata: ${body}\n\n`);
+}
+
+function pyExe() {
+  const venv = path.join(REPO, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+  return fs.existsSync(venv) ? venv : 'python';
+}
+
+function compose(args, timeout) {
+  return new Promise((ok) => execFile('docker', [...COMPOSE, ...args], { timeout, windowsHide: true },
+    (e, out, err) => ok(e ? { ok: false, out: String(err || e.message).slice(-800) } : { ok: true, out: String(out).slice(-800) })));
+}
+
+async function comfyStart() {
+  if (comfyState().held) return { ok: false, code: 409, message: 'the GPU is already held by the ComfyUI session' };
+  const up = await compose(['up', '-d', '--wait'], 600000);
+  if (!up.ok) return { ok: false, code: 500, message: 'docker compose up failed: ' + up.out };
+  // The detached bridge acquires the lease and then listens to ComfyUI's events; it outlives this process.
+  const child = require('node:child_process').spawn(pyExe(), ['-m', 'router.comfy_bridge', '--comfy-url', COMFY_URL],
+    { cwd: REPO, env: { ...process.env, PYTHONPATH: REPO, PYTHONUNBUFFERED: '1' }, detached: true, stdio: 'ignore', windowsHide: true });
+  child.on('error', () => { /* reported by the status file */ });
+  child.unref();
+  return { ok: true, code: 200, message: 'ComfyUI started; the bridge is taking the GPU lease' };
+}
+
+async function comfyStop() {
+  if (comfyState().held) { // the bridge refuses while the queue is busy, else releases and stops the container itself
+    fs.mkdirSync(LEASE_DIR, { recursive: true });
+    fs.writeFileSync(STOP_REQUEST, new Date().toISOString());
+    return { ok: true, code: 202, message: 'stop requested: the bridge stops ComfyUI once the queue is empty' };
+  }
+  const r = await compose(['stop'], 120000);
+  return { ok: r.ok, code: r.ok ? 200 : 500, message: r.ok ? 'ComfyUI stopped' : 'docker compose stop failed: ' + r.out };
+}
+
+// Deletes the lease only. The container and any running job keep going, so the GPU may still be in use.
+function comfyForceRelease() {
+  const code = "from router import gpu_lease as g; old = g.force_release(); print('released' if old else 'none')";
+  return new Promise((ok) => execFile(pyExe(), ['-c', code], { cwd: REPO, env: { ...process.env, PYTHONPATH: REPO }, timeout: 15000, windowsHide: true },
+    (e, out, err) => ok(e ? { ok: false, code: 500, message: String(err || e.message).slice(-400) }
+      : { ok: true, code: 200, message: String(out).trim() })));
+}
+
+// ComfyUI paths under /comfy/ (the editor); ComfyUI's absolute paths (/scripts, /ws, /api/prompt) are accepted
+// when the request's Referer is the editor. Returns the upstream path, or null when this is not a ComfyUI request.
+function comfyUpstreamPath(url, req) {
+  const p = url.pathname;
+  if (p === '/comfy' || p.startsWith('/comfy/')) return p.slice('/comfy'.length) || '/';
+  const ours = NODE_PATHS.has(p) || p.startsWith('/Benchmark/') || NODE_API.some((x) => (x.endsWith('/') ? p.startsWith(x) : p === x));
+  return !ours && String(req.headers.referer || '').includes('/comfy/') ? p : null;
+}
+
+function upstreamHeaders(req) {
+  const headers = { ...req.headers, host: `127.0.0.1:${COMFY_PORT}` };
+  if (req.headers.origin !== undefined) headers.origin = `http://127.0.0.1:${COMFY_PORT}`;
+  return headers;
+}
+
+function proxyComfy(req, res, upPath, search) {
+  if (!hostOk(req)) return res.writeHead(403).end('forbidden');
+  if (req.method === 'POST' && (upPath === '/prompt' || upPath === '/api/prompt') && !comfyState().held) {
+    return res.writeHead(409, { 'Content-Type': 'text/plain; charset=utf-8' })
+      .end('GPU lease not held: press Start on the ComfyUI tab to take the GPU again');
+  }
+  let bytes = 0;
+  const up = http.request({ host: '127.0.0.1', port: COMFY_PORT, method: req.method, path: upPath + search, headers: upstreamHeaders(req) }, (ures) => {
+    res.writeHead(ures.statusCode, ures.headers);
+    ures.pipe(res);
+  });
+  up.on('error', () => {
+    if (res.headersSent) { if (!res.writableEnded) res.destroy(); } else res.writeHead(502).end('ComfyUI is not answering');
+  });
+  req.on('data', (chunk) => {
+    bytes += chunk.length;
+    if (bytes > UPLOAD_LIMIT) {
+      up.destroy();
+      if (!res.headersSent) res.writeHead(413).end('upload too large');
+      req.destroy();
+    }
+  });
+  req.pipe(up);
+}
+
+async function comfyRoute(req, res, url) {
+  if (url.pathname === '/api/comfy/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(comfyPayload());
+  }
+  const action = url.pathname.slice('/api/comfy/'.length);
+  if (!hostOk(req)) return res.writeHead(403).end('forbidden');
+  let r;
+  if (action === 'start') r = await comfyStart();
+  else if (action === 'stop') r = await comfyStop();
+  else if (action === 'force-release') r = await comfyForceRelease();
+  else return res.writeHead(404).end('not found');
+  res.writeHead(r.code || (r.ok ? 200 : 500), { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  return res.end(JSON.stringify(r));
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/api/state') {
@@ -503,9 +636,13 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     return res.end(JSON.stringify(usage()));
   }
+  if (url.pathname.startsWith('/api/comfy/')) return comfyRoute(req, res, url);
+  const upPath = comfyUpstreamPath(url, req); // the ComfyUI editor: /comfy/... and its absolute paths from the editor page
+  if (upPath !== null) return proxyComfy(req, res, upPath, url.search);
   if (url.pathname === '/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
     res.write(': connected\n\n');
+    res.write(`event: comfy\ndata: ${comfyPayload()}\n\n`);
     clients.add(res);
     return req.on('close', () => clients.delete(res));
   }
@@ -579,6 +716,33 @@ const server = http.createServer(async (req, res) => {
 
 poll();
 setInterval(poll, 400);
+setInterval(pollComfy, 1000);
+
+// WebSocket upgrade for the editor (ComfyUI's /ws): same Host/Origin rule, bytes piped both ways to ComfyUI.
+server.on('upgrade', (req, socket, head) => {
+  const url = new URL(req.url, 'http://x');
+  const upPath = comfyUpstreamPath(url, req);
+  if (upPath === null || !hostOk(req)) { socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return socket.destroy(); }
+  const up = http.request({ host: '127.0.0.1', port: COMFY_PORT, method: 'GET', path: upPath + url.search, headers: upstreamHeaders(req) });
+  up.on('upgrade', (ures, usock, uhead) => {
+    let out = 'HTTP/1.1 101 Switching Protocols\r\n';
+    for (let i = 0; i < ures.rawHeaders.length; i += 2) out += `${ures.rawHeaders[i]}: ${ures.rawHeaders[i + 1]}\r\n`;
+    socket.write(out + '\r\n');
+    if (uhead && uhead.length) socket.write(uhead);
+    if (head && head.length) usock.write(head);
+    usock.pipe(socket);
+    socket.pipe(usock);
+    usock.on('error', () => socket.destroy());
+    socket.on('error', () => usock.destroy());
+  });
+  up.on('response', (ures) => { // ComfyUI answered without upgrading: refuse the socket
+    socket.write(`HTTP/1.1 ${ures.statusCode} ${ures.statusMessage}\r\nConnection: close\r\n\r\n`);
+    socket.destroy();
+    ures.resume();
+  });
+  up.on('error', () => socket.destroy());
+  up.end();
+});
 setInterval(() => { // pids that died mid-task flip to "stale"; keepalive for idle SSE connections
   for (const t of tasks.values()) if (t.status === 'running' && !alive(t.pid)) broadcast(t);
   for (const c of clients) c.write(': ping\n\n');

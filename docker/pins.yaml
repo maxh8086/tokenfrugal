@@ -70,3 +70,36 @@ pins:
     context: folder
     licence: MIT
     base_image: node:22-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+  # ComfyUI for the GPU video lease (docker-compose.gpu.yml, project tokenfrugal-gpu). Built by scripts/pinned_build.py:
+  # it clones ComfyUI and each node at node_sha, checks each tree against tree_sha, and checks the node requirements
+  # against docker/comfyui/requirements.lock before docker build. Node keys are node_sha/tree_sha, so check_pins --write
+  # never rewrites them. tree_sha placeholders are written by the first build (the build prints the computed value).
+  comfyui:
+    repo: https://github.com/comfyanonymous/ComfyUI.git
+    tag_regex: '^v(\d+)\.(\d+)\.(\d+)$'
+    sha: 423cbd20511becb1f16122ab518e92e58bfa03d9   # tag v0.43.2
+    tree_sha: <written by the first build>
+    image: tokenfrugal/comfyui:1
+    dockerfile: docker/comfyui/Dockerfile
+    context: folder
+    lockfile: docker/comfyui/requirements.lock
+    licence: GPL-3.0 (confirm from LICENSE in the pinned tree at first build)
+    base_image: nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:<resolve-at-first-build>
+    nodes:
+      - repo: https://github.com/Lightricks/ComfyUI-LTXVideo.git
+        node_sha: 220e1d45aa0469f518e982102fca4dca92a61862   # tag v1.1.0
+        tree_sha: <written by the first build>
+        folder: ComfyUI-LTXVideo
+      - repo: https://github.com/city96/ComfyUI-GGUF.git
+        node_sha: 6ea2651e7df66d7585f6ffee804b20e92fb38b8a   # untagged
+        tree_sha: <written by the first build>
+        folder: ComfyUI-GGUF
+  # Small TCP forwarder that publishes 127.0.0.1:8188 to the internal-only ComfyUI container. No upstream git source:
+  # the pin is the base image digest and the socat package version (both resolved at first build).
+  forwarder:
+    image: tokenfrugal/forwarder:1
+    dockerfile: docker/forwarder/Dockerfile
+    context: folder
+    licence: GPL-2.0 (socat; confirm at first build)
+    base_image: alpine:3.20@sha256:<resolve-at-first-build>
+    socat_version: 1.8.0.0-r0   # confirm the apk version at first build

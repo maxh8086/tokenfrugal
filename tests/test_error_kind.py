@@ -116,6 +116,9 @@ class Classify(unittest.TestCase):
         self.assertEqual(loop.failure_reason("TimeoutError: slow"), "timeout")
         self.assertEqual(loop.error_kind("TimeoutError: slow"), "request_timeout")
 
+    def test_gpu_busy_is_its_own_kind(self):
+        self.assertEqual(loop.error_kind("GpuBusy: the GPU is in use by kalamanch (task) for 12 s"), "gpu_busy")
+
 
 class ToolCallCounter(unittest.TestCase):
     def test_counts_tool_calls_sent_to_the_server(self):
@@ -207,6 +210,13 @@ class Hints(unittest.TestCase):
         msg = self.msg("error", 0, "infra")
         self.assertTrue(msg.endswith("Call resume_task('t1') to retry."), msg)
         self.assertIn("error_kind=error", msg)
+
+    def test_gpu_busy_uses_the_given_hint(self):
+        hint = "The GPU is in use by kalamanch; retry in about 200 s; do not call resume_task."
+        msg = server.failure_message("t1", self.role, "GpuBusy: busy", "gpu-busy", "gpu_busy", 0, hint_text=hint)
+        self.assertIn(hint, msg)
+        self.assertIn("error_kind=gpu_busy", msg)
+        self.assertNotIn("Call resume_task", msg)
 
     def test_kind_is_in_reply(self):
         self.assertIn("reason=timeout error_kind=request_timeout:", self.msg("request_timeout", 0))

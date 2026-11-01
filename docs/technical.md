@@ -227,6 +227,20 @@ The router starts a dashboard at http://127.0.0.1:7777 and opens it in your brow
 
 Dashboard text comes from `router/ui.yaml`. Roles, models and tools come from `router/roles.json`. The dashboard needs Node.js and no npm packages. Without Node, the router runs without it. Run `node ui/server.js` to start it by hand.
 
+### ComfyUI tab
+
+The ComfyUI tab starts and stops the ComfyUI container (`docker-compose.gpu.yml`, project `tokenfrugal-gpu`) and shows the GPU session. It opens the editor under `/comfy/` only while the GPU lease is held.
+
+- **Event bridge:** `router/comfy_bridge.py` runs detached from the router and dashboard. It takes the GPU lease in `router/leases/gpu.json` (or `GPU_LEASE_DIR`), heartbeats it, and reads ComfyUI's websocket events. A stop request is a file, `comfy_stop.request`, in the same folder. The bridge refuses a stop while the queue is busy.
+- **Status file:** `comfy_status.json` in the lease folder, rewritten on every event and once a second. It holds the state (queued, idle, loading, running, finishing), the current step, elapsed time, the ETA, queue length and the queue-empty debounce.
+- **ETA:** remaining sampler steps times the step-time average (smoothing 0.3), plus the median post-sampling time from earlier runs of the same workflow. Without history the post-sampling part is 0 and the ETA is flagged partial.
+- **History file:** `comfy_history.json`. Runs are keyed by the SHA-256 of the API-format workflow with seed and prompt-text inputs removed, so repeats of one workflow with a new seed share a key. The last 20 successful runs per key are kept. Failed and interrupted runs are not recorded.
+- **Lease release:** the lease is released after the queue has been empty for 180 seconds. Stop ends the container once the bridge has released the lease.
+- **Force release:** deletes the lease only. ComfyUI and any running job keep going, so the GPU may still be in use. The dashboard asks for confirmation first.
+- **Proxy:** the dashboard forwards `/comfy/` to ComfyUI on 127.0.0.1:8188, rejects uploads over 100 MB, and rejects `POST /prompt` while no lease is held. Host and Origin must name the dashboard. The websocket upgrade is tunnelled.
+
+Limits: the ETA is only as good as the history, and the first run of a workflow shows no post-sampling estimate. The lease, ComfyUI and proxy paths need a live ComfyUI and a GPU to verify.
+
 ## Requirements and limits
 
 | Need | Notes |
