@@ -45,6 +45,10 @@ DEFAULT_WORKFLOW = "ltx098"
 DEFAULT_SEED = 42
 DEFAULT_PROMPT = "A person in a dark blazer looks at the camera and slowly nods."
 DEFAULT_CONTAINER = "tokenfrugal-gpu-comfyui-1"  # compose project tokenfrugal-gpu, service comfyui (docker-compose.gpu.yml)
+DEFAULT_IMAGE = "spike_input.png"  # file name in the ComfyUI input folder (LoadImage node)
+INPUT_DIR_DEFAULT = ROOT / "comfy_data" / "input"  # used when COMFY_INPUT_DIR is unset
+ENV_FILE = ROOT / ".env"  # read for COMFY_INPUT_DIR when the process environment does not set it
+LOAD_IMAGE_CLASS = "LoadImage"
 DEFAULT_COMFY_URL = "http://127.0.0.1:8188"
 DEFAULT_OLLAMA_NATIVE = "http://127.0.0.1:11434"
 SAMPLE_S = 1.0  # sampling period for nvidia-smi, typeperf and docker stats
@@ -260,6 +264,48 @@ def inject(wf, seed, prompt):
         raise WorkflowError(f"prompt node {prompt_id} has no text input")
     out[prompt_id]["inputs"]["text"] = prompt
     return out
+
+
+def set_image(wf, name):
+    """Copy of the workflow with the LoadImage node's image input set to `name`. Raises WorkflowError unless exactly
+    one LoadImage node exists."""
+    out = json.loads(json.dumps(wf))
+    ids = node_ids(out, (LOAD_IMAGE_CLASS,))
+    if len(ids) != 1:
+        raise WorkflowError(f"expected exactly one {LOAD_IMAGE_CLASS} node, found {len(ids)}")
+    out[ids[0]]["inputs"]["image"] = name
+    return out
+
+
+def _env_file_value(path, key):
+    """KEY=VALUE from a .env file (comments, blank lines and surrounding quotes handled). '' when absent."""
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, value = line.split("=", 1)
+        if name.strip() != key:
+            continue
+        value = value.strip()
+        if value[:1] in ("'", '"') and value[0] in value[1:]:
+            return value[1:value.index(value[0], 1)].strip()  # quoted: text up to the closing quote
+        return value.split(" #", 1)[0].strip()  # unquoted: drop an inline comment
+    return ""
+
+
+def input_dir(environ=None, env_file=None):
+    """The ComfyUI input folder on the host. COMFY_INPUT_DIR from the process environment, else from the repo .env
+    (compose reads .env itself, the spike does not), else comfy_data/input. A trailing slash is dropped."""
+    env = os.environ if environ is None else environ
+    value = (env.get("COMFY_INPUT_DIR") or "").strip()
+    if not value:
+        value = _env_file_value(ENV_FILE if env_file is None else env_file, "COMFY_INPUT_DIR").strip()
+    value = value.rstrip("/\\") or value
+    return Path(value) if value else INPUT_DIR_DEFAULT
 
 
 def workflow_steps(wf):
@@ -564,7 +610,7 @@ def require_free_gpu(comfy_url, ollama_native, lease_module=None):
 # ---------------------------------------------------------------- one run
 
 def run_once(*, workflow_path, seed, prompt, settings, out_dir, comfy_url, container, ollama_native,
-             tag="spike", lease_module=None, patch=None):
+             tag="spike", lease_module=None, patch=None, image=DEFAULT_IMAGE):
     """Runs the workflow once and returns a CSV row dict (psnr and ssim left empty). Raises GuardRefused before
     anything is submitted. The clip is saved under out_dir. `patch` (dict -> dict) changes the workflow for a
     quality variant; the hash then covers the patched workflow."""
@@ -573,7 +619,7 @@ def run_once(*, workflow_path, seed, prompt, settings, out_dir, comfy_url, conta
     if patch is not None:
         base_wf = patch(json.loads(json.dumps(base_wf)))
         raw = json.dumps(base_wf, sort_keys=True).encode("utf-8")
-    wf = inject(base_wf, seed, prompt)
+    wf = set_image(inject(base_wf, seed, prompt), image)
     steps = workflow_steps(wf)
     loaders = node_ids(wf, LOADER_CLASSES)
     sampler = (node_ids(wf, (SAMPLER_CLASS,)) or [None])[0]
@@ -635,6 +681,8 @@ def build_parser():
     p.add_argument("--workflow", default=DEFAULT_WORKFLOW, help="workflow name in docker/comfyui/workflows (default ltx098)")
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p.add_argument("--prompt", default=DEFAULT_PROMPT)
+    p.add_argument("--image", default=DEFAULT_IMAGE,
+                   help="file name in the ComfyUI input folder (COMFY_INPUT_DIR, else comfy_data/input) for LoadImage")
     p.add_argument("--comfy-url", default=os.getenv("COMFY_URL", DEFAULT_COMFY_URL))
     p.add_argument("--ollama-url", default=os.getenv("TF_OLLAMA_NATIVE_URL", DEFAULT_OLLAMA_NATIVE))
     p.add_argument("--container", default=DEFAULT_CONTAINER, help="container name for docker stats ('' to skip)")
@@ -647,16 +695,18 @@ def main(argv=None):
     wf_path = WORKFLOW_DIR / f"{args.workflow}.json"
     try:
         wf = load_workflow(wf_path)
-        inject(wf, args.seed, args.prompt)
+        set_image(inject(wf, args.seed, args.prompt), args.image)
     except WorkflowError as e:
         print(f"Workflow error: {e}")
         return 2
     steps = workflow_steps(wf)
     if args.dry_run:
+        image_path = input_dir() / args.image
         print("DRY RUN: nothing is contacted, nothing is written.")
         print(f"  workflow      {wf_path} (hash {workflow_hash(wf_path.read_bytes())[:16]}..., {len(wf)} nodes)")
         print(f"  seed node     {find_by_title(wf, 'seed')} -> seed {args.seed}")
         print(f"  prompt node   {find_by_title(wf, 'prompt')} -> {args.prompt[:60]!r}")
+        print(f"  image         {args.image} in {input_dir()} ({'found' if image_path.is_file() else 'NOT FOUND'})")
         print(f"  sampler steps {steps}")
         print(f"  ComfyUI       {args.comfy_url}  (POST /prompt, GET /history, GET /system_stats, GET /view)")
         print(f"  Ollama        {args.ollama_url}  (/api/ps)")
@@ -668,7 +718,7 @@ def main(argv=None):
     try:
         row = run_once(workflow_path=wf_path, seed=args.seed, prompt=args.prompt,
                        settings="spike=baseline", out_dir=args.out_dir, comfy_url=args.comfy_url,
-                       container=args.container, ollama_native=args.ollama_url)
+                       container=args.container, ollama_native=args.ollama_url, image=args.image)
     except GuardRefused as e:
         print("Refusing to run; the GPU is not free for ComfyUI:")
         for problem in e.problems:

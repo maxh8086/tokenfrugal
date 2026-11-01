@@ -3,9 +3,12 @@ threshold derivation, PSNR/SSIM on synthetic planes and the refuse-to-run guards
 
 No GPU, Docker, ComfyUI, Ollama, nvidia-smi or network: every hardware call is replaced by a mock or a fake value.
 """
+import contextlib
 import csv
+import io
 import json
 import math
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -160,6 +163,100 @@ class WorkflowTests(unittest.TestCase):
     def test_workflow_hash_is_sha256_of_the_bytes(self):
         self.assertEqual(spike.workflow_hash(b"abc"),
                          "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+
+
+class ImageInputTests(unittest.TestCase):
+    def test_set_image_sets_the_loadimage_input_without_touching_the_original(self):
+        wf = spike.load_workflow(WORKFLOW)
+        load_id = spike.node_ids(wf, (spike.LOAD_IMAGE_CLASS,))[0]
+        out = spike.set_image(wf, "first_frame_07.png")
+        self.assertEqual(out[load_id]["inputs"]["image"], "first_frame_07.png")
+        self.assertEqual(wf[load_id]["inputs"]["image"], "spike_input.png")
+
+    def test_set_image_refuses_a_workflow_without_one_loadimage_node(self):
+        wf = {"1": {"class_type": "X", "inputs": {}}}
+        with self.assertRaises(spike.WorkflowError):
+            spike.set_image(wf, "a.png")
+
+    def test_cli_image_flag_reaches_run_once(self):
+        row = spike.make_row(seed=42)
+        with mock.patch.object(spike, "run_once", return_value=row) as run, \
+                mock.patch.object(spike, "append_row"):
+            self.assertEqual(spike.main(["--image", "frame_b.png", "--container", ""]), 0)
+        self.assertEqual(run.call_args.kwargs["image"], "frame_b.png")
+
+    def test_cli_default_image_is_spike_input_png(self):
+        self.assertEqual(spike.build_parser().parse_args([]).image, "spike_input.png")
+
+    def test_run_once_puts_the_image_name_into_the_submitted_workflow(self):
+        module = mock.Mock()
+        module.loaded_models.return_value = []
+        module.read.return_value = mock.Mock(holder="comfyui")
+        submitted = {}
+
+        def fake_submit(base, wf, client_id):
+            submitted["wf"] = wf
+            raise RuntimeError("stop after capture")
+
+        with mock.patch.object(spike, "read_compute_apps", return_value=[]), \
+                mock.patch.object(spike, "http_json", return_value={}), \
+                mock.patch.object(spike, "submit_prompt", side_effect=fake_submit), \
+                mock.patch.object(spike.time, "sleep"), \
+                mock.patch.object(spike.Sampler, "start", lambda self: self), \
+                mock.patch.object(spike.Sampler, "stop", lambda self: self), \
+                mock.patch.object(spike.TypeperfSampler, "start", lambda self: self), \
+                mock.patch.object(spike.TypeperfSampler, "stop", lambda self: self):
+            with self.assertRaises(RuntimeError):
+                spike.run_once(workflow_path=WORKFLOW, seed=5, prompt="p", settings="s", out_dir=".",
+                               comfy_url="http://127.0.0.1:1", container="", ollama_native="http://127.0.0.1:1",
+                               lease_module=module, image="zz.png")
+        load_id = spike.node_ids(submitted["wf"], (spike.LOAD_IMAGE_CLASS,))[0]
+        self.assertEqual(submitted["wf"][load_id]["inputs"]["image"], "zz.png")
+
+    def test_input_dir_uses_comfy_input_dir_when_set(self):
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch.dict(os.environ, {"COMFY_INPUT_DIR": d}):
+                self.assertEqual(spike.input_dir(), Path(d))
+
+    def test_input_dir_falls_back_to_comfy_data_input(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(spike, "ENV_FILE", Path(d) / "absent.env"):
+            with mock.patch.dict(os.environ, {}):
+                os.environ.pop("COMFY_INPUT_DIR", None)
+                self.assertEqual(spike.input_dir(), spike.INPUT_DIR_DEFAULT)
+                self.assertEqual(spike.input_dir(), spike.ROOT / "comfy_data" / "input")
+            with mock.patch.dict(os.environ, {"COMFY_INPUT_DIR": "   "}):
+                self.assertEqual(spike.input_dir(), spike.INPUT_DIR_DEFAULT)
+
+    def test_input_dir_reads_comfy_input_dir_from_the_env_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            env_path = Path(d) / ".env"
+            env_path.write_text("# comment\n\nOTHER=1\nCOMFY_INPUT_DIR=\"C:\\frames\\first/\"  # trailing\n",
+                                encoding="utf-8")
+            with mock.patch.dict(os.environ, {}):
+                os.environ.pop("COMFY_INPUT_DIR", None)
+                self.assertEqual(spike.input_dir(env_file=env_path), Path("C:\\frames\\first"))
+            with mock.patch.dict(os.environ, {"COMFY_INPUT_DIR": d}):
+                self.assertEqual(spike.input_dir(env_file=env_path), Path(d))  # process env wins
+
+    def test_dry_run_reports_the_image_found_in_comfy_input_dir(self):
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, "spike_input.png").write_bytes(b"png")
+            out = io.StringIO()
+            with mock.patch.dict(os.environ, {"COMFY_INPUT_DIR": d}), \
+                    mock.patch.object(spike, "ENV_FILE", Path(d) / "absent.env"), \
+                    contextlib.redirect_stdout(out):
+                self.assertEqual(spike.main(["--dry-run"]), 0)
+        self.assertIn("found", out.getvalue())
+        self.assertNotIn("NOT FOUND", out.getvalue())
+
+    def test_dry_run_reports_a_missing_image(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = io.StringIO()
+            with mock.patch.dict(os.environ, {"COMFY_INPUT_DIR": d}), \
+                    mock.patch.object(spike, "ENV_FILE", Path(d) / "absent.env"), \
+                    contextlib.redirect_stdout(out):
+                self.assertEqual(spike.main(["--dry-run", "--image", "absent.png"]), 0)
+        self.assertIn("NOT FOUND", out.getvalue())
 
 
 class TimingTests(unittest.TestCase):

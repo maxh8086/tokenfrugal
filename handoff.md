@@ -25,7 +25,7 @@ Design: `docs/designs/comfyui-gpu-lease.md`. Everything below is committed on br
 - Question it answers: does LTX 0.9.8 distilled run on the 8 GB RTX 4060 Laptop, how long does it take, how much VRAM does it use, and does it spill into shared memory.
 - Before it can run, these must be done:
   1. Close Ollama models (`ollama ps` empty) and any other GPU process. The script refuses to run otherwise.
-  2. Create the folders once: `mkdir -p comfy_data/input comfy_data/output comfy_data/user`. Put the first frame in `comfy_data/input/spike_input.png`.
+  2. Set `COMFY_INPUT_DIR` in `.env` to the folder with the first-frame images (compose mounts it read-only as the ComfyUI input folder; uploads from the editor fail by design) and create `comfy_data/output` and `comfy_data/user` once: `mkdir -p comfy_data/output comfy_data/user`. Pass the file with `--image NAME`.
   3. **Model mapping is done.** `docker/comfyui/extra_model_paths.yaml` points `checkpoints`, `text_encoders` and `clip` at `/models/ltx-video-2b-distilled/` (the existing `models/video_generation` folder, mounted read-only; the yaml is bind-mounted by compose, so no rebuild). The single-file T5 `t5xxl_fp8_e4m3fn.safetensors` is in that folder (sha256 `7d330da4...4f09`). Both files show in `object_info` on CPU. The loader dropdowns also list the other files in that folder.
   4. Start the stack with the GPU: `docker compose -p tokenfrugal-gpu -f docker-compose.gpu.yml up -d --wait` (no CPU override). Start the bridge (it takes the lease): `python -m router.comfy_bridge`.
 - Run: `python scripts/comfy_spike.py` (add `--dry-run` first to check the workflow). It appends one row to `Benchmark/results/comfy_baseline.csv`.
@@ -38,7 +38,8 @@ Design: `docs/designs/comfyui-gpu-lease.md`. Everything below is committed on br
 - `router/loop.py` calls `guard_ollama` before every model request, so a ComfyUI start can fail a task that is already running. The design only asked for a check at task start (already in `_execute`). Remove the mid-task call? The user has not decided.
 - The `websockets` 17 DeprecationWarning is fixed (`legacy=True` in `router/comfy_bridge.py`, with a test).
 - The lock resolves transformers 5.22.1 and huggingface-hub 2.4.0; ComfyUI v0.43.2 started with them on CPU, but no model has run.
-- LTXVideo is under the LTX-2 Community License (not Apache). socat licence (GPL-2.0) not confirmed.
+- Licences (checked 2026-11-01, not legal advice). The pinned LTXVideo node ships the LTX-2 Community License (read from `/app/custom_nodes/ComfyUI-LTXVideo/LICENSE` in the image). Free for entities under $10M annual revenue (the owner is under); posting clips on Instagram, Facebook, LinkedIn and YouTube is allowed. **Posting checklist: say plainly that each clip is machine generated (Attachment A item 5), no deepfakes of real people without consent, no deceptive or harassing content, do not train other models on the outputs.** Lightricks may restrict or update the model remotely (section 6). Whether the 0.9.8 weights use this text or the older Open Weights licence (same $10M threshold) is unconfirmed. ComfyUI is GPL-3.0, ComfyUI-GGUF Apache-2.0, socat GPL-2.0 (no obligation while the image is not shared).
+- Workflow `ltx098.json` was checked against the live `object_info` on CPU (14 nodes). One bug fixed: SaveVideo needs `format.codec`, not `codec`. The rest is unverifiable without a run; see `ltx098.NOTES.md`.
 - Not done: Piece 5 (tuning, Tier B sign-off in `Benchmark/results/comfy_signoff.md`) and the `handoff.md` status line from the design. The `CLAUDE.md` GPU lease note is added.
 
 ---

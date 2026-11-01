@@ -3,6 +3,8 @@
 # (project tokenfrugal) cannot stop a running render.
 # Images come from scripts/pinned_build.py (pull_policy: never). Build: python scripts/pinned_build.py comfyui forwarder
 # First create the data folders (bind mount, the container cannot create them): mkdir -p comfy_data/input comfy_data/output comfy_data/user
+# COMFY_INPUT_DIR (set it in .env): host folder with the first-frame images. It is mounted read-only over /data/input,
+# so the ComfyUI input folder is this folder and uploads from the editor fail by design. Unset, it is ./comfy_data/input.
 # Start: docker compose -f docker-compose.gpu.yml up -d --wait
 name: tokenfrugal-gpu
 
@@ -24,6 +26,7 @@ services:
       - ./models/video_generation:/models:ro
       - ./docker/comfyui/extra_model_paths.yaml:/app/extra_model_paths.yaml:ro
       - ./comfy_data:/data
+      - ${COMFY_INPUT_DIR:-./comfy_data/input}:/data/input:ro
       - type: tmpfs
         target: /tmp
         tmpfs:
