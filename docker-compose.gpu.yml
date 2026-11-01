@@ -2,6 +2,7 @@
 # tokenfrugal.gpu=1, no top-level secrets. The router never adds these services to its PERSISTENT list, so stop_all_sync
 # (project tokenfrugal) cannot stop a running render.
 # Images come from scripts/pinned_build.py (pull_policy: never). Build: python scripts/pinned_build.py comfyui forwarder
+# First create the data folders (bind mount, the container cannot create them): mkdir -p comfy_data/input comfy_data/output comfy_data/user
 # Start: docker compose -f docker-compose.gpu.yml up -d --wait
 name: tokenfrugal-gpu
 

@@ -5,3 +5,6 @@
 services:
   comfyui:
     deploy: !reset {}
+    command: ["python", "main.py", "--cpu", "--listen", "0.0.0.0", "--port", "8188", "--disable-auto-launch",
+              "--output-directory", "/data/output", "--input-directory", "/data/input", "--user-directory", "/data/user",
+              "--temp-directory", "/tmp/comfy", "--extra-model-paths-config", "/app/extra_model_paths.yaml"]
