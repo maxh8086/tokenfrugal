@@ -78,21 +78,21 @@ pins:
     repo: https://github.com/comfyanonymous/ComfyUI.git
     tag_regex: '^v(\d+)\.(\d+)\.(\d+)$'
     sha: 423cbd20511becb1f16122ab518e92e58bfa03d9   # tag v0.43.2
-    tree_sha: <written by the first build>
+    tree_sha: 5376f5363666f6a532d1eb8311f2b4c97aebeeec
     image: tokenfrugal/comfyui:1
     dockerfile: docker/comfyui/Dockerfile
     context: folder
     lockfile: docker/comfyui/requirements.lock
-    licence: GPL-3.0 (confirm from LICENSE in the pinned tree at first build)
-    base_image: nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:<resolve-at-first-build>
+    licence: GPL-3.0 (LICENSE in the pinned tree, checked at first build)
+    base_image: nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:92906d87596d638d35015c6353053121bd299d25943b875763321653884ba924
     nodes:
       - repo: https://github.com/Lightricks/ComfyUI-LTXVideo.git
         node_sha: 220e1d45aa0469f518e982102fca4dca92a61862   # tag v1.1.0
-        tree_sha: <written by the first build>
+        tree_sha: 9b0bcd315ec65bfbf283b9cb6b9deba3b7531202
         folder: ComfyUI-LTXVideo
       - repo: https://github.com/city96/ComfyUI-GGUF.git
         node_sha: 6ea2651e7df66d7585f6ffee804b20e92fb38b8a   # untagged
-        tree_sha: <written by the first build>
+        tree_sha: e43a6ce58af9ddd228fad48aca6c8259cb88cf79
         folder: ComfyUI-GGUF
   # Small TCP forwarder that publishes 127.0.0.1:8188 to the internal-only ComfyUI container. No upstream git source:
   # the pin is the base image digest and the socat package version (both resolved at first build).
@@ -101,5 +101,5 @@ pins:
     dockerfile: docker/forwarder/Dockerfile
     context: folder
     licence: GPL-2.0 (socat; confirm at first build)
-    base_image: alpine:3.20@sha256:<resolve-at-first-build>
-    socat_version: 1.8.0.0-r0   # confirm the apk version at first build
+    base_image: alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+    socat_version: 1.8.0.0-r0   # checked with apk policy on alpine:3.20 at first build

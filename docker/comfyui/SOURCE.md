@@ -5,18 +5,17 @@ its pinned tree hash and every node's requirements are in `requirements.lock`.
 
 | Component | Upstream repo | Pinned commit | Tag | Licence |
 | --- | --- | --- | --- | --- |
-| ComfyUI | https://github.com/comfyanonymous/ComfyUI | `423cbd20511becb1f16122ab518e92e58bfa03d9` | v0.43.2 | GPL-3.0 (confirm from LICENSE in the pinned tree) |
-| ComfyUI-LTXVideo (node folder `ComfyUI-LTXVideo`) | https://github.com/Lightricks/ComfyUI-LTXVideo | `220e1d45aa0469f518e982102fca4dca92a61862` | v1.1.0 | to confirm from LICENSE at first build |
-| ComfyUI-GGUF (node folder `ComfyUI-GGUF`) | https://github.com/city96/ComfyUI-GGUF | `6ea2651e7df66d7585f6ffee804b20e92fb38b8a` | untagged (default branch on 2026-11-01) | to confirm from LICENSE at first build |
+| ComfyUI | https://github.com/comfyanonymous/ComfyUI | `423cbd20511becb1f16122ab518e92e58bfa03d9` | v0.43.2 | GPL-3.0 (LICENSE in the pinned tree, checked at first build) |
+| ComfyUI-LTXVideo (node folder `ComfyUI-LTXVideo`) | https://github.com/Lightricks/ComfyUI-LTXVideo | `220e1d45aa0469f518e982102fca4dca92a61862` | v1.1.0 | LTX-2 Community License Agreement (LICENSE in the pinned tree, checked at first build; not Apache-2.0) |
+| ComfyUI-GGUF (node folder `ComfyUI-GGUF`) | https://github.com/city96/ComfyUI-GGUF | `6ea2651e7df66d7585f6ffee804b20e92fb38b8a` | untagged (default branch on 2026-11-01) | Apache-2.0 (LICENSE in the pinned tree, checked at first build) |
 
 Commits were looked up on 2026-11-01.
 
 ## Placeholders to resolve at the first build
 
-- Base image digest (`nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:...`): `<resolve-at-first-build>` in `docker/pins.yaml`.
-- Tree hashes (`tree_sha`) for ComfyUI and both nodes: the build prints each computed value; write it into `docker/pins.yaml`.
-- `docker/comfyui/requirements.lock`: a placeholder with names only. Generate it with `pip-compile --generate-hashes`
-  and review it by hand. The build refuses a lockfile with no hashes.
+- Base image digest: resolved at first build (`nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:92906d87596d638d35015c6353053121bd299d25943b875763321653884ba924`), in `docker/pins.yaml` and the Dockerfile default.
+- Tree hashes (`tree_sha`): written from the first build (ComfyUI, LTXVideo, GGUF).
+- `docker/comfyui/requirements.lock`: generated at first build (torch 2.12.1+cu126, CPython 3.12, Linux x86_64), hashes from the resolved wheels.
 
 ## Not installed
 

@@ -195,9 +195,9 @@ class LockfileCoverageTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "no hashes"):
             pb.check_lockfile_coverage(self.lock, [self.req])
 
-    def test_shipped_lockfile_refuses_to_build(self):
-        with self.assertRaisesRegex(RuntimeError, "no hashes"):
-            pb.check_lockfile_coverage(pb.ROOT / "docker" / "comfyui" / "requirements.lock", [])
+    def test_shipped_lockfile_has_hashes(self):
+        # The shipped lockfile is hash-locked; an empty requirement list must not raise "no hashes".
+        pb.check_lockfile_coverage(pb.ROOT / "docker" / "comfyui" / "requirements.lock", [])
 
     def test_name_normalisation(self):
         self.assertEqual(pb.lock_names("Foo_Bar.baz==1.0 \\\n    --hash=sha256:x\n"), {"foo-bar-baz"})

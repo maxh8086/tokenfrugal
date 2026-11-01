@@ -6,7 +6,7 @@
 # See SOURCE.md for sources, licences and the accepted risk.
 
 # BASE is passed by scripts/pinned_build.py from docker/pins.yaml (base_image). TODO: resolve the digest at the first build.
-ARG BASE=nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:<resolve-at-first-build>
+ARG BASE=nvidia/cuda:12.6.3-runtime-ubuntu24.04@sha256:92906d87596d638d35015c6353053121bd299d25943b875763321653884ba924
 
 # ---- build the virtualenv with hash-checked packages; remove pip before the final stage ----
 FROM ${BASE} AS builder
