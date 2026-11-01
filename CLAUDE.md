@@ -61,6 +61,7 @@ Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "co
 - Docker MCP profiles live in `profiles/*.yaml` with a `__WORKSPACE__` placeholder; `scripts/install_profiles.py` fills it in and builds helper images `tokenfrugal/chrome-devtools-mcp:1` and `tokenfrugal/penpot-mcp:1`.
 - Secrets (`SONARQUBE_TOKEN`, `NEO4J_AUTH`, ...) are Docker secret files in `~/.docker/mcp/secrets`, written with `python -m router.secrets_store set NAME`, never in the repo or catalogue YAMLs.
 - Writable workspace for `ts-fs-rw` needs `:rw` in the catalogue volume and `CC_WORKSPACE` equal to that exact host path.
+- GPU lease: `router/gpu_lease.py` records who holds the GPU. While ComfyUI (compose project `tokenfrugal-gpu`) holds it, the router refuses Ollama work with `gpu_busy`.
 
 ## Code intelligence (synaptree-mcp)
 

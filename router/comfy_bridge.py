@@ -317,7 +317,9 @@ def run(comfy_url: str, container_id: str | None = None, task: str = "ComfyUI se
                 publish(tracker, warning="VRAM still low after /free; lease kept")
             if ws is None:
                 try:
-                    ws = connect(_ws_url(comfy_url, client_id), open_timeout=5)
+                    # legacy=True keeps the connection open across the loop (no context manager); the
+                    # websockets 17 DeprecationWarning is only raised when legacy is not given.
+                    ws = connect(_ws_url(comfy_url, client_id), open_timeout=5, legacy=True)
                     fails = 0
                 except Exception:  # noqa: BLE001 - any connect failure counts toward "container gone"
                     fails += 1

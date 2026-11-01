@@ -5,8 +5,12 @@ are easy to check by hand (load 40 s, 10 s per sampler step, 4 s from the last s
 """
 import copy
 import json
+import tempfile
+import threading
 import unittest
+import warnings
 from pathlib import Path
+from unittest import mock
 
 from router import comfy_bridge as cb
 from router import gpu_lease
@@ -167,6 +171,59 @@ class QueueStateTest(unittest.TestCase):
         for key in ("state", "elapsed_s", "step", "max_steps", "eta_s", "eta_partial", "load_s",
                     "queue_remaining", "empty_for_s", "debounce_s", "last_result"):
             self.assertIn(key, snap)
+
+
+class BridgeWebsocketTest(unittest.TestCase):
+    """run() opens a sync websocket without a context manager; websockets 17 must not warn about it."""
+
+    def test_run_connects_and_receives_without_connect_deprecation(self):
+        from websockets.sync.server import serve
+
+        def handler(conn):
+            try:
+                conn.recv()  # waits until the bridge closes the connection
+            except Exception:  # noqa: BLE001 - the close is the expected end
+                pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stop_file = root / cb.STOP_FILE
+            real_write = cb._write_json
+            writes = {"n": 0}
+
+            def write_then_request_stop(path, obj):
+                real_write(path, obj)
+                writes["n"] += 1
+                if writes["n"] == 3:  # a few polls over the live socket, then ask for a clean stop
+                    stop_file.write_text("stop", encoding="utf-8")
+
+            lease = object()
+            server = serve(handler, "127.0.0.1", 0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                port = server.socket.getsockname()[1]
+                with mock.patch.object(cb, "_lease_root", return_value=root), \
+                        mock.patch.object(cb, "POLL_S", 0.05), \
+                        mock.patch.object(cb.gpu_lease, "acquire", return_value=lease), \
+                        mock.patch.object(cb.gpu_lease, "start_heartbeat",
+                                          return_value=threading.Event()), \
+                        mock.patch.object(cb.gpu_lease, "release", return_value=True), \
+                        mock.patch.object(cb, "_queue", return_value=([], [])), \
+                        mock.patch.object(cb, "_stop_container"), \
+                        mock.patch.object(cb, "_write_json", side_effect=write_then_request_stop):
+                    with warnings.catch_warnings(record=True) as caught:
+                        warnings.simplefilter("always")
+                        code = cb.run(f"http://127.0.0.1:{port}")
+            finally:
+                server.shutdown()
+                server.socket.close()
+
+            self.assertEqual(code, 0)
+            self.assertGreaterEqual(writes["n"], 3)
+            deprecated = [w for w in caught
+                          if issubclass(w.category, DeprecationWarning) and "context manager" in str(w.message)]
+            self.assertEqual(deprecated, [])
 
 
 if __name__ == "__main__":

@@ -7,14 +7,14 @@ This file holds the working handoff notes. Closed items are removed once verifie
 ---
 ## Priority next (set 2026-11-01, NOT started)
 
-1. **GPU image / ComfyUI container with GPU lease.** Built and CPU-tested; the 8 GB spike waits for the user's GPU go-ahead and a model mapping. See the section "ComfyUI GPU lease: status and the 8 GB spike" below.
+1. **GPU image / ComfyUI container with GPU lease.** Built and CPU-tested; the 8 GB spike waits for the user's GPU go-ahead. See the section "ComfyUI GPU lease: status and the 8 GB spike" below.
 2. **Studio tab for content review and content writer roles.** Plan the design with the `ui-ux-pro-max` skill before any code (see the Studio item in the PRIORITY section below).
 3. **Split content-analyst into six roles.** Roles and held sources are in the PRIORITY section (item 1) and section 11.
 
 ---
 ## ComfyUI GPU lease: status and the 8 GB spike (set 2026-11-01, WAITING for the user's GPU go-ahead)
 
-Design: `docs/designs/comfyui-gpu-lease.md`. Everything below is committed on branch `benchmark-shared-tps` (lease and tab `ad1e33e`, pins `bc95111`, CPU fixes `9bfd142`). Nothing is pushed.
+Design: `docs/designs/comfyui-gpu-lease.md`. Everything below is committed on branch `benchmark-shared-tps` (lease and tab `ad1e33e`, pins `bc95111`, CPU fixes `9bfd142`, model mapping `dcd60f9`). Nothing is pushed.
 
 **Done and checked without the GPU**
 - Lease module `router/gpu_lease.py`, router and kalamanch guards, bridge `router/comfy_bridge.py`, UI tab and `/comfy/` proxy in `ui/server.js`. Suite was green at 740 tests before the last two commits; the pin tests pass after them.
@@ -26,7 +26,7 @@ Design: `docs/designs/comfyui-gpu-lease.md`. Everything below is committed on br
 - Before it can run, these must be done:
   1. Close Ollama models (`ollama ps` empty) and any other GPU process. The script refuses to run otherwise.
   2. Create the folders once: `mkdir -p comfy_data/input comfy_data/output comfy_data/user`. Put the first frame in `comfy_data/input/spike_input.png`.
-  3. **Model mapping is missing.** The workflow loads `ltxv-2b-0.9.8-distilled.safetensors` as a checkpoint and `t5xxl_fp8_e4m3fn.safetensors` as the text encoder from flat folders (`checkpoints/`, `text_encoders/`). On disk, `models/video_generation/ltx-video-2b-distilled/` is diffusers-style: the checkpoint sits in the model folder, and the text encoder is four shards under `text_encoder/`. `docker/comfyui/extra_model_paths.yaml` is still a stub. The user must pick: copy or link the checkpoint into `checkpoints/`, and get a single-file T5 (or change the workflow to the shards). This is the start of Piece 4.
+  3. **Model mapping is done.** `docker/comfyui/extra_model_paths.yaml` points `checkpoints`, `text_encoders` and `clip` at `/models/ltx-video-2b-distilled/` (the existing `models/video_generation` folder, mounted read-only; the yaml is bind-mounted by compose, so no rebuild). The single-file T5 `t5xxl_fp8_e4m3fn.safetensors` is in that folder (sha256 `7d330da4...4f09`). Both files show in `object_info` on CPU. The loader dropdowns also list the other files in that folder.
   4. Start the stack with the GPU: `docker compose -p tokenfrugal-gpu -f docker-compose.gpu.yml up -d --wait` (no CPU override). Start the bridge (it takes the lease): `python -m router.comfy_bridge`.
 - Run: `python scripts/comfy_spike.py` (add `--dry-run` first to check the workflow). It appends one row to `Benchmark/results/comfy_baseline.csv`.
 - Stop rule (from the design): if it fails, spills badly or exceeds the time budget, stop and report; do not tune.
@@ -36,10 +36,10 @@ Design: `docs/designs/comfyui-gpu-lease.md`. Everything below is committed on br
 - A bridge test run left the GPU lease held for about a minute on 2026-11-01 around 18:41; the benchmark queue (model 27, `queue_resume6`) then logged `gpu_busy` for most roles and was stopped. Those rows are not model results. The lease is released now (`router/leases/gpu.json` absent). The queue can restart. Do not run the bridge or the ComfyUI stack while a benchmark queue is running.
 - `router/comfy_status.json` keeps `holder: "comfyui"` after the bridge exits. It is a status file, not the lease; the lease is `gpu.json`.
 - `router/loop.py` calls `guard_ollama` before every model request, so a ComfyUI start can fail a task that is already running. The design only asked for a check at task start (already in `_execute`). Remove the mid-task call? The user has not decided.
-- `websockets` 17 prints a DeprecationWarning for `connect()` at `router/comfy_bridge.py:332`. Works; update the call.
+- The `websockets` 17 DeprecationWarning is fixed (`legacy=True` in `router/comfy_bridge.py`, with a test).
 - The lock resolves transformers 5.22.1 and huggingface-hub 2.4.0; ComfyUI v0.43.2 started with them on CPU, but no model has run.
 - LTXVideo is under the LTX-2 Community License (not Apache). socat licence (GPL-2.0) not confirmed.
-- Not done: Piece 4 (models, `extra_model_paths.yaml`), Piece 5 (tuning, Tier B sign-off in `Benchmark/results/comfy_signoff.md`), the one-line `CLAUDE.md` note and the `handoff.md` status line from the design.
+- Not done: Piece 5 (tuning, Tier B sign-off in `Benchmark/results/comfy_signoff.md`) and the `handoff.md` status line from the design. The `CLAUDE.md` GPU lease note is added.
 
 ---
 
