@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
-from router.media_workspace import media_dir
+from router.media_workspace import media_dir, raw_dir, render_dir, render_name
 
 mcp = FastMCP("media-generator")
 
@@ -39,14 +39,14 @@ def _names(folder: Path) -> list[str]:
 @mcp.tool()
 def list_raw() -> str:
     """List the raw clip file names in the media workspace Raw folder."""
-    names = _names(_workspace() / "Raw")
+    names = _names(raw_dir(_workspace()))
     return "\n".join(names) if names else "no clips in Raw"
 
 
 @mcp.tool()
 def list_renders() -> str:
     """List the finished file names in the media workspace Render folder."""
-    names = _names(_workspace() / "Render")
+    names = _names(render_dir(_workspace()))
     return "\n".join(names) if names else "no files in Render"
 
 
@@ -60,9 +60,9 @@ def mgen(clip: str, out_name: str = "", no_music: bool = False, captions: str = 
         if captions not in ("auto", "on", "off"):
             raise ValueError("bad captions value")
         ws = _workspace()
-        if not (ws / "Raw" / clip).is_file():
+        if not (raw_dir(ws) / clip).is_file():
             return "error: clip not found in Raw"
-        render = ws / "Render"
+        render = render_dir(ws)
         before = set(_names(render))
         argv = ["docker", "compose", "-f", str(COMPOSE_FILE), "--profile", "video", "run", "--rm", "-T",
                 "media-generator", "mgen", clip, "--captions", captions]
@@ -72,6 +72,7 @@ def mgen(clip: str, out_name: str = "", no_music: bool = False, captions: str = 
             argv.append("--no-music")
         env = dict(os.environ)
         env["VIDEO_EDITOR_DIR"] = str(ws)  # compose mounts this same resolved folder at /work
+        env["VIDEO_EDITOR_RENDER_DIR"] = render_name()  # the container writes its output to this folder name
         env.setdefault("TF_SECRETS_DIR", str(Path.home() / ".docker" / "mcp" / "secrets"))
         r = subprocess.run(argv, capture_output=True, text=True, timeout=TIMEOUT, env=env)
         lines = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()

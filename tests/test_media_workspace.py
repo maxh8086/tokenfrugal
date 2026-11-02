@@ -52,17 +52,44 @@ class ResolutionOrder(unittest.TestCase):
         self.assertFalse((self.home / "Videos").exists())
 
 
+class RenderAndLayoutConfig(unittest.TestCase):
+    def test_defaults_when_unset(self):
+        with mock.patch.dict(os.environ, {"VIDEO_EDITOR_LAYOUT": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+            self.assertEqual(mw.render_name(), "Render")
+            self.assertEqual(mw.layout(), ("Raw", "References", "Render", "content", "analyst", "analyst/daily"))
+
+    def test_env_sets_render_name_and_layout(self):
+        env = {"VIDEO_EDITOR_RENDER_DIR": "Final", "VIDEO_EDITOR_LAYOUT": "Raw, Work/tmp ,"}
+        with mock.patch.dict(os.environ, env):
+            self.assertEqual(mw.render_name(), "Final")
+            self.assertEqual(mw.layout(), ("Raw", "Work/tmp", "Final"))
+            self.assertEqual(mw.render_dir(Path("ws")), Path("ws") / "Final")
+            self.assertEqual(mw.raw_dir(Path("ws")), Path("ws") / "Raw")
+
+    def test_render_folder_is_always_created(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name) / "ws"
+        with mock.patch.dict(os.environ, {"VIDEO_EDITOR_RENDER_DIR": "Final", "VIDEO_EDITOR_LAYOUT": "Raw"}):
+            mw.ensure_tree(root)
+        self.assertTrue((root / "Final").is_dir())
+        self.assertFalse((root / "Render").exists())
+
+
 class Tree(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name) / "ws"
+        patcher = mock.patch.dict(os.environ, {"VIDEO_EDITOR_LAYOUT": "", "VIDEO_EDITOR_RENDER_DIR": ""})
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_ensure_creates_layout_then_is_idempotent(self):
         first = mw.ensure_tree(self.root)
-        self.assertEqual([rel for rel, _ in first], ["."] + list(mw.LAYOUT))
+        self.assertEqual([rel for rel, _ in first], ["."] + list(mw.layout()))
         self.assertTrue(all(status == "CREATED" for _, status in first))
-        for rel in mw.LAYOUT:
+        for rel in mw.layout():
             self.assertTrue((self.root / rel).is_dir(), rel)
         second = mw.ensure_tree(self.root)
         self.assertTrue(all(status == "OK" for _, status in second))
@@ -81,7 +108,8 @@ class ScriptCli(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name) / "ws"
-        patcher = mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(self.root)})
+        patcher = mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(self.root), "VIDEO_EDITOR_LAYOUT": "",
+                                               "VIDEO_EDITOR_RENDER_DIR": ""})
         patcher.start()
         self.addCleanup(patcher.stop)
 

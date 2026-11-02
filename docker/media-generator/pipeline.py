@@ -153,11 +153,12 @@ def main():
     # --out may come with the .mp4 suffix; the final path adds it, so strip it here to avoid name.mp4.mp4.
     if name.endswith(".mp4"):
         name = name[: -len(".mp4")]
-    render = "/work/Render"
+    render = "/work/" + os.environ.get("VIDEO_EDITOR_RENDER_DIR", "Render")
     tmp = "/tmp/mgen"
     os.makedirs(tmp, exist_ok=True)
-    for d in ("Raw", "References", "Render"):
+    for d in ("Raw", "References"):
         os.makedirs(f"/work/{d}", exist_ok=True)
+    os.makedirs(render, exist_ok=True)
     wav, whisper_out, speech = f"{tmp}/a.wav", f"{tmp}/words", f"{tmp}/speech.json"
     notes = []
     if a.captions == "off":

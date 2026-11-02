@@ -28,6 +28,8 @@ services:
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
+    environment:
+      - VIDEO_EDITOR_RENDER_DIR=${VIDEO_EDITOR_RENDER_DIR:-Render}   # render folder name under the workspace; mgen reads it from .env
     volumes:
       - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/media_generator_mcp.py (mgen) and resolved by router/media_workspace.py; this default is the fallback when run by hand
       - ./docker/media-generator/templates:/templates:ro   # composition templates (Mode B first). Read-only; the render copies a project to a scratch folder first
