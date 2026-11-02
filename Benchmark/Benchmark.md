@@ -1,6 +1,6 @@
 # TokenFrugal benchmark
 
-<!-- Maintainer note: keep this file to information that stays true over time (method, definitions, how to run). Do not put benchmark results, rankings, scores, "best model" claims or run counts here. Results live in index.html and explorer.html, which build_report.py generates from results/*.csv. Same rule for Benchmark/README.md and the root README.md. -->
+<!-- Maintainer note: keep this file to information that stays true over time (method, definitions, how to run). Do not put benchmark results, rankings, scores, "best model" claims or run counts here. Results live in index.html and explorer.html, which the report build generates from results/*.csv. Same rule for Benchmark/README.md and the root README.md. -->
 
 This page describes how the benchmark works. For results, open the **[live report](https://maxh8086.github.io/tokenfrugal/Benchmark/)** (rankings, per-role leaderboards, case heatmaps) or the **[live explorer](https://maxh8086.github.io/tokenfrugal/Benchmark/explorer.html)** (filters, charts, sortable table).
 
@@ -18,7 +18,7 @@ This page describes how the benchmark works. For results, open the **[live repor
 - `results/benchmark.csv`: local runs, one row per run.
 - `results/cloud.csv`: cloud baseline runs (for example Claude Haiku), merged in at build time so the baseline stays unchanged unless a cloud run is added on purpose.
 - Column meanings: [README.md](README.md).
-- `python Benchmark/script/build_report.py` regenerates `index.html` and `explorer.html`.
+- Rebuilding the report regenerates `index.html` and `explorer.html`.
 
 ## Forced tool calls
 
@@ -32,10 +32,10 @@ Local model:
 
 ```text
 Benchmark the Ollama model <MODEL_TAG> on this machine for the TokenFrugal repo.
-1. Check `.env` has `LOCAL_LLM_TEMPERATURE=0.0` (copy from `.env.example`). Run `python scripts/doctor.py` and fix what it reports; run `python scripts/install_profiles.py`; start backends with scripts/mcp_up.ps1 (or .sh). Ask before installing anything.
+1. Check `.env` has `LOCAL_LLM_TEMPERATURE=0.0` (copy from `.env.example`). Run the environment doctor check and fix what it reports; install the Docker MCP profiles; start the backends with the bring-up script for your shell. Ask before installing anything.
 2. `ollama pull <MODEL_TAG>`, use a variant whose `num_ctx` follows the context policy (Benchmark/README.md, "Context window and KV cache").
-3. `python Benchmark/script/run_benchmark.py <MODEL_TAG> --tag <SHORT_NAME>`. If the preflight fails, apply the fix command it prints and retry once.
-4. `python Benchmark/script/build_report.py`, then show me the new row (score, pass rate, s per case) and where it ranks.
+3. Run the benchmark for <MODEL_TAG> with tag <SHORT_NAME>. If the preflight fails, apply the fix command it prints and retry once.
+4. Rebuild the report, then show me the new row (score, pass rate, s per case) and where it ranks.
 Do not edit other rows of results/benchmark.csv. Do not commit.
 ```
 
@@ -43,19 +43,19 @@ Cloud model (new baseline run):
 
 ```text
 Run a new cloud baseline for TokenFrugal with model <CLOUD_MODEL> at <BASE_URL>. My key is exported in env var <ENV_VAR_NAME>; never print or store it.
-1. `python Benchmark/script/run_benchmark.py <CLOUD_MODEL> --tag <SHORT_NAME> --endpoint <BASE_URL> --api-key-env <ENV_VAR_NAME>`.
+1. Run the benchmark for <CLOUD_MODEL> with tag <SHORT_NAME>, endpoint <BASE_URL>, and the API key read from env var <ENV_VAR_NAME>.
 2. Move the new row from results/benchmark.csv into results/cloud.csv (same header). Keep the existing rows in cloud.csv unchanged.
-3. `python Benchmark/script/build_report.py` and report the new row. Do not commit.
+3. Rebuild the report and report the new row. Do not commit.
 ```
 
-Optional review prompt: see [script/README.md](script/README.md).
+Optional review prompt: see [the review notes](script/README.md).
 
 ## ComfyUI baseline (GPU)
 
 Measures the LTX 0.9.8 distilled workflow in ComfyUI (`docker/comfyui/workflows/ltx098.json`). It needs the RTX 4060 with no Ollama model loaded and no other GPU process. The scripts refuse to run (exit 2) otherwise, and also when the GPU lease is not held by `comfyui`.
 
-- `scripts/comfy_spike.py`: one run, one row in `results/comfy_baseline.csv`. `--dry-run` validates the workflow and prints the plan without contacting anything.
-- `scripts/comfy_quality.py --workflow ltx098 --seeds 3`: reference and repeat runs at fixed seeds, PSNR and SSIM against the reference clip, then Tier A and Tier B variants.
+- Spike run: one run, one row in `results/comfy_baseline.csv`. `--dry-run` validates the workflow and prints the plan without contacting anything.
+- Quality run (`--workflow ltx098 --seeds 3`): reference and repeat runs at fixed seeds, PSNR and SSIM against the reference clip, then Tier A and Tier B variants.
 
 `results/comfy_baseline.csv` columns:
 
@@ -77,7 +77,7 @@ Quality rules:
 
 - **Tier A** (neutral knobs: attention kernel, offload, prompt cache, precision of non-model nodes) is expected to leave the picture unchanged. It passes when the mean PSNR and the mean SSIM over the seeds are at or above their thresholds. Thresholds come from the repeat runs of the unchanged workflow: mean minus three standard deviations, but never tighter than a floor of 0.5 dB PSNR and 0.002 SSIM. A Tier A change that fails is dropped even when it is faster.
 - **Tier B** (lossy knobs: TeaCache, fewer steps, other quantizations) never passes automatically. The script writes a side-by-side pair and the author signs off in `results/comfy_signoff.md`. Only signed-off settings may become defaults.
-- PSNR is on the luma plane. SSIM is a simplified version (8x8 blocks, not the Gaussian window), so its numbers are only comparable with other runs of this script. Neither metric compares ComfyUI with `kalamanch/generators/generate_ltx.py`; that comparison is wall time and peak VRAM, plus a human check.
+- PSNR is on the luma plane. SSIM is a simplified version (8x8 blocks, not the Gaussian window), so its numbers are only comparable with other runs of this script. Neither metric compares ComfyUI with the LTX generator in `kalamanch`; that comparison is wall time and peak VRAM, plus a human check.
 
 ## Observations
 
