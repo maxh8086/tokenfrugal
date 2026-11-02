@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
 
 class MediahouseRoles(unittest.TestCase):
-    NAMES = ("content-writer", "content-analyst", "media-generator")
+    NAMES = ("content-writer", "content-analyst", "media-generator", "media-motion")
 
     def setUp(self):
         from router.config import ROOT, load_tf_roles
@@ -133,6 +133,9 @@ class MediahouseRoles(unittest.TestCase):
 
     def test_media_generator_native_tools_parse_from_source(self):
         self.assertEqual(preflight._native_tools(self.root, "media-generator"), {"list_raw", "list_renders", "mgen"})
+
+    def test_media_motion_native_tools_parse_from_source(self):
+        self.assertEqual(preflight._native_tools(self.root, "media-briefing"), {"brief"})
 
     def test_contracts_present(self):
         self.assertEqual(preflight.contract_errors(self.roles, {n: self.contracts.get(n) for n in self.NAMES}), {})

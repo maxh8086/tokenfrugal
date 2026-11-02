@@ -41,6 +41,7 @@ roles:
   content-editor: {model: thinker, profile: content-writer, max_steps: 8, timeout_s: 90, required_tool: read_file, tools: [read_file, write_file], skills: [role-content-editor], improve: gated}  # stages 4, 6: critic, anti-slop
   content-analyst: {model: thinker, profile: content-analyst, max_steps: 14, timeout_s: 300, compose: [crawl4ai, searxng, qdrant], native: [crawl4ai, sandbox, reddit, hn, rss, youtube, qdrant, postgres], required_tool: web_search, tools: [web_search, crawl_markdown, read_file, write_file, run_python, search_posts, search_stories, get_feed, searchVideos, getVideoDetails, qdrant-find, execute_sql], skills: [role-content-analyst], improve: gated}  # trend intelligence; separate from the script pipeline
   media-generator: {model: thinker, profile: media-generator, max_steps: 8, timeout_s: 900, native: [media-generator], required_tool: list_raw, tools: [list_raw, list_renders, mgen, read_file], skills: [role-media-generator], improve: gated}  # generator: text brief to motion-graphics film (Mode B, planned); one raw clip to a captioned 9:16 short (Mode A, docker compose media-generator)
+  media-motion: {model: thinker, profile: media-generator, max_steps: 8, timeout_s: 900, native: [media-briefing], required_tool: brief, tools: [brief, read_file], skills: [role-media-motion], improve: gated}  # Mode B: text brief to narrated motion-graphics film (media-briefing tool; slice 1 stub returns "error: not built yet" for a valid brief)
   github-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, required_tool: list_pull_requests, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read], improve: gated}  # read-only; create/close/merge PRs stay with Haiku
   github-actions-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, required_tool: actions_list, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read], improve: gated}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, required_tool: read_file, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops], improve: gated}
@@ -289,7 +290,7 @@ teams:
     roles: [research, finance, docs]
   mediahouse:
     description: Media production. Script pipeline (content-* roles, research to executive rewrite), the separate kalamanch video pipeline and media-generator (generates motion-graphics films from a brief and captioned 9:16 shorts from a raw clip).
-    roles: [kalamanch, content-research, content-factcheck, content-writer, content-editor, content-analyst, media-generator]
+    roles: [kalamanch, content-research, content-factcheck, content-writer, content-editor, content-analyst, media-generator, media-motion]
 
 # Self-improvement gate (scripts/role_improve.py). A role may propose a diff to its own skill files.
 # Nothing is applied automatically: only 'python -m scripts.role_improve approve <id>' applies one.
@@ -549,6 +550,15 @@ contracts:
       - {text: "mgen returned the Render path with no error.", kind: deterministic}
       - {text: "The output file exists in list_renders.", kind: deterministic}
       - {text: "Only the options the task asked for were passed, and no Raw clip was changed.", kind: judgement}
+  media-motion:
+    purpose: Generate a narrated motion-graphics film of 20 to 30 seconds from a text brief. Output goes to Render.
+    inputs: [brief text, length_target_s, music flag if the task asks for it, output name if the task gives one]
+    output_format: Render file name, then the brief exit line.
+    stop_condition: the brief returns the Render path, or 8 steps used.
+    checklist:
+      - {text: "brief returned the Render path with no error.", kind: deterministic}
+      - {text: "Only the options the task asked for were passed.", kind: judgement}
+      - {text: "The narration is 90 words or fewer.", kind: judgement}
   db-postgres-dev:
     purpose: Run read and write statements in a named dev database for one change.
     inputs: [database name, statements or query, expected result]
