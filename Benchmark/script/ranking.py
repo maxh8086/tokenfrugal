@@ -1,9 +1,12 @@
-"""Ranking logic shared by build_report.py and update_recommendations.py: loads benchmark.csv and picks models per role."""
+"""Team scoreboard shared by build_report.py: ranks local models by their team-role results in results/team_results.csv.
+
+The suites builder, thinker, hard and coding are retired. Their CSVs stay in results/ as archives and are not read here.
+SCOREBOARD_VERSION labels every ranking output. Rankings compare only within one version; the old 81-check numbers are
+archived and never added to the team totals.
+"""
 
 import csv
-import html
 import json
-import math
 import re
 import statistics
 import urllib.request
@@ -14,20 +17,13 @@ import yaml
 B = Path(__file__).resolve().parent.parent          # Benchmark/
 AGENTS = B.parent / "router" / "tf-roles.yaml"
 
-# The 16 real case columns. Anything else in the CSV (meta, context_used_* columns) is not a case.
-BUILDER_CASES = ["write_function", "fix_bug", "write_tests", "rename_across_files"]
-THINKER_CASES = ["find_symbol", "review_sqli", "debug_trace", "summarize_readme", "role_analyzer", "role_data",
-                 "role_docs", "role_security", "role_designer", "role_browser", "role_tracker", "role_research"]
-CASES = BUILDER_CASES + THINKER_CASES
-assert len(CASES) == 16
-RUNS_PER_CASE = 3  # a model is ranked for a role only when each of that role's cases ran this many times
+import sys  # noqa: E402
+sys.path.insert(0, str(B.parent))
+from scripts.bench_team_tasks import BENCH_EXCLUDED_TEAMS  # noqa: E402
 
-# Cases that need a specific MCP tool. A 0 score here is marked with a warning sign.
-REQUIRED_TOOL_CASES = {
-    "plan_status": "plan_status",                       # role_tracker
-    "design_overview": "high_level_overview",           # role_designer
-    "browser_navigate_snapshot": "navigate_page",       # role_browser
-}
+SCOREBOARD_VERSION = "team-v1"
+TEAM_FILE = "team_results.csv"
+
 
 def _load(name):
     _path = B / "results" / name
@@ -36,129 +32,47 @@ def _load(name):
     return list(csv.DictReader(_path.open(encoding="utf-8")))
 
 
-# The per-test detail files are the source of truth: one row per (run, model, case), with `superseded=yes`
-# on older rows. benchmark.csv is only a summary and is not read here. Each run becomes one wide row.
-# Excluded from the report: diagnostic runs (probe, browser-longlived) and the cloud Haiku baseline,
-# which stays out of the ranking. Runs where every case hit an infra failure have no valid score.
-EXCLUDE_TAGS = {"probe-qwen-tracker-browser", "browser-longlived", "haiku-baseline"}
-
-
-def _live(name):
-    """Rows of a detail file that were not superseded by a newer run."""
-    return [r for r in _load(name) if not (r.get("superseded") or "").strip()]
-
-
 def _params_by_model():
-    """Model -> params text from the summary CSVs (benchmark.csv, then cloud.csv); the newest non-blank value wins.
-    The detail files have no params column, so this is where a run's params come from."""
+    """Model -> params text from the summary CSV (benchmark.csv); the newest non-blank value wins. Used only to
+    label the params column; no score is read from it."""
     out = {}
-    for name in ("benchmark.csv", "cloud.csv"):
-        for r in _load(name):
-            m = (r.get("builder_model") or r.get("model") or "").strip()
-            p = (r.get("params") or "").strip()
-            if m and p:
-                out[m] = p
-    return out
-
-
-def _detail_runs():
-    """One wide row per run, joined on run_id from all four detail files: realworld (builder.csv, thinker.csv), hard
-    (hard_test.csv) and coding (coder.csv). Together they are the checks benchmark.csv adds up, so a complete run has FULL checks."""
-    runs = {}
-    for fname in ("builder.csv", "thinker.csv", "hard_test.csv", "coder.csv"):
-        for r in _live(fname):
-            g = runs.setdefault(r["run_id"], {"date": r["date"], "git": "", "cases": {}, "case_s": {}, "out": 0.0,
-                                               "infra": 0.0, "valid": 0, "ran": 0, "builder_model": "", "thinker_model": ""})
-            g[f"{r['role']}_model"] = r["model"]
-            g["git"] = g["git"] or r.get("git_sha", "")
-            g["cases"][r["case"]] = r["verified"].lstrip("'")
-            if r.get("s_p50"):
-                g["case_s"][r["case"]] = float(r["s_p50"])
-            g["out"] += float(r.get("output") or 0)
-            g["infra"] += float(r.get("infra_cases") or 0)
-            g["valid"] += r.get("status") == "valid"
-            g["ran"] += (r.get("ran") or "0").split("/")[0] not in ("", "0")  # cases with at least one attempt ran
-    out = []
-    for run_id, g in runs.items():
-        if g["builder_model"] in EXCLUDE_TAGS or g["thinker_model"] in EXCLUDE_TAGS:
-            continue
-        a = sum(int(v.split("/")[0]) for v in g["cases"].values() if "/" in v)
-        n = sum(int(v.split("/")[1]) for v in g["cases"].values() if "/" in v)
-        row = {"model": g["builder_model"] or g["thinker_model"], "date": g["date"],
-               "params": _PARAMS.get(g["builder_model"] or g["thinker_model"], ""), "git_sha": g["git"],
-               "harness_version": "", "shared_system_memory_gb": "", "total_s": "", "run_id": run_id,
-               "builder_model": g["builder_model"] or g["thinker_model"], "thinker_model": g["thinker_model"],
-               "score": str(a), "max": str(n), "ran": str(g["ran"]), "valid_cases": str(g["valid"]),
-               "mean_s_per_case": f"{statistics.mean(g['case_s'].values()):.2f}" if g["case_s"] else "",
-               "median_s": statistics.median(g["case_s"].values()) if g["case_s"] else None,
-               "tokens_out_per_run": f"{g['out']:g}", "infra_cases": f"{g['infra']:g}"}
-        for c in CASES:
-            row[c] = g["cases"].get(c, "")
-        row["case_s"] = g["case_s"]
-        out.append(row)
+    for r in _load("benchmark.csv"):
+        m = (r.get("builder_model") or r.get("model") or "").strip()
+        p = (r.get("params") or "").strip()
+        if m and p:
+            out[m] = p
     return out
 
 
 _PARAMS = _params_by_model()
 
 
-def _team_scores():
-    """Model -> {team: "passes/valid"} summed over that team's roles in results/team_results.csv. Valid = runs minus infra.
-    A team with no role run for a model is absent, so the report shows NA for it."""
-    tot = {}
-    for r in _load("team_results.csv"):
-        valid = int(r["runs"] or 0) - int(r["infra"] or 0)
-        if valid <= 0 or not r["runs"] or r["runs"] == "0":
+def team_rows():
+    """One dict per (model, team, role) row of team_results.csv. valid = runs minus infra repeats; passes and checks
+    count valid repeats only, so an infra repeat is in neither the passes nor the checks. s = mean warm seconds per
+    case for the role (None when blank)."""
+    out = []
+    for r in _load(TEAM_FILE):
+        if r["team"] in BENCH_EXCLUDED_TEAMS:  # not part of the model benchmark
             continue
-        t = tot.setdefault(r["model"], {}).setdefault(r["team"], [0, 0])
-        t[0] += int(r["passes"] or 0)
-        t[1] += valid
-    return {m: {t: f"{a}/{n}" for t, (a, n) in teams.items()} for m, teams in tot.items()}
+        runs, infra = int(r["runs"] or 0), int(r["infra"] or 0)
+        out.append({"model": r["model"], "team": r["team"], "role": r["role"], "runs": runs, "infra": infra,
+                    "valid": max(runs - infra, 0), "passes": int(r["passes"] or 0),
+                    "s": float(r["mean_s_warm"]) if (r.get("mean_s_warm") or "").strip() else None,
+                    "date": (r.get("date") or "")[:10]})
+    return out
 
 
-_TEAM_SCORES = _team_scores()
-rows = [r for r in _detail_runs() + _load("cloud.csv")]  # cloud rows are shown, never ranked (_local)
-rows = [r for r in rows if (r.get("ran") or "0") not in ("", "0") and (r.get("valid_cases") or "0") not in ("", "0") or r["builder_model"].startswith("claude-")]
-
-
-def num(r, k):
-    try:
-        return float(r[k])
-    except (ValueError, TypeError, KeyError):
-        return 0.0
-
-
-def pct(r):
-    return 100 * num(r, "score") / max(num(r, "max"), 1)
-
-
-def params_b(p, model=""):
-    """Billions of parameters from the params column; if blank, from a size tag in the model name (4b, e4b, 1.2b)."""
-    m = re.match(r"\s*([\d.]+)B", p or "")
-    if m:
-        return float(m.group(1))
-    if model.startswith("claude-"):
-        return None
-    m = re.search(r"(?:^|[^a-z\d.])e?(\d+(?:\.\d+)?)b(?![a-z])", model, re.I)
-    return float(m.group(1)) if m else None
-
-
-def case_frac(r, c):
-    try:
-        a, n = r[c].lstrip("'").split("/")  # benchmark.csv stores n/m with a leading apostrophe for Excel
-        return int(a) / int(n)
-    except Exception:
-        return None
-
-
-TRIAL = Path(__file__).resolve().parents[2] / "models" / "trial"
-LOCAL_BUILDS = {   # tag -> (base model to pull, Modelfile that derives the tag)
-    "qwen2.5-coder-yarn:3b": ("qwen2.5-coder:3b", "models/builder.Modelfile"),
-    "llama3.2:3b-16k": ("llama3.2:3b", "models/thinker.Modelfile"),
-}
+TEAM_ROWS = team_rows()
+# The team roles the scoreboard covers: every (team, role) pair in team_results.csv. A model is ranked only when it
+# has a run with at least one valid check for each of them.
+ROLE_KEYS = sorted({(t["team"], t["role"]) for t in TEAM_ROWS})
+ROLE_LABELS = [f"{team}/{role}" for team, role in ROLE_KEYS]   # column keys the explorer page reads
+TEAMS = sorted({team for team, _ in ROLE_KEYS})
 
 
 CTX_SUFFIX = re.compile(r"-(8192|16384|32768|40960|49152|65536)$")
+TRIAL = Path(__file__).resolve().parents[2] / "models" / "trial"
 
 
 def _ollama_show(name):
@@ -204,9 +118,6 @@ def origin(name):
     """(source, exact command to get this model) from the model tag the run used. Blank pull = source not recorded."""
     if name.startswith("claude-"):
         return "Anthropic API", "not pullable (cloud baseline)"
-    if name in LOCAL_BUILDS:
-        base, mf = LOCAL_BUILDS[name]
-        return "Ollama library (run as local 16k wrapper)", f"ollama pull {base}"
     if name.startswith("ts-"):
         want = _norm(name.split(":")[0])
         for mf in sorted(TRIAL.glob("*.Modelfile")):
@@ -228,77 +139,85 @@ def origin(name):
     return "Ollama library", f"ollama pull {name}"
 
 
-def subtotal(r, cases):
-    """(passed, total) summed over the given case columns."""
-    a = n = 0
-    for c in cases:
-        try:
-            x, y = r[c].lstrip("'").split("/")
-            a, n = a + int(x), n + int(y)
-        except Exception:
-            pass
-    return a, n
-
-
-def sub_md(r, cases):
-    a, n = subtotal(r, cases)
-    return f"{a}/{n}" if n else "⬜ NA"
-
-
-def tps(r):
-    """Tokens per second, the primary speed metric: tokens_out_per_run / (mean_s_per_case x max).
-    None when the row lacks the inputs (legacy rows), so it shows blank rather than zero."""
-    s, m, t = num(r, "mean_s_per_case"), num(r, "max"), num(r, "tokens_out_per_run")
-    return round(t / (s * m), 1) if s and m and t else None
+def params_b(p, model=""):
+    """Billions of parameters from the params column; if blank, from a size tag in the model name (4b, e4b, 1.2b)."""
+    m = re.match(r"\s*([\d.]+)B", p or "")
+    if m:
+        return float(m.group(1))
+    if model.startswith("claude-"):
+        return None
+    m = re.search(r"(?:^|[^a-z\d.])e?(\d+(?:\.\d+)?)b(?![a-z])", model, re.I)
+    return float(m.group(1)) if m else None
 
 
 def spc(r):
-    """Seconds per case, the primary speed metric: mean wall seconds for one case (lower = faster). None when absent."""
-    return num(r, "mean_s_per_case") or None
+    """Seconds per case, the tie-break speed metric: median of the role timings (lower = faster). None when absent."""
+    return r.get("median_s") or None
 
 
+def num(r, k):
+    try:
+        return float(r[k])
+    except (ValueError, TypeError, KeyError):
+        return 0.0
 
 
+def _scoreboard():
+    """One row per model that has any team-role row. Score = passes over valid checks summed across the team roles.
+    A model is ranked only when every team role ran (at least one valid check). Rank: pass rate (most first), then
+    median seconds per case (fastest first). Unranked models keep their row with rank None."""
+    by_model = {}
+    for t in TEAM_ROWS:
+        by_model.setdefault(t["model"], {})[(t["team"], t["role"])] = t
+    out = []
+    for model, got in by_model.items():
+        a = n = infra = ran = 0
+        secs, cells, teams, dates = [], {}, {}, []
+        for key, label in zip(ROLE_KEYS, ROLE_LABELS):
+            t = got.get(key)
+            if t is None:
+                cells[label] = "⬜ NA"
+                continue
+            infra += t["infra"]
+            dates.append(t["date"])
+            if t["valid"] <= 0:
+                cells[label] = "⬜ infra"
+                continue
+            ran += 1
+            a += t["passes"]
+            n += t["valid"]
+            cells[label] = f"{t['passes']}/{t['valid']}"
+            ta, tn = teams.get(key[0], (0, 0))
+            teams[key[0]] = (ta + t["passes"], tn + t["valid"])
+            if t["s"] is not None:
+                secs.append(t["s"])
+        params = _PARAMS.get(model, "")
+        source, pull = origin(model)
+        row = {"builder_model": model, "day": max(dates, default=""), "params": params,
+               "params_b": params_b(params, model), "source": source, "pull": pull,
+               "a": a, "n": n, "score": str(a), "max": str(n),
+               "pct": round(100 * a / n) if n else None,
+               "median_s": statistics.median(secs) if secs else None,
+               "mean_s_per_case": f"{statistics.median(secs):.2f}" if secs else "",
+               "tps": None, "total_s": "", "valid_cases": str(ran), "infra_cases": str(infra),
+               "ran": str(ran), "team": "", "git_sha": "", "harness_version": "", "shared_system_memory_gb": "",
+               "teams": {tm: f"{x}/{y}" for tm, (x, y) in teams.items()}, "version": SCOREBOARD_VERSION,
+               "ranked": ran == len(ROLE_KEYS), "rank": None}
+        row.update(cells)  # one "a/b" cell per team role, keyed "team/role"
+        out.append(row)
+    ranked = sorted((r for r in out if r["ranked"]),
+                    key=lambda r: (-(r["a"] / r["n"]), r["median_s"] if r["median_s"] is not None else 1e9,
+                                   r["builder_model"]))
+    for i, r in enumerate(ranked, 1):
+        r["rank"] = i
+    return out
 
-rows.sort(key=lambda r: (spc(r) or 1e9, -pct(r)))
-for r in rows:
-    r["pct"] = round(pct(r))
-    r["spc"] = spc(r)
-    r["tps"] = tps(r)
-    r["day"] = (r.get("date") or "")[:10]
-    r["source"], r["pull"] = origin(r["builder_model"])
-    r["builder_score"], r["thinker_score"] = sub_md(r, BUILDER_CASES), sub_md(r, THINKER_CASES)
-    r["params_b"] = params_b(r["params"], r["builder_model"])
-    r["shared_system_memory_gb"] = r.get("shared_system_memory_used_gb") or ""  # the column the page reads as "Shared memory GB"
 
-
-# Shared memory GB and t/s per builder tag, for the pass tables (team and Hard) that have no benchmark row of their own.
-_MODEL_STATS = {}
-for r in rows:
-    _MODEL_STATS.setdefault(r["builder_model"], {"shared": num(r, "shared_system_memory_gb") if r["shared_system_memory_gb"] else None, "tps": r["tps"]})
-
-
-# Complete local runs: the full check count, as benchmark.csv scores them.
-_local = [r for r in rows if not r["builder_model"].startswith("claude-") and (r["spc"] or 0) > 0]
-_full = max((num(r, "max") for r in _local), default=0)
-_cands = [r for r in _local if num(r, "max") == _full]
-_max_tps = max((r["tps"] for r in _cands if r["tps"]), default=1)  # kept for callers that still import it
-# Rank: each model's newest complete run, by total passes (most first), then median seconds per case (fastest first).
-# Same order as rank_rows() in store.py. benchmark.csv keeps one summary row per model, so the explorer ranks the
-# same runs. Older and partial runs get no rank (None).
-_newest = {}
-for r in _cands:
-    if r["builder_model"] not in _newest or r["run_id"] > _newest[r["builder_model"]]["run_id"]:
-        _newest[r["builder_model"]] = r
-_ranked = sorted(_newest.values(), key=lambda r: (-num(r, "score"), num(r, "median_s") or 1e9))
-for r in rows:
-    r["rank"] = None
-for i, r in enumerate(_ranked, 1):
-    r["rank"] = i
+rows = _scoreboard()
 
 
 def mmss(v):
-    """total_s seconds as m:ss; '' when blank (legacy rows written before total_s existed)."""
+    """total_s seconds as m:ss; '' when blank."""
     try:
         t = int(float(v))
     except (ValueError, TypeError):
@@ -307,183 +226,26 @@ def mmss(v):
 
 
 RANK_LEGEND = [
-    "Score = verified checks passed out of total checks across the builder, thinker, hard and coding suites.",
-    "Pass rate % = Score / max.",
-    "Builder / Thinker = the same score split by role cases.",
-    "s per case = mean wall seconds for one case (primary speed metric, lower = faster). It measures how long you wait for an answer, so wordy models get no credit for verbosity.",
-    "t/s = tokens generated per second, shown for information only; it no longer affects rank.",
-    "Rank = position among each model's newest complete run, by total passes (most first), then median seconds per case (fastest first). The same runs benchmark.csv ranks. Cloud and partial runs are not ranked.",
-    "Run time = wall clock for the whole run.",
-    "Valid cases = cases whose status is valid on the page: a case with infrastructure failure or no tools called is not valid and is excluded from speed, not from score. Counted per case over the builder, thinker, hard and coding files.",
-    "Ran = cases with at least one attempt that reached the model. A case that never ran is not counted. Counted per case over the same four files, so it is out of the same total as valid cases.",
-    "Date = when the run happened; newer = made with newer code.",
+    f"Scoreboard version {SCOREBOARD_VERSION}. Rankings compare only within one version. The older builder, thinker, hard and coding suites are retired: their scores are archived and not added to team totals.",
+    "Score = passes over valid checks, summed across the team roles in results/team_results.csv. Infra repeats are left out of both the passes and the checks.",
+    "Pass rate % = Score / max, where max is the valid checks.",
+    "Each team-role cell is passes/valid checks for that role over its runs. A role that only had infra repeats shows ⬜ infra.",
+    "s per case = median of the roles' mean warm seconds per case (lower = faster). It is the tie-break after pass rate.",
+    "Rank = position among models that ran every team role, by pass rate (most first), then s per case (fastest first). A model missing any role, or with no valid check in one, is not ranked.",
+    "Date = the newest run date among the model's team roles.",
 ]
 RANK_LEGEND_MD = "\n".join(f"- {l}" for l in RANK_LEGEND)
 
 
 def md_table():
-    o = ["| # | Model | Date | Params | Score | Pass rate % | Builder | Thinker | s per case | t/s | Rank | Run time | Valid cases |",
-         "|--:|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+    o = ["| # | Model | Date | Params | Score | Pass rate % | s per case | Rank | Valid cases |",
+         "|--:|---|---|---|--:|--:|--:|--:|--:|"]
     for i, r in enumerate(rows, 1):
         m = f"`{r['builder_model']}`" + (" ⚠infra" if num(r, "infra_cases") > 0 else "")
         comp = "" if r["rank"] is None else str(r["rank"])
-        score = frac_cell(f"{r['score']}/{r['max']}")
-        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {score} "
-                 f"| {r['pct']} | {frac_cell(r['builder_score'])} | {frac_cell(r['thinker_score'])} "
-                 f"| {r['mean_s_per_case']} | {'' if r['tps'] is None else r['tps']} | {comp} | {mmss(r.get('total_s'))} | {r.get('valid_cases') or ''} |")
+        o.append(f"| {i} | {m} | {r['day']} | {r['params']} | {frac_cell(r['score'] + '/' + r['max'])} "
+                 f"| {r['pct'] if r['pct'] is not None else ''} | {r['mean_s_per_case']} | {comp} | {r['valid_cases']} |")
     return "\n".join(o)
-
-
-DOT = {"green": "🟢", "amber": "🟡", "red": "🔴"}
-DOT_LEGEND = [
-    "🟢 Preferred: every case of the role passes in every run, no infra flag, nothing spilled to system RAM.",
-    "🟡 Usable: passes at least 75% of the role's checks overall, or passes everything but had an infra flag or system-RAM spill.",
-    "🔴 Not recommended: below 75% of the role's checks.",
-]
-RANK_DOT_LEGEND_MD = "\n".join(f"- {l}" for l in DOT_LEGEND)
-
-
-def _status(m):
-    clean = m["infra"] == 0 and m["shared"] == 0
-    if m["full"] == m["runs"] and clean:
-        return "green"
-    if m["a"] / m["n"] >= 0.75:
-        return "amber"
-    return "red"
-
-
-def _sort_role(agg):
-    """Rank by pass rate on the role's own cases (most first), then median seconds per case (fastest first), then more
-    evidence. Status is a label, not a sort key. Each role is ranked on its own cases only."""
-    for m in agg.values():
-        m["score"] = round(m["a"] / m["n"], 3)
-    return sorted(agg.items(), key=lambda kv: (-kv[1]["score"], kv[1]["s"][0] if kv[1]["s"] else 1e9, -kv[1]["n"]))
-
-
-def cloud_reference(cases):
-    """Cloud (claude-*) reference for one role, from cloud.csv: pass rate on the cases it actually ran, scaled to the
-    role's size. The cloud model is the ceiling, shown beside the local ranking and never part of it. None if absent."""
-    best = None
-    for r in _load("cloud.csv"):
-        a, n = subtotal(r, cases)
-        if n and (best is None or a / n > best[1]["a"] / best[1]["n"]):
-            best = (r["builder_model"], {"a": a, "n": n})
-    return best
-
-
-def _role_run(r, cases):
-    """(passed, total) for one role's cases in this run, or None unless every case ran RUNS_PER_CASE times (n=3)."""
-    a = 0
-    for c in cases:
-        try:
-            x, y = (int(v) for v in r[c].lstrip("'").split("/"))
-        except (KeyError, ValueError, AttributeError):
-            return None  # case missing or not scored
-        if y != RUNS_PER_CASE:
-            return None
-        a += x
-    return a, RUNS_PER_CASE * len(cases)
-
-
-def _role_latest(cases):
-    """Each local model's newest run that covers this role's cases: {model: row}. Other roles' runs are ignored."""
-    latest = {}
-    for r in rows:
-        name = r["builder_model"]
-        if name.startswith("claude-") or not any(r.get(c) for c in cases):
-            continue
-        if name not in latest or r.get("run_id", "") > latest[name].get("run_id", ""):
-            latest[name] = r
-    return latest
-
-
-def role_unranked(cases):
-    """Models whose newest run for this role is not n=3 on every case. They are left out of the role's ranking."""
-    return sorted(name for name, r in _role_latest(cases).items() if _role_run(r, cases) is None)
-
-
-def _role_agg(cases):
-    """Per-model totals for one role, from each model's newest run of that role only. A run counts only when every
-    case of the role ran n=3 times, so a model with a partial or n!=3 run for the role is not ranked for it."""
-    agg = {}
-    for name, r in _role_latest(cases).items():
-        got = _role_run(r, cases)
-        if got is None:
-            continue
-        a, n = got
-        m = {"a": a, "n": n, "runs": 1, "full": a == n, "infra": num(r, "infra_cases") > 0,
-             "shared": num(r, "shared_system_memory_gb"), "s": [], "t": [], "d": (r.get("date") or "")[:10],
-             "g": {(r.get("git_sha") or "")[:7]}, "h": {r.get("harness_version") or ""}, "pull": r["pull"], "row": r}
-        case_s = [r["case_s"][c] for c in cases if c in r.get("case_s", {})]
-        if case_s:
-            m["s"].append(statistics.median(case_s))
-        if r["tps"] is not None:
-            m["t"].append(r["tps"])
-        agg[name] = m
-    return agg
-
-
-BEST_AVAILABLE_COUNT = 3
-
-
-def role_pick(cases):
-    """(preferred list, faster, best available) for one role. Preferred = green models in rank order; faster = the
-    quickest preferred model with the same pass rate as the top one, when it is not the top one.
-    When no model is green, best available = the top-ranked models (amber before red) instead."""
-    ranked = _sort_role(_role_agg(cases))
-    greens = [(n, m) for n, m in ranked if _status(m) == "green"]
-    if not greens:
-        return [], None, [n for n, _ in ranked[:BEST_AVAILABLE_COUNT]]
-    top_name, top = greens[0]
-    top_pct = top["a"] / top["n"]
-    same = [(n, m) for n, m in greens if m["a"] / m["n"] == top_pct and m["t"]]
-    fast_name = max(same, key=lambda kv: sum(kv[1]["t"]) / len(kv[1]["t"]), default=(None, None))[0]
-    return [n for n, _ in greens], (fast_name if fast_name != top_name else None), []
-
-
-# Hard thinker suite: separate from the 48-case standard. Detail rows live in results/hard_test.csv (store.py).
-HARD_CASES = ["hard_multifile_bug", "hard_two_vulns", "hard_ambiguous_trace", "hard_long_summary", "hard_compare_functions"]
-HARD_FILE = B / "results" / "hard_test.csv"
-
-
-def hard_results(path=None):
-    """{thinker model: {"cases": {case: (verified, n)}, "a": verified total, "n": runs total, "s": median s/case}}.
-    Per model and case the newest non-superseded row counts (run_id is a timestamp, so string order is time order)."""
-    newest = {}                                 # (model, case) -> row
-    try:
-        with open(path or HARD_FILE, encoding="utf-8", newline="") as fh:
-            for r in csv.DictReader(fh):
-                if r["superseded"] == "yes" or r["case"] not in HARD_CASES:
-                    continue
-                key = (r["model"], r["case"])
-                if key not in newest or r["run_id"] > newest[key]["run_id"]:
-                    newest[key] = r
-    except OSError:
-        return {}
-    out = {}
-    for (model, case), r in newest.items():
-        try:
-            v, n = (int(x) for x in r["verified"].lstrip("'").split("/"))
-        except ValueError:
-            continue
-        m = out.setdefault(model, {"cases": {}, "secs": []})
-        m["cases"][case] = (v, n)
-        m["day"] = max(m.get("day", ""), r["date"][:10])
-        if r["s_p50"]:
-            m["secs"].append(float(r["s_p50"]))
-    for m in out.values():
-        secs = sorted(m.pop("secs"))
-        m["a"] = sum(v for v, _ in m["cases"].values())
-        m["n"] = sum(n for _, n in m["cases"].values())
-        m["s"] = secs[len(secs) // 2] if secs else 0.0
-    return out
-
-
-_HARD = hard_results()  # hard_test.csv, newest non-superseded row per model and case
-for r in rows:  # hard and team scores need hard_results(), so they are attached here, after its definition
-    h = _HARD.get(r["builder_model"])
-    r["hard"] = f"{h['a']}/{h['n']}" if h else ""
-    r["teams"] = _TEAM_SCORES.get(r["builder_model"], {})
 
 
 def score_cell(a, n):
@@ -505,29 +267,15 @@ PASS_DATA = {}  # page key -> {labels, rows}; the page script draws each one wit
 def pass_entry(name, a, n, runs, cells, s, day="", think=""):
     """One model's row for pass_block: a/n passes, runs per case, one cell per column ('a/b' or a marker), median s/case, latest run date, thinking level."""
     p = _PARAMS.get(name, "")
-    st = _MODEL_STATS.get(name, {})
     return {"name": name, "a": a, "n": n, "runs": runs, "cells": cells, "s": s, "day": day, "params": p, "pb": params_b(p, name),
-            "shared": st.get("shared"), "tps": st.get("tps"), "think": think}
+            "shared": None, "tps": None, "think": think}
 
 
 def pass_block(key, entries, labels):
-    """Register one pass table (a team or the Hard suite) and return its placeholder. Entries must be in rank order."""
+    """Register one pass table (a team) and return its placeholder. Entries must be in rank order."""
     PASS_DATA[key] = {"labels": labels, "rows": [
         {"model": e["name"], "params": e["params"], "pb": e["pb"], "rank": i, "a": e["a"], "n": e["n"],
          "pct": round(100 * e["a"] / e["n"]) if e["n"] else None, "s": round(e["s"], 1) if e["s"] else None,
          "runs": e["runs"], "cells": e["cells"], "day": e["day"], "shared": e["shared"], "tps": e["tps"], "think": e["think"]}
         for i, e in enumerate(entries, 1)]}
     return f'<div id="{key}-bar"></div>\n<div id="{key}" class="tbox"></div>'
-
-
-def hard_md(results=None):
-    """The Hard suite as a pass_block, best first."""
-    res = hard_results() if results is None else results
-    if not res:
-        return "_No hard-suite runs yet._"
-    entries = []
-    for m, r in sorted(res.items(), key=lambda kv: (-kv[1]["a"] / max(kv[1]["n"], 1), kv[1]["s"] or 1e9)):
-        cells = [f"{r['cases'][c][0]}/{r['cases'][c][1]}" if c in r["cases"] else "⬜ NA" for c in HARD_CASES]
-        runs = max((n for _, n in r["cases"].values()), default="")
-        entries.append(pass_entry(m, r["a"], r["n"], runs, cells, r["s"] or None, r.get("day", "")))
-    return pass_block("hd", entries, [c.replace("hard_", "") for c in HARD_CASES])

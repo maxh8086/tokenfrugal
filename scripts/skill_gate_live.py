@@ -22,28 +22,26 @@ from router import preflight
 from router.config import ROOT
 from scripts import skill_gate as g
 
-CASES = {"code-l2": "code_l2_slugify", "code-l4": "code_l4_rename", "code-l6": "code_l6_callers"}
+# skill -> dev-coding role name (a key of teams["dev-coding"]["roles"] in router/tf-roles.yaml)
+CASES = {"code-l2": "code-l2", "code-l4": "code-l4", "code-l6": "code-l6"}
 RESULTS = ROOT / "Benchmark" / "results" / "gate"
 SUITE_TIMEOUT_S = 3 * 3600
 
 
-def _records(node):
-    """Every run record (a dict with 'status' and 'verified') anywhere in the bench JSON."""
-    if isinstance(node, dict):
-        if "status" in node and isinstance(node.get("verified"), bool):  # skips the text summary row
-            yield node
-        for v in node.values():
-            yield from _records(v)
-    elif isinstance(node, list):
-        for v in node:
-            yield from _records(v)
+def _role_runs(data, role):
+    """(verified, runs) for one role from a roles-section bench JSON; infra runs are left out of both counts."""
+    roles = (data.get("results") or {}).get("roles")
+    if not isinstance(roles, dict) or not isinstance(roles.get(role), dict) or "runs" not in roles[role]:
+        raise RuntimeError(f"bench JSON has no roles result for {role}")
+    runs = [r for r in roles[role]["runs"] if not r.get("infra")]
+    return sum(1 for r in runs if r.get("ok") is True), len(runs)
 
 
 BASE = {}  # skill -> original text (LF), filled before any run
 
 
 def run_variant(skill, label, text, n, stamp):
-    """Run one case n times with `text` as the skill. Returns (verified, runs) counting non-infra runs only."""
+    """Run one role n times with `text` as the skill. Returns (verified, runs) counting non-infra runs only."""
     # checked before every variant; a drifted or missing skill file is restored to the baseline first
     action = preflight.heal_skill(g.SKILLS / skill / "SKILL.md", BASE[skill])
     if action:
@@ -54,15 +52,14 @@ def run_variant(skill, label, text, n, stamp):
     tag = f"gate-{skill}-{stamp}-{label}"
     out = RESULTS / "raw" / tag
     out.mkdir(parents=True, exist_ok=True)
-    env = {**os.environ, "BENCH_SUITE": "coding", "BENCH_CASES": CASES[skill], "BENCH_OUT_DIR": str(out)}
-    subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "realworld", "--n", str(n), "--tag", tag],
+    env = {**os.environ, "BENCH_ROLES": CASES[skill], "BENCH_OUT_DIR": str(out)}
+    subprocess.run([sys.executable, "-m", "scripts.bench", "--only", "roles", "--n", str(n), "--tag", tag],
                    cwd=ROOT, env=env, check=False, timeout=SUITE_TIMEOUT_S)
     hits = sorted(out.glob(f"*-{tag}.json"), key=lambda p: p.stat().st_mtime)
     if not hits:
         raise RuntimeError(f"no bench JSON for {tag} in {out}")
     data = json.loads(hits[-1].read_text(encoding="utf-8"))
-    runs = [r for r in _records(data) if r["status"] != "infra"]
-    return sum(1 for r in runs if r["verified"]), len(runs)
+    return _role_runs(data, CASES[skill])
 
 
 def run_tests():

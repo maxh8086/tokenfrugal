@@ -1,12 +1,12 @@
 """Two-layer result store.
 
   results/benchmark.csv   one summary row per model: its latest run. Built from the test files, never typed by hand.
-  results/builder.csv     builder realworld cases
-  results/coder.csv       builder coding cases
-  results/thinker.csv     thinker realworld cases
-  results/hard_test.csv   thinker hard cases
+  results/team_results.csv  the team-role scoreboard (ranking.py, SCOREBOARD_VERSION team-v1).
 
-Column order and the test list are in results/LAYOUT.md. A new test is added to TESTS below.
+The retired suites (builder, thinker, hard, coding) are no longer written or read. Their files (builder.csv,
+coder.csv, thinker.csv, hard_test.csv) stay in results/ as archives. TESTS is empty until a new suite is added.
+
+Column order is in results/LAYOUT.md. A new test is added to TESTS below.
 
 A run writes its detail rows to the test files. Older rows for the same model, role and suite stay there,
 marked superseded=yes. The summary row for the model is then recomputed from the latest non-superseded rows.
@@ -24,25 +24,13 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import csvstore  # noqa: E402
-import ranking as R  # noqa: E402
 
-CODING_CASES = ["code_l1_clamp", "code_l2_slugify", "code_l3_tax", "code_l4_rename", "code_l5_median",
-                "code_l6_callers"]
-HARD_CASES = ["hard_multifile_bug", "hard_two_vulns", "hard_ambiguous_trace", "hard_long_summary",
-              "hard_compare_functions"]
 RUNS_PER_CASE = 3
 
 # One entry per test, in summary column order. role = which model ran it; suite = the suite key in the raw JSON.
-TESTS = {
-    "builder": {"file": "builder.csv", "role": "builder", "suite": "realworld", "cases": R.BUILDER_CASES,
-                "score": "builder_score", "when": "datetime_builder"},
-    "thinker": {"file": "thinker.csv", "role": "thinker", "suite": "realworld", "cases": R.THINKER_CASES,
-                "score": "thinker_score", "when": "datetime_thinker"},
-    "hard": {"file": "hard_test.csv", "role": "thinker", "suite": "hard", "cases": HARD_CASES,
-             "score": "thinker_hard_score", "when": "datetime_hard"},
-    "coding": {"file": "coder.csv", "role": "builder", "suite": "coding", "cases": CODING_CASES,
-               "score": "coding_score", "when": "datetime_coding"},
-}
+# Retired: the builder, thinker, hard and coding entries were removed with their suites (the scoreboard now ranks
+# team-role results from team_results.csv). Add a new suite here to run it again.
+TESTS = {}
 
 # Per-case columns, same for every test file.
 CASE_COLS = ["run_id", "date", "model", "role", "suite", "case", "verified", "ran", "status", "s_p50", "s_min",
@@ -120,7 +108,7 @@ def _fraction(v):
 def suite_detail(json_path, role, suite, cases, run_id=None, model=None, run_cols=None):
     """Case rows for one suite from one raw/suite JSON. Cases missing from the file are skipped, not invented.
     run_id and model override the file's own stamp and meta, so tests run in one invocation share one run id.
-    Suite files keep their cases under results[<suite>] or, as the existing runner writes them, under results[realworld]."""
+    Suite files keep their cases under results[<suite>] or, as the existing runner writes them, under results[roles]."""
     json_path = Path(json_path)
     d = json.loads(json_path.read_text(encoding="utf-8"))
     meta = d.get("meta", {})
@@ -129,7 +117,7 @@ def suite_detail(json_path, role, suite, cases, run_id=None, model=None, run_col
     if not model:
         raise ValueError(f"{json_path.name}: no {role} model given or in meta")
     date = datetime.strptime(stamp, "%Y%m%d-%H%M%S").isoformat(timespec="seconds")
-    results = d["results"].get(suite) or d["results"].get("realworld", {})
+    results = d["results"].get(suite) or d["results"].get("roles", {})
     rows = []
     for case in cases:
         c = _case_result(results, case)

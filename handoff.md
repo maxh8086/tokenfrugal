@@ -1,4 +1,5 @@
 ﻿# Handoff: tokenfrugal
+> Note: `run_benchmark.py` and `queue_watch.py` were deleted in the benchmark-retire-suites worktree when the realworld benchmark was retired. Mentions below are dated history, not live commands.
 
 Last updated: 2026-10-30
 
@@ -237,7 +238,7 @@ Tool overlap only, different skill (keep; not duplicates):
 
 **Plan (user decision, 2026-10-20)**
 - `Benchmark/results/benchmark.csv` is the source of truth for summaries: one row per model, its latest run only.
-- Four detail CSVs, one per test, with full per-case data: `builder.csv` (builder realworld), `coder.csv` (coding), `thinker.csv` (thinker realworld), `hard_test.csv` (hard). Coding and hard do not go into builder or thinker.
+- Four detail CSVs, one per test, with full per-case data: `builder.csv` (builder roles), `coder.csv` (coding), `thinker.csv` (thinker roles), `hard_test.csv` (hard). Coding and hard do not go into builder or thinker.
 - A run for a role writes its detail rows to that role's CSV and updates only that model's summary row in `benchmark.csv`.
 - Older detail rows for the same model, role and suite stay in the role CSV and are marked `superseded=yes`. Nothing is deleted.
 - Column list kept in `benchmark.csv`: params, endpoint, temperature, harness_version, loop_version, compression_level, context_used_peak_tokens, gpu_memory_capacity (from vram_gb), gpu_memory_used_gb, system_ram_gb, shared_system_memory_capacity_gb, shared_system_memory_used_gb, peak_model_ram_gb, plus the v6 score and rank columns and the pipeline keys the scorer reads.
@@ -246,13 +247,13 @@ Tool overlap only, different skill (keep; not duplicates):
 
 **Done (temp-CSV tested; the real `benchmark.csv` and detail CSVs are not written)**
 - `Benchmark/script/store.py`:
-  - `suite_detail(json, role, suite, cases, run_id, model, run_cols)` builds one row per case from a raw or suite JSON. Reads `results[<suite>]`, falling back to `results[realworld]`.
+  - `suite_detail(json, role, suite, cases, run_id, model, run_cols)` builds one row per case from a raw or suite JSON. Reads `results[<suite>]`, falling back to `results[roles]`.
   - `route` / `publish_detail` write each test to its own file. Re-publishing the same run replaces its rows; older runs are marked `superseded=yes`.
   - `summarize` computes score, total, median, mean and datetime from the latest run only, blank when a test is incomplete.
   - `upsert_summary` replaces the model's row, then re-ranks. `load_details` reads all test files.
-- `Benchmark/script/run_benchmark.py` writes through `store.py`. Hard and coding rows share the realworld run id.
+- `Benchmark/script/run_benchmark.py` (since deleted) writes through `store.py`. Hard and coding rows share the roles run id.
 - `Benchmark/script/hardware.py`: `ollama` is one version string (server API first), not the CLI's multi-line output.
-- Temp test, realworld only (`ts-qwen3-4b`): builder 2/12, thinker 27/36, total blank, as the rules require.
+- Temp test, roles only (`ts-qwen3-4b`): builder 2/12, thinker 27/36, total blank, as the rules require.
 - Live test with hard and coding suites on `ts-qwen2-5-1-5b-32768` (small model, 3 attempts per case). It wrote to a temp folder. Its raw outputs in `results/raw/` (231137) and `results/raw/suites/` (231631, 231850) were deleted on 2026-10-21 once the result was concluded.
 - `max` is now `27 × n` from the run's `n` (81 at n=3, 27 at n=1), falling back to 3 when `n` is blank. Checked on a temp CSV.
 - **Backfill (2026-10-21).** The four detail CSVs and `benchmark.csv` were rebuilt from the raw JSON and approved. The real files were replaced; the previous versions are in `results/backups/` as `<name>-pre-backfill-20261021-014503.csv` (`benchmark`, `builder`, `thinker`; `coder.csv` and `hard_test.csv` did not exist before). The rebuild script is `backfill_build.py` in the session scratchpad, and it is not in the repo.
@@ -268,7 +269,7 @@ Tool overlap only, different skill (keep; not duplicates):
 - `ran`: cases with at least one attempt that reached the model. A case that never ran is not counted. Counted per case over the same four files, so it has the same total as valid cases.
 
 **Not done**
-1. Unit mismatch, decision needed: the CSV `valid_cases`/`ran` count realworld cases and repeats (Haiku shows 16/48), while the page counts case rows across the four files (Haiku shows 27/27). The legend explains the page rule; the two are not unified. The user must choose which one `benchmark.csv` stores.
+1. Unit mismatch, decision needed: the CSV `valid_cases`/`ran` count roles cases and repeats (Haiku shows 16/48), while the page counts case rows across the four files (Haiku shows 27/27). The legend explains the page rule; the two are not unified. The user must choose which one `benchmark.csv` stores.
 
 **Decided (user, 2026-10-20)**
 1. Displaced summary lines are not kept. The summary is rebuilt from the detail CSVs (latest run only), so no `benchmark_history.csv`.
@@ -283,7 +284,7 @@ Tool overlap only, different skill (keep; not duplicates):
 **Progress**
 - Method is in `Benchmark/ADDING_ROLES.md`. v5 is the current proposal: `role_cols_v5.py` (scratchpad `c33ece76-.../scratchpad/`).
 - Ran v5 into a scratch copy only: `scratchpad/benchmark_v5_copy.csv`. Result: 12 rows, columns 83 to 94, original cells unchanged (asserted in the script).
-- Columns added: `builder_score` (30 denominator: realworld 12 + coding 18), `thinker_score` (51: realworld 36 + hard 15), `total_score` (81), `median_s` (median of 27 case p50s), `rank` (total desc, median asc), `builder_ref`, `thinker_ref`, `coding_score`, `thinker_hard_score`, `coding_ref`, `thinker_hard_ref`.
+- Columns added: `builder_score` (30 denominator: roles 12 + coding 18), `thinker_score` (51: roles 36 + hard 15), `total_score` (81), `median_s` (median of 27 case p50s), `rank` (total desc, median asc), `builder_ref`, `thinker_ref`, `coding_score`, `thinker_hard_score`, `coding_ref`, `thinker_hard_ref`.
 - Ranked output: qwen3.5-9b-iq4xs 46/81 (#1), granite3-3-2b 20/81, qwen2.5-1.5b 15/81, llama3.2-1b 15/81, deepseek-r1-7b 12/81. The script printed only these 5 models, so the other rows were not ranked. Not yet explained; check before writing.
 - The real `results/benchmark.csv` is unchanged. User said hold on writing it.
 
@@ -302,22 +303,22 @@ Tool overlap only, different skill (keep; not duplicates):
 
 **RESTART POINT (2026-10-20, read this first)**
 - All benchmark processes were stopped on 2026-10-20 after a laptop restart (patch install). Nothing is running.
-- Batch-01 (`scratchpad/q-batch-01.lst`): `ts-deepseek-r1-distill-qwen-7b-65536:latest` and `ts-gemma3-4b-65536:latest` finished and were committed as `4e07633`. `ts-qwen3-4b-65536:latest` stalled after realworld (log silent from 16:24), held GPU memory, and was killed. Its coding stage never ran. Its partial raw files (`raw/20261020-153419-full-ts-qwen3-4b-*`) were swept into `4e07633` by the batch runner. Its row is NOT in `benchmark.csv` and not in `runs.jsonl`.
+- Batch-01 (`scratchpad/q-batch-01.lst`): `ts-deepseek-r1-distill-qwen-7b-65536:latest` and `ts-gemma3-4b-65536:latest` finished and were committed as `4e07633`. `ts-qwen3-4b-65536:latest` stalled after roles (log silent from 16:24), held GPU memory, and was killed. Its coding stage never ran. Its partial raw files (`raw/20261020-153419-full-ts-qwen3-4b-*`) were swept into `4e07633` by the batch runner. Its row is NOT in `benchmark.csv` and not in `runs.jsonl`.
 - Logs: `scratchpad/bench-q-batch-01.log`, `scratchpad/batch01_run.out`.
 - `1b84e51` and `4e07633` both used `git add -A` / broad adds and pushed untracked `raw/`, `hard/`, `coding/` files. Already on the remote; not rewritten.
 - Haiku canonical rows: retry4 40/48 (`runs.jsonl` 10:09:30) and post-correction 45/48 (11:08:27). Retry2 failed (`cloud.csv` header had an extra `tag` column; data kept in raw JSON and `runs.jsonl`). Retry3 exited 1.
 - `Benchmark/results/cloud.csv` header was renamed `tag`→`model` in the working tree only (uncommitted).
 - Single source of truth goal: `Benchmark/results/benchmark.csv` holds 48-case score, `hard_*` and `coding_*` in one row. `hard/` and `coding/` result folders are to be backfilled and then removed (deletion needs user confirmation; keep coding temp data until c2 merge).
-- Restart after the CSV and script fixes: qwen3-4b first (realworld + coding), then the remaining batches from `q-batch-01` onward, batches of 3, commit and push per batch, progress every 30 min.
+- Restart after the CSV and script fixes: qwen3-4b first (roles + coding), then the remaining batches from `q-batch-01` onward, batches of 3, commit and push per batch, progress every 30 min.
 
 **State at session handoff (2026-10-20, before /clear)**
 - Done and verified: `'` prefix on every `n/m` cell (192 cells, backup taken). `csvstore.excel_safe` is wired into `append_row`. `ranking.py` and `build_report.py` strip the apostrophe (`lstrip("'")`), checked with a `python -I` import (`subtotal` gives 32/32, 9 rows load).
-- NOT done: `Benchmark/script/run_benchmark.py` is unchanged. It still writes `results/hard/` and `results/coding/` and still appends the main row before the hard/coding subprocesses run.
+- NOT done: `Benchmark/script/run_benchmark.py` (since deleted) is unchanged. It still writes `results/hard/` and `results/coding/` and still appends the main row before the hard/coding subprocesses run.
 - Nothing is running. No queue, no benchmark, no batch. Stale Python PID 4222036 is unverified, so check it before stopping it. Other Python processes belong to other projects; leave them.
 
 **Next actions, in order (execution details)**
-1. Edit `Benchmark/script/run_benchmark.py`:
-   - Run the hard suite (`BENCH_SUITE=hard`) and the coding suite (`BENCH_SUITE=coding`) as subprocesses first. Use `python -m scripts.bench --only realworld --n <n> --tag <tag>` with `BENCH_OUT_DIR` set to a scratch dir, not `results/hard` or `results/coding`.
+1. Edit `Benchmark/script/run_benchmark.py` (since deleted):
+   - Run the hard suite (`BENCH_SUITE=hard`) and the coding suite (`BENCH_SUITE=coding`) as subprocesses first. Use `python -m scripts.bench --only roles --n <n> --tag <tag>` with `BENCH_OUT_DIR` set to a scratch dir, not `results/hard` or `results/coding`.
    - Parse their outputs into `hard_*` and `coding_*` values, add them to `rec` and to the single `csvstore.append_row(dst, cols, rec, log)` call (around line 329).
    - Add `CODING_COLS` and include it in `cols` (line 325).
    - Remove the hard and coding folder writes. Update the comments at lines 337 and 347.
@@ -327,7 +328,7 @@ Tool overlap only, different skill (keep; not duplicates):
 3. Report the CSV issues and the expected final layout to the user. Ask for explicit confirmation before deleting `results/hard/`, `results/coding/`, or the stray raw JSON. Keep `results/coding/` temp data until the c2 merge.
 4. Disclose to the user: `1b84e51` and `4e07633` swept untracked files (`git add -A` / broad adds). Both are pushed and not rewritten. Also disclose that the qwen3-4b run was killed and its partial raw files are in `4e07633`.
 5. Done: `router/tf-roles.yaml`, `scripts/bench_real.py` and `Benchmark/results/cloud.csv` are tracked and nothing is uncommitted (checked 2026-10-28).
-6. After confirmation, restart the queue: qwen3-4b first (realworld + coding), then the remaining batches of 3. Run `scratchpad/run_queue.sh` with the CR fix. Commit and push per batch to `tokenfrugal HEAD:main`, with no Co-Authored-By trailer and only specific paths added.
+6. After confirmation, restart the queue: qwen3-4b first (roles + coding), then the remaining batches of 3. Run `scratchpad/run_queue.sh` with the CR fix. Commit and push per batch to `tokenfrugal HEAD:main`, with no Co-Authored-By trailer and only specific paths added.
 
 **Scratchpad caveat**: the queue lists and logs live in `C:\Users\vaibh\AppData\Local\Temp\claude\C--Users-vaibh-Downloads-Projects-tokenfrugal\3fcf2a35-5f28-486d-92c5-8bd8f806feed\scratchpad\`. A new session gets a new scratchpad id. Reference that path by absolute path, and check that it still exists before the queue restart.
 
@@ -337,14 +338,14 @@ Tool overlap only, different skill (keep; not duplicates):
 - Queue runner `scratchpad/run_queue.sh` reads `scratchpad/q-batch-NN.lst` (3 models per batch). It runs each model with `-I --model <m> --role builder,thinker,hard,coding`, rebuilds the report, `git add`s specific paths, commits "Benchmark batch <name>: <models>" and pushes to `tokenfrugal HEAD:main`.
 - Batch commit `1b84e51` (q-batch-00) is on the `tokenfrugal` remote. It swept untracked `raw/` and `hard/` result files with `git add -A`. That was already pushed and was not rewritten. Disclose it when reporting.
 - `00178cc` (pushed in `b4defd0`): `build_report.py` puts its script dir on `sys.path`, so the `ranking` import works under `python -I`.
-- Preflight false FAIL ("pull or enable it on the endpoint") root cause: the list files are CRLF, and the queue loop kept a trailing `\r` on each model name, so `m in ids` was False. The bug is in the queue scripts' CR strip, not in `run_benchmark.py`. Both `scratchpad/run_queue.sh` and `run_queue_01_08.sh` now strip with `$'\r'`; names were checked against `/v1/models` (PASS).
+- Preflight false FAIL ("pull or enable it on the endpoint") root cause: the list files are CRLF, and the queue loop kept a trailing `\r` on each model name, so `m in ids` was False. The bug is in the queue scripts' CR strip, not in `run_benchmark.py` (since deleted). Both `scratchpad/run_queue.sh` and `run_queue_01_08.sh` now strip with `$'\r'`; names were checked against `/v1/models` (PASS).
 - Queue restarted for batches 01–08 after the CR fix (log `scratchpad/queue_restart4.out`).
 - Dedupe (`scratchpad/dedupe.py`): 26 eligible models and 12 excluded. Already done and skipped: `ts-deepseek-r1-distill-qwen-7b-65536:latest`, `ts-granite3-3-2b-65536:latest`, `ts-llama3-2-1b-65536:latest`, `ts-qwen2-5-1-5b-32768:latest`.
 
 
 
 **Plan**
-1. Find the preflight root cause before any restart. Run `run_benchmark.py` in preflight-only mode for `llama3.2:3b-64k`, then compare its endpoint check with `GET /v1/models`.
+1. Find the preflight root cause before any restart. Run `run_benchmark.py` (since deleted) in preflight-only mode for `llama3.2:3b-64k`, then compare its endpoint check with `GET /v1/models`.
 2. After approval, pull the q-batch-09 models, then restart `run_queue.sh` with `-I`. Use the 32k default and 64k max policy. Run the excluded models after the eligible ones, with policy `num_ctx` variants.
 3. After each batch: check the rows, commit and push to `tokenfrugal` only, then report progress.
 4. After the full run: regenerate the explorer, mark line 58 as superseded, and merge the c2 coding results only if asked. Clean old CSVs and temp files only after the full run is done and the user confirms. Do not delete files before then.
@@ -416,7 +417,7 @@ Rebuild: `.venv/Scripts/python.exe Benchmark/script/build_report.py --update no`
 ## Full run: Haiku first, then 32 local models in batches of 3 (started 2026-10-21)
 
 Plan, in order:
-1. **Haiku full run** (`claude-haiku-5-5`, n=3, realworld + hard + coding). Log: `Benchmark/results/tracker/haiku-5-5-full.log`. Started in the background (run_benchmark.py, cloud endpoint, key from the Windows User env var, never printed).
+1. **Haiku full run** (`claude-haiku-5-5`, n=3, roles + hard + coding). Log: `Benchmark/results/tracker/haiku-5-5-full.log`. Started in the background (run_benchmark.py (since deleted), cloud endpoint, key from the Windows User env var, never printed).
 2. **Remove old Haiku entries** after the new run finishes and is checked. Keep only the new run's rows. Rows to remove: `benchmark.csv` (`full-claude-haiku-5-5` lines from 2026-10-20), `builder.csv`, `thinker.csv`, `hard_test.csv` (rows with `claude-haiku-5-5` from earlier run_ids), and `cloud.csv` (`haiku-baseline`). Back up each file first. `runs.jsonl` is append-only and is left unchanged. Raw JSON and hard/ files are kept, not deleted.
 3. **Local queue**: `Benchmark/results/tracker/queue.lst`, 32 models, batches of 3 (the last batch has 2). Built from the earlier q-batch lists, with done models skipped and duplicate aliases excluded. Runner: `Benchmark/results/tracker/run_queue.sh` (`--role builder,thinker,hard,coding`, rebuild report after each batch). It does NOT commit or push. Status: `queue-run.log`, per-model logs in `tracker/logs/`.
 4. **Final step**: show the final `benchmark.csv` to the user when all tests are done.
@@ -470,7 +471,7 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 
 
 ### Stage 6: hard-suite and loose ends (open)
-- Add the hard section to `explorer.html` and `Benchmark.md`, and test the hard block in `run_benchmark.py` live.
+- Add the hard section to `explorer.html` and `Benchmark.md`, and test the hard block in `run_benchmark.py` (since deleted) live.
 - Reorder `md_table()` so s/case precedes t/s. Scan `tf_roles_ui.py` and `explorer.html` for the old t/s formula.
 - Harden the subtotal and CSV loader against Excel date-mangled cells. Check the Test Model card in the browser pane.
 - Decide on `profiles/build-data.yaml` and `router/skills/role-data` (used by data-engineer). Both still exist.
@@ -488,7 +489,7 @@ Working rules: no Co-Authored-By trailer or "generated with" footer (project CLA
 ### Benchmark data merge (open)
 - **Update 2026-10-28:** `Benchmark/results/coding/` deleted (commit `14e65ec`, 78 tracked files). Its 26 runs were checked against `coder.csv` first; all are present. `coding-t15/` is kept. `tests/test_merge_legacy_coding.py` skips while the source folder is absent.
 - Coding L1-L6 history backfill (done 2026-10-27): `Benchmark/script/merge_legacy_coding.py` wrote 28 legacy runs (`results/coding/` and `results/coding-t15/`, 168 rows) into `coder.csv` as history, marked `superseded=yes`. Backup: `Benchmark/results/backups/coder-20261027-155305-210379.csv`. `benchmark.csv` is unchanged (byte-identical). Re-running skips run_ids already present. Test: `tests/test_merge_legacy_coding.py` (checks that the summary is unchanged with the history added).
-- Live coding results come from the normal bench path. A run with the `coding` role publishes its rows and re-summarizes on each run (`run_benchmark.py`, both the suite-only and main paths). No separate merge step is needed. The qwen3-4b coding 0/18 is a real suite result (the cases failed or timed out), not a missing merge. 30 of 40 CSV rows have a `coding_score`.
+- Live coding results come from the normal bench path. A run with the `coding` role publishes its rows and re-summarizes on each run (`run_benchmark.py` (since deleted), both the suite-only and main paths). No separate merge step is needed. The qwen3-4b coding 0/18 is a real suite result (the cases failed or timed out), not a missing merge. 30 of 40 CSV rows have a `coding_score`.
 - Explorer coverage (decided 2026-10-27): eight CSV models do not appear in `explorer.html`: `ts-qwen2-5vl-7b-65536`, `mannix/deepseek-coder-v2-lite-instruct:iq4_xs`, `hf.co/kkohtaka/starcoder2-7b`, `hf.co/akpsahan/starcoder2-15b`, `ts-gemma3-4b-65536`, `qwen2.5-coder-yarn:3b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `ts-hf-co-bartowski-google_gemma-3-12b`. This is intended. Other variants of these models are tested and shown in the CSV. Rank parity for the 31 models shown is verified: 0 mismatches.
 
 ### Router clarity for Haiku (A built 2026-10-28; B and C open)
@@ -505,7 +506,7 @@ Rollback: git tag `rollback-pre-loopfix` (6c0c557). New runs carry `loop_version
 
 Items: (1) bench preflight: a 400 "does not support tools" marks the model `no-tools` and skips it; optional tool-aware Modelfile for 1B. (2) Forced first call: 2A corrective message naming the exact tool; 2B the router pre-reads up to two paths named in the task (`TOKENFRUGAL_NO_PREREAD=1` disables). (3) Salvage parser: execute `<tool_call>` blocks and `{"name", "arguments"}` JSON found in text. (4) `think:false` for thinking models that support it (option B only). (5) Wrap-up nudge at 70% of the step budget. (6) Ollama 500: check the log for OOM; record as infra. (7) Verifier check on ambiguous_trace: the verifier is correct, no re-score.
 
-Status: items 1-6 and 2B are implemented in `router/loop.py` and `Benchmark/script/run_benchmark.py`. Offline suite was 353 OK at that point.
+Status: items 1-6 and 2B are implemented in `router/loop.py` and `Benchmark/script/run_benchmark.py` (since deleted). Offline suite was 353 OK at that point.
 
 Open:
 - No valid re-run has been done. The first v2 try was invalid (Connection closed). Self-heal was added after that. v2e (phi4-mini, 3/15) ran with containers started by hand, so it is not a clean test.
@@ -527,7 +528,7 @@ Done (2026-10-27): the wrapper is public as `open_native_ensured` (`router/mcp_c
 
 ## Parked: Coding table on index (set 2026-10-28)
 
-Move the Coding table (`cd`, L1-L6 realworld suite, `results/coding/`) from `explorer.html` to `index.html`, placed above the model run tables under its own heading that says it is a separate suite. Parked until the other index and explorer changes in `Benchmark/REPORT_DESIGN.md` are concluded.
+Move the Coding table (`cd`, L1-L6 roles suite, `results/coding/`) from `explorer.html` to `index.html`, placed above the model run tables under its own heading that says it is a separate suite. Parked until the other index and explorer changes in `Benchmark/REPORT_DESIGN.md` are concluded.
 
 ## Portability of all roles, teams and MCP profiles (set 2026-10-30)
 
@@ -631,3 +632,18 @@ State: built and wired, suite green (611 tests, 5 skipped), nothing committed. N
 | 14 | X and LinkedIn stay "not collected" (see item 11). | Held |
 | 15 | Existing `content/<slug>/` files in the repo checkout are not visible to roles now; they use the shared media folder `OneDrive/Videos/video-editor` (`python scripts/ensure_media_workspace.py`). Move them if needed. | Open |
 | 16 | Commit plan not done: add `.gitignore` for `router/tasks.db*` and `gfpgan/`, then commit in groups (router core, content pipeline, video editor, MCP images, benchmark, docs, kalamanch) with explicit paths. Exclude `Benchmark/results/team_results.before-redo.csv`. No Co-Authored-By lines. | Not started |
+
+## Open considerations: benchmark retire-suites (2026-11-02)
+
+- Regenerate Benchmark/index.html and Benchmark/explorer.html with Benchmark/script/build_report.py. Do this only after the new benchmark run, not before. First decide whether to run with cleanup or skip it, because the script's default cleanup deletes logs and backups under Benchmark/results/.
+- The index.html "Hard thinker suite" paragraph (around line 25) still tells readers to run run_benchmark.py. It is replaced when the page is regenerated.
+- Benchmark/results/tracker/run_queue.sh line 35 still calls run_benchmark.py, which is deleted. Delete the script or remove that line.
+- mediahouse: its seven roles in router/tf-roles.yaml have no rows in results/team_results.csv yet, so it shows NA. Run it in the new benchmark.
+- media-generator: the old explorer page names it, but it is not in router/tf-roles.yaml or the CSV. The commit "show media-generator in mediahouse" does not match the current yaml. Confirm which is right.
+- bench_csv.py: the roles data has no per-case verified or ran counts, so the CSV case cells are blank. Left empty on purpose. Decide later whether to add the counts.
+- code-l5: its edit path (edit_file) was not tested by the write probe. The probe passed for builder and code-l1 to code-l4 and code-l6. code-l5 has no write_file in its tool list.
+- Test count: one full offline run reported 773 tests and a later one reported 767, with no code change between them. Not explained yet.
+- Live checks not yet run: no bench run, no gate check against a live container, and no model run since the changes. The "not exposed by profile" string is in the infra markers but has not been seen from the gateway.
+- ui/server.js: the realworld summary (benchSummary) was removed. Check that the UI still renders without it.
+- Browser role: now treated as synaptree-dependent by the infra gate (scripts/bench_team_tasks.py SYNAPTREE_EXTRA). Confirm with a live run.
+- devops: timeout_s set to 120 in router/tf-roles.yaml (approved). Confirm in the next run.

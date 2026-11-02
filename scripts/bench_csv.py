@@ -1,7 +1,7 @@
-"""Write a realworld benchmark result as CSV in the Benchmark/model-comparison.md layout.
+"""Write a benchmark result as CSV in the Benchmark/model-comparison.md layout.
 
-Columns: Model / run tag, Params, Verified, Ran, Mean s/case, then one column per realworld case
-(16 columns, in layout order). Each case cell is "verified/n".
+Columns: Model / run tag, Params, Verified, Ran, Mean s/case, then one column per case
+(in layout order). Each case cell is "verified/n". Cases are read from results["roles"].
 
 Usage: python scripts/bench_csv.py bench/<stamp>-<tag>.json [out.csv]
 """
@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-# (bench_real case id, layout column, tool server, layout agent shown in the header)
+# (case id, layout column, tool server, layout agent shown in the header)
 LAYOUT = [
     ("write_function", "write_function", "Filesystem MCP server (mcp/filesystem)"),
     ("fix_bug", "fix_bug", "Filesystem MCP server (mcp/filesystem)"),
@@ -31,7 +31,7 @@ LAYOUT = [
     ("role_research", "web_crawl", "Crawl4AI MCP server (unclecode/crawl4ai)"),
 ]
 
-# Agent comes from the agent each case dispatches to (bench_real.cases()).
+# Agent comes from the agent each case dispatches to.
 AGENTS = {
     "write_function": "engineering-backend-architect", "fix_bug": "engineering-backend-architect",
     "write_tests": "engineering-backend-architect", "rename_across_files": "engineering-backend-architect",
@@ -86,7 +86,7 @@ def header():
 
 
 def rows(data):
-    res = data.get("results", {}).get("realworld", {})
+    res = data.get("results", {}).get("roles", {})
     if "error" in res or not res:
         return []
     v_tot = v_n = r_tot = 0
@@ -112,8 +112,8 @@ def rows(data):
 
 
 def status_scores(cases):
-    """(valid_cases, infra_cases, mean_s_valid) over realworld case results.
-    A case whose status is "infra" (synaptree container down, see bench_real.case_status) counts only in
+    """(valid_cases, infra_cases, mean_s_valid) over case results.
+    A case whose status is "infra" (synaptree container down) counts only in
     infra_cases and is excluded from the mean. mean_s_valid is "" when no valid case has timings."""
     valid = infra = 0
     means = []
@@ -130,7 +130,7 @@ def status_scores(cases):
 
 def total_seconds(cases):
     """Wall time in whole seconds of every repeat that ran, infra repeats included (their elapsed time is real).
-    Sums the per-repeat "s" field that bench_real.run also feeds into the case timings. 0 when nothing ran."""
+    Sums the per-repeat "s" field of each case's runs. 0 when nothing ran."""
     total = 0.0
     for c in cases.values():
         if isinstance(c, dict):  # skips a section-level {"error": ...} entry

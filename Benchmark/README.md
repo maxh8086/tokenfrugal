@@ -18,7 +18,7 @@ Set these in `.env` at the repo root (copy from `.env.example`). Real environmen
 
 | Variable | Default | Used for |
 | --- | --- | --- |
-| `LOCAL_LLM_TEMPERATURE` | `0.0` | Sampling temperature for every local model call. Benchmarks need `0.0`; the preflight in `script/run_benchmark.py` fails otherwise. Recorded in each run's `temperature` column |
+| `LOCAL_LLM_TEMPERATURE` | `0.0` | Sampling temperature for every local model call. Benchmarks need `0.0`. Recorded in each run's `temperature` column |
 | `TOKENFRUGAL_LLM_URL` | `http://localhost:11434/v1` | OpenAI-compatible endpoint the benchmark and router call. Overridable per run with `--endpoint` |
 | `TOKENFRUGAL_LLM_API_KEY` | `ollama` | API key for that endpoint. Overridable per run with `--api-key-env NAME`, which reads the key from the named variable; the key is never printed or stored |
 | `LOCAL_LLM_MAX_TOKENS` | `8192` | Editable in the dashboard settings. The router's tool loop currently caps each reply at 2048 tokens in code, so this value does not change benchmark replies |
@@ -45,7 +45,7 @@ Each row in `results/benchmark.csv` is one run of one model setup, scored on all
 | `params` | Model size, for example `3B` |
 | `score`, `max` | Passes out of total checks (`score` / `max`) |
 | `git_sha` | Commit the run was made from |
-| `harness_version` | Version of the cases, scoring and harness (`HARNESS_VERSION` in `run_benchmark.py`). Bump it when they change; rows with different values are not comparable. Empty on older rows |
+| `harness_version` | Version of the cases, scoring and harness (`HARNESS_VERSION` was in the deleted `run_benchmark.py`). Bump it when they change; rows with different values are not comparable. Empty on older rows |
 | `ran` | Number of cases attempted |
 | `mean_s_per_case` | Average seconds per case (lower is faster) |
 | `total_s` | Whole run time in seconds |
