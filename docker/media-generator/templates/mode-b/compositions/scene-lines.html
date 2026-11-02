@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      #scene-lines { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0; }
+      #scene-lines .line { position: absolute; left: 0; right: 0; text-align: center; font-size: 64px; font-weight: 400; color: var(--ink); opacity: 0; }
+      #line-1 { top: 380px; }
+      #line-2 { top: 500px; }
+      #line-3 { top: 620px; }
+    </style>
+  </head>
+  <body>
+    <div id="scene-lines" data-composition-id="scene-lines" data-width="1920" data-height="1080" class="clip">
+      <div class="line" id="line-1">One intake step</div>
+      <div class="line" id="line-2">Each request reaches its owner</div>
+      <div class="line" id="line-3">Every stage is checked before the next</div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // Local time 0 to 10 s (absolute 8 to 18 s)
+      tl.fromTo("#scene-lines", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, 0);
+      tl.fromTo("#line-1", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0.6);
+      tl.fromTo("#line-2", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 2.0);
+      tl.fromTo("#line-3", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 3.4);
+      tl.to("#scene-lines", { opacity: 0, duration: 0.6, ease: "power2.in" }, 9.4);
+      tl.to({}, { duration: 10 }, 0);
+      window.__timelines["scene-lines"] = tl;
+    </script>
+  </body>
+</html>

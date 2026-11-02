@@ -3,81 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="icon" href="data:," />
     <script src="vendor/gsap.min.js"></script>
     <style>
-      /* Neutral template (D12). Colours are placeholders until the palette is approved. */
-      /* Placeholder face: Arial is not an open licence, so this is for the spike only (D12 needs a bundled open font). */
-      @font-face { font-family: "Template Sans"; src: local("Arial"); font-weight: 400 700; }
+      /* Neutral template (D12). Palette approved by the owner on 2026-11-02. */
+      /* Font: Inter (SIL OFL 1.1), bundled under vendor/fonts with its licence. No network at render time. */
+      @font-face { font-family: "Template Sans"; src: url("vendor/fonts/inter-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Template Sans"; src: url("vendor/fonts/inter-latin-700-normal.woff2") format("woff2"); font-weight: 700; }
       :root {
         --ground: #0e1013;
         --ink: #f2f2f2;
         --accent: #8a909a;
-        --font-display: "Template Sans", "Arial", sans-serif;
+        --font-display: "Template Sans", sans-serif;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
-        width: 1920px;
-        height: 1080px;
-        overflow: hidden;
-        background: var(--ground);
-      }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
       #root { width: 1920px; height: 1080px; position: relative; font-family: var(--font-display); }
-      .scene { position: absolute; inset: 0; opacity: 0; }
-      .title { font-size: 128px; font-weight: 700; color: var(--ink); text-align: center; letter-spacing: -0.02em; }
-      .title-wrap { position: absolute; left: 0; right: 0; top: 420px; }
-      .line { position: absolute; left: 0; right: 0; text-align: center; font-size: 64px; font-weight: 400; color: var(--ink); }
-      .rule { position: absolute; left: 760px; top: 640px; width: 400px; height: 4px; background: var(--accent); transform-origin: center; }
-      .closing { font-size: 96px; font-weight: 700; color: var(--ink); }
-      .closing-wrap { position: absolute; left: 0; right: 0; top: 460px; text-align: center; }
-      .sub { font-size: 40px; font-weight: 400; color: var(--accent); margin-top: 32px; }
     </style>
   </head>
   <body>
-    <div
-      id="root"
-      data-composition-id="main"
-      data-start="0"
-      data-duration="25"
-      data-width="1920"
-      data-height="1080"
-    >
-      <section id="scene-title" class="scene clip" data-start="0" data-duration="8" data-track-index="0">
-        <div class="title-wrap"><h1 class="title">Mode B template</h1></div>
-        <div class="rule"></div>
-      </section>
-
-      <section id="scene-lines" class="scene clip" data-start="8" data-duration="10" data-track-index="1">
-        <div class="line" id="line-1" style="top: 380px;">One intake step</div>
-        <div class="line" id="line-2" style="top: 500px;">Each request reaches its owner</div>
-        <div class="line" id="line-3" style="top: 620px;">Every stage is checked before the next</div>
-      </section>
-
-      <section id="scene-closing" class="scene clip" data-start="18" data-duration="7" data-track-index="2">
-        <div class="closing-wrap">
-          <div class="closing">Ready for review</div>
-          <div class="sub">Approve the stills to continue</div>
-        </div>
-      </section>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="25" data-width="1920" data-height="1080">
+      <div id="host-title" data-composition-id="scene-title" data-composition-src="compositions/scene-title.html" data-start="0" data-duration="8" data-track-index="0"></div>
+      <div id="host-lines" data-composition-id="scene-lines" data-composition-src="compositions/scene-lines.html" data-start="8" data-duration="10" data-track-index="1"></div>
+      <div id="host-closing" data-composition-id="scene-closing" data-composition-src="compositions/scene-closing.html" data-start="18" data-duration="7" data-track-index="2"></div>
     </div>
     <script>
+      window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
-      // Title card: 0 to 8 s
-      tl.fromTo("#scene-title", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0);
-      tl.fromTo(".title-wrap", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.3);
-      tl.fromTo(".rule", { scaleX: 0 }, { scaleX: 1, duration: 1.4, ease: "power2.inOut" }, 1.0);
-      tl.to("#scene-title", { opacity: 0, duration: 0.6, ease: "power2.in" }, 7.4);
-      // Text lines: 8 to 18 s
-      tl.fromTo("#scene-lines", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, 8.0);
-      tl.fromTo("#line-1", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 8.6);
-      tl.fromTo("#line-2", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 10.0);
-      tl.fromTo("#line-3", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 11.4);
-      tl.to("#scene-lines", { opacity: 0, duration: 0.6, ease: "power2.in" }, 17.4);
-      // Closing card: 18 to 25 s
-      tl.fromTo("#scene-closing", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 18.0);
-      tl.fromTo(".closing-wrap", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 18.4);
       tl.to({}, { duration: 25 }, 0);
       window.__timelines["main"] = tl;
-      tl.seek(0);
     </script>
   </body>
 </html>

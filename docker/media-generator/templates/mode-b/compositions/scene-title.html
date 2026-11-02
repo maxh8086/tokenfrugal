@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      #scene-title { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0; }
+      #scene-title .title-wrap { position: absolute; left: 0; right: 0; top: 420px; }
+      #scene-title .title { font-size: 128px; font-weight: 700; color: var(--ink); text-align: center; letter-spacing: -0.02em; }
+      #scene-title .rule { position: absolute; left: 760px; top: 640px; width: 400px; height: 4px; background: var(--accent); transform-origin: center; transform: scaleX(0); }
+    </style>
+  </head>
+  <body>
+    <div id="scene-title" data-composition-id="scene-title" data-width="1920" data-height="1080" class="clip">
+      <div class="title-wrap"><h1 class="title">Mode B template</h1></div>
+      <div class="rule"></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // Local time 0 to 8 s
+      tl.fromTo("#scene-title", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0);
+      tl.fromTo("#scene-title .title-wrap", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.3);
+      tl.fromTo("#scene-title .rule", { scaleX: 0 }, { scaleX: 1, duration: 1.4, ease: "power2.inOut" }, 1.0);
+      tl.to("#scene-title", { opacity: 0, duration: 0.6, ease: "power2.in" }, 7.4);
+      tl.to({}, { duration: 8 }, 0);
+      window.__timelines["scene-title"] = tl;
+    </script>
+  </body>
+</html>
