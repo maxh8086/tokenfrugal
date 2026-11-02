@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends       python3-d
 
 # Layers below the Manim build are added last so the earlier layers stay cached.
 # tesseract-ocr + English traineddata only (no other language packs; tesseract-ocr-osd comes in as a Debian dependency):
-# vedit --captions auto reads burned-in subtitles.
+# mgen --captions auto reads burned-in subtitles.
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
@@ -56,16 +56,16 @@ RUN pip3 install --no-cache-dir --break-system-packages "yt-dlp[default]==${YT_D
 
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/
 COPY pipeline.py /opt/pipeline/pipeline.py
-RUN sed -i "s/$//" /opt/pipeline/pipeline.py && chmod +x /opt/pipeline/pipeline.py && ln -s /opt/pipeline/pipeline.py /usr/local/bin/vedit
+RUN sed -i "s/$//" /opt/pipeline/pipeline.py && chmod +x /opt/pipeline/pipeline.py && ln -s /opt/pipeline/pipeline.py /usr/local/bin/mgen
 
 # Non-root user (uid/gid 10001, own home dir) for everything at runtime. Files written into the
 # /work bind mount (OneDrive folder on the host) are created by this uid.
-RUN groupadd --gid 10001 vedit \
-    && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/vedit --shell /bin/bash vedit \
-    && mkdir -p /work && chown vedit:vedit /work
+RUN groupadd --gid 10001 mgen \
+    && useradd --uid 10001 --gid 10001 --create-home --home-dir /home/mgen --shell /bin/bash mgen \
+    && mkdir -p /work && chown mgen:mgen /work
 # Chromium cannot create its sandbox for a non-root user in this container (no user namespaces), so the
 # Debian wrapper gets --no-sandbox from /etc/chromium.d. The container itself is the isolation boundary.
-RUN printf '%s\n' 'CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromium.d/vedit
+RUN printf '%s\n' 'CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromium.d/mgen
 
 ENV WHISPER_MODEL_PATH=/opt/whisper.cpp/models/ggml-${WHISPER_MODEL}.bin \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
@@ -73,6 +73,6 @@ ENV WHISPER_MODEL_PATH=/opt/whisper.cpp/models/ggml-${WHISPER_MODEL}.bin \
     VIDEO_PUBLISH_DIR=0 \
     PYTHONUTF8=1
 
-USER vedit
+USER mgen
 WORKDIR /work
 CMD ["bash"]

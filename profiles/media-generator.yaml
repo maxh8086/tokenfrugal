@@ -1,6 +1,6 @@
 version: 1
-id: video-editor
-name: video-editor
+id: media-generator
+name: media-generator
 servers:
 - type: image
   secrets: default
@@ -10,11 +10,11 @@ servers:
   image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
   snapshot:
     server:
-      name: ts-fs-video-editor
+      name: ts-fs-media-generator
       type: server
       image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
       description: Video editor filesystem (read-only)
-      title: ts-fs-video-editor
+      title: ts-fs-media-generator
       remote: {}
       command:
       - /workspace

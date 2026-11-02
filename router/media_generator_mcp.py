@@ -1,4 +1,4 @@
-"""Video editor (stdio). Lists the Raw and Render folders and runs vedit on one raw clip in the video-editor container."""
+"""Media generator (stdio). Lists the Raw and Render folders and runs mgen on one raw clip in the media-generator container."""
 import os
 import re
 import subprocess
@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 
 from router.media_workspace import media_dir
 
-mcp = FastMCP("video-editor")
+mcp = FastMCP("media-generator")
 
 REPO = Path(__file__).resolve().parent.parent
 COMPOSE_FILE = REPO / "docker-compose.yml"
@@ -38,20 +38,20 @@ def _names(folder: Path) -> list[str]:
 
 @mcp.tool()
 def list_raw() -> str:
-    """List the raw clip file names in the video-editor workspace Raw folder."""
+    """List the raw clip file names in the media workspace Raw folder."""
     names = _names(_workspace() / "Raw")
     return "\n".join(names) if names else "no clips in Raw"
 
 
 @mcp.tool()
 def list_renders() -> str:
-    """List the finished file names in the video-editor workspace Render folder."""
+    """List the finished file names in the media workspace Render folder."""
     names = _names(_workspace() / "Render")
     return "\n".join(names) if names else "no files in Render"
 
 
 @mcp.tool()
-def vedit(clip: str, out_name: str = "", no_music: bool = False, captions: str = "auto") -> str:
+def mgen(clip: str, out_name: str = "", no_music: bool = False, captions: str = "auto") -> str:
     """Turn one clip from Raw into a captioned 9:16 short in Render. clip = bare file name in Raw.
     out_name = optional output name. no_music = True skips the music bed. captions = auto (default, skips word captions when the clip has burned-in subtitles), on (always add them) or off (never add them). Returns the last output lines and the Render path."""
     try:
@@ -65,7 +65,7 @@ def vedit(clip: str, out_name: str = "", no_music: bool = False, captions: str =
         render = ws / "Render"
         before = set(_names(render))
         argv = ["docker", "compose", "-f", str(COMPOSE_FILE), "--profile", "video", "run", "--rm", "-T",
-                "video-editor", "vedit", clip, "--captions", captions]
+                "media-generator", "mgen", clip, "--captions", captions]
         if out_name:
             argv += ["--out", out_name]
         if no_music:

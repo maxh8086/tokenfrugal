@@ -292,9 +292,11 @@ def infra_error(exc: BaseException) -> bool:
 def failure_reason(text: str) -> str:
     """Coarse class of a task failure, so the orchestrator knows whether to resume or re-scope."""
     s = (text or "").lower()
-    if s.startswith("infra:") or re.search(r"\b500\b", s) or any(
+    if re.search(r"\binfra:", s) or re.search(r"\b500\b", s) or any(
             m in s for m in ("internalservererror", "llama runner", "runner terminated", "runner stopped")):
         return "infra"
+    if "does not support tools" in s:
+        return "no-tools"
     if re.search(r"connection closed|is not running|broken ?pipe", s):
         return "connection"
     if "timed out" in s or "timeouterror" in s or "apitimeouterror" in s:
@@ -313,7 +315,9 @@ def failure_reason(text: str) -> str:
 def error_kind(text: str) -> str:
     """Failure kind stored as error_kind: step_timeout (role time limit hit), request_timeout (one model request timed out),
     no_tool_call, max_steps, bad_answer (empty or placeholder reply), infra (backend or runner failure), or error for
-    everything else (connection, ...). Built on failure_reason."""
+    everything else (connection, ...). Built on failure_reason. gpu_busy: the GPU lease is held (router/gpu_lease.py)."""
+    if (text or "").startswith("GpuBusy:"):
+        return "gpu_busy"
     reason = failure_reason(text)
     if reason == "infra":
         return "infra"

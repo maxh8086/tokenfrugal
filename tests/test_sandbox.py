@@ -4,7 +4,7 @@ import unittest
 from unittest import mock
 
 from router import sandbox_mcp as s
-from router import video_editor_mcp as v
+from router import media_generator_mcp as v
 
 
 class SandboxTests(unittest.TestCase):
@@ -57,23 +57,23 @@ class VideoEditorTests(unittest.TestCase):
     def test_path_like_names_refused_without_docker(self):
         with mock.patch.object(v.subprocess, "run") as run:
             for bad in ("../x.mp4", "a/b.mp4", "a\\b.mp4", "x..y.mp4", "-x.mp4", ""):
-                self.assertTrue(v.vedit(bad).startswith("error: bad clip name"), bad)
-            self.assertTrue(v.vedit("ok.mp4", out_name="../o").startswith("error: bad output name"))
+                self.assertTrue(v.mgen(bad).startswith("error: bad clip name"), bad)
+            self.assertTrue(v.mgen("ok.mp4", out_name="../o").startswith("error: bad output name"))
             run.assert_not_called()
 
     def test_missing_clip_refused_without_docker(self):
         with mock.patch.object(v.subprocess, "run") as run:
-            self.assertEqual(v.vedit("nope.mp4"), "error: clip not found in Raw")
+            self.assertEqual(v.mgen("nope.mp4"), "error: clip not found in Raw")
             run.assert_not_called()
 
-    def test_runs_compose_vedit_with_options(self):
+    def test_runs_compose_mgen_with_options(self):
         open(os.path.join(self.tmp.name, "Raw", "talk.mp4"), "w").close()
         with mock.patch.object(v.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=0, stdout="done\n", stderr="")
-            out = v.vedit("talk.mp4", out_name="short", no_music=True)
+            out = v.mgen("talk.mp4", out_name="short", no_music=True)
         argv = run.call_args[0][0]
-        self.assertEqual(argv[-7:], ["vedit", "talk.mp4", "--captions", "auto", "--out", "short", "--no-music"])
-        self.assertIn("video-editor", argv)
+        self.assertEqual(argv[-7:], ["mgen", "talk.mp4", "--captions", "auto", "--out", "short", "--no-music"])
+        self.assertIn("media-generator", argv)
         self.assertEqual(run.call_args[1]["timeout"], 900)
         self.assertTrue(out.startswith("exit=0"))
         self.assertIn("Render:", out)
@@ -87,12 +87,12 @@ class VideoEditorTests(unittest.TestCase):
         open(os.path.join(self.tmp.name, "Raw", "talk.mp4"), "w").close()
         with mock.patch.object(v.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=0, stdout="done\n", stderr="")
-            v.vedit("talk.mp4")
+            v.mgen("talk.mp4")
             argv = run.call_args[0][0]
             self.assertEqual(argv[argv.index("--captions") + 1], "auto")
-            v.vedit("talk.mp4", captions="off")
+            v.mgen("talk.mp4", captions="off")
             argv = run.call_args[0][0]
             self.assertEqual(argv[argv.index("--captions") + 1], "off")
-            out = v.vedit("talk.mp4", captions="loud")
+            out = v.mgen("talk.mp4", captions="loud")
             self.assertTrue(out.startswith("error: bad captions value"), out)
             self.assertEqual(run.call_count, 2)

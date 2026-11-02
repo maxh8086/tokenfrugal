@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from router import docker_mcp, media_workspace as mw, profile_sync, video_editor_mcp as v
+from router import docker_mcp, media_workspace as mw, profile_sync, media_generator_mcp as v
 from scripts import ensure_media_workspace as emw
 from scripts import install_profiles as ip
 
@@ -149,7 +149,7 @@ class ProfilePlaceholders(unittest.TestCase):
         self.assertNotIn("__WORKSPACE__", out)
 
     def test_media_roles_mount_the_media_folder_read_write(self):
-        for name in ("content-writer", "content-analyst", "video-editor"):
+        for name in ("content-writer", "content-analyst", "media-generator"):
             text = (ROOT / "profiles" / f"{name}.yaml").read_text(encoding="utf-8")
             self.assertIn("__MEDIA__:/workspace:rw", text, name)
             self.assertNotIn("__WORKSPACE__", text, name)
@@ -164,7 +164,7 @@ class ProfilePlaceholders(unittest.TestCase):
     def test_profile_sync_fills_media_and_records_it(self):
         pdir = self.tmp / "profiles"
         pdir.mkdir()
-        (pdir / "video-editor.yaml").write_text("- __MEDIA__:/workspace:rw\n", encoding="utf-8")
+        (pdir / "media-generator.yaml").write_text("- __MEDIA__:/workspace:rw\n", encoding="utf-8")
         marker = self.tmp / "marker.json"
         seen = []
 
@@ -194,7 +194,7 @@ class ProfilePlaceholders(unittest.TestCase):
 
 
 class VeditExportsResolvedFolder(unittest.TestCase):
-    def test_vedit_passes_the_resolved_folder_to_compose(self):
+    def test_mgen_passes_the_resolved_folder_to_compose(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         ws = Path(tmp.name)
@@ -203,7 +203,7 @@ class VeditExportsResolvedFolder(unittest.TestCase):
         with mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(ws)}), \
              mock.patch.object(v.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=0, stdout="", stderr="")
-            v.vedit("clip.mp4")
+            v.mgen("clip.mp4")
         self.assertEqual(run.call_args.kwargs["env"]["VIDEO_EDITOR_DIR"], str(ws))
 
 

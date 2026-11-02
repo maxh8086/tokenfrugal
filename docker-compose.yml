@@ -19,17 +19,17 @@ secrets:
   DATABASE_URI: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/DATABASE_URI"}
 
 services:
-  video-editor:
+  media-generator:
     build:
-      context: ./docker/video-editor
+      context: ./docker/media-generator
       additional_contexts:
         scripts: ./kalamanch
-    image: ${VIDEO_EDITOR_IMAGE:-maxh8086/video-editor:1@sha256:6c222cd6518427127a5fd2fc125e9a5fa2ceb0e27d6f1a7bd4bc79abf90d3e94}   # pulled from Docker Hub; "docker compose build video-editor" rebuilds from docker/video-editor
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/video-editor:1@sha256:6c222cd6518427127a5fd2fc125e9a5fa2ceb0e27d6f1a7bd4bc79abf90d3e94}   # pulled from Docker Hub; "docker compose build media-generator" rebuilds from docker/media-generator
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
     volumes:
-      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/video_editor_mcp.py (vedit) and resolved by router/media_workspace.py; this default is the fallback when run by hand
+      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/media_generator_mcp.py (mgen) and resolved by router/media_workspace.py; this default is the fallback when run by hand
     restart: "no"
 
   crawl4ai:

@@ -5,7 +5,7 @@ Usage:
   python scripts/ensure_media_workspace.py --check       verify only; exit 1 if anything is missing (creates nothing)
   python scripts/ensure_media_workspace.py --print-path  print the resolved absolute path only (creates nothing)
 
-Folder meanings: Raw / References / Render (video-editor), content/<slug>/ (stage files, created by the roles),
+Folder meanings: Raw / References / Render (media-generator), content/<slug>/ (stage files, created by the roles),
 analyst/daily (daily top-5 reports). Idempotent; safe to re-run.
 """
 import argparse

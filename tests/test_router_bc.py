@@ -20,6 +20,24 @@ class FailureKinds(unittest.TestCase):
         self.assertEqual(loop.error_kind(text), "infra")
         self.assertEqual(loop.error_kind("LoopError: infra: Error code: 500 - internal error"), "infra")
 
+    def test_loop_error_wrapped_infra_text_is_infra_kind(self):
+        # _run raises LoopError("infra: ..."); the failure path prefixes the exception name, so the match must not
+        # depend on the text starting with "infra:".
+        text = "LoopError: infra: no tools listed for builder (profile build failed to start)"
+        self.assertEqual(loop.failure_reason(text), "infra")
+        self.assertEqual(loop.error_kind(text), "infra")
+
+
+    def test_model_without_tool_support_is_no_tools_kind(self):
+        text = "BadRequestError: Error code: 400 - invalid_request_error: model does not support tools"
+        self.assertEqual(loop.failure_reason(text), "no-tools")
+        self.assertEqual(loop.error_kind(text), "no_tools")
+
+    def test_malformed_tool_call_has_its_own_kind(self):
+        text = "LoopError: model wrote a tool call that could not be run"
+        self.assertEqual(loop.failure_reason(text), "malformed-tool-call")
+        self.assertEqual(loop.error_kind(text), "malformed_tool_call")
+
 
 class StatusLine(unittest.TestCase):
     def test_format(self):

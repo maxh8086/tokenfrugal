@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Raw talking clip -> finished 9:16 short, all inside the video-editor image.
 
-Usage: vedit <clip.mp4> [--out name] [--no-music] [--captions auto|on|off]
+Usage: mgen <clip.mp4> [--out name] [--no-music] [--captions auto|on|off]
 Steps: ffmpeg audio extract -> whisper.cpp word timestamps -> compose_intro.py (sentence cuts, push-in zoom,
 blurred bars, word captions) -> make_score.py mix (ducked synthesized score). Output lands in /work/Render.
 Relative clip names are looked up in /work/Raw.
@@ -10,7 +10,7 @@ Clips without an audio stream, or whose audio is silent or has no words, are ren
 (a WARNING line on stderr and in the done line) and exit 0. Whisper is not run on silent audio.
 
 --captions auto (default) OCRs the lower 60 % of 8 evenly spaced frames with tesseract. If the clip already has
-burned-in subtitles (2+ real words in at least 3 of the 8 frames) vedit adds no word captions and prints a NOTE; the
+burned-in subtitles (2+ real words in at least 3 of the 8 frames) mgen adds no word captions and prints a NOTE; the
 rest of the render is unchanged. on always adds word captions, off never does.
 """
 import argparse
@@ -150,8 +150,11 @@ def main():
     a = ap.parse_args()
     clip = a.clip if os.path.isabs(a.clip) else os.path.join("/work/Raw", a.clip)
     name = a.out or os.path.splitext(os.path.basename(clip))[0] + "-short"
+    # --out may come with the .mp4 suffix; the final path adds it, so strip it here to avoid name.mp4.mp4.
+    if name.endswith(".mp4"):
+        name = name[: -len(".mp4")]
     render = "/work/Render"
-    tmp = "/tmp/vedit"
+    tmp = "/tmp/mgen"
     os.makedirs(tmp, exist_ok=True)
     for d in ("Raw", "References", "Render"):
         os.makedirs(f"/work/{d}", exist_ok=True)

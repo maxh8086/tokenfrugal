@@ -42,7 +42,8 @@ def ensure_profiles(workspace, marker=MARKER, profiles_dir=PROFILES_DIR, run=sub
                 name = path.stem
                 text = (path.read_text(encoding="utf-8")
                         .replace("__WORKSPACE__", workspace)
-                        .replace("__MEDIA__", media))
+                        .replace("__MEDIA__", media)
+                        .replace("__REPO__", Path(profiles_dir).parent.as_posix()))
                 tmpfile = Path(tmp) / path.name
                 tmpfile.write_text(text, encoding="utf-8")
                 run(["docker", "mcp", "profile", "remove", name], capture_output=True)
