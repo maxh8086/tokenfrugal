@@ -30,6 +30,7 @@ services:
     working_dir: /work
     volumes:
       - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/media_generator_mcp.py (mgen) and resolved by router/media_workspace.py; this default is the fallback when run by hand
+      - ./docker/media-generator/templates:/templates:ro   # composition templates (Mode B first). Read-only; the render copies a project to a scratch folder first
     restart: "no"
 
   crawl4ai:
