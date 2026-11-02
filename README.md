@@ -11,7 +11,7 @@ TokenFrugal is an MCP server. Your cloud agent (Claude Code, Codex, Cursor or an
 - **Lower token spend.** Tests, docstrings, lint fixes, file edits and log reading go to a local model. The cloud agent only sees a short summary.
 - **Private by default.** Local models run on your machine. Only summaries and a `task_id` return to the cloud agent.
 - **No surprise bills.** A failed task returns a short error and a `task_id` you can resume. Nothing falls back silently to the cloud.
-- **Small models that stay on track.** Each role gets a tool allowlist of 4-6 tools, and runs one model at a time.
+- **Small models that stay on track.** Each role gets a tool allowlist of 6 tools recommended, 12 at most, and runs one model at a time.
 - **Visible and auditable.** A live dashboard shows every tool call, and the task log is stored locally.
 
 ## Use cases

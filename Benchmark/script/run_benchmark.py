@@ -50,6 +50,24 @@ ap.add_argument("--csv", default=str(HERE.parent / "results" / "benchmark.csv"))
 ap.add_argument("--endpoint", help="OpenAI-compatible base URL (default: TOKENFRUGAL_LLM_URL / local Ollama)")
 ap.add_argument("--api-key-env", help="name of the env var holding the endpoint API key (value is never printed)")
 a = ap.parse_args()
+
+# Model tags listed in Benchmark/avoid_models.txt (one case-insensitive substring per line) are refused here.
+AVOID_FILE = HERE.parent / "avoid_models.txt"
+
+
+def avoided(model):
+    """Return why the model is refused, or None if it may run."""
+    if not AVOID_FILE.exists():
+        return None
+    for line in AVOID_FILE.read_text(encoding="utf-8").splitlines():
+        pattern = line.split("#")[0].strip().lower()
+        if pattern and pattern in model.lower():
+            return f"listed in {AVOID_FILE.name} as {pattern!r}"
+    return None
+
+
+if reason := avoided(a.model):
+    ap.error(f"model {a.model!r} is refused: {reason}")
 roles = list(dict.fromkeys(r for r in (a.role or "").split(",") if r))
 for r in roles:
     if r not in ALL_ROLES:
@@ -473,6 +491,7 @@ if endpoint and not any(h in endpoint for h in LOCAL):
 real = data["results"]["realworld"]
 done = [real[cid] for cid, _, _ in bench_csv.LAYOUT if cid in real]
 temp = "omitted (rejected by model)" if meta.get("temperature_omitted") else meta.get("temperature", "")
+think = store.thinking_of(meta, row[0])
 stamp = data.get("stamp", "")
 date = datetime.strptime(stamp, "%Y%m%d-%H%M%S").isoformat(timespec="seconds") if stamp else ""
 def _peak_ram(d):
@@ -523,7 +542,7 @@ try:
     summary = store.summarize({"builder": rec["builder_model"], "thinker": rec["thinker_model"]},
                               store.load_details(results_dir))
     config = {
-        "model": rec["model"], "params": rec["params"], "endpoint": endpoint, "temperature": temp,
+        "model": rec["model"], "params": rec["params"], "endpoint": endpoint, "temperature": temp, "thinking_level": think,
         "harness_version": HARNESS_VERSION, "loop_version": LOOP_VERSION, "compression_level": mi.get("compression_level", ""),
         "valid_cases": rec["valid_cases"], "ran": ran,
         "context_used_peak_tokens": rec["context_used_peak_tokens"],

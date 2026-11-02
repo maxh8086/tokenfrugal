@@ -40,8 +40,11 @@ def gateway_argv(profile: str, cpus: str = "1", memory: str = "2Gb", docker: str
 
 
 def profile_text(path: Path, workspace: str) -> str:
-    """Profile YAML with the __WORKSPACE__ placeholder replaced by the workspace path."""
-    return Path(path).read_text(encoding="utf-8").replace("__WORKSPACE__", workspace)
+    """Profile YAML with the __WORKSPACE__ and __MEDIA__ placeholders replaced (__MEDIA__ = shared media folder)."""
+    from .media_workspace import media_dir
+    return (Path(path).read_text(encoding="utf-8")
+            .replace("__WORKSPACE__", workspace)
+            .replace("__MEDIA__", media_dir().as_posix()))
 
 
 def load_profile(path: Path, workspace: str) -> dict:

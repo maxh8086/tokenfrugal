@@ -76,7 +76,7 @@ class RoleErrors(unittest.TestCase):
 
     def test_each_broken_field_is_reported(self):
         roles = {"bad": {"model": "gpt", "profile": "nope", "skills": ["gone"], "compose": ["db-x"],
-                         "native": ["mystery"], "tools": [f"t{i}" for i in range(7)]}}
+                         "native": ["mystery"], "tools": [f"t{i}" for i in range(preflight.MAX_TOOLS + 1)]}}
         probs = preflight.role_errors(roles, self.root)["bad"]
         self.assertEqual(len(probs), 6)
 
@@ -101,3 +101,38 @@ class HealSkill(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MediahouseRoles(unittest.TestCase):
+    NAMES = ("content-writer", "content-analyst", "video-editor")
+
+    def setUp(self):
+        from router.config import ROOT, load_tf_roles
+        cfg = load_tf_roles()
+        self.root = ROOT
+        self.roles = {n: cfg["roles"][n] for n in self.NAMES}
+        self.contracts = cfg.get("contracts") or {}
+
+    def test_each_role_has_its_profile_file(self):
+        for name, role in self.roles.items():
+            self.assertTrue((self.root / "profiles" / f"{role['profile']}.yaml").exists(), name)
+
+    def test_roles_pass_static_checks(self):
+        self.assertEqual(preflight.role_errors(self.roles, self.root), {})
+
+    def test_tools_are_served_and_within_limit(self):
+        # These native servers are built from upstream sources outside the repo, so their tools are "unverified" offline.
+        off_repo = {"native reddit", "native hn", "native rss", "native youtube", "native qdrant", "native postgres"}
+        for name, role in self.roles.items():
+            missing, unverified = preflight.tool_gaps(role, self.root)
+            self.assertEqual(missing, [], name)
+            self.assertLessEqual(set(unverified), off_repo, name)
+            # content-analyst is the documented exception to the recommended 6 (docs/content-analyst.md); MAX_TOOLS still applies.
+            limit = preflight.MAX_TOOLS if name == "content-analyst" else preflight.RECOMMENDED_TOOLS
+            self.assertLessEqual(len(role["tools"]), limit, name)
+
+    def test_video_editor_native_tools_parse_from_source(self):
+        self.assertEqual(preflight._native_tools(self.root, "video-editor"), {"list_raw", "list_renders", "vedit"})
+
+    def test_contracts_present(self):
+        self.assertEqual(preflight.contract_errors(self.roles, {n: self.contracts.get(n) for n in self.NAMES}), {})

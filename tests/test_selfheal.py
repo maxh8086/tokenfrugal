@@ -2,6 +2,10 @@
 import asyncio
 import unittest
 
+import contextlib
+from unittest import mock
+
+from router import mcp_client
 from router.mcp_client import Router, conn_error
 
 
@@ -31,7 +35,8 @@ def run(coro):
 class ConnError(unittest.TestCase):
     def test_true(self):
         for m in ("Connection closed", "MCPError: Connection closed", "container ts-fs is not running",
-                  "Error response from daemon: container abc is not running", "BrokenPipeError", "Broken pipe"):
+                  "Error response from daemon: container abc is not running", "BrokenPipeError", "Broken pipe",
+                  "server is closing: EOF"):
             self.assertTrue(conn_error(Exception(m)), m)
 
     def test_false(self):
@@ -284,6 +289,62 @@ class BackendEnsure(unittest.TestCase):
             run(go())
         self.assertEqual(order, [("ensure", "synaptree"), ("open", "synaptree"),
                                  ("ensure", "synaptree"), ("open", "synaptree")])
+
+
+class OpenStderr(unittest.TestCase):
+    """A failed open carries the gateway's stderr, so the EOF says why; the message keeps its markers for the open retry."""
+
+    def _open_with(self, stderr_text):
+        @contextlib.asynccontextmanager
+        async def fake_stdio(sp, errlog=None):
+            errlog.write(stderr_text)
+            yield (None, None)
+
+        class FailingSession:
+            def __init__(self, r, w):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *a):
+                return False
+
+            async def initialize(self):
+                raise Exception("server is closing: EOF")
+
+        async def drain():
+            async with mcp_client.open_profile("db-test"):
+                pass
+
+        patches = [
+            mock.patch.object(mcp_client.docker_mcp, "docker_bin", lambda: "docker"),
+            mock.patch.object(mcp_client.docker_mcp, "gateway_argv", lambda *a: ["docker", "mcp"]),
+            mock.patch.object(mcp_client.profile_sync, "ensure_profiles", lambda *a: None),
+            mock.patch.object(mcp_client.mcp_reap, "enter", lambda *a: None),
+            mock.patch.object(mcp_client.mcp_reap, "leave", lambda *a: None),
+            mock.patch.object(mcp_client, "stdio_client", fake_stdio),
+            mock.patch.object(mcp_client, "ClientSession", FailingSession),
+        ]
+        for p in patches:
+            p.start()
+        try:
+            with self.assertRaises(Exception) as cm:
+                run(drain())
+            return cm.exception
+        finally:
+            for p in reversed(patches):
+                p.stop()
+
+    def test_eof_on_open_adds_gateway_stderr(self):
+        exc = self._open_with("dbhub: cannot reach mssql on 1433\n")
+        self.assertIn("server is closing: EOF", str(exc))
+        self.assertIn("gateway stderr: dbhub: cannot reach mssql on 1433", str(exc))
+        self.assertTrue(conn_error(exc))
+
+    def test_empty_stderr_leaves_error_unchanged(self):
+        exc = self._open_with("")
+        self.assertEqual(str(exc), "server is closing: EOF")
 
 
 if __name__ == "__main__":

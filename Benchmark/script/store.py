@@ -54,7 +54,19 @@ RUN_COLS = ["score", "max", "mean_s_per_case", "failure_kind", "n", "max_tokens"
 ROLE_COLS = CASE_COLS + RUN_COLS
 
 # Summary columns, in the order of results/LAYOUT.md.
-HEAD_COLS = ["model", "params", "endpoint", "temperature", "harness_version", "loop_version", "compression_level"]
+HEAD_COLS = ["model", "params", "endpoint", "temperature", "thinking_level", "harness_version", "loop_version", "compression_level"]
+
+
+def thinking_of(meta, model):
+    """Thinking level a run used for this model: the level, `off`, `not supported` (model refused it) or `not sent`
+    (runs recorded before the level was logged)."""
+    if "thinking" not in meta:
+        return "not sent"
+    if meta["thinking"] in ("", "off"):
+        return "off"
+    if model in meta.get("thinking_refused", []):
+        return "not supported"
+    return meta["thinking"]
 RANK_COLS = ["rank", "total_score", "valid_cases", "median_s", "max", "ran"]
 TEST_COLS = [c for t in TESTS.values() for c in (t["when"], t["score"])]
 TAIL_COLS = ["mean_s_per_case", "context_used_peak_tokens", "gpu_memory_capacity", "gpu_memory_used_gb",

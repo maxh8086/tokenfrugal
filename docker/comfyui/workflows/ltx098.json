@@ -1,0 +1,101 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {"ckpt_name": "ltxv-2b-0.9.8-distilled.safetensors"},
+    "_meta": {"title": "LTX 0.9.8 distilled checkpoint (model, CLIP, VAE)"}
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {"clip_name": "t5xxl_fp8_e4m3fn.safetensors", "type": "ltxv"},
+    "_meta": {"title": "T5-XXL text encoder"}
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A person in a dark blazer looks at the camera and slowly nods.",
+      "clip": ["2", 0]
+    },
+    "_meta": {"title": "prompt"}
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "worst quality, inconsistent motion, blurry, jittery, distorted",
+      "clip": ["2", 0]
+    },
+    "_meta": {"title": "negative prompt"}
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "spike_input.png"},
+    "_meta": {"title": "first frame (copied into the ComfyUI input folder)"}
+  },
+  "6": {
+    "class_type": "LTXVImgToVideo",
+    "inputs": {
+      "positive": ["3", 0],
+      "negative": ["4", 0],
+      "vae": ["1", 2],
+      "image": ["5", 0],
+      "width": 512,
+      "height": 704,
+      "length": 65,
+      "batch_size": 1,
+      "strength": 1.0
+    },
+    "_meta": {"title": "LTX image-to-video conditioning and empty latent"}
+  },
+  "7": {
+    "class_type": "RandomNoise",
+    "inputs": {"noise_seed": 42},
+    "_meta": {"title": "seed"}
+  },
+  "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {"sampler_name": "euler"},
+    "_meta": {"title": "sampler"}
+  },
+  "9": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    },
+    "_meta": {"title": "fixed 8-step distilled sigma schedule"}
+  },
+  "10": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": ["1", 0],
+      "positive": ["6", 0],
+      "negative": ["6", 1],
+      "cfg": 1.0
+    },
+    "_meta": {"title": "guider (cfg 1.0, distilled)"}
+  },
+  "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["7", 0],
+      "guider": ["10", 0],
+      "sampler": ["8", 0],
+      "sigmas": ["9", 0],
+      "latent_image": ["6", 2]
+    },
+    "_meta": {"title": "sampler"}
+  },
+  "12": {
+    "class_type": "VAEDecode",
+    "inputs": {"samples": ["11", 0], "vae": ["1", 2]},
+    "_meta": {"title": "VAE decode"}
+  },
+  "13": {
+    "class_type": "CreateVideo",
+    "inputs": {"images": ["12", 0], "fps": 24},
+    "_meta": {"title": "frames to video (24 fps)"}
+  },
+  "14": {
+    "class_type": "SaveVideo",
+    "inputs": {"video": ["13", 0], "filename_prefix": "video/ltx098_spike", "format": "auto", "format.codec": "auto"},
+    "_meta": {"title": "save clip"}
+  }
+}

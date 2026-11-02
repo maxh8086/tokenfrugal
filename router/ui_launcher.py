@@ -13,6 +13,7 @@ import webbrowser
 
 import yaml
 
+from . import comfy_bridge, gpu_lease
 from .config import ROOT
 from .events import UI_TEXT
 
@@ -74,8 +75,33 @@ def start() -> str | None:
     return url
 
 
+def _lease_held() -> bool:
+    """True while the GPU lease is held. An unreadable lease counts as held, so nothing is killed by mistake."""
+    try:
+        return gpu_lease.read() is not None
+    except Exception:  # noqa: BLE001
+        return True
+
+
+def start_bridge(comfy_url: str | None = None, container_id: str | None = None):
+    """Spawn the detached ComfyUI event bridge, which acquires the GPU lease. Called for a ComfyUI session only, never
+    at router start. The dashboard's Start route spawns the same module. Returns the Popen, or None on failure."""
+    args = []
+    if comfy_url:
+        args += ["--comfy-url", comfy_url]
+    if container_id:
+        args += ["--container-id", container_id]
+    try:
+        return comfy_bridge.spawn_detached(args)
+    except OSError as e:
+        print(f"tokenfrugal ui: could not start the ComfyUI bridge ({e})", file=sys.stderr)
+        return None
+
+
 def stop() -> None:
+    """Stop the dashboard at router exit, unless a GPU lease is held: then it stays up so the ComfyUI tab can still
+    show the session and stop it. The bridge itself is detached and is never terminated here."""
     global _proc
-    if _proc and _proc.poll() is None:
+    if _proc and _proc.poll() is None and not _lease_held():
         _proc.terminate()
     _proc = None

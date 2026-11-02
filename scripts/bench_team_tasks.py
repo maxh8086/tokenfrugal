@@ -1,6 +1,6 @@
 TEAM_TASKS = {
     "designer": ("design-ui-designer", "Say what design tools you have."),
-    "browser": ("testing-evidence-collector", "Say what browser tools you have."),
+    "browser": ("testing-evidence-collector", "Use navigate_page to open https://example.com, then say in one sentence what the page is about. Read-only: do not submit forms or change state."),
     "builder": ("engineering-backend-architect", "Use search_graph to find the symbol named summarize and report its file path."),
     "data-engineer": ("engineering-data-engineer", "List the files in /workspace/router and name three."),
     "analyzer": ("engineering-software-architect", "Use search_graph to find the symbol named run in project tokenfrugal and say which file defines it."),
@@ -24,8 +24,8 @@ TEAM_TASKS = {
     "db-redis-dev-l3": ("db-redis-dev-l3", "List the keys you can see in the database, or say you cannot reach it. Read-only: do not write, edit, commit or run anything that changes state."),
     "devops": ("engineering-devops-automator", "Read /workspace/profiles/build.yaml and say in one sentence what it configures. Read-only: do not write, edit, commit or run anything that changes state."),
     "tracker": ("project-management-project-shepherd", "Report the plan status."),
-    "github-read": ("github-ops", "Read /workspace/profiles/github.yaml and say in one sentence what it configures. Read-only: do not write, edit, commit or run anything that changes state."),
-    "github-actions-read": ("github-actions-ops", "Read /workspace/profiles/github.yaml and say whether it configures GitHub Actions access; say none if not. Read-only: do not write, edit, commit or run anything that changes state."),
+    "github-read": ("github-ops", "Use get_file_contents on owner maxh8086, repo tokenfrugal, path profiles/github.yaml and say in one sentence what it configures. Read-only: do not write, edit, commit or run anything that changes state."),
+    "github-actions-read": ("github-actions-ops", "Use actions_list on owner maxh8086, repo tokenfrugal to list its GitHub Actions workflows, and say in one sentence whether any exist; say none if the list is empty. Read-only: do not write, edit, commit or run anything that changes state."),
     "db-postgres-admin": ("db-postgres-admin", "List the tables you can see in the database, or say you cannot reach it. Read-only: do not write, edit, commit or run anything that changes state."),
     "db-mysql-admin": ("db-mysql-admin", "List the tables you can see in the database, or say you cannot reach it. Read-only: do not write, edit, commit or run anything that changes state."),
     "db-mssql-admin": ("db-mssql-admin", "List the tables you can see in the database, or say you cannot reach it. Read-only: do not write, edit, commit or run anything that changes state."),

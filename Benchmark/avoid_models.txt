@@ -1,0 +1,6 @@
+# Models to skip in tokenfrugal benchmark runs (Benchmark/script/run_benchmark.py refuses them).
+# One case-insensitive substring of the model tag per line. Text after # is a comment.
+# The 10B size limit applies to kalamanch diffusion models only, not to these benchmarks.
+wan2.1-i2v        # Wan 2.1 I2V 14B video model (GGUF), not a text model
+ltx-2.5           # LTX-2.5 22B video model (GGUF)
+cogvideox         # CogVideoX-5b-I2V video model

@@ -15,7 +15,8 @@ TEMPLATE_BUDGET_TOKENS = 1500  # their combined size; the rest of the 16-32k win
 
 
 def _db():
-    c = sqlite3.connect(DB_PATH)
+    c = sqlite3.connect(DB_PATH, timeout=30)  # wait for concurrent writers instead of failing after Python's 5s default
+    c.execute("PRAGMA journal_mode=WAL")  # readers and writers stop blocking each other
     c.execute("""CREATE TABLE IF NOT EXISTS tasks(
         id TEXT PRIMARY KEY, agent TEXT, role TEXT, prompt TEXT, status TEXT,
         summary TEXT, detail TEXT, messages TEXT, error TEXT, attempts INTEGER DEFAULT 0)""")
@@ -73,6 +74,13 @@ def sweep_stale(reason: str, stale_after: float = STALE_AFTER) -> int:
     with _db() as c:
         return c.execute("UPDATE tasks SET status='failed', error=?, error_kind='error' WHERE status='running' AND (heartbeat IS NULL OR heartbeat < ?)",
                          (reason, cutoff)).rowcount
+
+
+def last_for(agent) -> dict | None:
+    """Newest task row for one agent slug (id and status only), or None. Used to resume a pipeline stage."""
+    with _db() as c:
+        r = c.execute("SELECT id, status FROM tasks WHERE agent=? ORDER BY rowid DESC LIMIT 1", (agent,)).fetchone()
+    return {"id": r[0], "status": r[1]} if r else None
 
 
 def get(tid) -> dict | None:

@@ -20,7 +20,8 @@ class CsvSchemaError(Exception):
 
 
 # Value for a column that older rows do not have (or leave blank). Columns not listed migrate to "" as before.
-COLUMN_DEFAULTS = {"loop_version": "1"}  # rows written before loop_version existed ran the loop v1
+COLUMN_DEFAULTS = {"loop_version": "1",  # rows written before loop_version existed ran the loop v1
+                   "thinking_level": "not sent"}  # rows written before a thinking level was sent
 
 
 def read_rows(path, cols):

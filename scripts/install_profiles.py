@@ -12,6 +12,16 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from router.media_workspace import media_dir  # noqa: E402
+from scripts.ensure_media_workspace import run as ensure_media  # noqa: E402
+
+
+def fill(text: str, ws: str, media: str) -> str:
+    """Replace the profile placeholders: __WORKSPACE__ (repo/workspace), __MEDIA__ (shared media folder), __REPO__."""
+    return text.replace("__WORKSPACE__", ws).replace("__MEDIA__", media).replace("__REPO__", str(ROOT).replace("\\", "/"))
 
 
 def ensure_images() -> None:
@@ -38,18 +48,21 @@ def main() -> int:
             pass
         ws = os.getenv("CC_WORKSPACE") or ROOT.as_posix()
     ws = Path(ws).resolve().as_posix()
+    if ensure_media([]) != 0:  # create the shared media folder tree before any profile points at it
+        return 1
+    media = media_dir().as_posix()
     ensure_images()
     with tempfile.TemporaryDirectory() as tmp:
         for src in sorted((ROOT / "profiles").glob("*.yaml")):
             name = src.stem
             out = Path(tmp) / src.name
-            out.write_text(src.read_text(encoding="utf-8").replace("__WORKSPACE__", ws).replace("__REPO__", str(ROOT).replace("\\", "/")), encoding="utf-8")
+            out.write_text(fill(src.read_text(encoding="utf-8"), ws, media), encoding="utf-8")
             subprocess.run(["docker", "mcp", "profile", "remove", name], capture_output=True)
             r = subprocess.run(["docker", "mcp", "profile", "import", str(out)], capture_output=True, text=True)
             print(("ok   " if r.returncode == 0 else "FAIL ") + name, (r.stderr or r.stdout).strip()[:200] if r.returncode else "")
             if r.returncode:
                 return 1
-    print(f"Profiles installed (workspace {ws}). Set CC_WORKSPACE in .env to this exact path.")
+    print(f"Profiles installed (workspace {ws}, media {media}). Set CC_WORKSPACE in .env to the workspace path.")
     return 0
 
 

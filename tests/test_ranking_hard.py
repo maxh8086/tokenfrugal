@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "Benchmark" / "script"))
 import ranking  # noqa: E402
 
-FIELDS = ["run_id", "model", "case", "verified", "s_p50", "superseded"]
+FIELDS = ["run_id", "date", "model", "case", "verified", "s_p50", "superseded"]
 
 
 def _rows(d, name, rows):
@@ -16,8 +16,9 @@ def _rows(d, name, rows):
         w = csv.DictWriter(fh, fieldnames=FIELDS)
         w.writeheader()
         for run_id, model, verified, p50, superseded in rows:
-            w.writerow({"run_id": run_id, "model": model, "case": "hard_two_vulns", "verified": verified,
-                        "s_p50": p50, "superseded": superseded})
+            stamp = run_id.split("-")[0]  # run_id starts with YYYYMMDD
+            w.writerow({"run_id": run_id, "date": f"{stamp[:4]}-{stamp[4:6]}-{stamp[6:8]}", "model": model,
+                        "case": "hard_two_vulns", "verified": verified, "s_p50": p50, "superseded": superseded})
 
 
 class HardResults(unittest.TestCase):
@@ -43,7 +44,10 @@ class HardResults(unittest.TestCase):
         self.assertIn("No hard-suite", ranking.hard_md({}))
         with tempfile.TemporaryDirectory() as d:
             _rows(d, "hard_test.csv", [("20260101-a", "m2", "2/3", 12, "")])
-            self.assertIn("| `m2` | 2/3 |", ranking.hard_md(ranking.hard_results(Path(d) / "hard_test.csv")))
+            out = ranking.hard_md(ranking.hard_results(Path(d) / "hard_test.csv"))
+            self.assertIn('id="hd"', out)  # the table is drawn by the page from PASS_DATA
+            self.assertEqual(ranking.PASS_DATA["hd"]["rows"][0]["model"], "m2")
+            self.assertEqual((ranking.PASS_DATA["hd"]["rows"][0]["a"], ranking.PASS_DATA["hd"]["rows"][0]["n"]), (2, 3))
 
 
 if __name__ == "__main__":

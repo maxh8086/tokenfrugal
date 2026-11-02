@@ -1,0 +1,10 @@
+# Override used only for the 2a smoke test on a machine without an NVIDIA GPU: it removes the GPU reservation.
+# Use with a second -f, for example:
+#   docker compose -p tokenfrugal-gpu -f docker-compose.gpu.yml -f docker-compose.gpu.cpu.yml up -d --wait
+# The tab never uses this file. Timings taken in CPU mode are not recorded. Needs Compose 2.24.4+ for !reset.
+services:
+  comfyui:
+    deploy: !reset {}
+    command: ["python", "main.py", "--cpu", "--listen", "0.0.0.0", "--port", "8188", "--disable-auto-launch",
+              "--output-directory", "/data/output", "--input-directory", "/data/input", "--user-directory", "/data/user",
+              "--temp-directory", "/tmp/comfy", "--extra-model-paths-config", "/app/extra_model_paths.yaml"]

@@ -25,6 +25,9 @@ class Reason(unittest.TestCase):
 
     def test_no_tool_call(self):
         self.assertReason("you answered without calling any tool; call a tool to read real data first", "no-tool-call")
+        self.assertReason("LoopError: You have not called list-collections yet. Call list-collections now", "no-tool-call")
+        self.assertReason("LoopError: You have not read anything yet", "no-tool-call")
+        self.assertReason("LoopError: something else", "unknown")
 
     def test_malformed_tool_call(self):
         for m in ("that tool call could not be run: it is malformed JSON or names an unknown tool.",

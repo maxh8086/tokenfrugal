@@ -42,6 +42,29 @@ class DbRoleTests(unittest.TestCase):
         for slug in ("db-postgres-dev", "db-redis-dev-l3", "engineering-data-engineer"):
             self.assertIn("tools", config.resolve_role(slug, self.cfg))
 
+    def test_no_db_password_literal_in_generated_output(self):
+        import yaml
+        literals = ("tf_scratch_pw", "tf_Scratch_pw1")
+        for pid in g.ROLES:
+            text = yaml.safe_dump(g.build(pid), sort_keys=False)
+            for lit in literals:
+                self.assertNotIn(lit, text, pid)
+        for engine in g.DSN:
+            for kind in ("dev", "admin"):
+                toml = g.toml_for(engine, kind)
+                for lit in literals:
+                    self.assertNotIn(lit, toml, f"{engine}-{kind}")
+                self.assertIn("${TF_DB_MSSQL_PASSWORD}" if engine == "mssql" else "${TF_DB_PASSWORD}", toml)
+
+    def test_dbhub_servers_carry_db_password_secret(self):
+        for pid, (engine, _kind, _tools) in g.ROLES.items():
+            server = g.build(pid)["servers"][0]["snapshot"]["server"]
+            if engine in g.DSN:
+                name = "TF_DB_MSSQL_PASSWORD" if engine == "mssql" else "TF_DB_PASSWORD"
+                self.assertEqual(server["secrets"], [{"name": name, "env": name}], pid)
+            else:
+                self.assertNotIn("secrets", server, pid)
+
 
 if __name__ == "__main__":
     unittest.main()

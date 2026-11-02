@@ -32,6 +32,8 @@ You are the lead architect. Keep cloud tokens for design, cross-module reasoning
 
 Use `list_roles` to see agent slugs. Replies are capped summaries; call `get_detail(task_id)` only when you need the full output. On failure call `resume_task(task_id)` once, then re-scope the task smaller. There is no cloud fallback.
 
+The content script pipeline (seven stages for one slug) is run with `scripts/content_pipeline.py`; see `docs/content-pipeline.md`.
+
 ## Context budget
 
 Local models run 16k-32k context. Point them at file paths in the workspace instead of pasting files. Pass only signatures and the types they need.
@@ -51,7 +53,7 @@ Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "co
 ## Architecture
 
 - Tools exposed to the agent: `dispatch_task`, `ask_followup`, `get_detail`, `resume_task`, `list_roles`, plus `plan_add/plan_overview/plan_revert/plan_update_from`. Changing tool docstrings changes delegation behaviour.
-- `router/tf-roles.yaml` maps agency-agents slugs (division prefix, longest match, plus overrides) to a role = model + Docker MCP profile + 4-6 allowlisted tools (+ optional `native:` servers). Only two local models: builder `qwen2.5-coder-yarn:3b`, thinker `llama3.2:3b-16k`. No cloud fallback: failures return a short error and a `task_id` for `resume_task`.
+- `router/tf-roles.yaml` maps agency-agents slugs (division prefix, longest match, plus overrides) to a role = model + Docker MCP profile + allowlisted tools (6 recommended, 12 maximum for any role) (+ optional `native:` servers). Two logical local models (builder `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K`, thinker `prism-bonsai-4b-q1:latest`); agents listed in `tf_roles_models` (the content-* stages) use their own Ollama tag. No cloud fallback: failures return a short error and a `task_id` for `resume_task`.
 - Per-agent model: `tf_roles_models` in `tf-roles.yaml` (slug -> `builder`/`thinker`/Ollama tag), overridden by `router/tf-roles_models.json` (written by `python -m scripts.tf_roles_ui`). `TOKENFRUGAL_TF_ROLES_MODELS=0` or any `TOKENFRUGAL_MODEL_*` env var disables it. Resolved in `config.resolve_role`.
 - `loop.py` is the tool-calling loop (max 2 calls/step, forced first tool call, slop retry). `mcp_client.py` opens `docker mcp gateway run --profile <p>` and native stdio servers behind one `Router`. `summarize.py` enforces the token cap; `store.py` (SQLite, `router/tasks.db`) backs `get_detail`/`resume_task`.
 - `compose.py` + `docker-compose.yml` (project `tokenfrugal`): roles with `compose: [...]` start their backends (`up -d --wait`) before a run and stop them after (`keep_alive` / `MCP_KEEP_ALIVE=1` skips the stop). The last router process to exit stops every `tokenfrugal` container. Leave other compose projects alone.
@@ -59,6 +61,7 @@ Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "co
 - Docker MCP profiles live in `profiles/*.yaml` with a `__WORKSPACE__` placeholder; `scripts/install_profiles.py` fills it in and builds helper images `tokenfrugal/chrome-devtools-mcp:1` and `tokenfrugal/penpot-mcp:1`.
 - Secrets (`SONARQUBE_TOKEN`, `NEO4J_AUTH`, ...) are Docker secret files in `~/.docker/mcp/secrets`, written with `python -m router.secrets_store set NAME`, never in the repo or catalogue YAMLs.
 - Writable workspace for `ts-fs-rw` needs `:rw` in the catalogue volume and `CC_WORKSPACE` equal to that exact host path.
+- GPU lease: `router/gpu_lease.py` records who holds the GPU. While ComfyUI (compose project `tokenfrugal-gpu`) holds it, the router refuses Ollama work with `gpu_busy`.
 
 ## Code intelligence (synaptree-mcp)
 

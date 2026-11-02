@@ -22,9 +22,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from router.config import load_tf_roles  # noqa: E402
 from scripts.bench import ok  # noqa: E402
+from store import thinking_of  # noqa: E402
 
 OUT = ROOT / "Benchmark" / "results" / "team_results.csv"
-COLS = ["team", "role", "model", "tag", "json", "runs", "passes", "infra", "pass_pct", "mean_s_warm", "failure", "date"]
+COLS = ["team", "role", "model", "tag", "thinking", "json", "runs", "passes", "infra", "pass_pct", "mean_s_warm", "failure", "date"]
 
 
 def run_date(json_name):
@@ -47,6 +48,7 @@ def team_of_role(cfg):
 def rows_from(path, teams, model):
     d = json.loads(Path(path).read_text(encoding="utf-8"))
     tag = d.get("tag", "")
+    think = thinking_of(d.get("meta", {}), model)
     rows = []
     for role, v in d.get("results", {}).get("roles", {}).items():
         if role not in teams:
@@ -70,6 +72,8 @@ def rows_from(path, teams, model):
                      "mean_s_warm": warm.get("mean", ""),
                      "failure": ("infra: compose backend did not start" if infra and not fails
                                  else (fails[0] if fails else ""))})
+    for r in rows:
+        r["thinking"] = think
     return rows
 
 

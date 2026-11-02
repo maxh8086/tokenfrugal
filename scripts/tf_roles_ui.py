@@ -273,7 +273,7 @@ $("sm").textContent=sel.length?sel.map(n=>S.mcps[n].label).join(", "):"(none: ro
 $("cb").innerHTML=Object.entries(S.mcps).map(([n,m])=>`<label><input type=checkbox value="${n}"${sel.includes(n)?" checked":""}> ${m.label}${prop.includes(n)?PR:""}</label>`).join("");
 document.querySelectorAll("#cb input").forEach(c=>c.onchange=()=>{mc[p]=[...document.querySelectorAll("#cb input:checked")].map(x=>x.value);const o=$("dd").open;draw();$("dd").open=o});
 const n=new Set(sel.flatMap(x=>S.mcps[x].tools)).size;
-$("warn").textContent=n>6?`${n} tools selected; 3B models work best with 6 or fewer.`:"";
+$("warn").textContent=n>12?`${n} tools selected; the maximum is 12.`:n>6?`${n} tools selected; 6 or fewer is recommended for 3B models.`:"";
 const pm=r.default||"",c=md[p];
 const all=[...new Set([...Object.keys(S.logical),...S.installed,pm,c].filter(Boolean))];
 $("m").innerHTML='<option value="">(role model)</option>'+all.map(m=>`<option value="${m}"${m===c?" selected":""}>${m}${m===pm?" (proposed)":""}</option>`).join("");

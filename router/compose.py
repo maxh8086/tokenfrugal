@@ -8,18 +8,48 @@ import uuid
 from pathlib import Path
 
 from .config import COMPOSE_FILE, COMPOSE_PROJECT, DB_PATH, KEEP_ALIVE
+from .proc_alive import _alive  # kept as a name here: tests patch router.compose._alive
 
 PERSISTENT = {"neo4j"}  # started with the router, only stopped by stop_all_sync() on router exit
 LEASES = DB_PATH.parent / "leases"  # one file per (service, router pid, task) using a backend
 _users: dict[str, int] = {}  # backend -> concurrent tasks using it (in this router process)
 _lock = asyncio.Lock()
+IDLE_S = int(os.getenv("TOKENFRUGAL_BACKEND_IDLE_S", "600"))  # an unused backend stops after this many idle seconds
+_idle: dict[str, asyncio.Task] = {}  # backend -> pending idle stop (cancelled when the backend is reused)
 
 
 class ComposeError(Exception):
     pass
 
 
+DOCKER_API_500 = "request returned 500"  # Docker Desktop API blip during container start: transient, worth waiting out
+UP_RETRY_WAITS = (5, 15, 30)  # seconds before each retry of a failed `up`; a 500 keeps retrying, other failures stop after the first
+
+
 async def _compose(*args: str, timeout: int) -> None:
+    try:
+        await _compose_once(*args, timeout=timeout)
+    except ComposeError as first:
+        if args[0] != "up" or "timed out" in str(first):
+            raise
+        # a fast `up` failure is usually a race with a container still stopping from the previous run, or a Docker API 500
+        waits = UP_RETRY_WAITS if DOCKER_API_500 in str(first) else UP_RETRY_WAITS[:1]
+        last = first
+        for wait in waits:
+            await asyncio.sleep(wait)
+            try:
+                await _compose_once(*args, timeout=timeout)
+                return
+            except ComposeError as exc:
+                last = exc
+                if DOCKER_API_500 not in str(exc):
+                    break
+        if last is first:
+            raise
+        raise ComposeError(f"{last} (first attempt: {first})") from None
+
+
+async def _compose_once(*args: str, timeout: int) -> None:
     p = await asyncio.create_subprocess_exec(
         shutil.which("docker") or "docker", "compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE), *args,
         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT, env=dict(os.environ))
@@ -43,11 +73,12 @@ async def backends(services: list[str], keep_alive: bool = False, timeout: int =
     async with _lock:
         for s in services:
             _users[s] = _users.get(s, 0) + 1
+            _cancel_idle(s)  # still running from a recent task: reuse it, do not restart
         try:
             leases = lease_acquire(services)
             await _compose("up", "-d", "--wait", *services, timeout=timeout)
         except BaseException:
-            await _release(services, leases, False)
+            await _release(services, leases, False, now=True)  # a failed start is not kept warm
             raise
     try:
         yield
@@ -56,15 +87,50 @@ async def backends(services: list[str], keep_alive: bool = False, timeout: int =
             await _release(services, leases, keep_alive or KEEP_ALIVE)
 
 
-async def _release(services: list[str], leases: list[Path], keep: bool) -> None:
+async def _release(services: list[str], leases: list[Path], keep: bool, now: bool = False) -> None:
     for s in services:
         _users[s] = _users.get(s, 1) - 1
         if _users[s] <= 0:
             _users.pop(s, None)
     idle = [s for s in lease_release(leases) if s not in PERSISTENT]
     if idle and not keep:
+        if now:
+            with contextlib.suppress(Exception):
+                await _compose("stop", *idle, timeout=120)
+        else:
+            for s in idle:
+                _schedule_idle_stop(s)
+
+
+def _cancel_idle(s: str) -> None:
+    pending = _idle.pop(s, None)
+    if pending:
+        pending.cancel()
+
+
+def _schedule_idle_stop(s: str) -> None:
+    """Stop `s` after IDLE_S seconds with no task using it; a task that starts in that window cancels the stop."""
+    _cancel_idle(s)
+    _idle[s] = asyncio.get_running_loop().create_task(_stop_when_idle(s))
+
+
+async def _stop_when_idle(s: str) -> None:
+    await asyncio.sleep(IDLE_S)
+    async with _lock:
+        _idle.pop(s, None)
+        if _users.get(s) or _has_live_lease(s):
+            return
         with contextlib.suppress(Exception):
-            await _compose("stop", *idle, timeout=120)
+            await _compose("stop", s, timeout=120)
+
+
+def _has_live_lease(s: str) -> bool:
+    """True when another live router process holds a lease on `s`."""
+    for f in LEASES.glob(f"{s}.*") if LEASES.exists() else []:
+        pid = f.name.split(".")[1]
+        if pid.isdigit() and _alive(int(pid)):
+            return True
+    return False
 
 
 def lease_acquire(services: list[str]) -> list[Path]:
@@ -87,6 +153,8 @@ def lease_release(paths: list[Path]) -> list[str]:
     for s in dict.fromkeys(p.name.split(".")[0] for p in paths):
         live = False
         for f in LEASES.glob(f"{s}.*") if LEASES.exists() else []:
+            if f.name.startswith(("gpu.", "comfy_")):  # GPU lease files (router/gpu_lease.py) are never touched here
+                continue
             pid = f.name.split(".")[1]
             if pid.isdigit() and _alive(int(pid)):
                 live = True
@@ -114,6 +182,7 @@ async def recreate(services: list[str], timeout: int = 300) -> None:
 def stop_all_sync() -> None:
     """Stop every running container of the tokenfrugal project (backends and stdio wrappers). Safe to call twice."""
     docker = shutil.which("docker") or "docker"
+    # The label filter must stay exact: project tokenfrugal-gpu (ComfyUI, GPU lease holder) is not stopped here.
     with contextlib.suppress(Exception):
         ids = subprocess.run([docker, "ps", "-q", "--filter", f"label=com.docker.compose.project={COMPOSE_PROJECT}"],
                              capture_output=True, text=True, timeout=30).stdout.split()
@@ -123,25 +192,6 @@ def stop_all_sync() -> None:
 
 # --- last-one-out shutdown: every router process (Claude, Codex, ...) drops a pid file; only the last stops containers
 REGISTRY = DB_PATH.parent / "gateways"
-
-
-def _alive(pid: int) -> bool:
-    if os.name == "nt":  # os.kill(pid, 0) would terminate the process on Windows
-        import ctypes
-        h = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
-        if not h:
-            return False
-        code = ctypes.c_ulong()
-        ok = ctypes.windll.kernel32.GetExitCodeProcess(h, ctypes.byref(code))
-        ctypes.windll.kernel32.CloseHandle(h)
-        return bool(ok) and code.value == 259  # STILL_ACTIVE
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
 
 
 def register() -> None:

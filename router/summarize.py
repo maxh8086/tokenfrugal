@@ -1,6 +1,7 @@
 """Enforce the summary cap (SUMMARY_MAX_TOKENS) in code (second summarizing pass, then hard trim)."""
 from openai import OpenAI
 
+from . import gpu_lease
 from .config import LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SUMMARY_MAX_TOKENS, SUMMARY_MIN_TOKENS
 
 _LOCAL = any(h in OLLAMA_URL for h in ("localhost", "127.0.0.1", "[::1]", "host.docker.internal"))
@@ -27,6 +28,10 @@ def hard_trim(text: str, limit: int = SUMMARY_MAX_TOKENS) -> str:
 def summarize(model: str, text: str, task: str) -> str:
     if tokens(text) <= SUMMARY_MAX_TOKENS:  # short answers are already the summary; a model pass only corrupts them
         return text
+    try:
+        gpu_lease.guard_ollama(OLLAMA_URL)
+    except gpu_lease.GpuBusy:  # the work is already done: keep the detail, trimmed, instead of failing the task
+        return hard_trim(text)
     source = text
     for _ in range(2):
         kw = {"model": model, "max_tokens": SUMMARY_MAX_TOKENS,

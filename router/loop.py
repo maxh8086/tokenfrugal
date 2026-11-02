@@ -9,14 +9,15 @@ from types import SimpleNamespace
 
 from openai import OpenAI
 
-from . import events, mcp_reap
-from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, TOOL_TIMEOUT,
-                     TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
+from . import events, gpu_lease, mcp_reap
+from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, THINK_LEVEL,
+                     TOOL_TIMEOUT, TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
 from .lint import check_python
 from .mcp_client import open_role, result_text, to_openai_tools
 
 _NO_TEMP: set[str] = set()  # models whose endpoint refuses `temperature`
+_NO_THINK: set[str] = set()  # models that have no thinking and refuse the `think` field
 _LOCAL = any(h in OLLAMA_URL for h in ("localhost", "127.0.0.1", "[::1]", "host.docker.internal"))
 # hosted endpoints rate-limit (429/529): let the SDK back off and honour retry-after; local stays at 0
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0 if _LOCAL else 4)
@@ -298,7 +299,7 @@ def failure_reason(text: str) -> str:
         return "connection"
     if "timed out" in s or "timeouterror" in s or "apitimeouterror" in s:
         return "timeout"
-    if "without calling any tool" in s:
+    if "without calling any tool" in s or re.search(r"you have not (called|read)", s):
         return "no-tool-call"
     if "tool call" in s and ("malformed" in s or "could not be run" in s or "wrote a tool call" in s):
         return "malformed-tool-call"
@@ -311,8 +312,8 @@ def failure_reason(text: str) -> str:
 
 def error_kind(text: str) -> str:
     """Failure kind stored as error_kind: step_timeout (role time limit hit), request_timeout (one model request timed out),
-    no_tool_call, max_steps, infra (backend or runner failure), or error for everything else (connection, bad answers, ...).
-    Built on failure_reason."""
+    no_tool_call, max_steps, bad_answer (empty or placeholder reply), infra (backend or runner failure), or error for
+    everything else (connection, ...). Built on failure_reason."""
     reason = failure_reason(text)
     if reason == "infra":
         return "infra"
@@ -322,12 +323,20 @@ def error_kind(text: str) -> str:
         return "no_tool_call"
     if reason == "out-of-steps":
         return "max_steps"
+    if reason == "bad-answer":
+        return "bad_answer"
+    if reason == "no-tools":
+        return "no_tools"
+    if reason == "malformed-tool-call":
+        return "malformed_tool_call"
     return "error"
 
 
 def think_extra(role: dict) -> dict:
-    """Ask thinking models to skip their reasoning phase; empty for other roles."""
-    return {"extra_body": {"think": False}} if role.get("thinking") else {}
+    """Send the thinking level (TOKENFRUGAL_THINK) to models that accept it; empty when off or refused."""
+    if THINK_LEVEL in ("", "off") or role["model"] in _NO_THINK:
+        return {}
+    return {"extra_body": {"think": THINK_LEVEL}}
 
 
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
@@ -361,6 +370,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
             open_role(role.get("profile"), role.get("native"), role.get("params")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
+        if role["tools"] and not tools:  # the MCP server did not start: a harness fault, not a model answer
+            raise LoopError(f"infra: no tools listed for {agent} (profile {role.get('profile')} failed to start)")
         names = {t["function"]["name"] for t in tools}
         text_mode = bool(tools) and (role.get("tool_mode") or TOOL_MODE) == "text"
         if text_mode and msgs and msgs[0].get("role") == "system" and "Tools are NOT available" not in msgs[0]["content"]:
@@ -389,6 +400,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 ok_calls += 1
                 used_tools = True
         hinted = False  # the first "answered without reading" retry names read_file (2A)
+        hint_retries = 0  # first-call hint retries: their own budget of 2, separate from slop_retries
         wrapped = False  # the wrap-up nudge is sent once
         for step in range(1, role["max_steps"] + 1):
             events.emit("step", id=tid, n=step)
@@ -401,6 +413,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                 msgs.append({"role": "user", "content": "Step limit reached. Do not call any more tools. "
                                                         "Answer now using only the tool results above."})
             use_tools = bool(tools) and not text_mode and not force_answer
+            gpu_lease.guard_ollama(OLLAMA_URL)  # GpuBusy goes up to _execute: it is not a model error, so no retry block here
             t0 = time.monotonic()
             kw = {"model": role["model"], "messages": text_view(msgs) if text_mode else msgs, **think_extra(role)}
             if use_tools and tools:
@@ -422,7 +435,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     elif "tool_choice" in kw and "tool_choice" in s:
                         del kw["tool_choice"]  # model/endpoint cannot force a tool call
                     elif "extra_body" in kw and "think" in s.lower() and "400" in s:
-                        del kw["extra_body"]  # endpoint rejects the think flag: send the request without it
+                        _NO_THINK.add(role["model"])  # model has no thinking: send it without the flag from now on
+                        del kw["extra_body"]
                     elif infra_error(e):
                         if infra_retried:
                             raise LoopError(f"infra: {s[:300]}") from e
@@ -445,16 +459,21 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                                + ", ".join(sorted(names)))
                     else:
                         bad += ". Unknown tool name? Valid tool names: " + ", ".join(sorted(names))
+                hint_turn = False  # a first-call nudge: counted in hint_retries, not slop_retries
                 if not bad and tools and not used_tools:
                     bad = (first_call_hint(task_text, names, role.get("required_tool") or "") if not hinted else None) or \
                         "you answered without calling any tool; call a tool to read real data first"
                     hinted = True
+                    hint_turn = True
                 failed = not bad and used_tools and not ok_calls and fail_retries < 2
                 if failed:
                     fail_retries += 1
                     bad = "every tool call failed; fix the arguments and call the tool again before answering"
-                if bad and (failed or slop_retries < 2):
-                    slop_retries += 0 if failed else 1
+                if bad and (failed or (hint_turn and hint_retries < 2) or (not hint_turn and slop_retries < 2)):
+                    if hint_turn:
+                        hint_retries += 1
+                    elif not failed:
+                        slop_retries += 1
                     events.emit("retry", id=tid, n=slop_retries, reason=bad[:200])
                     msgs += [{"role": "assistant", "content": m.content or ""}, {"role": "user", "content": bad}]
                     continue

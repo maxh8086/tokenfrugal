@@ -27,7 +27,7 @@ os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep 
 from router import loop, server  # noqa: E402
 from scripts import bench_csv, bench_env, bench_real  # noqa: E402
 from scripts.bench_team_tasks import TEAM_TASKS  # noqa: E402
-from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, load_tf_roles, resolve_role  # noqa: E402
+from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, THINK_LEVEL, load_tf_roles, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 SECTION_MARGIN = 600  # seconds
@@ -88,6 +88,15 @@ def failure_mode(r):
     return (r[i:i + 110] if i >= 0 else r[:110]).replace("\n", " ")
 
 
+async def role_call(agent, task, role_timeout):
+    # Only the harness wait_for limit becomes a role timeout. A TimeoutError inside the model reply stays as text,
+    # so its real class (request_timeout) is kept instead of being relabelled with the role limit.
+    try:
+        return await asyncio.wait_for(server.dispatch_task(agent, task, task_type="benchmark"), role_timeout)
+    except asyncio.TimeoutError:
+        return f"FAILED TimeoutError after {role_timeout:g}s"
+
+
 async def bench_roles(n, only=None):
     res = {}
     role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
@@ -101,15 +110,13 @@ async def bench_roles(n, only=None):
         assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
         runs = []
         for i in range(n):
-            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task, task_type="benchmark"), role_timeout))
-            if "TimeoutError" in r or r.startswith("EXC TimeoutError"):
-                r = f"FAILED TimeoutError after {role_timeout:g}s"
+            dt, r = await timed(role_call(agent, task, role_timeout))
             # a reply shorter than 20 chars (after dropping the leading "[tid] ") is a failure, not a success
             body = re.sub(r"^\[[^\]]*\]\s*", "", r).strip()
             role_ok = ok(r) and len(body) >= 20
             if ok(r) and not role_ok:
                 r = f"FAILED reply too short ({len(body)} chars)"
-            runs.append({"s": round(dt, 1), "ok": role_ok, "out": r[:140]})
+            runs.append({"s": round(dt, 1), "ok": role_ok, "out": r[:400]})  # keep the full compose/infra error
             print(f"  roles/{role} #{i + 1} {dt:5.1f}s {'ok' if role_ok else failure_mode(r)}", flush=True)
         warm = [x["s"] for x in runs[1:] if x["ok"]]
         res[role] = {"cold_s": runs[0]["s"], "warm": stats(warm), "success": f"{sum(x['ok'] for x in runs)}/{n}",
@@ -351,6 +358,7 @@ async def main():
     sampler.stop()
     print("tail: sampler stopped", flush=True)
     data["meta"] = {"endpoint": OLLAMA_URL, "temperature": LLM_TEMPERATURE,"temperature_omitted": sorted(loop._NO_TEMP),
+                    "thinking": THINK_LEVEL, "thinking_refused": sorted(loop._NO_THINK),
                     "max_tokens": 2048, "builder": os.getenv("TOKENFRUGAL_MODEL_BUILDER", ""),
                     "thinker": os.getenv("TOKENFRUGAL_MODEL_THINKER", ""),
                     "git_sha": sh(["git", "rev-parse", "--short", "HEAD"]).strip()}
