@@ -553,14 +553,14 @@ contracts:
       - {text: "The output file exists in list_renders.", kind: deterministic}
       - {text: "Only the options the task asked for were passed, and no Raw clip was changed.", kind: judgement}
   media-motion:
-    purpose: Generate a narrated motion-graphics film of 20 to 30 seconds from a text brief. Output goes to Render.
+    purpose: Generate a narrated motion-graphics film of 30 to 120 seconds from a text brief. Output goes to Render.
     inputs: [brief text, length_target_s, music flag if the task asks for it, output name if the task gives one]
     output_format: Render file name, then the brief exit line.
     stop_condition: the brief returns the Render path, or 8 steps used.
     checklist:
       - {text: "brief returned the Render path with no error.", kind: deterministic}
       - {text: "Only the options the task asked for were passed.", kind: judgement}
-      - {text: "The narration is 90 words or fewer.", kind: judgement}
+      - {text: "The narration fits the word limit for the clip length (about 3 words per second).", kind: judgement}
   manim-style:
     purpose: Look up a media style profile in docs/designs and return its settings for a media-motion brief. Reads only.
     inputs: [style name, optional section the task asks about]

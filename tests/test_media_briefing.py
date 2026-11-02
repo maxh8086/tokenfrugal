@@ -15,7 +15,7 @@ class Validate(unittest.TestCase):
         self.render = Path(tmp.name)
 
     def check(self, **over):
-        args = dict(text=OK_TEXT, length_target_s=25, music=False, out_name="film_one", render_dir=self.render)
+        args = dict(text=OK_TEXT, length_target_s=30, music=False, out_name="film_one", render_dir=self.render)
         args.update(over)
         return mb.validate(**args)
 
@@ -29,20 +29,29 @@ class Validate(unittest.TestCase):
         with self.assertRaisesRegex(mb.BriefError, r"^error: text is empty$"):
             self.check(text="   ")
 
-    def test_text_over_ninety_words(self):
-        with self.assertRaisesRegex(mb.BriefError, r"^error: text over 90 words \(91\)$"):
+    def test_word_limit_scales_with_length(self):
+        self.assertEqual(mb.max_words(30), 90)
+        self.assertEqual(mb.max_words(120), 360)
+
+    def test_text_over_limit_at_30_seconds(self):
+        with self.assertRaisesRegex(mb.BriefError, r"^error: text over 90 words for 30 s \(91\)$"):
             self.check(text=" ".join(["word"] * 91))
 
-    def test_ninety_words_is_allowed(self):
+    def test_limit_allowed_at_30_seconds(self):
         self.check(text=" ".join(["word"] * 90))
 
+    def test_about_350_words_fits_120_seconds(self):
+        self.check(length_target_s=120, text=" ".join(["word"] * 350))
+        with self.assertRaisesRegex(mb.BriefError, r"^error: text over 360 words for 120 s \(361\)$"):
+            self.check(length_target_s=120, text=" ".join(["word"] * 361))
+
     def test_length_bounds(self):
-        msg = "error: length_target_s must be 20 to 30"
-        for bad in (19.9, 30.1, 0, "25", True):
+        msg = "error: length_target_s must be 30 to 120"
+        for bad in (29.9, 120.1, 0, "30", True):
             with self.subTest(bad=bad), self.assertRaisesRegex(mb.BriefError, msg):
                 self.check(length_target_s=bad)
-        self.check(length_target_s=20)
         self.check(length_target_s=30)
+        self.check(length_target_s=120)
 
     def test_music_must_be_bool(self):
         with self.assertRaisesRegex(mb.BriefError, r"^error: music must be true or false$"):

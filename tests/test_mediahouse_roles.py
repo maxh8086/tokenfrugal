@@ -72,7 +72,6 @@ class StyleRoleFilesTest(unittest.TestCase):
         text = (ROOT / "router" / "skills" / "role-voice-artist" / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("consent", text.lower())
 
-    @unittest.expectedFailure  # known gap: no voice profile exists yet; voice-artist can only report "missing"
     def test_voice_artist_profile_file_exists(self):
         self.assertTrue((ROOT / "docs" / "designs" / "voice-artist-profile.md").is_file())
 
