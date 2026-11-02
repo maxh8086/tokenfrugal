@@ -24,7 +24,7 @@
 
 ## Stills gate (D13 point 3)
 
-Status: **pending approval**. The stills are `stillsscene_title.png` (4 s), `scene_lines.png` (14 s) and `scene_closing.png` (22 s), with `contact_sheet.png`. These are the first real per-scene stills. The spike stills stay marked `approved_spike_only` and do not count for this gate.
+Status: **approved** by the owner in chat on 2026-11-02. The approval covers the stills only; the font, palette and lint warnings stay open. The stills are `stills\scene_title.png` (4 s), `stills\scene_lines.png` (14 s) and `stills\scene_closing.png` (22 s), with `stills\contact_sheet.png`. These are the first real per-scene stills. The spike stills stay marked `approved_spike_only` and do not count for this gate.
 
 ## What this does not cover
 
