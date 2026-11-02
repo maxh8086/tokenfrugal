@@ -34,8 +34,7 @@ Local model:
 Benchmark the Ollama model <MODEL_TAG> on this machine for the TokenFrugal repo.
 1. Check `.env` has `LOCAL_LLM_TEMPERATURE=0.0` (copy from `.env.example`). Run `python scripts/doctor.py` and fix what it reports; run `python scripts/install_profiles.py`; start backends with scripts/mcp_up.ps1 (or .sh). Ask before installing anything.
 2. `ollama pull <MODEL_TAG>`, use a variant whose `num_ctx` follows the context policy (Benchmark/README.md, "Context window and KV cache").
-3. `python Benchmark/script/run_benchmark.py <MODEL_TAG> --tag <SHORT_NAME>`. If the preflight fails, apply the fix command it prints and retry once.
-4. `python Benchmark/script/build_report.py`, then show me the new row (score, pass rate, s per case) and where it ranks.
+3. The benchmark runner was removed with the realworld benchmark, so no run can be started from this repo. Stop here and tell me that.
 Do not edit other rows of results/benchmark.csv. Do not commit.
 ```
 
@@ -43,9 +42,7 @@ Cloud model (new baseline run):
 
 ```text
 Run a new cloud baseline for TokenFrugal with model <CLOUD_MODEL> at <BASE_URL>. My key is exported in env var <ENV_VAR_NAME>; never print or store it.
-1. `python Benchmark/script/run_benchmark.py <CLOUD_MODEL> --tag <SHORT_NAME> --endpoint <BASE_URL> --api-key-env <ENV_VAR_NAME>`.
-2. Move the new row from results/benchmark.csv into results/cloud.csv (same header). Keep the existing rows in cloud.csv unchanged.
-3. `python Benchmark/script/build_report.py` and report the new row. Do not commit.
+1. The benchmark runner was removed with the realworld benchmark, so no cloud run can be started from this repo. Stop here and tell me that.
 ```
 
 Optional review prompt: see [script/README.md](script/README.md).
@@ -81,4 +78,4 @@ Quality rules:
 
 ## Observations
 
-- **2026-11-02, `maternion/spark-x2.5:4b-q8_0` (4.1B, Q8_0, RTX 4060 8 GB):** realworld 42/48 runs. 14 of 16 cases verified 3/3. `role_tracker` 0/3, failing on timeout. `role_research` 0/3, marked **crawl-affected**: every run hit the Crawl4AI 401 on `crawl_markdown` and `crawl_links`, which is infra, not the model. Re-run research after the crawl auth is fixed before ranking the model on it. Source JSON: `bench/maternion_spark-x2.5_4b-q8_0/20261102-074650-maternion_spark-x2.5_4b-q8_0.json`. Backups of the pre-change reports: `Benchmark/backup/`.
+- **2026-11-02, `maternion/spark-x2.5:4b-q8_0` (4.1B, Q8_0, RTX 4060 8 GB):** roles 42/48 runs. 14 of 16 cases verified 3/3. `role_tracker` 0/3, failing on timeout. `role_research` 0/3, marked **crawl-affected**: every run hit the Crawl4AI 401 on `crawl_markdown` and `crawl_links`, which is infra, not the model. Re-run research after the crawl auth is fixed before ranking the model on it. Source JSON: `bench/maternion_spark-x2.5_4b-q8_0/20261102-074650-maternion_spark-x2.5_4b-q8_0.json`. Backups of the pre-change reports: `Benchmark/backup/`.

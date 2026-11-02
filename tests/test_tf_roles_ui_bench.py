@@ -8,19 +8,31 @@ from scripts import tf_roles_ui
 
 
 class BenchSummaryTest(unittest.TestCase):
-    def test_summary_sums_realworld(self):
+    def test_summary_sums_roles(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             (root / "bench" / "m").mkdir(parents=True)
-            data = {"results": {"realworld": {
-                "a": {"verified": 2, "ran": 2, "s": {"p50": 4.0}},
-                "b": {"verified": 1, "ran": 2, "s": {"p50": 6.0}}}}}
+            data = {"results": {"roles": {
+                # role a: two live passes, mean 3.0 s
+                "a": {"runs": [{"ok": True, "infra": False, "s": 4.0}, {"ok": True, "infra": False, "s": 2.0}]},
+                # role b: one live fail at 6.0 s; its infra run (marked ok) must count in neither total
+                "b": {"runs": [{"ok": False, "infra": False, "s": 6.0}, {"ok": True, "infra": True, "s": 0.0}]}}}}
             (root / "bench" / "m" / "r.json").write_text(json.dumps(data))
             with mock.patch.object(tf_roles_ui.config, "ROOT", root):
                 s = tf_roles_ui.bench_summary("m")
-                self.assertEqual((s["verified"], s["ran"], s["cases"], s["pct"]), (3, 4, 2, 75))
-                self.assertEqual(s["s_per_case"], 5.0)
+                self.assertEqual((s["verified"], s["ran"], s["cases"], s["pct"]), (2, 3, 2, 67))
+                self.assertEqual(s["s_per_case"], 4.5)
                 self.assertIsNone(tf_roles_ui.bench_summary("missing"))
+
+    def test_summary_failed_roles_section_counts_nothing(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "bench" / "m").mkdir(parents=True)
+            data = {"results": {"roles": {"error": "no result after 600s (section watchdog)"}}}
+            (root / "bench" / "m" / "r.json").write_text(json.dumps(data))
+            with mock.patch.object(tf_roles_ui.config, "ROOT", root):
+                s = tf_roles_ui.bench_summary("m")
+                self.assertEqual((s["verified"], s["ran"], s["cases"], s["pct"], s["s_per_case"]), (0, 0, 0, 0, None))
 
 
 class BenchStartTest(unittest.TestCase):

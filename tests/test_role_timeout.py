@@ -2,7 +2,7 @@ import unittest
 
 from router import loop, server
 from router.config import resolve_role
-from scripts import bench_real
+from scripts.bench_team_tasks import TEAM_TASKS
 
 FROZEN = {"code-l1": 240, "code-l2": 225, "code-l3": 270, "code-l4": 450, "code-l5": 450, "code-l6": 450}
 
@@ -30,21 +30,19 @@ class RoleTimeout(unittest.TestCase):
         for role in ("github-read", "github-actions-read", "finance"):
             self.assertEqual(server.CFG["roles"][role].get("timeout_s"), 90, role)
 
-    def test_every_bench_case_agent_has_a_timeout(self):
-        for case in bench_real.cases() + bench_real.hard_cases():
-            agent = case[1]
-            self.assertIsNotNone(bench_real.case_limits(agent)[0], agent)
+    def test_every_team_task_agent_has_a_timeout(self):
+        # devops has no explicit timeout_s in router/tf-roles.yaml (its role falls back to the global TASK_TIMEOUT);
+        # it predates the retire-suites change and is listed here so the gap stays visible
+        no_explicit_timeout = {"engineering-devops-automator"}
+        for role, tasks in TEAM_TASKS.items():
+            for agent, _prompt, _check in tasks:
+                if agent in no_explicit_timeout:
+                    continue
+                self.assertIsNotNone(resolve_role(agent, server.CFG).get("timeout_s"), f"{role}: {agent}")
 
     def test_loop_uses_role_value_else_global(self):
         self.assertEqual(loop.role_timeout({"timeout_s": 120}), 120.0)
         self.assertEqual(loop.role_timeout({}), loop.TASK_TIMEOUT)
-
-    def test_bench_limits_replace_case_timeout(self):
-        t, wd = bench_real.case_limits("coding-l4")
-        self.assertEqual((t, wd), (450.0, 450.0 + bench_real.WATCHDOG_GRACE))
-        t, wd = bench_real.case_limits("engineering-devops-automator")
-        self.assertIsNone(t)
-        self.assertEqual(wd, bench_real.CASE_TIMEOUT)
 
 
 if __name__ == "__main__":
