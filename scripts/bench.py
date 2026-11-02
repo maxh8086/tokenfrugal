@@ -88,6 +88,15 @@ def failure_mode(r):
     return (r[i:i + 110] if i >= 0 else r[:110]).replace("\n", " ")
 
 
+async def role_call(agent, task, role_timeout):
+    # Only the harness wait_for limit becomes a role timeout. A TimeoutError inside the model reply stays as text,
+    # so its real class (request_timeout) is kept instead of being relabelled with the role limit.
+    try:
+        return await asyncio.wait_for(server.dispatch_task(agent, task, task_type="benchmark"), role_timeout)
+    except asyncio.TimeoutError:
+        return f"FAILED TimeoutError after {role_timeout:g}s"
+
+
 async def bench_roles(n, only=None):
     res = {}
     role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
@@ -101,9 +110,7 @@ async def bench_roles(n, only=None):
         assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
         runs = []
         for i in range(n):
-            dt, r = await timed(asyncio.wait_for(server.dispatch_task(agent, task, task_type="benchmark"), role_timeout))
-            if "TimeoutError" in r or r.startswith("EXC TimeoutError"):
-                r = f"FAILED TimeoutError after {role_timeout:g}s"
+            dt, r = await timed(role_call(agent, task, role_timeout))
             # a reply shorter than 20 chars (after dropping the leading "[tid] ") is a failure, not a success
             body = re.sub(r"^\[[^\]]*\]\s*", "", r).strip()
             role_ok = ok(r) and len(body) >= 20

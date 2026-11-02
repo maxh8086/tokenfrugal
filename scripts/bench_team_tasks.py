@@ -1,6 +1,6 @@
 TEAM_TASKS = {
     "designer": ("design-ui-designer", "Say what design tools you have."),
-    "browser": ("testing-evidence-collector", "Say what browser tools you have."),
+    "browser": ("testing-evidence-collector", "Use navigate_page to open https://example.com, then say in one sentence what the page is about. Read-only: do not submit forms or change state."),
     "builder": ("engineering-backend-architect", "Use search_graph to find the symbol named summarize and report its file path."),
     "data-engineer": ("engineering-data-engineer", "List the files in /workspace/router and name three."),
     "analyzer": ("engineering-software-architect", "Use search_graph to find the symbol named run in project tokenfrugal and say which file defines it."),
