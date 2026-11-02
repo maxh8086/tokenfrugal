@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: #0b0f1a;
+        --ink: #ffffff;
+        --accent: #3ddc97;
+        --font-display: sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #root {
+        width: 1920px;
+        height: 1080px;
+        position: relative;
+        font-family: var(--font-display);
+      }
+      #title {
+        position: absolute;
+        left: 0; right: 0; top: 380px;
+        text-align: center;
+        color: var(--ink);
+        font-size: 120px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      #subtitle {
+        position: absolute;
+        left: 0; right: 0; top: 540px;
+        text-align: center;
+        color: var(--accent);
+        font-size: 56px;
+        font-weight: 500;
+      }
+      #bar {
+        position: absolute;
+        left: 660px; top: 760px;
+        width: 600px; height: 12px;
+        background: var(--accent);
+        transform-origin: left center;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="25"
+      data-width="1920"
+      data-height="1080"
+    >
+      <h1 id="title" class="clip" data-start="0" data-duration="25" data-track-index="0">Mode B spike</h1>
+      <div id="subtitle" class="clip" data-start="0" data-duration="25" data-track-index="1">Silent 25 second render test</div>
+      <div id="bar" class="clip" data-start="0" data-duration="25" data-track-index="2"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#title", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0);
+      tl.fromTo("#subtitle", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "power2.out" }, 1.0);
+      tl.fromTo("#bar", { scaleX: 0 }, { scaleX: 1, duration: 3.0, ease: "power2.inOut" }, 2.0);
+      tl.to({}, { duration: 25 }, 0);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
