@@ -24,7 +24,7 @@ services:
       context: ./docker/media-generator
       additional_contexts:
         scripts: ./kalamanch
-    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/video-editor:1@sha256:6c222cd6518427127a5fd2fc125e9a5fa2ceb0e27d6f1a7bd4bc79abf90d3e94}   # pulled from Docker Hub; "docker compose build media-generator" rebuilds from docker/media-generator
+    image: ${MEDIA_GENERATOR_IMAGE:-tokenfrugal/media-generator:1}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
