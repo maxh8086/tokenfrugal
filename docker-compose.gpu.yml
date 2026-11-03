@@ -24,6 +24,7 @@ services:
     read_only: true
     volumes:
       - ./models/video_generation:/models:ro
+      - ./models/image_generation/comfy-t2i:/image_models:ro
       - ./docker/comfyui/extra_model_paths.yaml:/app/extra_model_paths.yaml:ro
       - ./comfy_data:/data
       - ${COMFY_INPUT_DIR:-./comfy_data/input}:/data/input:ro
