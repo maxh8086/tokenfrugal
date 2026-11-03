@@ -63,7 +63,7 @@ Both items come from the user. Nothing implemented; the UI design is planned wit
    Must go through the router (tracked, resumable tasks), never call models or servers directly. Show per-role status, last run, "not collected" state for the held sources, YouTube quota use, and missing-secret warnings.
 
 ---
-## TOP PRIORITY (next): per-team benchmarks for the 40-run models (set 2026-10-28, IN PROGRESS since 2026-10-28 20:10)
+## TOP PRIORITY (next): per-team benchmarks for the 40-run models (set 2026-10-28, queue finished)
 
 The user asked to run the team benchmarks for the models in `Benchmark/results/benchmark.csv` as the next top priority. The user had stopped an earlier start ("do not start run now, i have many changes to finish yet") and then asked to start the full run on 2026-10-28.
 
@@ -74,6 +74,7 @@ The user asked to run the team benchmarks for the models in `Benchmark/results/b
 - Spark (`maternion/spark-x2.5:4b-q8_0`) already has team results (`results/team_results.csv`). It is not in the 40-run table.
 - Done when: `ALL_DONE` appears in the queue output, every tag has rows in `results/team_results.csv`, and the report is rebuilt. Record any `!!! no json written` tags here.
 - Team names in this section now match the current `teams:` block in `router/tf-roles.yaml` (the older `ui-ux`, `development`, `ops` names are gone).
+- Closed 2026-11-03: the queue reached `ALL_DONE`. Two tags have no rows in `results/team_results.csv` (`hf.co/unsloth/Qwen3.5-9B-GGUF:IQ4_XS`, no JSON written; `maternion/spark-x2.5:4b-q8_0`, rows only in `team_results.before-redo.csv`). Ignored for now: the teams were reworked, and a new benchmark runs for all models after the mediahouse testing.
 
 ### Issue tracker (queue run, 2026-10-28)
 
