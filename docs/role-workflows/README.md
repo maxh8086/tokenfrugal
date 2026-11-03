@@ -43,4 +43,4 @@ The stage 2 mapping differs between config and skill: router/tf-roles.yaml lists
 
 ## Regenerate
 
-These diagrams were generated from the role config and SKILL.md. Update the matching SVG by hand when the role's config or SKILL.md changes.
+These diagrams were drawn by hand from the role config and SKILL.md, not generated. Update the matching SVG when the role's config or SKILL.md changes. Each SVG was checked as valid XML only, not rendered.

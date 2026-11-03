@@ -30,15 +30,15 @@
 </text>
   <rect x="514" y="110" width="136" height="70" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
 <text x="582" y="133" font-size="12" text-anchor="middle">
-  <tspan x="582" dy="0">3 On error line,</tspan>
-  <tspan x="582" dy="16">report verbatim;</tspan>
-  <tspan x="582" dy="16">retry once</tspan>
+  <tspan x="582" dy="0">3 If brief returns an</tspan>
+  <tspan x="582" dy="16">error line, report it</tspan>
+  <tspan x="582" dy="16">verbatim</tspan>
 </text>
   <rect x="678" y="110" width="136" height="70" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
 <text x="746" y="133" font-size="12" text-anchor="middle">
-  <tspan x="746" dy="0">4 Report Render</tspan>
-  <tspan x="746" dy="16">file name and</tspan>
-  <tspan x="746" dy="16">brief exit line</tspan>
+  <tspan x="746" dy="0">4 Retry once at most,</tspan>
+  <tspan x="746" dy="16">then report Render</tspan>
+  <tspan x="746" dy="16">file name and exit line</tspan>
 </text>
   <rect x="842" y="110" width="136" height="70" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
 <text x="910" y="133" font-size="12" text-anchor="middle">
@@ -56,12 +56,13 @@
   <text x="116.0" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">brief</text>
   <rect x="150.0" y="204" width="80.8" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
   <text x="190.4" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">read_file</text>
-  <text x="30" y="270" font-size="12" fill="#7c2d12">Fallback: slice 1 returns "error: not built yet" for a valid brief; expect it until media-briefing is built.</text>
+  <text x="30" y="270" font-size="12" fill="#7c2d12">Blocked: brief returns "error: not built yet" for a valid brief. The role cannot finish until media-briefing is built.</text>
+  <text x="30" y="292" font-size="12" fill="#475569">Native server: media-briefing (router/media_briefing_mcp.py). Stop: Render path returned, or 8 steps used.</text>
   <rect x="30" y="300" width="940" height="240" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
   <text x="50" y="330" font-size="15" font-weight="bold">Checks before the task is done</text>
   <text x="50" y="358" font-size="13"><tspan fill="#15803d" font-weight="bold">[auto]</tspan><tspan dx="6">brief returned the Render path with no error.</tspan></text>
   <text x="50" y="384" font-size="13"><tspan fill="#92400e" font-weight="bold">[review]</tspan><tspan dx="6">Only the options the task asked for were passed.</tspan></text>
   <text x="50" y="410" font-size="13"><tspan fill="#92400e" font-weight="bold">[review]</tspan><tspan dx="6">Narration fits about 3 words per second of length (90 words at 30 s, 360 at 120 s).</tspan></text>
   <text x="30" y="590" font-size="11" fill="#64748b">Source: router/tf-roles.yaml; router/skills/role-media-motion/SKILL.md</text>
-  <text x="970" y="610" font-size="11" fill="#64748b" text-anchor="end">Diagram: media-motion, generated from the role's config and skill file.</text>
+  <text x="970" y="610" font-size="11" fill="#64748b" text-anchor="end">Diagram: media-motion, hand-drawn from the role's config and skill file.</text>
 </svg>
