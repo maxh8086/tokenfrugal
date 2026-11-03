@@ -24,7 +24,7 @@ services:
       context: ./docker/media-generator
       additional_contexts:
         scripts: ./kalamanch
-    image: ${MEDIA_GENERATOR_IMAGE:-tokenfrugal/media-generator:1}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:1}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
@@ -52,7 +52,7 @@ services:
       start_period: 10s
 
   mcp-crawl4ai:
-    image: tokenfrugal/crawl4ai-mcp:1
+    image: maxh8086/crawl4ai-mcp:1
     build: ./docker/crawl4ai-mcp   # built on first use, then reused
     profiles: [research]
     environment:
@@ -135,7 +135,7 @@ services:
       start_period: 15s
 
   penpot-mcp:
-    image: tokenfrugal/penpot-mcp:1
+    image: maxh8086/penpot-mcp:1
     build: ./docker/penpot-mcp   # built on first use, then reused
     profiles: [design]
     environment:
@@ -168,7 +168,7 @@ services:
       start_period: 5s
 
   mcp-qdrant:
-    image: tokenfrugal/qdrant-mcp:1
+    image: maxh8086/qdrant-mcp:1
     build: ./docker/qdrant-mcp   # built on first use, then reused
     profiles: [content]
     depends_on:
@@ -180,21 +180,21 @@ services:
     stdin_open: true
 
   mcp-reddit:
-    image: tokenfrugal/reddit-mcp:1
+    image: maxh8086/reddit-mcp:1
     build: ./docker/reddit-mcp   # built on first use, then reused
     profiles: [content]
     mem_limit: 256m
     stdin_open: true
 
   mcp-hn:
-    image: tokenfrugal/hn-mcp:1
+    image: maxh8086/hn-mcp:1
     build: ./docker/hn-mcp   # built on first use, then reused
     profiles: [content]
     mem_limit: 256m
     stdin_open: true
 
   mcp-rss:
-    image: tokenfrugal/rss-mcp:1
+    image: maxh8086/rss-mcp:1
     build: ./docker/rss-mcp   # built on first use, then reused
     profiles: [content]
     # Own network: cannot reach the backends on the default network. It can still reach LAN addresses; see docs/content-analyst.md.
@@ -203,7 +203,7 @@ services:
     stdin_open: true
 
   mcp-youtube:
-    image: tokenfrugal/youtube-mcp:1
+    image: maxh8086/youtube-mcp:1
     build: ./docker/youtube-mcp   # built on first use, then reused
     profiles: [content]
     # The image's entrypoint reads the key file itself, so the key is not in the environment.
@@ -214,7 +214,7 @@ services:
     stdin_open: true
 
   mcp-postgres:
-    image: tokenfrugal/postgres-mcp:1
+    image: maxh8086/postgres-mcp:1
     build: ./docker/postgres-mcp   # built on first use, then reused
     profiles: [content]
     # Wrapper: exports the secret file as DATABASE_URI (the server reads only the environment), then runs the server.

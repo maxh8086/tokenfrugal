@@ -1,6 +1,7 @@
 # Video-editor toolchain in one image: Node 22, ffmpeg, whisper.cpp, Remotion/HyperFrames runtime (Chromium).
 # CPU only. GPU models (LivePortrait, MuseTalk, Kontext, LTX) stay on the host and write into video-editor/Raw.
-FROM node:22-bookworm-slim
+# Base pinned by digest (node:22-bookworm-slim, resolved 2026-11-03). Refresh the digest deliberately, not on every build.
+FROM node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
 
 ARG WHISPER_CPP_TAG=v1.7.5
 ARG WHISPER_MODEL=base.en
@@ -41,6 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends       python3-d
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
+# Needs the named context "scripts" (compose sets it to ./kalamanch). A plain `docker build` needs --build-context scripts=./kalamanch.
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/
 COPY pipeline.py /opt/pipeline/pipeline.py
 RUN sed -i "s/$//" /opt/pipeline/pipeline.py && chmod +x /opt/pipeline/pipeline.py && ln -s /opt/pipeline/pipeline.py /usr/local/bin/mgen
