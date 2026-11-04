@@ -42,6 +42,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends       python3-d
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
+# Open-source fonts: the 59 packages in fonts.txt (about 210 MB installed). The build fails if a name is missing,
+# if fontconfig finds fewer than 50 families, or if the set is empty. fonts.lock records the resolved versions.
+COPY fonts.txt /opt/fonts/fonts.txt
+# Comments and blank lines are stripped first; otherwise their words reach apt as arguments.
+RUN PKGS=$(sed -e 's/#.*//' /opt/fonts/fonts.txt | tr -s ' \t\n' '\n' | grep -v '^$') \
+    && apt-get update && apt-get install -y --no-install-recommends $PKGS \
+    && rm -rf /var/lib/apt/lists/* \
+    && fc-cache -f \
+    && [ "$(fc-list : family | sort -u | wc -l)" -ge 50 ] \
+    && dpkg-query -W -f='${Package} ${Version}\n' $PKGS > /opt/fonts/fonts.lock
+
+# soundfile for the story-film workflow (WAV read/write and duration measurement). The 0.14.0 wheel bundles libsndfile.
+# numpy comes with manim above. Voice stays in the voice image (maxh8086/voice), not here.
+RUN pip3 install --no-cache-dir --break-system-packages "soundfile==0.14.0" \
+    && python3 -c "import numpy, soundfile; print('soundfile', soundfile.__version__, 'numpy', numpy.__version__)"
+
 # Needs the named context "scripts" (compose sets it to ./kalamanch). A plain `docker build` needs --build-context scripts=./kalamanch.
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/
 COPY pipeline.py /opt/pipeline/pipeline.py

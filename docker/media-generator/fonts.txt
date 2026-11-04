@@ -1,0 +1,77 @@
+# Open-source font packages baked into the media-generator image (Debian bookworm apt, main component).
+# One package per line. The Dockerfile strips comments, then installs the names; the build fails if any name is missing.
+# Scope: Latin, Greek and Cyrillic families plus the Noto core/UI/mono/emoji set, serif and display, mono, icon and maths fonts.
+# Excluded on purpose: CJK, Indic, Southeast Asian and other regional-script packages (fonts-noto-cjk, fonts-wqy-*, fonts-lohit-*, fonts-tlwg-*, ...)
+# and fonts-noto-extra/unhinted/hinted (duplicates). The full main set (498 packages) is about 4.4 GB installed.
+# Licences are mostly SIL OFL 1.1 or Apache 2.0; check the package copyright file before a brand uses a family commercially.
+
+# Sans and UI
+fonts-open-sans
+fonts-roboto
+fonts-roboto-slab
+fonts-lato
+fonts-inter
+fonts-inter-variable
+fonts-manrope
+fonts-karla
+fonts-cabin
+fonts-play
+fonts-sora
+fonts-league-spartan
+fonts-dosis
+fonts-quicksand
+fonts-comfortaa
+fonts-tiresias
+fonts-ubuntu-title
+fonts-comic-neue
+
+# Noto (Latin, Greek, Cyrillic, UI variants, mono, emoji)
+fonts-noto-core
+fonts-noto-ui-core
+fonts-noto-mono
+fonts-noto-color-emoji
+
+# Metric-compatible and classic Latin
+fonts-liberation
+fonts-liberation2
+fonts-crosextra-carlito
+fonts-crosextra-caladea
+fonts-croscore
+fonts-dejavu
+fonts-dejavu-extra
+fonts-urw-base35
+fonts-freefont-ttf
+fonts-texgyre
+
+# Serif and display
+fonts-ebgaramond
+fonts-ebgaramond-extra
+fonts-cardo
+fonts-vollkorn
+fonts-oldstandard
+fonts-lmodern
+fonts-sil-gentium
+fonts-linuxlibertine
+fonts-stix
+fonts-lobster
+fonts-bebas-neue
+fonts-dancingscript
+
+# Monospace
+fonts-jetbrains-mono
+fonts-firacode
+fonts-hack
+fonts-inconsolata
+fonts-anonymous-pro
+fonts-courier-prime
+fonts-mononoki
+fonts-monoid
+
+# Icons, symbols and maths
+fonts-font-awesome
+fonts-fork-awesome
+fonts-materialdesignicons-webfont
+fonts-opensymbol
+fonts-symbola
+fonts-mathjax
+fonts-katex
