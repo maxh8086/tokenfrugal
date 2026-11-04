@@ -1,0 +1,6 @@
+Here is the list of items that fail:
+
+1. **Three acts are clear: setup, conflict, resolution**: The script fails this item because the conflict and resolution are not clearly defined. The conflict is more of a curiosity and a mystery, rather than a clear conflict. The resolution is more of a conclusion, but it doesn't feel like a resolution to a conflict. (Passage: Act 2 and Act 3)
+2. **The setting, lore, and atmosphere are specific**: The script fails this item because the setting of Harrow Creek is not well-developed. We don't know much about the town, its history, or its culture. The atmosphere is also somewhat generic, with the only specific detail being the midnight show on WKRV. (Passage: Act 1)
+3. **The character's motive is stated and drives an action**: The script fails this item because Dale's motive is not clearly stated. He's curious about the call, but we don't know why it's important to him. His actions are driven more by a desire to uncover the truth, but we don't know what's at stake for him. (Passage: Act 1)
+4. **Tension rises and releases, with no long run of flat exposition**: The script fails this item because the tension is not well-developed. The conflict is more of a mystery, and the resolution is more of a conclusion. There's no real tension or release, and the story feels somewhat flat. (Passage: Act 2 and Act 3)

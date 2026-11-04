@@ -1,0 +1,1 @@
+Rain starts at the water tower. 6:02 AM. Wind shifts east. 11 AM sharp. Hail at 3:10 PM. Clear skies? Not today. June never calls back. Questions flood in. One letter, no address. Dale keeps silent. Clear skies? Not anymore. Rain starts at the water tower. 6:02 AM.

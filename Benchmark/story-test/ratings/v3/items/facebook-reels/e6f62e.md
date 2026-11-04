@@ -1,0 +1,5 @@
+In Port Marrow, a coastal city, water scarcity has been a persistent issue for three years. The rooftop-garden co-op on Grey Stair has felt the drought's impact. Mara Ellis read the notice twice. A developer named Lindqvist Partners had purchased the tank rights. The letter was polite, stating future management and review. Mara felt a knot in her stomach. The co-op had navigated complexities, but this felt like a game-changer.
+
+At the Thursday meeting, members gathered around the tea urn. Everyone had something to say. Old Tobin said he had seen this coming. Priya suggested calling a lawyer. Mara stayed silent, then spoke. "We have the tank key, pump receipts, and nine years of meter readings. That counts for something." The room went quiet. Her steady nature made people listen.
+
+They decided to shed light on the situation. Photographed meters, copied receipts, and posted the timeline on the stairwell wall. By weekend, the whole street knew. Mara's resolve strengthened as they prepared for the legal battle ahead.

@@ -1,0 +1,4 @@
+1. (1) three acts are clear: setup, conflict, resolution - The transition from Act II to Act III is too abrupt and lacks a clear peak of conflict/climax.
+2. (2) the setting, lore and atmosphere are specific - The lore is too vague ("Harrow Creek trusts his voice after dark").
+3. (3) the character's motive is stated and drives an action - Dale's initial motive (hosting the show) is stated, but his subsequent action (deciding to keep the call) is not clearly driven by a stated internal motive beyond simple hesitation.
+4. (4) tension rises and releases, with no long run of flat exposition - The passage "EXT. TOWN WATER TOWER - MORNING / The sky darkens. Rain hits the tower at 6:02 AM. The wind shifts east by eleven. Hail crashes at 3:10 PM. Dale watches from his car. He has no answer." is a long run of flat exposition detailing events without rising tension.

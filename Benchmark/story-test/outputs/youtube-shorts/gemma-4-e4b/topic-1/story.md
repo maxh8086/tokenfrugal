@@ -1,0 +1,3 @@
+The tank rights were sold. Suddenly.
+
+Port Marrow faced a drought. Three long years passed. The rooftop garden suffered. Twelve flats shared one tank. A developer bought the rights. Lindqvist Partners took control. Mara read the polite notice. Access would be reviewed. A knot tightened in her stomach. Thursday meeting convened. Tea urns steamed gently. Tobin sighed, "I saw this." Priya suggested lawyers. Mara spoke up finally. "We have the key." "Pump receipts remain." "Nine years of readings." Silence filled the room. They photographed the meters. Receipts were copied fast. The timeline hit the wall. The whole street knew. The tank rights were sold.

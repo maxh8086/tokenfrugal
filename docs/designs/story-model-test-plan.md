@@ -45,6 +45,8 @@ The ranking uses the script rubric (Part 1 of the Viral Retention framework, 100
 3. **Narrative pacing (25):** short, punchy sentences that would need a new visual every 2 to 3 seconds, with no dead air.
 4. **Loop and call to action (20):** the ending loops back into the opening hook, or it prompts a share.
 
+Destination item 4 (decided 2026-11-04): LinkedIn uses 'Closing question (20): the last line is one specific professional question a reader can answer in a comment, tied to the business lesson.' Long-form uses 'Resolution (20): the ending resolves the central conflict set up in act one.' Shorts, Instagram and Facebook keep the loop/share item above.
+
 Row score = sum of the four items (out of 100). Raters score independently, blind to model name and pass.
 
 Stock-phrase count from the fixed list is recorded beside each score and is not part of it.
@@ -62,6 +64,8 @@ Part 2 (video, 100 points) is scored on the rendered films in a later step. Its 
 * Run one model at a time. Record each run's wall-clock time and whether the GPU was used.
 * Stop after the first failed run and report it. Do not skip silently.
 * No GPU run starts until you approve the model list and the topic list.
+* Destination gate (added 2026-11-04): a full run needs `--destination` to name where the story will be placed (`youtube-shorts`, `instagram-reels`, `facebook-reels`, `linkedin`, `long-form`). The runner refuses to start without it. Each destination has its own story, critic, anti-AI and humanizer prompts, and its own output folder, CSV and failure file. Criteria per destination: [story-criteria-gap-analysis.md](story-criteria-gap-analysis.md) section 10.
+* Test length (decided 2026-11-04): each destination targets one minute of narration, 130 to 180 words (2.70 words per second). Real runs take minutes from the user, and words = minutes x 162.
 
 ## 7. Done when
 

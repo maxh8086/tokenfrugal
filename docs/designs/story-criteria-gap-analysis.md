@@ -89,6 +89,26 @@ The phrase list and the one-phrase-per-line format stay as they are.
 
 The table's video criteria (visual change every 2 to 3 s, emotional TTS, kinetic captions, music and SFX) belong to the Part 2 rubric in section 4 of the plan, scored on the films. They are noted here only because the ai-short-style skill's calm voice conflicts with the Shorts emotional-TTS item. That conflict is for the film step.
 
+## 10. Destination gate and per-destination prompts (implemented 2026-11-04)
+
+Every full run now names its destination first. `run_stories.py --destination <name>` is required, and the runner refuses to start without it. Each destination has its own prompts, with the criteria from section 1a.
+
+| Destination | Words (assumed) | Sentence cap | Opening | Ending | Critic checks |
+|---|---|---|---|---|---|
+| `youtube-shorts` | 120 to 180 | 15 | Paradox or climax | Loops to the opening line | Paradox opening, unusual premise, short beat-per-sentence, loop |
+| `instagram-reels` | 120 to 170 | 18 | Curiosity hook, read by a muted viewer | Direct share prompt ("Send this to the friend who...") | Hook, relatable premise, short sentences, share prompt |
+| `facebook-reels` | 120 to 170 | 18 | Relatable moment or what-if | Warm, shareable close | Relatable opening, recognisable setting, room to breathe, warm close |
+| `linkedin` | 130 to 180 | 20 | Concrete work situation | One specific professional question (the last line is a question a reader can answer in a comment) | Work opening, business lesson, calm documentary tone, professional question |
+| `long-form` | 130 to 180 | 25 | Setup in the first line (act one, compressed) | Resolution of the central conflict (act three, compressed) | Three acts, specific world, character motive, tension and release |
+
+Word counts are set for the test, not the final product. The test uses one-minute stories. At 2.70 words per second, one minute is about 162 words, so each destination now targets 130 to 180 words. In a real run the user gives the length in minutes, and the word range is minutes multiplied by 162. Sentence caps for the non-Shorts destinations remain assumptions. Confirm them before a real run.
+
+Consequences for the test:
+
+1. **Rubric.** Decided 2026-11-04: LinkedIn item 4 becomes 'Closing question (20): the last line is one specific professional question a reader can answer in a comment, tied to the business lesson.' Long-form item 4 becomes 'Resolution (20): the ending resolves the central conflict set up in act one.' Shorts, Instagram and Facebook keep 'Loop and call to action (20)'. The rubric text is in story-model-test-plan.md section 4.
+2. **Drafts.** Decided 2026-11-04: the test keeps the existing drafts (about 250 words). The story pass is set to the destination word range, so draft length does not need to match the target. Long drafts are not needed for the one-minute test.
+3. **Outputs.** Each destination writes to `outputs/<destination>/`, with `runs-<destination>.csv` and `RUN_FAILED-<destination>.md`. The v2 Shorts run was started before this change. Its files (`outputs/`, `runs.csv`, `RUN_FAILED.md` if any) should be moved to the `youtube-shorts` names once it finishes.
+
 ## 9. Next steps (need approval)
 
 1. Confirm the target platform (recommend YouTube Shorts).

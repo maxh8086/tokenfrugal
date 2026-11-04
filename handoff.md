@@ -1,15 +1,16 @@
 ﻿# Handoff: tokenfrugal
 
-Last updated: 2026-11-01
+Last updated: 2026-11-04
 
 This file holds the working handoff notes. Closed items are removed once verified.
 
 ---
-## Priority next (set 2026-11-01, NOT started)
+## Priority next (set 2026-11-01, NOT started; item 1 added 2026-11-04)
 
-1. **GPU image / ComfyUI container with GPU lease.** Built and CPU-tested; the 8 GB spike waits for the user's GPU go-ahead. See the section "ComfyUI GPU lease: status and the 8 GB spike" below.
-2. **Studio tab for content review and content writer roles.** Plan the design with the `ui-ux-pro-max` skill before any code (see the Studio item in the PRIORITY section below).
-3. **Split content-analyst into six roles.** Roles and held sources are in the PRIORITY section (item 1) and section 11.
+1. **Story to video: one workflow, `story-film`, through media-generator (set 2026-11-04, approved in part, NOT started).** The story flow stays as it is: destination gate, one topic per destination, blind ratings, ranking. The video step runs only in the media-generator container (HyperFrames, businessnext-video procedure). Aspect: 9:16 for Shorts, Instagram and Facebook Reels; 16:9 for LinkedIn and long-form. Tracking and PR base: branch `claude/upbeat-chebyshev-ebfc37`. Plan: `docs/designs/story-to-video-workflows.md`. Open: voice on the host (slice-1 D1a) or in the image (replaces D1a). Docker builds the current image; Model Runner still reports a GPU-helper error and needs a Docker Desktop restart to clear. Needs the GPU, so it runs after the story runs finish.
+2. **GPU image / ComfyUI container with GPU lease.** Built and CPU-tested; the 8 GB spike waits for the user's GPU go-ahead. See the section "ComfyUI GPU lease: status and the 8 GB spike" below.
+3. **Studio tab for content review and content writer roles.** Plan the design with the `ui-ux-pro-max` skill before any code (see the Studio item in the PRIORITY section below).
+4. **Split content-analyst into six roles.** Roles and held sources are in the PRIORITY section (item 1) and section 11.
 
 ---
 ## ComfyUI GPU lease: status and the 8 GB spike (set 2026-11-01, WAITING for the user's GPU go-ahead)

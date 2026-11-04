@@ -1,0 +1,5 @@
+1. (1) Three acts are clear: a setup, a conflict and a resolution. (Passes)
+2. (2) The setting, lore and atmosphere are specific. (Passes)
+3. (3) The character's motive is stated and drives an action. (Passes)
+4. (4) Tension rises and releases. (Passes)
+5. Length is 130 to 180 words. (Passes)
