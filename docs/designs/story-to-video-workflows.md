@@ -52,7 +52,29 @@ Each video job takes one ranked story:
 
 ## 5. Ranking the videos
 
-The Part 2 video rubric (100 points, plan section 4) is scored on the rendered films. Its AI-motion and emotional-TTS items are adapted to a HyperFrames render, which has no AI motion or emotional TTS. Before any ranking, the rubric items must be written out in full. The current plan lists Part 2 by name only, so the items are not yet defined.
+The Part 2 video rubric (100 points, plan section 4) is scored on the rendered films. Its AI-motion and emotional-TTS items are adapted to a HyperFrames render, which has no AI motion or emotional TTS. Before any ranking, the rubric items must be written out in full. The source criteria are recorded in 5.1 below. The scored rubric (Part 1 and Part 2, 100 points each) is `Benchmark/story-test/ratings/VIDEO_RUBRIC.md`.
+
+### 5.1 Source criteria and render mapping (from the owner, 2026-11-04)
+
+The owner's table gives story and video criteria for five destinations. This section covers the video column only. The story column is not re-checked against Part 1 here.
+
+| Destination | Video criterion (source) | Render mapping (HyperFrames, offline) |
+|---|---|---|
+| YouTube Shorts | Visual change every 2–3 s, no dead air | Feasible: scene cuts timed in `acts.json` |
+| YouTube Shorts | High-emotion TTS (panicked, whispering) | Not available: Kokoro has no emotion control. Pace and pauses only. Conflicts with the calm narration in `ai-short-style`. |
+| YouTube Shorts | Heavy SFX on every cut | Partial: procedural synthesised ticks only, no sound library |
+| YouTube Shorts | Kinetic word-by-word bouncing captions | Feasible in HTML, but needs word timings. Kokoro gives none; whisper.cpp (in the image) would supply them. |
+| Instagram / FB Reels | Massive text hook in the first 0–1 s | Feasible |
+| Instagram Reels | Trending platform audio at 1–5% under TTS | Not feasible offline: no licensed trending audio. Excluded. |
+| Facebook Reels | Hold visual clips 3–4 s | Feasible |
+| LinkedIn | Documentary polish, no generic "AI slop" look | Subjective. Scored by the frame review (section 5). |
+| LinkedIn | Clean block captions, not bouncing words | Feasible |
+| LinkedIn | Calm, documentary-style voice | Feasible with Kokoro at a slow pace |
+| Long-form | Shots hold 5–15 s with subtle ambient motion | Feasible: slow push-in and procedural room tone |
+| Long-form | Character (`--cref`) and style (`--sref`) references | Not applicable: these are Midjourney parameters and no image model runs in the render. Replace with one fixed palette and character cards in HTML. |
+| Long-form | Continuous emotionally mapped score | Partial: procedural bed in five moods |
+
+Items marked "Not feasible", "Not available" or "Not applicable" need a decision before scoring: drop them, or replace them with a render-side equivalent. Until that decision, they are not scored.
 
 Frame review uses frame sheets of 2 frames per second, reviewed by Haiku multimodal (the `UI/UX Vision` tier in the fleet matrix). A test to choose between Haiku and `ts-qwen3-vl-8b` is a later step, and it needs a rule change to allow the local vision model. Ranking is the mean of the two raters' totals per destination.
 
@@ -99,7 +121,7 @@ Source: `Benchmark/results/story-ranking-v2-2026-11-04.csv` (rank 1 per destinat
 | linkedin | 16:9 | ministral-3-8b | topic-2 | 62.0 | `outputs-v3/linkedin/ministral-3-8b/topic-2/story.md` |
 | long-form | 16:9 | ministral-3-8b | topic-3 | 56.2 | `outputs-v3/long-form/ministral-3-8b/topic-3/story.md` |
 
-Each job takes the `story.md` file only. The `anti-ai.md`, `critic.md` and `humanizer.md` files are kept as evidence and are not sent to the video step.
+Each job takes the `story.md` file only, unmodified from the ranking test. The LinkedIn rewrite (hook, business stake, debate question) is not used as input. Any rewrite would be a separate step and a separate ranking. The `anti-ai.md`, `critic.md` and `humanizer.md` files are kept as evidence and are not sent to the video step.
 
 ### 9.2 Setup (before any run)
 
