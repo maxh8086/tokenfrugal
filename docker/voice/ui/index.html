@@ -77,6 +77,20 @@
     <div id="speakStatus" class="status" role="status"></div>
     <audio id="speakAudio" controls hidden></audio>
   </section>
+
+  <section>
+    <h2>5. Kokoro voice sample</h2>
+    <p class="muted">Preset Kokoro voices, no reference clip needed. Generated on this machine.</p>
+    <label for="kokoroVoice">Voice</label>
+    <select id="kokoroVoice"><option>Loading…</option></select>
+    <label for="kokoroSpeed">Speed (0.5 to 2.0)</label>
+    <input id="kokoroSpeed" type="number" min="0.5" max="2" step="0.05" value="1">
+    <label for="kokoroText">Text (up to 1000 characters)</label>
+    <textarea id="kokoroText">The quick brown fox jumps over the lazy dog. This is a voice sample.</textarea>
+    <div class="row"><button id="kokoroSpeak" class="primary" type="button">Generate sample</button></div>
+    <div id="kokoroStatus" class="status" role="status"></div>
+    <audio id="kokoroAudio" controls hidden></audio>
+  </section>
 </main>
 
 <script>
@@ -222,6 +236,60 @@
     setStatus(status, data.error || "", !!data.error);
   });
 
+  const loadKokoroVoices = async () => {
+    const picker = $("kokoroVoice");
+    try {
+      const res = await fetch("/api/kokoro/voices");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "request failed");
+      picker.textContent = "";
+      data.voices.forEach((v) => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        picker.append(opt);
+      });
+      if (data.voices.includes("af_heart")) picker.value = "af_heart";
+    } catch (err) {
+      picker.textContent = "";
+      setStatus($("kokoroStatus"), "Could not load Kokoro voices: " + err.message, true);
+    }
+  };
+
+  let kokoroUrl = null;
+  $("kokoroSpeak").addEventListener("click", async () => {
+    const status = $("kokoroStatus");
+    const btn = $("kokoroSpeak");
+    const text = $("kokoroText").value.trim();
+    if (!text) return setStatus(status, "Enter some text.", true);
+    btn.disabled = true;
+    setStatus(status, "Generating… the first sample can take a little longer while the model loads.");
+    try {
+      const res = await fetch("/api/kokoro/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: $("kokoroVoice").value, speed: Number($("kokoroSpeed").value) }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return setStatus(status, data.error || "Generation failed (HTTP " + res.status + ")", true);
+      }
+      const blob = await res.blob();
+      if (kokoroUrl) URL.revokeObjectURL(kokoroUrl);
+      kokoroUrl = URL.createObjectURL(blob);
+      const audio = $("kokoroAudio");
+      audio.src = kokoroUrl;
+      audio.hidden = false;
+      setStatus(status, "Sample ready.");
+      audio.play().catch(() => {});
+    } catch (err) {
+      setStatus(status, "Generation failed: " + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadKokoroVoices();
   loadProfiles();
 })();
 </script>

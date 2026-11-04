@@ -13,6 +13,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent
@@ -24,6 +25,46 @@ NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{1,40}$")
 NOTE_MAX = 500
 EXT_BY_MIME = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/wav": "wav", "audio/x-wav": "wav",
                "audio/mp4": "m4a"}
+
+
+# Kokoro preset voices: the helper runs in the Kokoro venv (KOKORO_PYTHON), because its numpy differs from the OpenVoice venv.
+KOKORO_PYTHON = os.environ.get("KOKORO_PYTHON", sys.executable)
+KOKORO_HELPER = ROOT / "kokoro_speak.py"
+KOKORO_TIMEOUT = 180
+
+
+def run_kokoro(args, stdin_text=""):
+    """Run the Kokoro helper. Returns (returncode, stdout bytes, stderr text)."""
+    try:
+        proc = subprocess.run([KOKORO_PYTHON, str(KOKORO_HELPER), *args], input=stdin_text.encode("utf-8"),
+                              capture_output=True, timeout=KOKORO_TIMEOUT)
+    except (OSError, subprocess.SubprocessError) as err:
+        return 1, b"", f"could not start Kokoro: {err}"
+    return proc.returncode, proc.stdout, proc.stderr.decode("utf-8", "replace").strip()
+
+
+def last_line(text):
+    lines = text.splitlines()
+    return lines[-1].removeprefix("error: ") if lines else "Kokoro failed"
+
+
+def kokoro_voices():
+    code, out, err = run_kokoro(["list"])
+    if code != 0:
+        return 500, {"error": last_line(err)}
+    try:
+        return 200, json.loads(out)
+    except ValueError:
+        return 500, {"error": "Kokoro returned no voice list"}
+
+
+def kokoro_speak(req):
+    """Return (status, body bytes, content type). Exit code 2 from the helper means the request was bad."""
+    code, out, err = run_kokoro(["speak"], json.dumps(req))
+    if code == 0:
+        return 200, out, "audio/wav"
+    status = 400 if code == 2 else 500
+    return status, json.dumps({"error": last_line(err)}).encode("utf-8"), "application/json; charset=utf-8"
 
 
 def list_profiles():
@@ -103,6 +144,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, (ROOT / "index.html").read_bytes(), "text/html; charset=utf-8")
         elif self.path == "/api/profiles":
             self._send_json(200, {"profiles": list_profiles()})
+        elif self.path == "/api/kokoro/voices":
+            status, payload = kokoro_voices()
+            self._send_json(status, payload)
         else:
             self._send_json(404, {"error": "not found"})
 
@@ -123,8 +167,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path == "/api/profiles":
             status, payload = create_profile(req)
             self._send_json(status, payload)
+        elif self.path == "/api/kokoro/speak":
+            status, body, content_type = kokoro_speak(req)
+            self._send(status, body, content_type)
         elif self.path == "/api/speak":
-            # Synthesis is not wired yet: it waits on the Kokoro / OpenVoice numpy decision in docker/voice/Dockerfile.
+            # Profile (cloned-voice) synthesis is not wired yet: it waits on the OpenVoice setup in docker/voice/Dockerfile.
             self._send_json(501, {"error": "speech synthesis is not wired yet"})
         else:
             self._send_json(404, {"error": "not found"})
