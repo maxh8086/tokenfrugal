@@ -1,0 +1,10 @@
+1. **Vague Detail on the "Invariant"**: The story never defines what the "invariant" actually is, how it functions mathematically, or why it matters beyond being a "tapestry of old ideas." It remains an abstract concept without concrete substance.
+2. **Unexplained Time Jump**: The narrative skips from Helena writing the lemma to Tomas reading it on a train without establishing how the paper traveled between them or how they met to discuss it initially.
+3. **Motivation Gap**: There is no reason given for why Helena would write a proof on the back of an envelope, nor is there any explanation for why she would trust her intuition enough to skip the proof of the lemma.
+4. **Logical Inconsistency in Proof Method**: The story states the lemma rests on a specific boundary intersection, yet the final proof requires a "covering argument" and "intermediate spaces," which contradicts the initial description of a direct geometric collision.
+5. **Unmotivated Character Dynamics**: The sudden shift from Helena working alone to her and Tomas collaborating intensively in just a few weeks lacks a catalyst or reason for their partnership to form so quickly.
+6. **Vague Detail on the Conference**: The story mentions a conference talk and a title slide but provides no context about the stakes, the audience, or the consequences of failing to prove the lemma.
+7. **Unexplained "Dismissed" Route**: Tomas finds a route he had "dismissed earlier" without explaining why he previously rejected it or what specific flaw he thought it had.
+8. **Lack of Conflict**: The story presents a problem (the missing proof) and a resolution (the proof is found) without any significant internal or external conflict, making the tension feel unearned.
+9. **Vague Detail on the "Blur"**: The phrase "The weeks blurred into a blur" is repetitive and offers no specific details about the nature of their work or the obstacles they faced during that period.
+10. **Unexplained Intuition**: Helena assumes her intuition is sufficient for the lemma without any evidence of prior success or a logical basis for why intuition would work here.

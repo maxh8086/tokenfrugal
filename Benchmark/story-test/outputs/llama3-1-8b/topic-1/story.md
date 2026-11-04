@@ -1,0 +1,15 @@
+The sun beat down on the rooftop garden of the Grey Stair co-op, a stark reminder of the drought that had plagued Port Marrow for three long years. The once-lush greenery now wilted and brown, a testament to the scarcity of water in the coastal city. The co-op, a collective of twelve flats, had always shared the building's tank, a large concrete cistern on the roof that provided their only source of water.
+
+Mara Ellis, a steady and level-headed member of the co-op, was the first to receive the notice from Lindqvist Partners, the developer who had purchased the rights to the tank. She read it twice, her brow furrowed in concern. The letter was polite, but its implications were anything but. It said the rights would be "managed going forward" and that access would be "reviewed in due course." Mara felt a knot in her stomach as she wondered what this meant for the co-op.
+
+The Thursday meeting was a lively one, with every member of the co-op having an opinion on the situation. Old Tobin, a gruff but lovable man, said he had seen this coming. Priya, a young and ambitious member, suggested they call a lawyer to sort out the situation. Mara, however, remained quiet for a while, her eyes scanning the room as she weighed her words.
+
+Finally, she spoke up. "We have the tank key, the pump receipts, and nine years of meter readings. That counts for something." The room fell silent, a testament to Mara's steady nature and the respect the other members had for her. It was clear that she had given the situation a lot of thought, and her words carried weight.
+
+The meeting ended with a decision to shed light on the situation. They would document everything, photograph the meters, copy the receipts, and post the timeline on the stairwell wall. By the weekend, the whole street knew about the co-op's concerns. The news spread quickly, with neighbors stopping by to offer their support and ask questions.
+
+As the days went by, the co-op members worked tirelessly to gather evidence and make their case. They pored over the meter readings, looking for any discrepancies or anomalies. They copied the pump receipts, making sure to include every detail. And they posted the timeline on the stairwell wall, a visual reminder of their nine years of shared ownership and maintenance of the tank.
+
+The co-op's efforts did not go unnoticed. The local press picked up the story, and soon the news was splashed across the front pages of the local newspapers. The public was outraged, and the city council was forced to take notice. The co-op's actions had sparked a wider conversation about water rights and ownership in Port Marrow, and it seemed that Lindqvist Partners' plans might not be as straightforward as they had thought.
+
+As the co-op members waited for the city council's response, they continued to tend to their rooftop garden, a symbol of their resilience and determination. They knew that the fight for their water rights was far from over, but they were ready for whatever came next.

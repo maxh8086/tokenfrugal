@@ -15,7 +15,7 @@ Test the story hypothesis before implementation: a story model drafts, critics a
 | Topics | Five fictional topics, listed in section 2a. |
 | Draft | One fixed, AI-sounding draft per topic, written by me. Every model gets the same draft, so the only variable is the model. |
 | Models | Nine models: gemma-4-E4B, Qwen3.8-9B-Distill, Qwen3.5-4B Q6_K, nemotron-3-nano-4b, llama3-1-8b, granite4-tiny-h, qwen2.5-7b, ministral-3-8b, granite4-micro. Chosen 2026-11-03. |
-| Raters | Claude and Sonnet, scored separately. Each rater sees the story and the rubric, never the model name. |
+| Raters | Haiku and Sonnet, scored separately. Each rater sees the story and the rubric, never the model name. |
 
 ## 2a. Topics (fictional, drafted 2026-11-03)
 
@@ -38,20 +38,24 @@ Each pass is recorded separately, so the rater can score the draft, the story, a
 
 ## 4. Rubric
 
-Each rater scores every row 1 to 5 on five criteria. Anchors are the same for all five: 1 = fails, 3 = mixed, 5 = holds fully.
+The ranking uses the script rubric (Part 1 of the Viral Retention framework, 100 points), scored on the story text only. It was chosen on 2026-11-04 and replaces the earlier five-criterion 1-to-5 rubric. Each rater scores every row out of 100 on four items.
 
-1. **Plot holds together:** each event follows from earlier events, with no unexplained jumps.
-2. **Characters act for reasons:** each choice a character makes traces to a stated want or fear.
-3. **Specific detail:** names, objects, numbers, and places that could only belong to this story.
-4. **Sounds human:** reads as if a person wrote it. The rater judges the whole text, not a checklist. Penalise stock phrases, hedging, and even sentence rhythm. A separate count of stock phrases from a fixed list is recorded beside the score, not averaged into it. The list is written and committed before the run.
-5. **Reads well aloud:** a listener can follow it without rereading. No stacked clauses or tongue-twisters.
+1. **3-second hook (30):** the opening line introduces a bizarre, impossible, or high-stakes paradox, or starts at the climax.
+2. **Concept and what-if factor (25):** the premise is a hyper-niche mashup or unusual crossover that forces curiosity.
+3. **Narrative pacing (25):** short, punchy sentences that would need a new visual every 2 to 3 seconds, with no dead air.
+4. **Loop and call to action (20):** the ending loops back into the opening hook, or it prompts a share.
 
-Row score = mean of the five. Raters score independently, blind to model name and pass.
+Row score = sum of the four items (out of 100). Raters score independently, blind to model name and pass.
+
+Stock-phrase count from the fixed list is recorded beside each score and is not part of it.
+
+Part 2 (video, 100 points) is scored on the rendered films in a later step. Its AI-motion and emotional-TTS items are adapted to the HyperFrames render, because that pipeline has no Runway or Luma motion.
 
 ## 5. Output
 
-* One row per (topic, model, pass, rater) in a CSV under `Benchmark/results/`.
-* Summary: mean score per model and per pass, with the spread between raters.
+* One row per (topic, model, pass, rater) in a CSV under `Benchmark/results/`, with columns for the four item scores, the total out of 100, and the stock-phrase count.
+* Summary: mean total per model and per pass, with the spread between raters.
+* The ranking itself is the mean of the two raters' totals per model, highest first.
 
 ## 6. Run rules
 
@@ -69,5 +73,5 @@ Row score = mean of the five. Raters score independently, blind to model name an
 
 1. The five topics: approved 2026-11-03.
 2. The nine models: chosen 2026-11-03 (listed in section 2). Dropped from the earlier proposal: Qwen3.5-9B IQ4_XS, qwable-9b, Qwable-9B-Claude-Fable-5. Added: nemotron-3-nano-4b, llama3-1-8b, granite4-tiny-h. Four Gemma/Qwen models remain, so the family rule is not applied to this test.
-3. The rubric: section 4, decided 2026-11-03. The stock-phrase list is written before the run.
+3. The rubric: section 4, decided 2026-11-03 and changed to the script rubric (100 points) on 2026-11-04. The stock-phrase list is written before the run.
 4. Approval to start the GPU run. **Open.**

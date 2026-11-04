@@ -1,0 +1,23 @@
+In the coastal city of Port Marrow, where the salty breeze whispered secrets and the sun painted the sky in vibrant hues, water had become a precious commodity. The drought had lasted three years, and the rooftop-garden co-op on Grey Stair had felt every week of it. The co-op, a community of twelve flats, had always shared a large concrete cistern on the roof, a vital lifeline in the midst of scarcity.
+
+On a crisp autumn morning, Mara Ellis read the letter twice. Her heart pounded as she unfolded the paper, her fingers tracing the words. A developer named Lindqvist Partners had purchased the rights to the tank. The letter was polite, stating that the rights would be "managed going forward" and that access would be "reviewed in due course." Mara felt a knot in her stomach. The co-op had navigated many complexities over the years, but this felt like a game-changer.
+
+The Thursday meeting was tense. The members gathered around the tea urn, the steam rising in a thin, white cloud. Old Tobin, a grizzled man with a weathered face, said, "I told you this would happen. The market is ruthless, and water is the new gold." Priya, the co-op's treasurer, said, "We should call a lawyer. We can't just sit back and let them take control." Mara, usually the voice of reason, said nothing for a while. Then, she spoke, her voice steady. "We have the tank key, the pump receipts, and nine years of meter readings. That counts for something."
+
+The room went quiet. It was a testament to her steady nature that people listened. The co-op had always been a tight-knit community, but this felt like a breach of trust. They decided to shed light on the situation. Mara and Priya took photographs of the meters, copied the receipts, and posted the timeline on the stairwell wall. By the weekend, the whole street knew.
+
+The news spread like wildfire. Neighbors, friends, and even strangers stopped by to ask questions. The co-op members were surprised by the support they received. Old Tobin, who had been skeptical at first, now stood by their side. "We may not have the money, but we have the numbers," he said, pointing to the timeline on the wall.
+
+Mara and Priya organized a meeting with the developer, Lindqvist Partners. They arrived at the developer's office, a sleek building with glass walls reflecting the sun. The meeting was tense, with Mara presenting their case. "We have been managing the tank for nine years," she said, her voice firm. "We have the receipts, the meter readings, and the key. We believe we have a legitimate claim."
+
+The developer, a young man with a polished demeanor, listened intently. "I understand your concerns," he said. "However, the rights to the tank have been transferred to us. We will manage it going forward, but we are open to working with you. Perhaps we can find a mutually beneficial solution."
+
+Mara and Priya exchanged a look. They had prepared for this, but the developer's willingness to negotiate was a surprise. They agreed to meet again, this time with a lawyer to draft a proposal. The co-op members continued to monitor the tank, ensuring that the meters were accurate and the receipts up to date. They knew that the battle was far from over, but they were determined to protect their shared resource.
+
+As the weeks passed, the co-op members worked tirelessly. They organized community events, raised awareness about water conservation, and even started a petition. The support from the community grew, and soon, the petition had hundreds of signatures. The developer, seeing the strength of the co-op and the community's support, began to reconsider their stance.
+
+Finally, the day of the second meeting arrived. Mara and Priya sat across from the developer, the lawyer at their side. The developer, now more relaxed, presented a proposal. "We can work together," he said. "We can manage the tank, but we will ensure that the co-op has access. We can even provide additional funding for water conservation efforts."
+
+Mara and Priya exchanged a look of relief. They had won a hard-fought battle, but the victory was sweet. The co-op members celebrated, their hearts filled with a sense of accomplishment. They knew that the fight for water was far from over, but they were ready to face it together.
+
+In the end, the co-op and Lindqvist Partners signed an agreement. The tank remained a shared resource, managed by the co-op with the support of the developer. The community of Grey Stair had come together, united by their shared struggle and their determination to protect their precious water. As the sun set over Port Marrow, painting the sky in a brilliant array of colors, the co-op members knew that they had secured a future, one drop at a time.
