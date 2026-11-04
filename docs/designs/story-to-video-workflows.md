@@ -73,7 +73,9 @@ Adding these is a change to the image, so it needs your approval before it is bu
 3. **Slice 1 (branch `claude/upbeat-chebyshev-ebfc37`)** is the tracking and PR base for this work. It is not paused.
 4. **Image additions approved** (section 6): Kokoro, numpy, soundfile and brand fonts, each pinned. ComfyUI may be used where the existing tools are not enough.
    * **Voice decision (2026-11-04, from the owner):** voice uses the existing voice image, `maxh8086/voice:1` (built from `docker/voice/Dockerfile`, Kokoro-onnx with the model files baked in). Voice is not added to media-generator. This replaces slice-1 D1a (host voice) for the story-film workflow. The container reads `narration.wav` from the shared media folder, as D1a already describes. Media-generator gets only the non-voice packages it still needs: soundfile (numpy is already present) and the brand fonts.
-   * **Still open:** the voice image is referenced by tag `:1`, not a digest. Pin it by digest before the first run. The brand font list is not yet named.
+   * **Voice label policy (2026-11-04, from the owner):** the pin follows the `latest` label, not a version number or a fixed digest. Each new voice build gets a version label (`:2`, `:3`, ...) and the `latest` label. `docker/voice/voice.pin` holds `follows=latest` and the digest that `latest` points to. Current state: `maxh8086/voice:1` and `maxh8086/voice:latest` both point to digest `86fa8c5b…`; the pin was moved to it with `scripts/update_voice_pin.py --write`. Registry push is not done (needs approval).
+   * **Brand fonts (2026-11-04):** the font set is open source Debian packages listed in `docker/media-generator/fonts.txt` (see the file's header for scope and licences). Built into `maxh8086/media-generator:1`: 1135 font files present.
+   * **Sound files: none needed.** The media-generator image has no sound library. The music bed is procedural (see section 2), so no sound files are fetched. `docker/media-generator/assets.json` stays empty and `scripts/fetch_media_assets.py` is not used by `story-film`. The only audio files in the image are test samples inside Manim, whisper.cpp and scipy.
 5. **Docker repair approved.** Fix the "Inference manager" error so the media-generator image builds.
 
 ## 8. Next steps
@@ -82,3 +84,41 @@ Adding these is a change to the image, so it needs your approval before it is bu
 2. Add the approved dependencies to `docker/media-generator`, pinned, and build the image.
 3. Write the Part 2 rubric items (section 5).
 4. Write the `story-film` setup section and a single-story smoke test. No batch run and no GPU run before approval of the model and topic lists.
+
+## 9. story-film: input, setup and smoke test
+
+### 9.1 Input: the top story per destination
+
+Source: `Benchmark/results/story-ranking-v2-2026-11-04.csv` (rank 1 per destination, `combined` score). Each destination has one topic, so the topic number is fixed by the story test. Story files are at `Benchmark/story-test/outputs-v3/<destination>/<model>/<topic>/story.md`.
+
+| Destination | Format | Rank-1 model | Topic | Combined | Story file |
+|---|---|---|---|---|---|
+| youtube-shorts | 9:16 | ministral-3-8b | topic-4 | 68.2 | `outputs-v3/youtube-shorts/ministral-3-8b/topic-4/story.md` |
+| instagram-reels | 9:16 | qwen3-8-9b-distill | topic-5 | 62.5 | `outputs-v3/instagram-reels/qwen3-8-9b-distill/topic-5/story.md` |
+| facebook-reels | 9:16 | nemotron-3-nano-4b | topic-1 | 55.5 | `outputs-v3/facebook-reels/nemotron-3-nano-4b/topic-1/story.md` |
+| linkedin | 16:9 | ministral-3-8b | topic-2 | 62.0 | `outputs-v3/linkedin/ministral-3-8b/topic-2/story.md` |
+| long-form | 16:9 | ministral-3-8b | topic-3 | 56.2 | `outputs-v3/long-form/ministral-3-8b/topic-3/story.md` |
+
+Each job takes the `story.md` file only. The `anti-ai.md`, `critic.md` and `humanizer.md` files are kept as evidence and are not sent to the video step.
+
+### 9.2 Setup (before any run)
+
+1. Confirm the images: `maxh8086/media-generator:1` (has fonts and soundfile, built 2026-11-04) and `maxh8086/voice:latest` (= `:1`, digest `86fa8c5b…`), with `docker/voice/voice.pin` at `follows=latest`.
+2. Confirm the offline suite passes: `PYTHONPATH=. .venv/Scripts/python.exe -m unittest discover -s tests -t . -q`.
+3. Confirm the GPU lease is free (no ComfyUI running). The story-film step does not use ComfyUI.
+4. Put the chosen job list (section 9.1) in the job file for the run. Do not start the run until the user approves the list.
+
+### 9.3 Single-story smoke test
+
+Purpose: prove the chain runs end to end on one story, with no batch.
+
+* **Input:** `youtube-shorts`, `ministral-3-8b`, `topic-4`, `minutes=1` (word budget 162), `format` = the first `FORMAT-CHOICE.md` entry that passes the five-of-eight difference rule against the previous film (none yet, so the first entry).
+* **Steps:** measure narration with the voice image and the word budget, build the HTML scenes, run `guard.mjs` and `hyperframes lint`, render at 1080x1920, run the duration check, write `job.json`.
+* **Pass:** the output MP4 exists, the duration is within 5% of the target, `guard.mjs` reports no banned terms, and `job.json` lists the seed, format and GPU use.
+* **Fail:** stop, write `RUN_FAILED-video.md`, and do not run the other four destinations.
+* **Output path:** `Benchmark/video-test/youtube-shorts/ministral-3-8b/topic-4/`.
+
+### 9.4 Open items
+
+* **Part 2 video rubric.** The rubric items are not in this repo. A search of `docs/`, `Benchmark/`, the handoff and the `.claude/plans` folder finds only the references in `story-model-test-plan.md` (section 4) and `story-criteria-gap-analysis.md` (section 10). The user said the rubric was updated with video criteria. The file location must be given before section 5 can be finished.
+* **Not yet built:** the story-film scripts and HTML scene templates. This section describes the run, not code that exists.
