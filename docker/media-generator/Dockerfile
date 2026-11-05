@@ -34,7 +34,15 @@ RUN f=$(find /usr/local/lib/node_modules -path '*/renderer/dist/options/browser-
     && grep -q "currentBrowserExecutablePath = '/usr/bin/chromium';" "$f"
 
 # Manim Community, built from the pinned commit (no LaTeX: Text/shapes work, Tex/MathTex need texlive added).
-RUN apt-get update && apt-get install -y --no-install-recommends       python3-dev pkg-config libcairo2-dev libpango1.0-dev libglib2.0-dev     && rm -rf /var/lib/apt/lists/*     && git clone --branch "${MANIM_TAG}" https://github.com/ManimCommunity/manim /opt/manim     && git -C /opt/manim checkout --detach "${MANIM_COMMIT}"     && pip3 install --no-cache-dir --break-system-packages /opt/manim
+# Installed into its own venv (/opt/manim-venv) so later system pip3 installs cannot conflict with Manim's dependencies.
+RUN apt-get update && apt-get install -y --no-install-recommends python3-dev python3-venv pkg-config libcairo2-dev libpango1.0-dev libglib2.0-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && git clone --branch "${MANIM_TAG}" https://github.com/ManimCommunity/manim /opt/manim \
+    && git -C /opt/manim checkout --detach "${MANIM_COMMIT}" \
+    && python3 -m venv /opt/manim-venv \
+    && /opt/manim-venv/bin/pip install --no-cache-dir /opt/manim \
+    && ln -s /opt/manim-venv/bin/manim /usr/local/bin/manim \
+    && manim --version
 
 # Layers below the Manim build are added last so the earlier layers stay cached.
 # tesseract-ocr + English traineddata only (no other language packs; tesseract-ocr-osd comes in as a Debian dependency):
@@ -54,14 +62,30 @@ RUN PKGS=$(sed -e 's/#.*//' /opt/fonts/fonts.txt | tr -s ' \t\n' '\n' | grep -v 
     && dpkg-query -W -f='${Package} ${Version}\n' $PKGS > /opt/fonts/fonts.lock
 
 # soundfile for the story-film workflow (WAV read/write and duration measurement). The 0.14.0 wheel bundles libsndfile.
-# numpy comes with manim above. Voice stays in the voice image (maxh8086/voice), not here.
-RUN pip3 install --no-cache-dir --break-system-packages "soundfile==0.14.0" \
+# numpy is installed explicitly here, since it no longer arrives with the Manim venv. Voice stays in the voice image (maxh8086/voice), not here.
+RUN pip3 install --no-cache-dir --break-system-packages "soundfile==0.14.0" numpy \
     && python3 -c "import numpy, soundfile; print('soundfile', soundfile.__version__, 'numpy', numpy.__version__)"
+
+# chrome-headless-shell for HyperFrames' BeginFrame capture path. Debian's chromium only gets the slower screenshot
+# path. The cache is set to /opt/hf-home at build time because the runtime user (mgen) cannot read /root.
+RUN HOME=/opt/hf-home hyperframes browser ensure \
+    && ln -s "$(HOME=/opt/hf-home hyperframes browser path)" /usr/local/bin/chrome-headless-shell \
+    && chmod -R a+rX /opt/hf-home \
+    && /usr/local/bin/chrome-headless-shell --version
+
+# Render engine: POST /render turns JSON props into an MP4 (HTML/GSAP scene rendered by HyperFrames). Code from
+# render-engine/; dependencies pinned in its package.json. Start it with `node /opt/render-engine/server.js`.
+COPY render-engine/package.json /opt/render-engine/package.json
+RUN cd /opt/render-engine && npm install --omit=dev --no-audit --no-fund \
+    && npm cache clean --force
+COPY render-engine/server.js /opt/render-engine/server.js
+COPY render-engine/lib /opt/render-engine/lib
+COPY render-engine/composition /opt/render-engine/composition
 
 # Needs the named context "scripts" (compose sets it to ./kalamanch). A plain `docker build` needs --build-context scripts=./kalamanch.
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/
 COPY pipeline.py /opt/pipeline/pipeline.py
-RUN sed -i "s/$//" /opt/pipeline/pipeline.py && chmod +x /opt/pipeline/pipeline.py && ln -s /opt/pipeline/pipeline.py /usr/local/bin/mgen
+RUN sed -i 's/\r$//' /opt/pipeline/pipeline.py && chmod +x /opt/pipeline/pipeline.py && ln -s /opt/pipeline/pipeline.py /usr/local/bin/mgen
 
 # Non-root user (uid/gid 10001, own home dir) for everything at runtime. Files written into the
 # /work bind mount (OneDrive folder on the host) are created by this uid.
@@ -74,8 +98,11 @@ RUN printf '%s\n' 'CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromiu
 
 ENV WHISPER_MODEL_PATH=/opt/whisper.cpp/models/ggml-${WHISPER_MODEL}.bin \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
-    HYPERFRAMES_BROWSER_PATH=/usr/bin/chromium \
+    HYPERFRAMES_BROWSER_PATH=/usr/local/bin/chrome-headless-shell \
     VIDEO_PUBLISH_DIR=0 \
+    OUTPUT_DIR=/work/renders \
+    WORK_DIR=/tmp/render-jobs \
+    PORT=3000 \
     PYTHONUTF8=1
 
 USER mgen
