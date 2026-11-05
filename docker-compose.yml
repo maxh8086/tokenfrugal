@@ -24,7 +24,7 @@ services:
       context: ./docker/media-generator
       additional_contexts:
         scripts: ./kalamanch
-    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:1}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
@@ -33,6 +33,26 @@ services:
     volumes:
       - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/media_generator_mcp.py (mgen) and resolved by router/media_workspace.py; this default is the fallback when run by hand
       - ./docker/media-generator/templates:/templates:ro   # composition templates (Mode B first). Read-only; the render copies a project to a scratch folder first
+    restart: "no"
+
+  render-engine:
+    build:
+      context: ./docker/media-generator
+      additional_contexts:
+        scripts: ./kalamanch
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}   # same tag as media-generator: one image, two services
+    command: ["node", "/opt/render-engine/server.js"]
+    profiles: [video]
+    shm_size: 256m
+    working_dir: /work
+    environment:
+      - OUTPUT_DIR=/work/${VIDEO_EDITOR_RENDER_DIR:-Render}
+      - RENDER_LOG=/work/logs/render-engine.jsonl
+      - PIPER_MODEL=/opt/voices/en_US-lessac-medium.onnx
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work
     restart: "no"
 
   crawl4ai:

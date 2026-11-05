@@ -15,8 +15,9 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import checker, compose, events, gpu_lease, kalamanch_cleanup, plan, reconnect, store, ui_launcher
-from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role
+from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
 from .mcp_client import ensure_backend
+from .model_sync import ensure_models
 from .preflight import task_error
 from .loop import error_kind, failure_reason, leaf, role_timeout, run, take_started, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
@@ -27,6 +28,7 @@ STALE_REASON = "router stopped while task was running (no heartbeat)"
 HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
 RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # other reasons: re-scope instead
 RESCOPE = "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure."
+_models_ready = False  # set once ensure_models() has succeeded in this process (mediahouse tasks)
 
 
 def kind_hint(kind: str, started: int, required_tool: str = "") -> str:
@@ -316,8 +318,15 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
             return "accept must be a command, e.g. 'python -m unittest ...'"
     err = task_error(agent, task, CFG, WORKSPACE)
     if err:
+        events.emit("task_refused", agent=agent, reason=err)  # refusal before any model time; logged to events.jsonl
         return err
     role = resolve_role(agent, CFG)
+    global _models_ready
+    if not _models_ready and team_of(role["role"], CFG) == "mediahouse":
+        err = await asyncio.to_thread(ensure_models)  # a first pull can take hours; keep the event loop free
+        if err:
+            return err
+        _models_ready = True
     if plan_id:
         ok, msg = await _plan(plan.claim, plan_id, "router")
         if not ok:

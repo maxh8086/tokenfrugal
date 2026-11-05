@@ -132,7 +132,7 @@ class MediahouseRoles(unittest.TestCase):
             self.assertLessEqual(len(role["tools"]), limit, name)
 
     def test_media_generator_native_tools_parse_from_source(self):
-        self.assertEqual(preflight._native_tools(self.root, "media-generator"), {"list_raw", "list_renders", "mgen"})
+        self.assertEqual(preflight._native_tools(self.root, "media-generator"), {"list_raw", "list_renders", "mgen", "render_film"})
 
     def test_media_motion_native_tools_parse_from_source(self):
         self.assertEqual(preflight._native_tools(self.root, "media-briefing"), {"brief"})
