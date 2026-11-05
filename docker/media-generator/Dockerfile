@@ -66,6 +66,11 @@ RUN PKGS=$(sed -e 's/#.*//' /opt/fonts/fonts.txt | tr -s ' \t\n' '\n' | grep -v 
 RUN pip3 install --no-cache-dir --break-system-packages "soundfile==0.14.0" numpy \
     && python3 -c "import numpy, soundfile; print('soundfile', soundfile.__version__, 'numpy', numpy.__version__)"
 
+# Fail the build if ffprobe is missing or ffmpeg has no libx264 encoder (the render path encodes H.264 with libx264).
+RUN ffprobe -version >/dev/null \
+    && ffmpeg -hide_banner -encoders | grep -q ' libx264 ' \
+    && echo "ffprobe and libx264 present"
+
 # chrome-headless-shell for HyperFrames' BeginFrame capture path. Debian's chromium only gets the slower screenshot
 # path. The cache is set to /opt/hf-home at build time because the runtime user (mgen) cannot read /root.
 RUN HOME=/opt/hf-home hyperframes browser ensure \
