@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Pin the voice image by digest, taking new versions from a moving label.
 
-docker/voice/voice.pin holds the repo, the label it follows (latest) and the digest the stack runs.
-  python scripts/update_voice_pin.py             # compare the label's digest with the pin (exit 1 if they differ)
-  python scripts/update_voice_pin.py --write     # move the pin to the label's digest
-  python scripts/update_voice_pin.py --offline   # read the local image only, do not pull
+docker/dhvani/dhvani.pin holds the repo, the label it follows (latest) and the digest the stack runs.
+  python scripts/update_dhvani_pin.py             # compare the label's digest with the pin (exit 1 if they differ)
+  python scripts/update_dhvani_pin.py --write     # move the pin to the label's digest
+  python scripts/update_dhvani_pin.py --offline   # read the local image only, do not pull
 
 A pin moves only when this script runs with --write. A digest that followed the label on every run would not be a pin.
 """
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PIN = ROOT / "docker" / "voice" / "voice.pin"
+PIN = ROOT / "docker" / "dhvani" / "dhvani.pin"
 REQUIRED = ("repo", "follows", "digest")
 
 

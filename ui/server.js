@@ -541,8 +541,8 @@ function proxyComfy(req, res, upPath, search) {
   req.pipe(up);
 }
 
-// ---- Voice tab: start/stop the Kokoro voice UI container (image maxh8086/voice:1). Fixed name and host port.
-const VOICE_NAME = 'tokenfrugal-voice-ui', VOICE_IMAGE = 'maxh8086/voice:1', VOICE_PORT = 18080;
+// ---- Voice tab: start/stop the Kokoro voice UI container (image maxh8086/dhvani:1). Fixed name and host port.
+const VOICE_NAME = 'tokenfrugal-voice-ui', VOICE_IMAGE = 'maxh8086/dhvani:1', VOICE_PORT = 18080;
 const execDocker = (args, timeout) => new Promise((ok) => execFile('docker', args, { timeout, windowsHide: true },
   (e, out, err) => ok({ ok: !e, out: String(out || '') + String(err || '') })));
 async function voiceState() {

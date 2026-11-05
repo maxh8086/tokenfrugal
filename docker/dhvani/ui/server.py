@@ -171,7 +171,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             status, body, content_type = kokoro_speak(req)
             self._send(status, body, content_type)
         elif self.path == "/api/speak":
-            # Profile (cloned-voice) synthesis is not wired yet: it waits on the OpenVoice setup in docker/voice/Dockerfile.
+            # Profile (cloned-voice) synthesis is not wired yet: it waits on the OpenVoice setup in docker/dhvani/Dockerfile.
             self._send_json(501, {"error": "speech synthesis is not wired yet"})
         else:
             self._send_json(404, {"error": "not found"})

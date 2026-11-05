@@ -1,4 +1,4 @@
-// Narration through the dhvani service (Kokoro over HTTP, docker/voice/ui/server.py).
+// Narration through the dhvani service (Kokoro over HTTP, docker/dhvani/ui/server.py).
 // Kokoro accepts at most 1000 characters per request, so each scene is split into chunks below MAX_CHUNK.
 
 export const MAX_CHUNK = 900;

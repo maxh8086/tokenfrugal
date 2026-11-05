@@ -4,7 +4,7 @@
   python kokoro_speak.py speak   -> stdin: JSON {"text": ..., "voice": ..., "speed": ...}; stdout: WAV (mono, 16-bit)
 
 Exit codes: 0 ok, 2 bad request (message on stderr), 1 model or runtime failure (traceback on stderr).
-Model files come from KOKORO_MODEL_PATH and KOKORO_VOICES_PATH, set in docker/voice/Dockerfile.
+Model files come from KOKORO_MODEL_PATH and KOKORO_VOICES_PATH, set in docker/dhvani/Dockerfile.
 """
 import contextlib
 import io

@@ -6,7 +6,7 @@ import unittest
 import wave
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-HELPER = ROOT / "docker" / "voice" / "ui" / "kokoro_speak.py"
+HELPER = ROOT / "docker" / "dhvani" / "ui" / "kokoro_speak.py"
 
 spec = importlib.util.spec_from_file_location("kokoro_speak", HELPER)
 kokoro_speak = importlib.util.module_from_spec(spec)

@@ -62,7 +62,7 @@ RUN PKGS=$(sed -e 's/#.*//' /opt/fonts/fonts.txt | tr -s ' \t\n' '\n' | grep -v 
     && dpkg-query -W -f='${Package} ${Version}\n' $PKGS > /opt/fonts/fonts.lock
 
 # soundfile for the story-film workflow (WAV read/write and duration measurement). The 0.14.0 wheel bundles libsndfile.
-# numpy is installed explicitly here, since it no longer arrives with the Manim venv. Voice stays in the voice image (maxh8086/voice), not here.
+# numpy is installed explicitly here, since it no longer arrives with the Manim venv. Narration stays in the dhvani image (maxh8086/dhvani), not here.
 RUN pip3 install --no-cache-dir --break-system-packages "soundfile==0.14.0" numpy \
     && python3 -c "import numpy, soundfile; print('soundfile', soundfile.__version__, 'numpy', numpy.__version__)"
 
