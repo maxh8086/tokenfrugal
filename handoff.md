@@ -741,7 +741,7 @@ State: built and wired, suite green (611 tests, 5 skipped), nothing committed. N
 
 ## 13. Benchmark story videos: image cleanup for the next round (set 2026-11-05, OPEN)
 
-Five styled story videos are in `Benchmark/media-generator/` (`v1-water-tank-final.mp4`, `v2-seed-route-final.mp4`, `v3-forecast-caller-final.mp4`, `v4-inference-chain-final.mp4`, `v5-unproven-lemma-final.mp4`). Source: `scratchpad/nv/project/bench/` (`gen.py` writes the HTML, `mux.py` adds narration and drone bed). Nothing has been removed yet (the cleanup was rolled back on 2026-11-05).
+Five styled story videos are in `Benchmark/media-generator/` (`v1-water-tank-final.mp4`, `v2-seed-route-final.mp4`, `v3-forecast-caller-final.mp4`, `v4-inference-chain-final.mp4`, `v5-unproven-lemma-final.mp4`). Source: `scratchpad/nv/project/bench/` (`gen.py` writes the HTML, `mux.py` adds narration and drone bed). The six decorative elements listed below were removed on 2026-11-05. The five finals were re-rendered with HyperFrames and re-muxed with `mux.py` (durations: v1 30.23 s, v2 31.23 s, v3 32.73 s, v4 30.90 s, v5 29.97 s). The earlier cleanup had been rolled back in PR #53; this PR re-applies it. The pre-cleanup generator is `gen_before_cleanup.py` and the cleaned one is `gen_after_cleanup.py`, both in `scratchpad/nv/project/bench/`.
 
 **Rule (user, 2026-11-05):** remove any image element that has no use in the video; keep the rest.
 
