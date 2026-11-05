@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
-from router.media_workspace import media_dir, render_dir
+from router.media_workspace import films_dir, media_dir
 
 mcp = FastMCP("media-briefing")
 
@@ -57,7 +57,7 @@ def brief(text: str, out_name: str, length_target_s: float = 30, music: bool = F
     out_name = bare output name, written to Render/<out_name>.mp4. length_target_s = 30 to 120 seconds.
     music = True adds the neutral music bed. Returns exit=0 and the Render path, or an error line."""
     try:
-        validate(text, length_target_s, music, out_name, render_dir(media_dir()))
+        validate(text, length_target_s, music, out_name, films_dir(media_dir()))
         return "error: not built yet"
     except BriefError as e:
         return str(e)

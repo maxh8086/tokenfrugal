@@ -256,3 +256,35 @@ class OutputDirConfig(unittest.TestCase):
         with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target)}):
             mw.output_dir(Path(tempfile.gettempdir()))
         self.assertFalse(target.exists())
+
+
+class PipelineFolders(unittest.TestCase):
+    def test_films_and_shorts_sit_under_output_dir(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        target = Path(tempfile.gettempdir()) / "films-out"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target), "VIDEO_EDITOR_RENDER_DIR": ""}):
+            out = Path(os.path.abspath(target))
+            self.assertEqual(mw.films_dir(root), out / "films")
+            self.assertEqual(mw.shorts_dir(root), out / "shorts")
+
+    def test_unset_puts_both_under_render_folder(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+            self.assertEqual(mw.films_dir(root), root / "Render" / "films")
+            self.assertEqual(mw.shorts_dir(root), root / "Render" / "shorts")
+
+    def test_place_short_moves_into_shorts_and_avoids_overwrite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            render = root / "Render"
+            render.mkdir()
+            with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+                (render / "a.mp4").write_bytes(b"1")
+                first = v._place_short(render / "a.mp4", root)
+                (render / "a.mp4").write_bytes(b"2")
+                second = v._place_short(render / "a.mp4", root)
+                self.assertEqual(first, render / "shorts" / "a.mp4")
+                self.assertEqual(second, render / "shorts" / "a-2.mp4")
+                self.assertFalse((render / "a.mp4").exists())
+                self.assertEqual((render / "shorts" / "a.mp4").read_bytes(), b"1")
+                self.assertEqual((render / "shorts" / "a-2.mp4").read_bytes(), b"2")

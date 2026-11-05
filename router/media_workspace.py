@@ -57,6 +57,20 @@ def output_dir(root: Path) -> Path:
     return render_dir(root)
 
 
+FILMS = "films"  # render_film output (HyperFrames film from a scenes brief), under output_dir()
+SHORTS = "shorts"  # mgen output (captioned 9:16 short from a Raw clip), under output_dir()
+
+
+def films_dir(root: Path) -> Path:
+    """Folder for films rendered by the render engine: <output_dir>/films. Creates nothing."""
+    return output_dir(root) / FILMS
+
+
+def shorts_dir(root: Path) -> Path:
+    """Folder for shorts made from Raw clips by mgen: <output_dir>/shorts. Creates nothing."""
+    return output_dir(root) / SHORTS
+
+
 def raw_dir(root: Path) -> Path:
     return root / RAW
 

@@ -11,7 +11,9 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 from router.events import emit
-from router.media_workspace import media_dir, output_dir, raw_dir, render_dir, render_name
+from router.media_workspace import (
+    FILMS, SHORTS, films_dir, media_dir, output_dir, raw_dir, render_dir, render_name, shorts_dir,
+)
 from router.model_sync import ensure_models
 
 mcp = FastMCP("media-generator")
@@ -51,14 +53,15 @@ def list_raw() -> str:
 
 @mcp.tool()
 def list_renders() -> str:
-    """List the finished file names in the media workspace Render folder."""
-    names = _names(output_dir(_workspace()))
-    return "\n".join(names) if names else "no files in Render"
+    """List the finished files: films/ (render_film) and shorts/ (mgen) under the output folder."""
+    ws = _workspace()
+    rows = [f"{FILMS}/{n}" for n in _names(films_dir(ws))] + [f"{SHORTS}/{n}" for n in _names(shorts_dir(ws))]
+    return "\n".join(rows) if rows else "no files in Render"
 
 
 @mcp.tool()
 def mgen(clip: str, out_name: str = "", no_music: bool = False, captions: str = "auto") -> str:
-    """Turn one clip from Raw into a captioned 9:16 short in Render. clip = bare file name in Raw.
+    """Turn one clip from Raw into a captioned 9:16 short, saved to the shorts folder. clip = bare file name in Raw.
     out_name = optional output name. no_music = True skips the music bed. captions = auto (default, skips word captions when the clip has burned-in subtitles), on (always add them) or off (never add them). Returns the last output lines and the Render path."""
     try:
         clip = _check(clip, "clip")
@@ -87,8 +90,10 @@ def mgen(clip: str, out_name: str = "", no_music: bool = False, captions: str = 
         lines = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()
         out = "\n".join(lines[-MAX_LINES:])
         new = sorted(set(_names(render)) - before)
-        path = render / out_name if out_name else (render / new[0] if new else render)
-        return f"exit={r.returncode}\n{out}\nRender: {path}"
+        stem = out_name[:-4] if out_name.endswith(".mp4") else out_name
+        src = render / f"{stem}.mp4" if out_name else (render / new[0] if new else None)
+        path = _place_short(src, ws) if src is not None and src.is_file() else (src or render)
+        return f"exit={r.returncode}\n{out}\nSaved: {path}"
     except subprocess.TimeoutExpired:
         return f"error: timed out after {TIMEOUT} s"
     except ValueError as e:
@@ -163,6 +168,19 @@ def _free_name(folder: Path, stem: str) -> str:
     return candidate
 
 
+def _place_short(src: Path, root: Path) -> Path:
+    """Move a finished short from the render folder into the shorts folder, keeping its name unless taken.
+    Returns the new path, or src when the move fails."""
+    folder = shorts_dir(root)
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        dest = folder / _free_name(folder, src.stem)
+        os.replace(src, dest)
+        return dest
+    except OSError:
+        return src
+
+
 def _render_film_call(scenes_json: str, fps: int, music: bool, narration: bool, name: str) -> tuple[str, str, str]:
     """Returns (reply, status, error). status is the HTTP code, or validation, unreachable, timeout or error."""
     try:
@@ -209,12 +227,14 @@ def _render_film_call(scenes_json: str, fps: int, music: bool, narration: bool, 
         return "error: render engine returned an unexpected file name", "error", "bad file name"
 
     # Compose mounts the engine's OUTPUT_DIR at the output folder (MEDIA_OUTPUT_DIR, default the Render folder),
-    # so the file is usually already there. Otherwise download it over HTTP. Either way it is renamed to the requested stem.
-    folder = output_dir(_workspace())
+    # so the engine's <uuid>.mp4 is usually already there at the output root. It is moved into the films folder
+    # under the requested stem. Otherwise download it over HTTP.
+    root_out = output_dir(_workspace())
+    folder = films_dir(_workspace())
     folder.mkdir(parents=True, exist_ok=True)
     out_name = _free_name(folder, stem)
     dest = folder / out_name
-    local = folder / file_name
+    local = root_out / file_name
     try:
         if local.is_file():
             os.replace(local, dest)
@@ -227,7 +247,7 @@ def _render_film_call(scenes_json: str, fps: int, music: bool, narration: bool, 
             finally:
                 part.unlink(missing_ok=True)
     except (OSError, ValueError) as e:
-        return _cap(f"error: could not place the film in Render: {type(e).__name__}"), "error", "copy failed"
+        return _cap(f"error: could not place the film in the films folder: {type(e).__name__}"), "error", "copy failed"
 
     warnings = len(result.get("warnings") or [])
     audio = "+".join(x for x, on in (("narration", narration), ("music", music)) if on) or "none"
@@ -240,7 +260,7 @@ def render_film(scenes_json: str, fps: int = 30, music: bool = False, narration:
     """Render a film from a scenes brief through the render engine (docker compose --profile video, service render-engine).
     scenes_json = JSON array of 1 to 10 scenes: {text (max 80 chars), sub or subtitle (optional, max 120), seconds or duration (0.83 to 8)}; total <= 60 s.
     fps = 24, 30 or 60. music = deterministic ffmpeg bed; narration = offline Piper voice (one clip per scene).
-    name = short output file stem. The finished MP4 is placed in the Render folder. Returns the path, seconds, fps, audio and warning count, or the error."""
+    name = short output file stem. The finished MP4 is placed in the films folder. Returns the path, seconds, fps, audio and warning count, or the error."""
     reply, status, error = _render_film_call(scenes_json, fps, music, narration, name)
     emit("render_film", name=str(name)[:60], ok=not error, status=status, error=error[:120])
     return reply
