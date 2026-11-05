@@ -1,5 +1,5 @@
 // POST /render: renders composition/index.html with the given props to an MP4 in OUTPUT_DIR.
-// Optional narration (Piper TTS) and music (deterministic ffmpeg bed) are muxed into the film.
+// Optional narration (dhvani/Kokoro over HTTP) and music (deterministic ffmpeg bed) are muxed into the film.
 // POST /render and GET /health each append one JSON line to RENDER_LOG (lib/log.js).
 import express from 'express';
 import { spawn, execFile } from 'node:child_process';
@@ -14,6 +14,7 @@ import { validateProps, propsToJs, echoProps } from './lib/props.js';
 import { checkScenes, toTimeline, applyCraftPolicy } from './lib/craft-check.js';
 import { planNarration, narrationArgs, musicArgs, muxArgs, audioMode } from './lib/audio-plan.js';
 import { writeLog, tailLines } from './lib/log.js';
+import { synthesizeScene } from './lib/dhvani.js';
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -26,8 +27,8 @@ const TEMPLATE_DIR = path.join(here, 'composition');
 const GSAP_FILE = require.resolve('gsap/dist/gsap.min.js');
 const HF_BIN = path.join(path.dirname(require.resolve('hyperframes/package.json')), 'bin', 'hyperframes.mjs');
 const RENDER_TIMEOUT_MS = Number(process.env.RENDER_TIMEOUT_MS || 600_000);
-const PIPER_BIN = process.env.PIPER_BIN || '/opt/voice/bin/piper';
-const PIPER_MODEL = process.env.PIPER_MODEL || '/opt/voices/en_US-lessac-medium.onnx';
+const DHVANI_URL = process.env.DHVANI_URL || 'http://dhvani:8080';
+const DHVANI_VOICE = process.env.DHVANI_VOICE || 'af_heart';
 const FFMPEG_BIN = process.env.FFMPEG_BIN || 'ffmpeg';
 const FFPROBE_BIN = process.env.FFPROBE_BIN || 'ffprobe';
 const LOG_TAIL_LINES = 40;
@@ -134,7 +135,36 @@ async function probeSeconds(file) {
   return seconds;
 }
 
-// Writes narration (one Piper clip per scene, placed at its start time) and music into jobDir.
+// Synthesizes one scene through dhvani into jobDir/s{i}.wav. Kokoro takes at most 1000 characters per request,
+// so a long scene comes back in several chunks, which are joined with ffmpeg. Returns the file path.
+async function narrateScene(text, jobDir, i) {
+  let buffers;
+  try {
+    buffers = await synthesizeScene(text, { baseUrl: DHVANI_URL, voice: DHVANI_VOICE });
+  } catch (err) {
+    throw stageError(502, 'audio', 'dhvani narration failed', { detail: err.message });
+  }
+  const wav = path.join(jobDir, `s${i}.wav`);
+  const parts = [];
+  for (let k = 0; k < buffers.length; k++) {
+    const part = path.join(jobDir, `s${i}_${k}.wav`);
+    await writeFile(part, buffers[k]);
+    parts.push(part);
+  }
+  if (parts.length === 1) {
+    await rename(parts[0], wav);
+    return wav;
+  }
+  const inputs = parts.flatMap((part) => ['-i', part]);
+  await run(FFMPEG_BIN, [
+    '-y', ...inputs,
+    '-filter_complex', `concat=n=${parts.length}:v=0:a=1`,
+    '-ar', '22050', '-ac', '1', wav,
+  ]);
+  return wav;
+}
+
+// Writes narration (one dhvani clip per scene, placed at its start time) and music into jobDir.
 // Returns { mode, narration?, music? }. Throws a stage 'audio' error (400 with findings) when a clip is too long.
 async function buildAudio(props, audioScenes, jobDir) {
   const mode = audioMode({ narration: props.narration, music: props.music });
@@ -145,10 +175,7 @@ async function buildAudio(props, audioScenes, jobDir) {
     const clips = [];
     for (let i = 0; i < audioScenes.length; i++) {
       const scene = props.scenes[i];
-      const wav = path.join(jobDir, `s${i}.wav`);
-      await run(PIPER_BIN, ['--model', PIPER_MODEL, '--output_file', wav], {
-        input: `${scene.text}. ${scene.sub || ''}`,
-      });
+      const wav = await narrateScene(`${scene.text}. ${scene.sub || ''}`, jobDir, i);
       clips.push({ file: wav, startSeconds: audioScenes[i].start });
     }
     const durations = [];

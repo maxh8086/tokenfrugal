@@ -48,7 +48,7 @@ services:
     environment:
       - OUTPUT_DIR=/work/${VIDEO_EDITOR_RENDER_DIR:-Render}
       - RENDER_LOG=/work/logs/render-engine.jsonl
-      - PIPER_MODEL=/opt/voices/en_US-lessac-medium.onnx
+      - DHVANI_URL=http://dhvani:8080
     ports:
       - "127.0.0.1:3000:3000"
     volumes:

@@ -90,24 +90,6 @@ RUN mkdir -p /opt/refs && \
     fetch_pin design-engineering AgentsORG/design-engineering "$DESIGN_ENG_COMMIT" && \
     rm -rf /opt/refs/*/.git
 
-# Narration voice: Piper, an offline TTS, in its own venv (/opt/voice), pinned to piper-tts 1.8.0 (PyPI upload
-# 2026-09-04, sha256 of the manylinux x86_64 wheel 25b4d3f31ff70c8fa7151908e00aaa5650cbdf16bca8fcf21299f3941b89a7d3).
-# Piper's licence: GPL-3.0-or-later (wheel metadata). Voice en_US-lessac-medium from rhasspy/piper-voices at revision
-# e7229f7d33a10e145e109b886d661984201ac3c4 (sha256 checked below). Voice licence: MIT, per the repo README at that
-# revision. The lessac training-data terms are not stated there and need a check before any commercial use.
-ARG PIPER_VERSION=1.8.0
-ARG PIPER_VOICE_REV=e7229f7d33a10e145e109b886d661984201ac3c4
-RUN set -e \
-    && python3 -m venv /opt/voice \
-    && /opt/voice/bin/pip install --no-cache-dir "piper-tts==${PIPER_VERSION}" \
-    && mkdir -p /opt/voices \
-    && base="https://huggingface.co/rhasspy/piper-voices/resolve/${PIPER_VOICE_REV}/en/en_US/lessac/medium" \
-    && curl -fsSL -o /opt/voices/en_US-lessac-medium.onnx "$base/en_US-lessac-medium.onnx" \
-    && curl -fsSL -o /opt/voices/en_US-lessac-medium.onnx.json "$base/en_US-lessac-medium.onnx.json" \
-    && echo "5efe09e69902187827af646e1a6e9d269dee769f9877d17b16b1b46eeaaf019f  /opt/voices/en_US-lessac-medium.onnx" | sha256sum -c - \
-    && echo "efe19c417bed055f2d69908248c6ba650fa135bc868b0e6abb3da181dab690a0  /opt/voices/en_US-lessac-medium.onnx.json" | sha256sum -c - \
-    && /opt/voice/bin/piper --help >/dev/null
-
 # Render engine: POST /render turns JSON props into an MP4 (HTML/GSAP scene rendered by HyperFrames). Code from
 # render-engine/; dependencies pinned in its package.json. Start it with `node /opt/render-engine/server.js`.
 COPY render-engine/package.json /opt/render-engine/package.json
