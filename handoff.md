@@ -1388,3 +1388,42 @@ o final answer in 8 steps\). Model 18 \db-mongo-admin-l2\ is now 0/3.
 2. **Cleanup pending:** remove the empty folder `.claude/worktrees/benchmark-retire-suites`. It is still locked by a process after the branch was deleted (local and remote). Remove it after a restart or reboot with `rmdir`. Nothing in it is tracked.
 3. **Before the rerun:** confirm `Benchmark/results/backups/` holds a dated copy of `benchmark.csv` and the other suite CSVs. Then decide whether to regenerate `index.html` and `explorer.html` as part of the rerun.
 4. **Open decision:** `Hard thinker suite` heading in `Benchmark/index.html` still names the retired suite. Rename it when the pages are regenerated.
+
+## 13. Benchmark story videos: image cleanup for the next round (set 2026-11-05, OPEN)
+
+Five styled story videos are in `Benchmark/media-generator/` (`v1-water-tank-final.mp4`, `v2-seed-route-final.mp4`, `v3-forecast-caller-final.mp4`, `v4-inference-chain-final.mp4`, `v5-unproven-lemma-final.mp4`). Source: `scratchpad/nv/project/bench/` (`gen.py` writes the HTML, `mux.py` adds narration and drone bed). Nothing has been removed yet (the cleanup was rolled back on 2026-11-05).
+
+**Rule (user, 2026-11-05):** remove any image element that has no use in the video; keep the rest.
+
+**Candidates to review next round (decorative, carry no information):**
+
+| Video | Element | Note |
+| --- | --- | --- |
+| v3 forecast-caller (CRT) | Header "HARROW CREEK · MIDNIGHT LINE" | Scene setting only; decide whether it adds anything |
+| v3 forecast-caller (CRT) | Flicker overlay and scanlines | Mood only; keep or drop by taste |
+| v4 inference-chain (Swiss) | Large faded numerals "01"–"07" | Doubles as the scene counter with the red box; possibly redundant |
+| v1 water-tank (kinetic) | Concentric ripple rings behind the tank | Mood only |
+| v2 seed-route (neon) | Synthwave sun and grid | Mood only |
+| v5 unproven-lemma (chalk) | Chalk frame border | Mood only |
+
+Checked 2026-11-05: all five chalk drawings in v5 render at each scene's midpoint, so none is invisible. The earlier 20 s and 30 s contact-sheet gap was sampling, not a missing drawing.
+
+**Open question for the user:** which element was meant. The request did not name a video or an element, so nothing was removed. Pick from the table, or say which one, and the next round will remove it, re-render, re-mux and re-verify.
+
+## 14. Disk cleanup 2026-11-06: Kalamanch model removed, Docker images removed (DONE)
+
+**Why:** C: was at 18.7 GB free of 952 GB, below the 40 GB design floor (D47). Docker reported 98 GB of images and the dhvani CUDA build used about 33 GB.
+
+**Removed (permanent, re-download later if space allows):**
+
+| What | Path | Size | Why it was safe to remove |
+| --- | --- | --- | --- |
+| Kalamanch bf16 T5 text encoder (diffusers `text_encoder/`, 4 safetensors shards) | `models/video_generation/ltx-video-2b-distilled/text_encoder/` | 18 GB | ComfyUI already loads the quantized copy `t5xxl_fp8_e4m3fn.safetensors` (4.6 GB) from the same folder. Kalamanch `generate_ltx.py` and the `experiments/` scripts load this folder, so Kalamanch LTX runs fail until it is restored or pointed at the fp8 copy. |
+
+**Kept on purpose:** `ltxv-2b-0.9.8-distilled.safetensors` (6 GB bf16 transformer), `vae_0.9.8/`, `t5xxl_fp8_e4m3fn.safetensors`, and the rest of `ltx-video-2b-distilled/`. Each one is still used by Kalamanch or ComfyUI. Note that ComfyUI has a Q8 GGUF of the 0.9.8 transformer and a BF16 VAE of its own. Those would be the next duplicates to review, but the user has not asked for them yet.
+
+**Docker images removed:** `maxh8086/voice:latest` (33.8 GB, the CUDA narration image) and `maxh8086/voice:1`. The narration service is now `maxh8086/dhvani:1` (CPU, 1.9 GB), pushed to Docker Hub.
+
+**Docker build cache pruned:** 22.7 GB (`docker builder prune -af`). Dangling images were already gone.
+
+**Not yet done:** compaction of `%LOCALAPPDATA%\Docker\wsl\disk\docker_data.vhdx` (about 251 GB on disk), which is what actually returns the freed space to C:.
