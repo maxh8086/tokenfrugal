@@ -737,3 +737,25 @@ State: built and wired, suite green (611 tests, 5 skipped), nothing committed. N
 2. **Cleanup pending:** remove the empty folder `.claude/worktrees/benchmark-retire-suites`. It is still locked by a process after the branch was deleted (local and remote). Remove it after a restart or reboot with `rmdir`. Nothing in it is tracked.
 3. **Before the rerun:** confirm `Benchmark/results/backups/` holds a dated copy of `benchmark.csv` and the other suite CSVs. Then decide whether to regenerate `index.html` and `explorer.html` as part of the rerun.
 4. **Open decision:** `Hard thinker suite` heading in `Benchmark/index.html` still names the retired suite. Rename it when the pages are regenerated.
+
+
+## 13. Benchmark story videos: image cleanup for the next round (set 2026-11-05, OPEN)
+
+Five styled story videos are in `Benchmark/media-generator/` (`v1-water-tank-final.mp4`, `v2-seed-route-final.mp4`, `v3-forecast-caller-final.mp4`, `v4-inference-chain-final.mp4`, `v5-unproven-lemma-final.mp4`). Source: `scratchpad/nv/project/bench/` (`gen.py` writes the HTML, `mux.py` adds narration and drone bed). Nothing has been removed yet.
+
+**Rule (user, 2026-11-05):** remove any image element that has no use in the video; keep the rest.
+
+**Candidates to review next round (decorative, carry no information):**
+
+| Video | Element | Note |
+| --- | --- | --- |
+| v3 forecast-caller (CRT) | Header "HARROW CREEK · MIDNIGHT LINE" | Scene setting only; decide whether it adds anything |
+| v3 forecast-caller (CRT) | Flicker overlay and scanlines | Mood only; keep or drop by taste |
+| v4 inference-chain (Swiss) | Large faded numerals "01"–"07" | Doubles as the scene counter with the red box; possibly redundant |
+| v1 water-tank (kinetic) | Concentric ripple rings behind the tank | Mood only |
+| v2 seed-route (neon) | Synthwave sun and grid | Mood only |
+| v5 unproven-lemma (chalk) | Chalk frame border | Mood only |
+
+Checked 2026-11-05: all five chalk drawings in v5 render at each scene's midpoint, so none is invisible. The earlier 20 s and 30 s contact-sheet gap was sampling, not a missing drawing.
+
+**Open question for the user:** which element was meant. The request did not name a video or an element, so nothing was removed. Pick from the table, or say which one, and the next round will remove it, re-render, re-mux and re-verify.
