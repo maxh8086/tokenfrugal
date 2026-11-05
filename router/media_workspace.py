@@ -45,6 +45,18 @@ def render_dir(root: Path) -> Path:
     return root / render_name()
 
 
+OUTPUT_ENV = "MEDIA_OUTPUT_DIR"  # where finished films are written; unset = the render folder
+
+
+def output_dir(root: Path) -> Path:
+    """Folder that receives finished films. MEDIA_OUTPUT_DIR (read at call time, .env included) wins;
+    otherwise the render folder under the root. Creates nothing."""
+    value = os.environ.get(OUTPUT_ENV, "").strip()
+    if value:
+        return Path(os.path.abspath(os.path.expanduser(value)))
+    return render_dir(root)
+
+
 def raw_dir(root: Path) -> Path:
     return root / RAW
 

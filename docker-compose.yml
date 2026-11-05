@@ -55,13 +55,14 @@ services:
     shm_size: 256m
     working_dir: /work
     environment:
-      - OUTPUT_DIR=/work/${VIDEO_EDITOR_RENDER_DIR:-Render}
+      - OUTPUT_DIR=/output
       - RENDER_LOG=/work/logs/render-engine.jsonl
       - DHVANI_URL=http://dhvani:8080
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
       - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work
+      - ${MEDIA_OUTPUT_DIR:-${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}/${VIDEO_EDITOR_RENDER_DIR:-Render}}:/output
     restart: "no"
 
   crawl4ai:

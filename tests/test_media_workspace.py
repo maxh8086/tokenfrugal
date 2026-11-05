@@ -237,3 +237,22 @@ class VeditExportsResolvedFolder(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OutputDirConfig(unittest.TestCase):
+    def test_unset_uses_render_folder(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+            self.assertEqual(mw.output_dir(root), root / "Render")
+
+    def test_set_overrides_render_folder(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        target = Path(tempfile.gettempdir()) / "films-out"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target)}):
+            self.assertEqual(mw.output_dir(root), Path(os.path.abspath(target)))
+
+    def test_resolving_creates_nothing(self):
+        target = Path(tempfile.gettempdir()) / "films-not-created"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target)}):
+            mw.output_dir(Path(tempfile.gettempdir()))
+        self.assertFalse(target.exists())

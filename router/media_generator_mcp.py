@@ -11,7 +11,7 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 from router.events import emit
-from router.media_workspace import media_dir, raw_dir, render_dir, render_name
+from router.media_workspace import media_dir, output_dir, raw_dir, render_dir, render_name
 from router.model_sync import ensure_models
 
 mcp = FastMCP("media-generator")
@@ -52,7 +52,7 @@ def list_raw() -> str:
 @mcp.tool()
 def list_renders() -> str:
     """List the finished file names in the media workspace Render folder."""
-    names = _names(render_dir(_workspace()))
+    names = _names(output_dir(_workspace()))
     return "\n".join(names) if names else "no files in Render"
 
 
@@ -208,9 +208,9 @@ def _render_film_call(scenes_json: str, fps: int, music: bool, narration: bool, 
     if not file_name.endswith(".mp4") or "/" in file_name or "\\" in file_name:
         return "error: render engine returned an unexpected file name", "error", "bad file name"
 
-    # Compose sets the engine's OUTPUT_DIR to the Render folder, so the file is usually already there.
-    # Otherwise download it over HTTP. Either way it is renamed to the requested stem.
-    folder = render_dir(_workspace())
+    # Compose mounts the engine's OUTPUT_DIR at the output folder (MEDIA_OUTPUT_DIR, default the Render folder),
+    # so the file is usually already there. Otherwise download it over HTTP. Either way it is renamed to the requested stem.
+    folder = output_dir(_workspace())
     folder.mkdir(parents=True, exist_ok=True)
     out_name = _free_name(folder, stem)
     dest = folder / out_name
