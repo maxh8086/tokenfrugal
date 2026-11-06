@@ -45,7 +45,7 @@ def validate(text: str, length_target_s: float, music: bool, out_name: str, rend
     name = (out_name or "").strip()
     if not _NAME.fullmatch(name) or ".." in name:
         raise BriefError("error: bad output name")
-    if (render_dir / f"{name}.mp4").exists() or (render_dir / f"{name}.run").exists():
+    if (render_dir / name).exists() or (render_dir / f"{name}.mp4").exists() or (render_dir / f"{name}.run").exists():
         raise BriefError("error: out_name_exists")
     return {"text": " ".join(words), "length_target_s": length_target_s, "music": music, "out_name": name}
 

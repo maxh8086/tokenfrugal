@@ -273,7 +273,7 @@ class PipelineFolders(unittest.TestCase):
             self.assertEqual(mw.films_dir(root), root / "Render" / "films")
             self.assertEqual(mw.shorts_dir(root), root / "Render" / "shorts")
 
-    def test_place_short_moves_into_shorts_and_avoids_overwrite(self):
+    def test_place_short_moves_into_a_job_folder_and_avoids_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             render = root / "Render"
@@ -283,8 +283,16 @@ class PipelineFolders(unittest.TestCase):
                 first = v._place_short(render / "a.mp4", root)
                 (render / "a.mp4").write_bytes(b"2")
                 second = v._place_short(render / "a.mp4", root)
-                self.assertEqual(first, render / "shorts" / "a.mp4")
-                self.assertEqual(second, render / "shorts" / "a-2.mp4")
+                self.assertEqual(first, render / "shorts" / "a" / "a.mp4")
+                self.assertEqual(second, render / "shorts" / "a-2" / "a.mp4")
                 self.assertFalse((render / "a.mp4").exists())
-                self.assertEqual((render / "shorts" / "a.mp4").read_bytes(), b"1")
-                self.assertEqual((render / "shorts" / "a-2.mp4").read_bytes(), b"2")
+                self.assertEqual(first.read_bytes(), b"1")
+                self.assertEqual(second.read_bytes(), b"2")
+
+    def test_free_job_counts_up(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            self.assertEqual(v._free_job(parent, "film"), parent / "film")
+            (parent / "film").mkdir()
+            (parent / "film-2").mkdir()
+            self.assertEqual(v._free_job(parent, "film"), parent / "film-3")

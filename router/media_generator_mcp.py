@@ -51,11 +51,18 @@ def list_raw() -> str:
     return "\n".join(names) if names else "no clips in Raw"
 
 
+def _job_files(folder: Path) -> list[str]:
+    """'job/file.mp4' for every file inside every per-job folder under folder."""
+    if not folder.is_dir():
+        return []
+    return sorted(f"{job.name}/{p.name}" for job in folder.iterdir() if job.is_dir() for p in job.iterdir() if p.is_file())
+
+
 @mcp.tool()
 def list_renders() -> str:
-    """List the finished files: films/ (render_film) and shorts/ (mgen) under the output folder."""
+    """List the finished films (films/<job>/file) and shorts (shorts/<job>/file) under the output folder."""
     ws = _workspace()
-    rows = [f"{FILMS}/{n}" for n in _names(films_dir(ws))] + [f"{SHORTS}/{n}" for n in _names(shorts_dir(ws))]
+    rows = [f"{FILMS}/{n}" for n in _job_files(films_dir(ws))] + [f"{SHORTS}/{n}" for n in _job_files(shorts_dir(ws))]
     return "\n".join(rows) if rows else "no files in Render"
 
 
@@ -160,21 +167,22 @@ def _validate_scenes(scenes_json: str) -> tuple[list[dict], float]:
     return scenes, total
 
 
-def _free_name(folder: Path, stem: str) -> str:
-    candidate, n = f"{stem}.mp4", 2
-    while (folder / candidate).exists():
-        candidate = f"{stem}-{n}.mp4"
+def _free_job(parent: Path, stem: str) -> Path:
+    """A new per-job folder name under parent: <stem>, then <stem>-2, <stem>-3 ... Creates nothing."""
+    candidate, n = parent / stem, 2
+    while candidate.exists():
+        candidate = parent / f"{stem}-{n}"
         n += 1
     return candidate
 
 
 def _place_short(src: Path, root: Path) -> Path:
-    """Move a finished short from the render folder into the shorts folder, keeping its name unless taken.
+    """Move a finished short into its own job folder under the shorts folder: shorts/<stem>/<stem>.mp4.
     Returns the new path, or src when the move fails."""
-    folder = shorts_dir(root)
     try:
-        folder.mkdir(parents=True, exist_ok=True)
-        dest = folder / _free_name(folder, src.stem)
+        job = _free_job(shorts_dir(root), src.stem)
+        job.mkdir(parents=True)
+        dest = job / src.name
         os.replace(src, dest)
         return dest
     except OSError:
@@ -227,19 +235,18 @@ def _render_film_call(scenes_json: str, fps: int, music: bool, narration: bool, 
         return "error: render engine returned an unexpected file name", "error", "bad file name"
 
     # Compose mounts the engine's OUTPUT_DIR at the output folder (MEDIA_OUTPUT_DIR, default the Render folder),
-    # so the engine's <uuid>.mp4 is usually already there at the output root. It is moved into the films folder
-    # under the requested stem. Otherwise download it over HTTP.
+    # so the engine's <uuid>.mp4 is usually already there at the output root. It is moved into its own job folder
+    # under the films folder: films/<stem>/<stem>.mp4. Otherwise download it over HTTP.
     root_out = output_dir(_workspace())
-    folder = films_dir(_workspace())
-    folder.mkdir(parents=True, exist_ok=True)
-    out_name = _free_name(folder, stem)
-    dest = folder / out_name
+    job = _free_job(films_dir(_workspace()), stem)
+    dest = job / f"{job.name}.mp4"
     local = root_out / file_name
     try:
+        job.mkdir(parents=True)
         if local.is_file():
             os.replace(local, dest)
         else:
-            part = folder / (out_name + ".part")
+            part = job / (dest.name + ".part")
             try:
                 with urllib.request.urlopen(f"{_engine_base()}/output/{file_name}", timeout=FILM_TIMEOUT) as resp, part.open("wb") as f:
                     shutil.copyfileobj(resp, f)
