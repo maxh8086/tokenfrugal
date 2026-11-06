@@ -16,6 +16,9 @@ import { planNarration, narrationArgs, musicArgs, muxArgs, audioMode } from './l
 import { writeLog, tailLines } from './lib/log.js';
 import { synthesizeScene } from './lib/dhvani.js';
 import { planSegments, concatListText, segmentIsValid, coversDuration } from './lib/segments.js';
+import {
+  parseMotionBlurSamples, parseResolution, framesFor, segmentTimeoutMs, fitsBudget, settingsKey,
+} from './lib/render-options.js';
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -35,6 +38,8 @@ const FFPROBE_BIN = process.env.FFPROBE_BIN || 'ffprobe';
 const LOG_TAIL_LINES = 40;
 const SEGMENTS_FPS_OK = [24, 25, 30, 60]; // fps values HyperFrames accepts for segmented MP4
 const JOB_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+// Per-job render budget (D54). A segmented job whose projected time exceeds this fails with stage "budget" and keeps its segments.
+const JOB_BUDGET_MS = Number(process.env.RENDER_JOB_BUDGET_MS || 1_800_000);
 
 const LOGGED_ROUTES = new Set(['GET /health', 'POST /render']);
 
@@ -201,11 +206,11 @@ async function buildAudio(props, audioScenes, jobDir) {
 }
 
 // Runs hyperframes render in jobDir with extra args. Failures are render stage errors carrying the output tail.
-function renderHyperframes(jobDir, args) {
+function renderHyperframes(jobDir, args, timeoutMs = RENDER_TIMEOUT_MS) {
   return execFileAsync(
     process.execPath,
     [HF_BIN, 'render', ...args],
-    { cwd: jobDir, timeout: RENDER_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024 },
+    { cwd: jobDir, timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 },
   ).catch((err) => {
     const tail = `${err.stdout || ''}${err.stderr || ''}`.trim().slice(-600);
     throw stageError(500, 'render', `hyperframes render failed: ${tail}`, {
@@ -215,7 +220,8 @@ function renderHyperframes(jobDir, args) {
 }
 
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
-async function renderJob(props, audioScenes, log, jobId) {
+async function renderJob(props, audioScenes, log, jobId, opts = {}) {
+  const { blurSamples = 32, resolution = '1080p' } = opts;
   const id = jobId ?? randomUUID();
   log.id = id;
   const jobDir = path.join(WORK_DIR, id);
@@ -227,7 +233,11 @@ async function renderJob(props, audioScenes, log, jobId) {
     // HyperFrames reads the length from the static HTML, so write it there per job.
     const htmlPath = path.join(jobDir, 'index.html');
     const html = await readFile(htmlPath, 'utf8');
-    await writeFile(htmlPath, html.replace('data-duration="3"', `data-duration="${props.duration}"`));
+    let page = html.replace('data-duration="3"', `data-duration="${props.duration}"`);
+    // Motion blur is on in the template at 32 samples; 0 switches it off and any other value sets the sample count.
+    if (blurSamples === 0) page = page.replace('data-motion-blur="on"', 'data-motion-blur="off"');
+    else page = page.replace('data-motion-blur-samples="32"', `data-motion-blur-samples="${blurSamples}"`);
+    await writeFile(htmlPath, page);
     await writeFile(path.join(jobDir, 'props.js'), propsToJs(props));
     await cp(GSAP_FILE, path.join(jobDir, 'gsap.min.js'));
 
@@ -242,18 +252,41 @@ async function renderJob(props, audioScenes, log, jobId) {
       // One MP4 per scene span; finished segments are kept, so a retry with the same jobId skips them.
       const segDir = path.join(jobDir, 'segments');
       await mkdir(segDir, { recursive: true });
+      // Segments made with other motion-blur or resolution settings must not be joined into this film.
+      const key = settingsKey({ blurSamples, resolution });
+      const keyFile = path.join(segDir, 'settings.key');
+      if ((await readFile(keyFile, 'utf8').catch(() => null)) !== key) {
+        await rm(segDir, { recursive: true, force: true });
+        await mkdir(segDir, { recursive: true });
+        await writeFile(keyFile, key);
+      }
+      const totalFrames = framesFor(props.duration, props.fps);
+      let doneFrames = 0;
+      let elapsedMs = 0;
+      let measuredFps = null; // frames per second measured on the segments this request rendered
       const files = [];
       for (const { index, start, end } of spans) {
         const seg = path.join(segDir, `seg-${index}.mp4`);
         files.push(seg);
+        const frames = framesFor(end - start, props.fps);
         if (segmentIsValid(await stat(seg).catch(() => null))) {
           segmentsReused++;
+          doneFrames += frames;
           continue;
         }
+        if (!fitsBudget({ elapsedMs, remainingFrames: totalFrames - doneFrames, measuredFps, budgetMs: JOB_BUDGET_MS })) {
+          throw stageError(409, 'budget',
+            `projected render time is over the ${Math.round(JOB_BUDGET_MS / 1000)} s job budget. Re-POST the same job_id with a lower motion_blur_samples, or motion_blur_samples 0 to turn motion blur off. Finished segments are kept.`);
+        }
         const tmp = path.join(segDir, `seg-${index}.tmp.mp4`);
+        const t0 = Date.now();
         await atStage('render', () => renderHyperframes(jobDir, [
           '--output', tmp, '--fps', String(props.fps), '--start', String(start), '--end', String(end),
-        ]));
+        ], segmentTimeoutMs(frames, measuredFps, RENDER_TIMEOUT_MS)));
+        const took = Date.now() - t0;
+        elapsedMs += took;
+        measuredFps = frames / (took / 1000);
+        doneFrames += frames;
         await rename(tmp, seg);
       }
       const list = path.join(segDir, 'list.txt');
@@ -315,6 +348,20 @@ app.post('/render', async (req, res) => {
     log.error = 'bad job_id';
     return res.status(400).json({ error: 'bad job_id' });
   }
+  // motion_blur_samples and resolution are render options (D54), not props: removed before validation and echo.
+  let blurRaw;
+  let resRaw;
+  if (body && typeof body === 'object' && ('motion_blur_samples' in body || 'resolution' in body)) {
+    ({ motion_blur_samples: blurRaw, resolution: resRaw, ...body } = body);
+  }
+  const blur = parseMotionBlurSamples(blurRaw);
+  const res1080 = parseResolution(resRaw);
+  if (!blur.ok || !res1080.ok) {
+    const error = !blur.ok ? blur.error : res1080.error;
+    log.stage = 'validate';
+    log.error = error;
+    return res.status(400).json({ error });
+  }
   const checked = validateProps(body);
   if (!checked.ok) {
     log.stage = 'validate';
@@ -333,9 +380,13 @@ app.post('/render', async (req, res) => {
 
   const audioScenes = timed.map((s) => ({ id: s.id, start: s.start, seconds: s.duration }));
   try {
-    const result = await enqueue(() => renderJob(checked.props, audioScenes, log, jobId ?? undefined));
+    const result = await enqueue(() => renderJob(checked.props, audioScenes, log, jobId ?? undefined, {
+      blurSamples: blur.value,
+      resolution: res1080.value,
+    }));
     res.status(201).json({
       ...result,
+      motion_blur_samples: blur.value,
       props: echoProps(body, checked.props),
       warnings: policy.warnings,
     });

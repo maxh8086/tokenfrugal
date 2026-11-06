@@ -1427,3 +1427,41 @@ Checked 2026-11-05: all five chalk drawings in v5 render at each scene's midpoin
 **Docker build cache pruned:** 22.7 GB (`docker builder prune -af`). Dangling images were already gone.
 
 **Not yet done:** compaction of `%LOCALAPPDATA%\Docker\wsl\disk\docker_data.vhdx` (about 251 GB on disk), which is what actually returns the freed space to C:.
+
+## 15. D54 resume test and render-engine layout (set 2026-11-06, DONE for the resume check)
+
+**Resume test (passed).** Job `d54-resume-2`: five scenes of 3 s, fps 30. The render-engine container was restarted after two segments were written. Re-POSTing the same `job_id` returned `segments_reused: 2`. Output `/output/d54-resume-2.mp4`: 15.000 s, h264, 1920x1080. The work folder is removed on success, so the segment list is gone.
+
+**Not yet verified:** segment boundaries (frames either side of each join), the audio join (no audio in this test), the measured-fps budget, and the motion-blur choice (D54 remainder).
+
+**Test-setup mistake (recorded so it is not repeated).** The first attempt polled `/tmp/hf-jobs`, but the server's `WORK_DIR` is `/tmp/render-jobs` (`WORK_DIR` env, server.js line 26). The poll never saw a segment, the container restart killed a render that had not been observed, and the job left no trace. Poll the real `WORK_DIR` before restarting anything.
+
+**Render-engine layout (answers to the 2026-11-06 questions):**
+- `media-generator` and `render-engine` are two services in `docker-compose.yml` (profile `video`) that use one image, `maxh8086/media-generator:latest`, built from `docker/media-generator/`. There is no separate render-engine image and no separate render-engine code.
+- `media-generator` runs the image default entrypoint (`docker-entrypoint.sh`, `bash`) for `mgen` one-shot work, with no published port, and exits.
+- `render-engine` runs `node /opt/render-engine/server.js`, publishes `127.0.0.1:3000`, and stays up. Its mounts are `/work` (the video workspace) and `/output` (`MEDIA_OUTPUT_DIR`, default under the workspace).
+- Splitting the render engine into its own image is an option. The current image is about 6.2 GB and includes the pipeline tools the server does not call. Not measured; not started.
+
+**Segment-join check (2026-11-06, job `d54-resume-2`).** Frame count 450 (15 s at 30 fps), so no frame is lost or doubled at the joins. Frames at 2.95 s and 3.05 s, and at 5.95 s and 6.05 s, show each scene ending and the next starting its entrance animation. Joins are clean at these points. Limits: the joins sit on scene starts, so a split in the middle of a scene is not tested; audio is not tested (the job had no narration).
+
+## 16. D54 options: budget, motion blur, 4K gate (set 2026-11-06)
+
+**Implemented (unit-tested, 109/109 pass with `npm test` in `docker/media-generator/render-engine`).**
+- `lib/render-options.js` (new): `parseMotionBlurSamples` (0 = off, 4..32, default 32), `parseResolution` (1080p only; `4k` returns 400), `segmentTimeoutMs` (600 s floor, then 3x the expected time once fps is measured), `fitsBudget` (projected time with a 1.5x margin must fit the job budget), `settingsKey` (a segment is reused only when its blur and resolution settings match).
+- `server.js`: `POST /render` accepts `motion_blur_samples` and `resolution`, rejects bad values with 400, and returns 409 `budget` when the remaining segments would not finish within `RENDER_JOB_BUDGET_MS` (default 1 800 000 ms). Finished segments are kept, so the caller can re-POST the same `job_id` with lower blur or blur 0.
+
+**Motion blur: no effect on output (the D54 blur choice cannot be made yet).**
+- Live: the same 3 s job rendered with blur 0, 5 and 32 gave identical bytes (461 450 B, md5 `1c9af0e7...`).
+- Fast-motion test (word rise changed from 40 px to 400 px over 0.5 s, about 13 px/frame at 30 fps, 2 s clip, blur on vs off, run in `/tmp/mb` inside the container): identical md5 `9c6f615c...`.
+- Cause, from the render log: `[motion-blur] off: the renderer turned it off (distributed-render)` with `reasonCode=renderer-off movers=0`. The renderer turns capture motion blur off on this path. The composition's `data-motion-blur="on"` is ignored.
+- Tried and also turned off: `--workers 1`, `--low-memory-mode`, `data-motion-blur-tier="filter"`, `data-motion-blur-events="on"`. `--page-motion-blur` accepts only `off`.
+- `hyperframes check` on the template reports `motion_blur_no_movers`. Its one sample is at t=0, so it does not show whether later frames move.
+- Not tried: a different HyperFrames version (needs an install, so it is the user's call).
+
+**4K: rejected.** The composition is fixed at 1920x1080 px and the render path has no scaling. The 4K opt-in stays out of scope under D54.
+
+**Budget 409 path: not run live.** It needs `RENDER_JOB_BUDGET_MS` set low in the container, which means a compose env change and a container restart. The wiring is unit-tested only through `fitsBudget`.
+
+**Open decisions for the user:**
+1. Motion blur: keep the `motion_blur_samples` field as a no-op with a note, make the default 0 so the API does not imply blur, or remove the field until HyperFrames is upgraded.
+2. Budget 409 check: approve a short container restart with a low `RENDER_JOB_BUDGET_MS`, or defer.
