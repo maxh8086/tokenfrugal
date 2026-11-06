@@ -42,6 +42,12 @@ services:
     expose: ["8080"]   # reachable from render-engine on the default network only; not published to the host
     mem_limit: 4g
     restart: "no"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8080/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
 
   render-engine:
     build:
