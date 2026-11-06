@@ -100,6 +100,8 @@ RUN mkdir -p /opt/refs && \
 COPY render-engine/package.json /opt/render-engine/package.json
 RUN cd /opt/render-engine && npm install --omit=dev --no-audit --no-fund \
     && npm cache clean --force
+COPY render-engine/scripts /opt/render-engine/scripts
+RUN cd /opt/render-engine && node scripts/licence-report.js /opt/render-engine/LICENCE-REPORT.md
 COPY render-engine/server.js /opt/render-engine/server.js
 COPY render-engine/lib /opt/render-engine/lib
 COPY render-engine/composition /opt/render-engine/composition
