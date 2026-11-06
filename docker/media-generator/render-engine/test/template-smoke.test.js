@@ -18,6 +18,7 @@ const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SMOKE = process.env.TEMPLATE_SMOKE === '1';
 const FFPROBE = process.env.FFPROBE_BIN || 'ffprobe';
+const FFMPEG = process.env.FFMPEG_BIN || 'ffmpeg';
 const CLIP_SECONDS = 2;
 
 const registry = await loadRegistry(root);
@@ -45,6 +46,12 @@ for (const [id, entry] of registry.templates) {
           .replace(/data-duration="[\d.]+"/, `data-duration="${CLIP_SECONDS}"`);
         await writeFile(path.join(dir, 'index.html'), html);
         await cp(gsapFile, path.join(dir, 'gsap.min.js'));
+        // A template that takes a background gets a red one here, so the frame check below can read it back.
+        const takesBackground = Boolean(entry.manifest.parameters?.properties?.background);
+        if (takesBackground) {
+          await writeFile(path.join(dir, 'template-params.js'),
+            'window.__templateParams = {"background":"#ff0000","accent":"#00ff00"};\n');
+        }
 
         await execFileAsync(process.execPath, [hfBin, 'render', '--output', 'video.mp4', '--fps', String(fps)], {
           cwd: dir,
@@ -62,6 +69,16 @@ for (const [id, entry] of registry.templates) {
         assert.equal(info.streams[0].height, height);
         assert.ok(Math.abs(Number(info.format.duration) - CLIP_SECONDS) < 0.25,
           `duration ${info.format.duration}s, expected about ${CLIP_SECONDS}s`);
+
+        if (takesBackground) {
+          // Average the top-left 40x40 corner of a frame: it should be the red background from template-params.js.
+          const { stdout: px } = await execFileAsync(FFMPEG, [
+            '-v', 'error', '-ss', '1', '-i', path.join(dir, 'video.mp4'), '-frames:v', '1',
+            '-vf', 'crop=40:40:0:0,scale=1:1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-',
+          ], { encoding: 'buffer', maxBuffer: 1024 * 1024 });
+          const [r, g, b] = px;
+          assert.ok(r > 230 && g < 25 && b < 25, `corner pixel rgb(${r},${g},${b}), expected red background`);
+        }
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

@@ -11,10 +11,10 @@ Design: `docs/designs/media-generator-multiformat-engine.md`. Nothing is approve
 
 Sub-project 1 (partly built):
 - Done: presets `youtube` 1920x1080 and `shorts` 1080x1920 (`lib/job-schema.js`); `job.json` Ajv schema (`036017b`, `schemas/job.schema.json`); gate approvals with SHA-256 hashes and the human-run `bin/approve.js` (`5367589`); Dockerfile build check for ffprobe and libx264 (`b7d46e2`); contact-sheet builder and test, 113 tests pass (`9522a93`, branch `media-generator-contact-sheet`).
-- Not wired: `canOpen` gate enforcement is not called by `server.js` or `pipeline.py`. `/render` takes props, not `job.json`, so the agent-written job path is not connected. No per-job output folder (D25): `server.js` writes flat to `OUTPUT_DIR`. No MP4-per-preset run in the render path (verify).
+- Not wired: `canOpen` gate enforcement is not called by `server.js` or `pipeline.py`. `/render` takes props, not `job.json`, so the agent-written job path is not connected. Per-job output folder (D25) and per-preset output are in the render path (PR #58): gated renders write `OUTPUT_DIR/<job_id>/youtube.mp4`; props renders stay flat.
 - Not started: `MEDIA_OUTPUT_DIR` value in `.env` (O23; `.env.example` has only a commented placeholder).
 
-Sub-project 2 (partial): `lib/template-registry.js` checks manifests against presets; templates `plain-scene` and `mode-b` exist. Per-template conformance tests for every preset (O10) not verified.
+Sub-project 2 (partial): `lib/template-registry.js` checks manifests against presets; templates `plain-scene` and `mode-b` exist. Conformance test per (template, preset) and a 2 s smoke render (`TEMPLATE_SMOKE=1`) are in PR #60 (O10). `plain-scene` is the only template with a real composition; `/render` uses `composition/index.html` unless a request names a `template` (opt-in). `plain-scene` applies its `background` and `accent` parameters through a per-job `template-params.js`; the engine suite passes (152 pass, 0 fail, 3 skipped) and the `TEMPLATE_SMOKE=1` render passes in the image. A live `/render` with a template has not been run, since the image has not been rebuilt.
 
 Sub-project 4 (partial): dhvani narration is wired in `server.js` (`lib/dhvani.js`); Piper removed (`2fb24d4`). The speech-service consolidation steps 1 to 8 are not checked here.
 
@@ -24,9 +24,9 @@ Voice sample (G4), stills (G5), preview (G6): not started.
 
 Open design items: O1 licence compliance (libx264 build check now exists, not run in CI); O18 platform specs to verify against official pages; section 12 questions 1 to 5.
 
-Next, in order: (1) wire `canOpen` into the render path and make `/render` accept a validated `job.json`; (2) per-job folder and per-preset output; (3) contact sheet called from the render path, once (1) to (2) are settled; (4) sub-project 2 conformance tests. Items 1 and 2 need a short design choice first; ask before starting them.
+Next, in order: (1) done as opt-in: `/render` takes an optional `template` field and reads `templates/index.json`; without it, `composition/index.html` is used (`lib/render-template.js`, `test/render-template.test.js`, 152 engine tests pass in the image; not yet run through a live `/render` or after an image rebuild, since `Dockerfile` now copies `templates/`); (2) apply the `background` and `accent` parameters in `plain-scene`; (3) end-to-end check of `/render` with real approvals and a real long-job join with the contact sheet (not run yet).
 
-Update 2026-11-06: item 1 and the long-job part are built on branch `media-gate-job` (commits `8aaf8e8`, `381f085`, `701a797`, pushed; PR #57). Gates run before each render, and a job over 60 s renders as joined parts. Still open: items 2 and 3 above, and shorts (below).
+Update 2026-11-06: item 1 and the long-job part are built on branch `media-gate-job` (commits `8aaf8e8`, `381f085`, `701a797`, pushed; PR #57). Gates run before each render, and a job over 60 s renders as joined parts. Items 2 to 4 of the earlier list are also merged into `benchmark-ui-fix`: per-job output folder (PR #58), contact sheet on each gated film (PR #59), and template conformance plus the `plain-scene` smoke render (PR #60). Still open: the registry is not read by `/render`, `plain-scene` ignores its parameters, and shorts (below).
 
 ### Planning: 9:16 shorts (problem statement, set 2026-11-06, NOT started, planning only)
 

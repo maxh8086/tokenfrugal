@@ -23,6 +23,8 @@ import { gateJob } from './lib/job-gate.js';
 import { planParts, totalSeconds, PART_MAX_SECONDS } from './lib/job-parts.js';
 import { jobOutputRel, jobOutputUrl, jobContactSheetRel, jobContactSheetUrl, JOB_PRESETS } from './lib/job-output.js';
 import { buildContactSheetArgs, contactSheetFps } from './lib/contact-sheet.js';
+import { loadRegistry } from './lib/template-registry.js';
+import { parseRenderTemplate } from './lib/render-template.js';
 
 // Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). Only youtube is rendered.
 const JOB_PRESET = JOB_PRESETS[0];
@@ -37,6 +39,17 @@ const ARTIFACT_DIR = process.env.ARTIFACT_DIR || '';     // root for gate artifa
 const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals file written by bin/approve.js
 const WORK_DIR = process.env.WORK_DIR || path.join(os.tmpdir(), 'hf-jobs');
 const TEMPLATE_DIR = path.join(here, 'composition');
+// Template registry (templates/index.json), loaded once on the first render that names a template.
+let templateRegistryPromise = null;
+function getTemplateRegistry() {
+  if (!templateRegistryPromise) {
+    templateRegistryPromise = loadRegistry(here).catch((err) => {
+      templateRegistryPromise = null;
+      throw err;
+    });
+  }
+  return templateRegistryPromise;
+}
 const GSAP_FILE = require.resolve('gsap/dist/gsap.min.js');
 const HF_BIN = path.join(path.dirname(require.resolve('hyperframes/package.json')), 'bin', 'hyperframes.mjs');
 const RENDER_TIMEOUT_MS = Number(process.env.RENDER_TIMEOUT_MS || 600_000);
@@ -247,7 +260,7 @@ async function makeContactSheet(videoPath, jobId, seconds, log) {
 
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
-  const { blurSamples = 32, resolution = '1080p', preset = null } = opts;
+  const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null } = opts;
   const id = jobId ?? randomUUID();
   log.id = id;
   const jobDir = path.join(WORK_DIR, id);
@@ -255,16 +268,20 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   let ok = false;
   await mkdir(jobDir, { recursive: true });
   try {
-    await cp(TEMPLATE_DIR, jobDir, { recursive: true });
+    await cp(templateDir, jobDir, { recursive: true });
     // HyperFrames reads the length from the static HTML, so write it there per job.
     const htmlPath = path.join(jobDir, 'index.html');
     const html = await readFile(htmlPath, 'utf8');
-    let page = html.replace('data-duration="3"', `data-duration="${props.duration}"`);
+    let page = html.replace(/data-duration="[0-9.]+"/, `data-duration="${props.duration}"`);
     // Motion blur is on in the template at 32 samples; 0 switches it off and any other value sets the sample count.
     if (blurSamples === 0) page = page.replace('data-motion-blur="on"', 'data-motion-blur="off"');
     else page = page.replace('data-motion-blur-samples="32"', `data-motion-blur-samples="${blurSamples}"`);
     await writeFile(htmlPath, page);
     await writeFile(path.join(jobDir, 'props.js'), propsToJs(props));
+    // Template parameters (D50): the composition reads window.__templateParams from this file.
+    if (templateParams) {
+      await writeFile(path.join(jobDir, 'template-params.js'), `window.__templateParams = ${JSON.stringify(templateParams)};\n`);
+    }
     await cp(GSAP_FILE, path.join(jobDir, 'gsap.min.js'));
 
     // Audio is built before the render, so a narration that is too long fails without starting Chromium.
@@ -452,10 +469,37 @@ app.post('/render', async (req, res) => {
     log.error = error;
     return res.status(400).json({ error });
   }
+  // Optional template (D50, handoff item 1): removed before props validation. Absent means composition/index.html.
+  let templateRaw;
+  if (body && typeof body === 'object' && 'template' in body) {
+    ({ template: templateRaw, ...body } = body);
+  }
+  let tpl = { ok: true, entry: null, parameters: {} };
+  if (templateRaw !== undefined) {
+    let registry;
+    try {
+      registry = await getTemplateRegistry();
+    } catch (err) {
+      log.stage = 'validate';
+      log.error = `template registry failed to load: ${err.message}`;
+      return res.status(500).json({ error: log.error });
+    }
+    tpl = parseRenderTemplate(templateRaw, registry, JOB_PRESET);
+    if (!tpl.ok) {
+      log.stage = 'validate';
+      log.error = tpl.error;
+      return res.status(400).json({ error: tpl.error });
+    }
+  }
   // A job.json body (schema_version present) takes the gated path: it is validated, every gate before the
   // full render must be approved against its artifact, then it becomes a props body (D9, D39).
   let gatedJob = false;
   if (body && typeof body === 'object' && 'schema_version' in body) {
+    if (templateRaw !== undefined) {
+      log.stage = 'validate';
+      log.error = 'template is not supported on a job.json body yet';
+      return res.status(400).json({ error: log.error });
+    }
     const gated = await gateJob(body, { artifactRoot: ARTIFACT_DIR, approvalsPath: APPROVALS_PATH });
     if (!gated.ok) {
       log.stage = 'gate';
@@ -511,9 +555,12 @@ app.post('/render', async (req, res) => {
       blurSamples: blur.value,
       resolution: res1080.value,
       preset: gatedJob ? JOB_PRESET : null,
+      templateDir: tpl.entry ? tpl.entry.dir : TEMPLATE_DIR,
+      templateParams: tpl.entry ? tpl.parameters : null,
     }));
     res.status(201).json({
       ...result,
+      template: tpl.entry ? { id: tpl.entry.manifest.id, version: tpl.entry.version } : null,
       motion_blur_samples: blur.value,
       props: echoProps(body, checked.props),
       warnings: policy.warnings,

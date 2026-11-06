@@ -12,14 +12,19 @@
 </style>
 </head>
 <body>
-<!-- Minimal two-second scene: a title fades in and an accent bar wipes across. Parameters (background, accent)
-     are not applied yet; the defaults above are used. -->
+<!-- Minimal two-second scene: a title fades in and an accent bar wipes across.
+     Parameters come from template-params.js (written per job by the render engine). Missing values keep the defaults. -->
 <div id="root" data-composition-id="main" data-start="0" data-duration="2" data-width="1920" data-height="1080">
   <div id="title">Plain scene</div>
   <div id="bar"></div>
 </div>
+<script src="template-params.js"></script>
 <script src="gsap.min.js"></script>
 <script>
+  var params = Object.assign({ background: '#0d1117', accent: '#2f81f7' }, window.__templateParams || {});
+  document.body.style.background = params.background;
+  document.getElementById('root').style.background = params.background;
+  document.getElementById('bar').style.background = params.accent;
   var tl = gsap.timeline({ paused: true });
   tl.to('#title', { opacity: 1, duration: 0.5, ease: 'none' }, 0);
   tl.to('#bar', { scaleX: 1, duration: 1, ease: 'none' }, 0.5);
