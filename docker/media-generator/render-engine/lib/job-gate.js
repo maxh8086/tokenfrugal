@@ -68,6 +68,20 @@ export function unapprovedGates(approvals, artifacts) {
   );
 }
 
+// Gates whose current hash has an approval recorded under a different path (for example a relative path
+// typed into bin/approve.js). Used only to explain a refusal; it never grants approval.
+export function pathMismatches(approvals, artifacts) {
+  const entries = approvals && Array.isArray(approvals.approvals) ? approvals.approvals : [];
+  const out = [];
+  for (const g of gatesBeforeRender()) {
+    const want = artifacts[g];
+    if (isApproved(approvals, g, want.artifact, want.sha256)) continue;
+    const other = entries.find((e) => e.gate === g && e.sha256 === want.sha256 && e.artifact !== want.artifact);
+    if (other) out.push({ gate: g, recordedPath: other.artifact, expectedPath: want.artifact });
+  }
+  return out;
+}
+
 // Full gate decision for a job body. Returns {ok: true, body} with the props body to render, or
 // {ok: false, status, payload} for the HTTP response.
 export async function gateJob(job, { artifactRoot, approvalsPath }) {
@@ -93,10 +107,15 @@ export async function gateJob(job, { artifactRoot, approvalsPath }) {
     return { ok: false, status: 503, payload: { error: `approvals unreadable: ${err.message}` } };
   }
   if (!canOpen(approvals, RENDER_GATE, (g) => resolved.artifacts[g])) {
+    const mismatched = pathMismatches(approvals, resolved.artifacts);
     return {
       ok: false,
       status: 403,
-      payload: { error: 'gates not approved', gates: unapprovedGates(approvals, resolved.artifacts) },
+      payload: {
+        error: mismatched.length > 0 ? 'approval recorded for a different path' : 'gates not approved',
+        gates: unapprovedGates(approvals, resolved.artifacts),
+        ...(mismatched.length > 0 ? { mismatched } : {}),
+      },
     };
   }
   return { ok: true, body: mapped.body };
