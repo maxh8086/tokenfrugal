@@ -1,19 +1,27 @@
 #!/usr/bin/env node
 // Records a human approval for a render gate.
 //
-// Usage: node bin/approve.js <approvalsPath> <gate> <artifactPath> <approvedBy>
+// Usage: node bin/approve.js <approvalsPath> <gate> <artifactPath> [approvedBy]
 //   gate: G1..G7. artifactPath is resolved to an absolute path and stored that way; the server compares
 //   absolute paths. When ARTIFACT_DIR is set, the artifact must sit inside it, because the server reads
 //   nothing outside that folder.
+//   approvedBy is optional and defaults to "requestor": the person who starts the workflow. No named
+//   person is written unless one is passed explicitly.
 //
 // This command is meant for a human, run by hand. The approvals file must sit outside any path the agent
 // may write (D39), so the agent cannot approve its own gates.
 import { GATES, hashArtifact, recordApproval, resolveApprovalArtifact } from '../lib/approvals.js';
 
+export const DEFAULT_APPROVER = 'requestor';
+
 async function main(argv) {
-  const [approvalsPath, gate, artifactPath, approvedBy] = argv;
-  if (argv.length !== 4 || !approvalsPath || !gate || !artifactPath || !approvedBy) {
-    throw new Error('usage: node bin/approve.js <approvalsPath> <gate> <artifactPath> <approvedBy>');
+  const [approvalsPath, gate, artifactPath, approvedByArg] = argv;
+  if (argv.length < 3 || argv.length > 4 || !approvalsPath || !gate || !artifactPath) {
+    throw new Error('usage: node bin/approve.js <approvalsPath> <gate> <artifactPath> [approvedBy]');
+  }
+  const approvedBy = approvedByArg === undefined ? DEFAULT_APPROVER : approvedByArg;
+  if (approvedBy.trim() === '') {
+    throw new Error('approvedBy must be a non-empty string when given');
   }
   if (!GATES.includes(gate)) {
     throw new Error(`invalid gate ${JSON.stringify(gate)}; expected one of ${GATES.join(', ')}`);

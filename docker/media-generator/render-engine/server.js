@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { validateProps, propsToJs, echoProps } from './lib/props.js';
-import { checkScenes, toTimeline, applyCraftPolicy } from './lib/craft-check.js';
+import { checkScenes, toTimeline, applyCraftPolicy, CRAFT_RULES } from './lib/craft-check.js';
 import { planNarration, narrationArgs, musicArgs, muxArgs, audioMode } from './lib/audio-plan.js';
 import { writeLog, tailLines } from './lib/log.js';
 import { synthesizeScene } from './lib/dhvani.js';
@@ -402,9 +402,14 @@ async function renderParts(scenes, fps, log, jobId, opts) {
     const checked = validateProps({ fps, scenes: scenes.slice(a, b) });
     if (!checked.ok) throw stageError(400, 'validate', checked.error);
     const timed = toTimeline(checked.props.scenes);
-    const craft = checkScenes(timed);
-    if (applyCraftPolicy(checked.hasScenes, craft.findings).reject) {
-      throw stageError(400, 'craft', 'craft check failed', { findings: craft.findings });
+    // The last-scene rule applies to the film's final scene only. Each part is checked on its own timeline,
+    // so a part's last scene is not the film's last scene unless this is the final part.
+    const isFinalPart = k === groups.length - 1;
+    const findings = checkScenes(timed).findings.filter(
+      (f) => isFinalPart || f.rule !== CRAFT_RULES.LAST_SCENE,
+    );
+    if (applyCraftPolicy(checked.hasScenes, findings).reject) {
+      throw stageError(400, 'craft', 'craft check failed', { findings });
     }
     const audioScenes = timed.map((s) => ({ id: s.id, start: s.start, seconds: s.duration }));
     const part = await renderJob(checked.props, audioScenes, { stage: null }, `${base}_p${k}`, opts);
@@ -470,8 +475,9 @@ app.post('/render', async (req, res) => {
     return res.status(400).json({ error });
   }
   // Optional template (D50, handoff item 1): removed before props validation. Absent means composition/index.html.
+  // A job.json body (schema_version present) keeps its own `template` name for the job schema (D9); it is not the opt-in object.
   let templateRaw;
-  if (body && typeof body === 'object' && 'template' in body) {
+  if (body && typeof body === 'object' && 'template' in body && !('schema_version' in body)) {
     ({ template: templateRaw, ...body } = body);
   }
   let tpl = { ok: true, entry: null, parameters: {} };

@@ -77,6 +77,17 @@ test('approve.js records an absolute path for a relative input, run from ARTIFAC
   assert.equal(entry.sha256, await hashArtifact(file));
 });
 
+test('approve.js with no approver name records the requestor, with no named person', async () => {
+  const file = path.join(root, 'g1.txt');
+  await writeFile(file, 'hello');
+  const { stdout } = await execFileAsync(process.execPath, [APPROVE, approvalsPath, 'G1', file], {
+    env: { ...process.env, ARTIFACT_DIR: root },
+  });
+  const entry = JSON.parse(stdout);
+  assert.equal(entry.approvedBy, 'requestor');
+  assert.equal(entry.sha256, await hashArtifact(file));
+});
+
 test('approve.js refuses a file outside ARTIFACT_DIR and records nothing', async () => {
   const outside = path.join(dir, 'outside.txt');
   await writeFile(outside, 'x');
