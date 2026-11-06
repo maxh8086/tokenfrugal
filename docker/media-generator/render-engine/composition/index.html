@@ -81,7 +81,21 @@
     }
     /* Overlay for line variants that follow a shape (curve, circle or rectangle edge, frame edge). */
     .scene .ov { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; overflow: visible; }
-    /* Line that draws across, and a blurred glow copy of it that flashes on and off with the narration. */
+    /* Glow tip that rides the leading edge of a line while it draws. Off when the line finishes. */
+    .scene .tip {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 110px;
+      height: 110px;
+      margin-left: -55px;
+      margin-top: -55px;
+      border-radius: 50%;
+      filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* Line that draws across. Its glow is the tip above, not a flashing copy. */
     .scene .gline {
       position: absolute;
       left: 160px;
@@ -195,19 +209,18 @@
         sub.style.color = subColor;
         sub.textContent = sc.sub || '';
 
-        // Line that draws across, and a blurred glow copy of it.
+        // Line that draws across. Its glow is one tip that rides the front of the line while it draws.
         var gline = document.createElement('div');
         gline.className = 'gline';
         gline.style.background = accent;
-        var gglow = document.createElement('div');
-        gglow.className = 'gglow';
-        gglow.style.background = accent;
+        var tip = document.createElement('div');
+        tip.className = 'tip';
+        tip.style.background = 'radial-gradient(circle, ' + accent + ' 0%, transparent 70%)';
 
         // Glass panel goes first so every other element in the scene draws above it.
         var glass = document.createElement('div');
         glass.className = 'glass';
         section.appendChild(glass);
-        section.appendChild(gglow);
         section.appendChild(gline);
         section.appendChild(bar);
         section.appendChild(title);
@@ -229,12 +242,16 @@
         // Straight line only in variant 0. Other variants draw their own shape in the overlay below.
         if (scenes.indexOf(sc) % 5 === 0) {
           tl.from(gline, { scaleX: 0, duration: 0.8, ease: springEase }, T + 0.1);
-          tl.from(gglow, { scaleX: 0, duration: 0.8, ease: springEase }, T + 0.1);
-          tl.to(gglow, { opacity: 1, duration: 0.2, ease: 'none' }, T + D * 0.4);
-          tl.to(gglow, { opacity: 0, duration: 0.25, ease: 'none' }, T + D * 0.75);
+          // The tip follows the line's front with the same easing. Its glow is on only while the line draws.
+          var sp = { p: 0 };
+          tl.set(tip, { opacity: 1 }, T + 0.1);
+          tl.to(sp, { p: 1, duration: 0.8, ease: springEase, onUpdate: function () {
+            tip.style.left = (160 + 1600 * sp.p) + 'px';
+            tip.style.top = '233px';
+          } }, T + 0.1);
+          tl.set(tip, { opacity: 0 }, T + 0.9);
         } else {
           gline.style.display = 'none';
-          gglow.style.display = 'none';
         }
 
         // Line variants by scene: 0 straight (above), 1 curve, 2 circle edge, 3 frame edge, 4 rectangle edge.
@@ -260,26 +277,27 @@
             shape.setAttribute('x', '300'); shape.setAttribute('y', '920');
             shape.setAttribute('width', '340'); shape.setAttribute('height', '170'); shape.setAttribute('rx', '60');
           }
-          var glowCopy = shape.cloneNode(true);
-          [glowCopy, shape].forEach(function (el) {
-            el.setAttribute('fill', 'none');
-            el.setAttribute('stroke', accent);
-            el.setAttribute('stroke-linecap', 'round');
-          });
+          shape.setAttribute('fill', 'none');
+          shape.setAttribute('stroke', accent);
+          shape.setAttribute('stroke-linecap', 'round');
           shape.setAttribute('stroke-width', '6');
-          glowCopy.setAttribute('stroke-width', '22');
-          glowCopy.style.filter = 'blur(14px)';
-          glowCopy.style.opacity = '0';
-          ov.appendChild(glowCopy);
           ov.appendChild(shape);
           section.appendChild(ov);
 
           var L = shape.getTotalLength();
-          tl.fromTo([shape, glowCopy], { strokeDasharray: L, strokeDashoffset: L },
+          tl.fromTo(shape, { strokeDasharray: L, strokeDashoffset: L },
             { strokeDashoffset: 0, duration: 1.0, ease: 'none' }, T + 0.1);
-          tl.to(glowCopy, { opacity: 1, duration: 0.2, ease: 'none' }, T + D * 0.4);
-          tl.to(glowCopy, { opacity: 0, duration: 0.25, ease: 'none' }, T + D * 0.75);
+          // The tip rides the end of the drawn part of the shape. Its glow is on only while the shape draws.
+          var sp2 = { p: 0 };
+          tl.set(tip, { opacity: 1 }, T + 0.1);
+          tl.to(sp2, { p: 1, duration: 1.0, ease: 'none', onUpdate: function () {
+            var pt = shape.getPointAtLength(L * sp2.p);
+            tip.style.left = pt.x + 'px';
+            tip.style.top = pt.y + 'px';
+          } }, T + 0.1);
+          tl.set(tip, { opacity: 0 }, T + 1.1);
         }
+        section.appendChild(tip);
 
         T += D;
       });
