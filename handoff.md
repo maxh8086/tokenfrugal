@@ -1,8 +1,30 @@
 ﻿# Handoff: tokenfrugal
 
-Last updated: 2026-11-04
+Last updated: 2026-11-06
 
 This file holds the working handoff notes. Closed items are removed once verified.
+
+---
+## Multi-format engine: status (checked against code 2026-11-06)
+
+Design: `docs/designs/media-generator-multiformat-engine.md`. Nothing is approved as a whole; section 12 has 5 open user questions. Status below comes from code and git history, not from the design doc's own labels.
+
+Sub-project 1 (partly built):
+- Done: presets `youtube` 1920x1080 and `shorts` 1080x1920 (`lib/job-schema.js`); `job.json` Ajv schema (`036017b`, `schemas/job.schema.json`); gate approvals with SHA-256 hashes and the human-run `bin/approve.js` (`5367589`); Dockerfile build check for ffprobe and libx264 (`b7d46e2`); contact-sheet builder and test, 113 tests pass (`9522a93`, branch `media-generator-contact-sheet`).
+- Not wired: `canOpen` gate enforcement is not called by `server.js` or `pipeline.py`. `/render` takes props, not `job.json`, so the agent-written job path is not connected. No per-job output folder (D25): `server.js` writes flat to `OUTPUT_DIR`. No MP4-per-preset run in the render path (verify).
+- Not started: `MEDIA_OUTPUT_DIR` value in `.env` (O23; `.env.example` has only a commented placeholder).
+
+Sub-project 2 (partial): `lib/template-registry.js` checks manifests against presets; templates `plain-scene` and `mode-b` exist. Per-template conformance tests for every preset (O10) not verified.
+
+Sub-project 4 (partial): dhvani narration is wired in `server.js` (`lib/dhvani.js`); Piper removed (`2fb24d4`). The speech-service consolidation steps 1 to 8 are not checked here.
+
+Sub-project 5 (partial): `lib/flash-check.js` and `lib/craft-check.js` exist. Loudness, end card and effects library not built.
+
+Voice sample (G4), stills (G5), preview (G6): not started.
+
+Open design items: O1 licence compliance (libx264 build check now exists, not run in CI); O18 platform specs to verify against official pages; section 12 questions 1 to 5.
+
+Next, in order: (1) wire `canOpen` into the render path and make `/render` accept a validated `job.json`; (2) per-job folder and per-preset output; (3) contact sheet called from the render path, once (1) to (2) are settled; (4) sub-project 2 conformance tests. Items 1 and 2 need a short design choice first; ask before starting them.
 
 ---
 ## Priority next (set 2026-11-01, NOT started; item 1 added 2026-11-04)
