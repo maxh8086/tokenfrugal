@@ -286,13 +286,14 @@ Checked against `main` at b6a9efa: each item was matched to code on main and to 
 | Contact sheet generator and wiring (D41) | Done | 9522a93, dba6fc1; `lib/contact-sheet.js` |
 | Build fails without ffprobe or libx264 (D41, D48) | Done | b7d46e2; `Dockerfile` lines 69 to 71 |
 | New test files added to render-engine `npm test` (D41) | Done | `render-engine/package.json` `test` script lists 19 files |
-| Flash check, WCAG 2.3.1 (D49) | Partial | Module and tests exist (9d26b0d; `lib/flash-check.js`). No import in the render path, so it does not block a render |
+| Flash check, WCAG 2.3.1 (D49) | Partial | Module and tests exist (9d26b0d; `lib/flash-check.js`). Wired after the mux behind GATES_ENFORCE=1, off by default (PR #75, d7994d0; `lib/flash-preflight.js`). Frames are decoded to 160x90 RGBA (assumed size). Not run against a real MP4 |
 | Per-job budget, scene resume, joined parts (D54) | Done | 29f8c28, 472663c, 701a797; `lib/render-options.js`, `lib/job-parts.js` |
 | Disk gate before render (D48) | Partial | Module and tests exist (be6bc99, PR #71 squash-merged; `lib/disk-gate.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). Estimate is raw RGB: a 5 min 30 fps render is 52.1 GiB, so it needs 92.1 GiB free with the 40 GiB floor. Not calibrated against a real render |
 | Colour tags bt709 and yuv420p on output (D51) | Not done | Not found in render-engine or the media-generator Python |
-| Seed in job.json, consumed by the composition (D55, R3) | Not done | Not found in code |
+| Seed in job.json, recorded in the approval record (D55, R3) | Partial | Recorded only (PR #74; `lib/approvals.js`, `bin/approve.js --seed`). Nothing consumes it: the composition and `make_music_bed` are deterministic today. Record-only decision, 2026-11-07 |
+| Output duration from explicit `-t`, not `-shortest` (R2) | Partial | PR #77 (a11534c; `lib/audio-plan.js` `muxArgs`). Not verified against a real render |
 | Hardware floor check (D47) | Partial | Module and tests exist (4760136, PR #70; `lib/hardware-floor.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). CPU count is logical threads, not physical cores (known gap) |
-| Licence report written by the build (D46(c)) | Not done | Not found in code |
+| Licence report written by the build (D46(c)) | Partial | Script and Dockerfile step (PR #76; `render-engine/scripts/licence-report.js`). The Docker build was not run |
 
 Result: stage 1 is partly built. Sub-project 1 stays open. The next steps are the Not done and Partial rows.
 
