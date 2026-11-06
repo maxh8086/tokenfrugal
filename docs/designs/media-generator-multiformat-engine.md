@@ -253,7 +253,7 @@ Owner is the person who starts the workflow (D23) for every row.
 
 | Sub-project | Content | Acceptance | Owner |
 | --- | --- | --- | --- |
-| 1 (not started) | One agent-written job.json, validated with Ajv against the job schema (D18). Template chosen from the registry at gate G2 (D27, D34). Narration through the speech service (D20, O12). Manim included (D19). Approvals file for gates G1 to G7, storing SHA-256 hashes (D21). Gate order is enforced here (D38): each gate blocks the next step until a human approval for the current artefact hash is recorded, and a changed artefact voids its approval (D39). Output path from .env, one folder per job (D25). Presets 1920x1080 and 1080x1920 (D24). Output an MP4 per preset and a contact sheet | Settled (D41): ffprobe in the image; a build check that fails if `ffmpeg -encoders` does not list libx264; a contact-sheet generator in the image; each new test file added to render-engine's `test` script. Exact commands are a sub-project task. Repo check: `npm test` in docker/media-generator/render-engine runs four named test files (not bare `node --test`); no contact-sheet generator exists in the code; ffprobe is not named in the Dockerfile | The person who starts the workflow (D23). Planned executors: Sonnet for schema, presets and the gate state machine (D38); Haiku for string edits and runs |
+| 1 (partly done; verified 2026-11-07, see table below) | One agent-written job.json, validated with Ajv against the job schema (D18). Template chosen from the registry at gate G2 (D27, D34). Narration through the speech service (D20, O12). Manim included (D19). Approvals file for gates G1 to G7, storing SHA-256 hashes (D21). Gate order is enforced here (D38): each gate blocks the next step until a human approval for the current artefact hash is recorded, and a changed artefact voids its approval (D39). Output path from .env, one folder per job (D25). Presets 1920x1080 and 1080x1920 (D24). Output an MP4 per preset and a contact sheet | Settled (D41): ffprobe in the image; a build check that fails if `ffmpeg -encoders` does not list libx264; a contact-sheet generator in the image; each new test file added to render-engine's `test` script. Exact commands are a sub-project task. Repo check: `npm test` in docker/media-generator/render-engine runs four named test files (not bare `node --test`); no contact-sheet generator exists in the code; ffprobe is not named in the Dockerfile | The person who starts the workflow (D23). Planned executors: Sonnet for schema, presets and the gate state machine (D38); Haiku for string edits and runs |
 | 2 (partly built, PR #60) | Template conformance and one studio template. Conformance test per (template, preset) and a `TEMPLATE_SMOKE=1` smoke render for `plain-scene` are in. `/render` reads the registry only when a request names a `template` (opt-in). Each template in the registry gets a manifest with its parameter schema and version (D34) | Each template passes its conformance test against every preset (O10). The registry rejects a manifest with a bad parameter schema | Sonnet (executor); the person who starts the workflow |
 | 4 (not started) | dhvani service wiring: compose service, voice field, Piper removed (follows speech-service-consolidation.md steps 1 to 8). Narration itself already runs in stage 1 (D20) | Narration WAV length measured; duration check passes | Sonnet client; Haiku renames; the person who starts the workflow |
 | 5 (not started) | Flashes, loop end card, effects library, loudness | Flash check passes; end card frames match; effects list passes review | Sonnet (executor); the person who starts the workflow |
@@ -261,6 +261,40 @@ Owner is the person who starts the workflow (D23) for every row.
 | Stills (gate G5; not started) | Still images from voice-timed scenes. Needs measured audio timing (R2) | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
 | Preview (gate G6; not started) | 30-second to 1-minute render, length set by the full length | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
 | Deferred (not scheduled) | Cloned voices; extra destinations beyond the picked set | Needs the user's answers in section 12 | User |
+
+### Stage 1 verification (2026-11-07)
+
+Checked against `main` at b6a9efa: each item was matched to code on main and to the commit that added it. Only items with that evidence are marked Done. Items marked Partial or Not done stay open.
+
+| Stage 1 item | Status | Evidence (commit, file) |
+| --- | --- | --- |
+| Job schema validated with Ajv (D18) | Done | 036017b; `render-engine/lib/job-schema.js` |
+| Template registry and template manifests (D15, D50) | Done | cee778b; `templates/index.json`, `templates/plain-scene/manifest.json` |
+| Template conformance tests, every template against every preset (D50) | Done | 7c843c0, dd10669 |
+| Per-template limits in the registry (D50) | Partial | Registry exists; per-template limits not checked in code |
+| Gate approvals with SHA-256, human-bound CLI (D21, D39) | Done | 5367589, 381f085, f7163f9; `lib/approvals.js`, `bin/approve.js` |
+| Gate order enforced before render: G1 to G6 must be approved, G7 after render (D38) | Done | `lib/job-gate.js` (`RENDER_GATE = 'G7'`) |
+| Approval storage per gate under the project, reopened on hash change (D52) | Partial | One approvals file written atomically (`lib/approvals.js`), not per-gate `approvals/G<n>.json` files. Hash is rechecked on read |
+| Gate G2 format choice (D27) | Not done | No G2 gate in code; the render path accepts only `youtube` (`job-gate.js` `RENDERED_DESTINATION`) |
+| Gate G3 narration voice choice (D55) | Not done | No G3 code |
+| Gate G4 voice sample, G5 stills, G6 preview generation (D35, D57) | Not done | Gate names only in `approvals.js`; no generation code |
+| Narration through dhvani, Piper removed (D20, D53) | Done | 2fb24d4 (Piper replaced), 98b297b (compose), 9a5b989 (rename to dhvani), ce1b281 (GET /health and healthcheck, PR #67); `lib/dhvani.js` (`MAX_CHUNK = 900`) |
+| Manim in the image (D19) | Done | 2d371f8; `docker/media-generator/Dockerfile` (`/opt/manim-venv`) |
+| Output folder per job under the output path (D25, D57) | Done | d40a550, 7bed3e4, d7127c1, 25d8158; `lib/job-output.js` |
+| Presets 1920x1080 and 1080x1920 defined (D24) | Done | `lib/job-schema.js` `presets` |
+| MP4 rendered for each preset | Partial | Only youtube (1920x1080) renders; shorts (1080x1920) is refused in `job-gate.js` |
+| Contact sheet generator and wiring (D41) | Done | 9522a93, dba6fc1; `lib/contact-sheet.js` |
+| Build fails without ffprobe or libx264 (D41, D48) | Done | b7d46e2; `Dockerfile` lines 69 to 71 |
+| New test files added to render-engine `npm test` (D41) | Done | `render-engine/package.json` `test` script lists 19 files |
+| Flash check, WCAG 2.3.1 (D49) | Partial | Module and tests exist (9d26b0d; `lib/flash-check.js`). No import in the render path, so it does not block a render |
+| Per-job budget, scene resume, joined parts (D54) | Done | 29f8c28, 472663c, 701a797; `lib/render-options.js`, `lib/job-parts.js` |
+| Disk gate before render (D48) | Not done | No code found |
+| Colour tags bt709 and yuv420p on output (D51) | Not done | Not found in render-engine or the media-generator Python |
+| Seed in job.json, consumed by the composition (D55, R3) | Not done | Not found in code |
+| Hardware floor check (D47) | Not done | Not found in code |
+| Licence report written by the build (D46(c)) | Not done | Not found in code |
+
+Result: stage 1 is partly built. Sub-project 1 stays open. The next steps are the Not done and Partial rows.
 
 ## 10. Risks
 
@@ -351,4 +385,5 @@ Answer each line. Items answered in this round are recorded in section 7 and rem
 - Round 5 (user answers, 2026-11-06): D38 to D44 added; O7 narrowed to restart durability; O16, O19, O21 and O24 closed; O18 kept open with a pending question list; O20 confirmed closed; section 2, 9, 10, 11 and 12 updated to match. No code was read or changed in this round.
 - Round 6 (user input, 2026-11-06): platform specs for the nine G2 formats recorded as D45 and the O18 table (section 11). O18 closed except its verify sub-item. Pending question list removed from section 12. Facebook post size now given. No code was read or changed in this round.
 - Round 7 (user answers, 2026-11-06): open items accepted as recommendations; D46 to D58 added; section 11 closed or narrowed; section 12 reduced to five questions. Checks run: nvidia-smi was not run; the CPU, RAM, GPU and free disk figures came from Windows (Get-CimInstance); the HyperFrames codec probe was not run; no licence files were read.
+- Round 8 (2026-11-07): stage 1 verification against main at b6a9efa, recorded in the table under section 9. Only items with a commit or file as evidence are marked Done.
 - Not verified in this round: HyperFrames codec path, Debian ffmpeg build flags, all licence files, the speech container's HTTP endpoints beyond what speech-service-consolidation.md states, star counts for any encoder, and platform specs for social formats.
