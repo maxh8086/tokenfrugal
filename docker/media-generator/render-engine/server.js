@@ -19,6 +19,7 @@ import { planSegments, concatListText, segmentIsValid, coversDuration } from './
 import {
   parseMotionBlurSamples, parseResolution, framesFor, segmentTimeoutMs, fitsBudget, settingsKey,
 } from './lib/render-options.js';
+import { gateJob } from './lib/job-gate.js';
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -26,6 +27,8 @@ const require = createRequire(import.meta.url);
 
 const PORT = Number(process.env.PORT || 3000);
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/output';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR || '';     // root for gate artifacts named by a job.json
+const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals file written by bin/approve.js
 const WORK_DIR = process.env.WORK_DIR || path.join(os.tmpdir(), 'hf-jobs');
 const TEMPLATE_DIR = path.join(here, 'composition');
 const GSAP_FILE = require.resolve('gsap/dist/gsap.min.js');
@@ -361,6 +364,17 @@ app.post('/render', async (req, res) => {
     log.stage = 'validate';
     log.error = error;
     return res.status(400).json({ error });
+  }
+  // A job.json body (schema_version present) takes the gated path: it is validated, every gate before the
+  // full render must be approved against its artifact, then it becomes a props body (D9, D39).
+  if (body && typeof body === 'object' && 'schema_version' in body) {
+    const gated = await gateJob(body, { artifactRoot: ARTIFACT_DIR, approvalsPath: APPROVALS_PATH });
+    if (!gated.ok) {
+      log.stage = 'gate';
+      log.error = gated.payload.error;
+      return res.status(gated.status).json(gated.payload);
+    }
+    body = gated.body;
   }
   const checked = validateProps(body);
   if (!checked.ok) {
