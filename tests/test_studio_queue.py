@@ -65,8 +65,10 @@ class QueueTests(StudioEnv):
         kinds = [c.args[0] for c in self.emitted.call_args_list]
         self.assertIn("studio_request_expired", kinds)
 
-    def test_refuses_store_bad_slugs_and_blank_topics(self):
-        self.assertFalse(studio.enqueue("store", {})["ok"])
+    def test_store_is_accepted_as_a_run(self):
+        self.assertTrue(studio.enqueue("store", {})["ok"])
+
+    def test_refuses_bad_slugs_and_blank_topics(self):
         self.assertFalse(studio.enqueue("pipeline", {"slug": "../etc", "topic": "t"})["ok"])
         self.assertFalse(studio.enqueue("pipeline", {"slug": "ok-slug", "topic": "  "})["ok"])
         self.assertEqual(list(studio._requests_dir().glob("*.json")), [])

@@ -144,10 +144,11 @@ services:
   neo4j:
     image: neo4j:5-community
     profiles: [plan]
-    # BLOCKED: NEO4J_AUTH is mounted at /run/secrets/NEO4J_AUTH, but the image is not verified to read it from a file
-    # (not pulled locally). Until a wrapper is verified, the server starts without the configured auth.
+    # The image's entrypoint reads NEO4J_AUTH_FILE (checked in neo4j:5-community 5.26 /startup/docker-entrypoint.sh).
+    # The secret file must hold "neo4j/<password>". The password applies only on first initialisation of a volume.
     secrets: [NEO4J_AUTH]
     environment:
+      NEO4J_AUTH_FILE: /run/secrets/NEO4J_AUTH
       NEO4J_server_memory_heap_initial__size: 256m
       NEO4J_server_memory_heap_max__size: 512m
       NEO4J_server_memory_pagecache_size: 128m

@@ -423,8 +423,8 @@ async def resume_task(task_id: str) -> str:
 async def studio_run(action: str = "", slug: str = "", topic: str = "", sources: str = "", feed_url: str = "") -> str:
     """Studio run backend. action: 'collect' (sources: comma list of reddit-hn, rss, youtube; default all three),
     'pipeline' (slug + topic: the seven content stages), 'save_feed' (feed_url: adds an RSS feed to the saved list, no run),
-    'cancel' (stops the active run at its next stage boundary). One run at a time: a start is refused while one is active.
-    'store' is not available yet (Piece 3). Returns a one-line message; use studio_status for state."""
+    'store' (writes today's collector files to Neo4j once each), 'cancel' (stops the active run at its next stage boundary). One run at a time: a start is refused while one is active.
+    Returns a one-line message; use studio_status for state."""
     return await asyncio.to_thread(studio.start, action, slug, topic, sources, feed_url)
 
 

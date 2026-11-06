@@ -43,7 +43,7 @@ The Studio tools queue work through a request folder (`STUDIO_DIR/requests`, one
 - `studio_run(action="collect", sources="reddit-hn,rss,youtube")` queues the three collector roles.
 - `studio_run(action="save_feed", feed_url=...)` adds an RSS feed to the saved list. Only http and https; loopback, private, link-local and reserved addresses are refused, and so are URLs over `RSS_MAX_URL` characters.
 - `studio_run(action="cancel")` stops the active run at its next stage boundary.
-- `studio_run(action="store")` is refused. It is Piece 3 and waits for `docs/designs/studio-write-path.md`.
+- `studio_run(action="store")` queues one run that writes today's collector files (`content/trends/raw/<date>-*.json`) to Neo4j, one node per item (`docs/designs/studio-write-path.md`). It needs `fastembed` for the embeddings; a missing install ends the run as failed before any write.
 - `studio_status()` shows the active run, the last five runs, waiting requests, the estimated YouTube quota for the Pacific day and any missing secret names. It never shows a secret value or a file path.
 
 One run is active at a time. A start is refused while a run is active or a request is already waiting. A request nobody claims within `STUDIO_CLAIM_TIMEOUT` seconds expires. The YouTube quota is an estimate: `searchVideos` counts 100 units and `getVideoDetails` 1 unit per successful call, reset at Pacific midnight.
