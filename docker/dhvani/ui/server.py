@@ -142,6 +142,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in ("/", "/index.html"):
             self._send(200, (ROOT / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif self.path == "/health":
+            self._send_json(200, {"status": "ok"})
         elif self.path == "/api/profiles":
             self._send_json(200, {"profiles": list_profiles()})
         elif self.path == "/api/kokoro/voices":
