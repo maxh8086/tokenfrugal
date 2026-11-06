@@ -39,7 +39,15 @@ roles:
   content-factcheck: {model: thinker, profile: content-writer, max_steps: 12, timeout_s: 180, compose: [crawl4ai, searxng], native: [crawl4ai], required_tool: read_file, tools: [read_file, web_search, crawl_markdown, write_file], skills: [role-content-factcheck], improve: gated}  # stage 2
   content-writer: {model: builder, profile: content-writer, max_steps: 8, timeout_s: 120, required_tool: read_file, tools: [read_file, write_file, edit_file], skills: [role-content-writer], improve: gated}  # stages 3, 5, 7: draft, humanize, executive rewrite
   content-editor: {model: thinker, profile: content-writer, max_steps: 8, timeout_s: 90, required_tool: read_file, tools: [read_file, write_file], skills: [role-content-editor], improve: gated}  # stages 4, 6: critic, anti-slop
-  content-analyst: {model: thinker, profile: content-analyst, max_steps: 14, timeout_s: 300, compose: [crawl4ai, searxng, qdrant], native: [crawl4ai, sandbox, reddit, hn, rss, youtube, qdrant, postgres], required_tool: web_search, tools: [web_search, crawl_markdown, read_file, write_file, run_python, search_posts, search_stories, get_feed, searchVideos, getVideoDetails, qdrant-find, execute_sql], skills: [role-content-analyst], improve: gated}  # trend intelligence; separate from the script pipeline
+  # Content analyst split (docs/designs/studio-and-collector-roles.md, Piece 1). Three live collectors, one curator
+  # that merges and scores, and three held collectors. Held roles are refused by dispatch_task (no task row).
+  content-analyst-reddit-hn: {model: thinker, profile: content-analyst-reddit-hn, max_steps: 10, timeout_s: 240, native: [reddit, hn], required_tool: search_posts, tools: [search_posts, search_stories, read_file, write_file], skills: [role-content-analyst-reddit-hn], improve: gated}  # collector: Reddit and Hacker News
+  content-analyst-rss: {model: thinker, profile: content-analyst-rss, max_steps: 8, timeout_s: 180, native: [rss], required_tool: get_feed, tools: [get_feed, read_file, write_file], skills: [role-content-analyst-rss], improve: gated}  # collector: RSS feeds from the saved list
+  content-analyst-youtube: {model: thinker, profile: content-analyst-youtube, max_steps: 10, timeout_s: 240, native: [youtube], required_tool: searchVideos, tools: [searchVideos, getVideoDetails, read_file, write_file], skills: [role-content-analyst-youtube], improve: gated}  # collector: YouTube Data API (quota-limited, see docs/content-analyst.md)
+  content-analyst-curator: {model: thinker, profile: content-analyst-curator, max_steps: 14, timeout_s: 300, compose: [qdrant], native: [sandbox, qdrant, postgres], required_tool: run_python, tools: [run_python, qdrant-find, execute_sql, read_file, write_file], skills: [role-content-analyst-curator], improve: gated}  # analyst: merges collector output, scores with the 30/25/25/20 formula, writes the brief
+  content-analyst-linkedin: {model: thinker, held: "Held: no collector. LinkedIn has no free collector and its terms are unresolved. Owner decides on servers, terms and API cost.", tools: []}
+  content-analyst-meta: {model: thinker, held: "Held: no collector. Instagram and Facebook need a Meta app review and API cost. Owner decides.", tools: []}
+  content-analyst-x: {model: thinker, held: "Held: no collector. X has no free API tier for search. Owner decides on API cost.", tools: []}
   media-generator: {model: thinker, profile: media-generator, max_steps: 8, timeout_s: 900, native: [media-generator], required_tool: list_raw, tools: [list_raw, list_renders, mgen, render_film, read_file], skills: [role-media-generator], improve: gated}  # generator: text brief to motion-graphics film (Mode B, planned); one raw clip to a captioned 9:16 short (Mode A, docker compose media-generator)
   media-motion: {model: thinker, profile: media-generator, max_steps: 8, timeout_s: 900, native: [media-briefing], required_tool: brief, tools: [brief, read_file], skills: [role-media-motion], improve: gated}  # Mode B: text brief to narrated motion-graphics film (media-briefing tool; slice 1 stub returns "error: not built yet" for a valid brief)
   manim-style: {model: thinker, profile: media-generator, max_steps: 4, timeout_s: 300, required_tool: read_file, tools: [read_file], skills: [role-manim-style], improve: gated}  # style lookup: reads docs/designs/manim-style-<name>.md and returns its settings for a media-motion brief; writes nothing
@@ -103,6 +111,13 @@ divisions:
   support: research
   testing: reviewer
 overrides:
+  content-analyst-reddit-hn: content-analyst-reddit-hn  # content analyst split (Piece 1)
+  content-analyst-rss: content-analyst-rss
+  content-analyst-youtube: content-analyst-youtube
+  content-analyst-curator: content-analyst-curator
+  content-analyst-linkedin: content-analyst-linkedin  # held
+  content-analyst-meta: content-analyst-meta  # held
+  content-analyst-x: content-analyst-x  # held
   video-editor: media-generator  # alias: old name kept so existing task rows and calls still resolve
   engineering-code-reviewer: reviewer
   security-architect: analyzer
@@ -292,7 +307,7 @@ teams:
     roles: [research, finance, docs]
   mediahouse:
     description: Media production. Script pipeline (content-* roles, research to executive rewrite), the separate kalamanch video pipeline and media-generator (generates motion-graphics films from a brief and captioned 9:16 shorts from a raw clip).
-    roles: [kalamanch, content-research, content-factcheck, content-writer, content-editor, content-analyst, media-generator, media-motion, manim-style, voice-artist]
+    roles: [kalamanch, content-research, content-factcheck, content-writer, content-editor, content-analyst-reddit-hn, content-analyst-rss, content-analyst-youtube, content-analyst-linkedin, content-analyst-meta, content-analyst-x, content-analyst-curator, media-generator, media-motion, manim-style, voice-artist]
 
 # Self-improvement gate (scripts/role_improve.py). A role may propose a diff to its own skill files.
 # Nothing is applied automatically: only 'python -m scripts.role_improve approve <id>' applies one.
@@ -531,13 +546,40 @@ contracts:
       - {text: "Critic stage scores hook, clarity, executive appeal, flow, accuracy and engagement.", kind: deterministic}
       - {text: "Anti-slop stage lists every banned phrase found, with a specific replacement.", kind: deterministic}
       - {text: "Each recommendation points to a quoted weak line.", kind: judgement}
-  content-analyst:
-    purpose: Trend intelligence, 7-point mission (see docs/content-analyst.md), collect public data, cluster topics, sentiment, summaries, content ideas, 5-day calendars, momentum scores. Never invents LinkedIn or X figures.
-    inputs: [topics or niche, sources to use, date]
+  content-analyst-reddit-hn:
+    purpose: Collect public Reddit and Hacker News posts on the given topic and write them to the shared media folder. Collect only; no scoring.
+    inputs: [topic or niche, date]
+    output_format: path of content/trends/raw/<date>-reddit-hn.json with the source URL of every item.
+    stop_condition: the raw file is written, or 10 steps used.
+    checklist:
+      - {text: "Every item has a source URL from a tool result.", kind: deterministic}
+      - {text: "The raw file is valid JSON.", kind: deterministic}
+      - {text: "Only the topic given in the task is searched.", kind: deterministic}
+  content-analyst-rss:
+    purpose: Read the saved RSS feed list and write new items for the topic to the shared media folder. Collect only; no scoring.
+    inputs: [topic or niche, date]
+    output_format: path of content/trends/raw/<date>-rss.json with the feed URL and link of every item.
+    stop_condition: the raw file is written, or 8 steps used.
+    checklist:
+      - {text: "Every item has a feed URL and a link from a tool result.", kind: deterministic}
+      - {text: "Only feeds from the saved list are read.", kind: deterministic}
+      - {text: "The raw file is valid JSON.", kind: deterministic}
+  content-analyst-youtube:
+    purpose: Search YouTube for the topic and fetch video details. Collect only; no scoring. Quota is estimated by Studio, not checked here.
+    inputs: [topic or niche, date]
+    output_format: path of content/trends/raw/<date>-youtube.json with the video URL of every item.
+    stop_condition: the raw file is written, or 10 steps used.
+    checklist:
+      - {text: "Every item has a video URL from a tool result.", kind: deterministic}
+      - {text: "The raw file is valid JSON.", kind: deterministic}
+      - {text: "Every item has a publish date from a tool result.", kind: deterministic}
+  content-analyst-curator:
+    purpose: Merge the collectors' raw files, cluster topics, score momentum with the 30/25/25/20 formula, and write the brief and 5-day calendar. Never invents figures for a platform with no collector; those are marked not collected.
+    inputs: [topics or niche, date, raw files to merge]
     output_format: path of content/trends/<date>.md, then the top 3 topics with scores.
     stop_condition: the brief file is written, or 14 steps used.
     checklist:
-      - {text: "Every figure has a source URL from a tool result.", kind: deterministic}
+      - {text: "Every figure has a source URL from a collector's raw file.", kind: deterministic}
       - {text: "Trend scores come from a run_python result using the 30/25/25/20 formula.", kind: deterministic}
       - {text: "Platforms with no collector are marked not collected.", kind: deterministic}
       - {text: "Each top topic has a LinkedIn, YouTube and X idea and a 5-day calendar entry.", kind: deterministic}

@@ -43,7 +43,8 @@ def roles_rows(cfg: dict) -> list[dict]:
         model = cfg.get("role_models", {}).get(k) or cfg["models"][v["model"]]  # dashboard override wins, as in resolve_role
         rows.append({"role": k, "model": model, "profile": v.get("profile") or "",
                      "backends": v.get("compose", []), "native": v.get("native", []), "tools": v["tools"],
-                     "max_steps": v["max_steps"], "mcps": mcps})
+                     "max_steps": v.get("max_steps", 0), "mcps": mcps,
+                     "held": str(v.get("held") or "").strip() or None})
     return rows
 
 

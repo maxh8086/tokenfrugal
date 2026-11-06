@@ -188,7 +188,9 @@ def contract_errors(roles: dict, contracts: dict) -> dict:
     """{role: [problem, ...]} for an active role whose contract is missing or incomplete, and for contracts naming no role.
     A contract needs every field, and a checklist of 3+ items, each with text and a kind of deterministic or judgement."""
     out = {}
-    for name in roles:
+    for name, role in roles.items():
+        if role.get("held"):  # held roles run nothing, so they carry no contract
+            continue
         c = contracts.get(name)
         if not isinstance(c, dict):
             out[name] = ["no contract"]

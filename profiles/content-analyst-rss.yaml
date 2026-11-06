@@ -1,6 +1,6 @@
 version: 1
-id: content-analyst
-name: content-analyst
+id: content-analyst-rss
+name: content-analyst-rss
 servers:
 - type: image
   secrets: default
@@ -10,11 +10,11 @@ servers:
   image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
   snapshot:
     server:
-      name: ts-fs-content-analyst
+      name: ts-fs-content-analyst-rss
       type: server
       image: mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
-      description: Content analysis filesystem rw
-      title: ts-fs-content-analyst
+      description: Content analyst RSS collector filesystem rw
+      title: ts-fs-content-analyst-rss
       remote: {}
       command:
       - /workspace

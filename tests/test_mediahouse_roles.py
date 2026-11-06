@@ -13,12 +13,14 @@ CFG = load_tf_roles()
 ROLES = CFG["roles"]
 MEDIAHOUSE = [
     "kalamanch", "content-research", "content-factcheck", "content-writer", "content-editor",
-    "content-analyst", "media-generator", "media-motion", "manim-style", "voice-artist",
+    "content-analyst-reddit-hn", "content-analyst-rss", "content-analyst-youtube", "content-analyst-linkedin",
+    "content-analyst-meta", "content-analyst-x", "content-analyst-curator",
+    "media-generator", "media-motion", "manim-style", "voice-artist",
 ]
 
 
 class MediahouseMembershipTest(unittest.TestCase):
-    def test_team_lists_exactly_the_ten_roles(self):
+    def test_team_lists_exactly_the_sixteen_roles(self):
         self.assertEqual(CFG["teams"]["mediahouse"]["roles"], MEDIAHOUSE)
 
     def test_every_mediahouse_role_is_defined_and_routed_to_its_team(self):
@@ -49,6 +51,8 @@ class MediahouseWiringTest(unittest.TestCase):
 
     def test_each_role_profile_file_exists(self):
         for name in MEDIAHOUSE:
+            if ROLES[name].get("held"):  # held roles have no profile: they run nothing
+                continue
             profile = ROLES[name]["profile"]
             with self.subTest(role=name, profile=profile):
                 self.assertTrue((ROOT / "profiles" / f"{profile}.yaml").is_file())

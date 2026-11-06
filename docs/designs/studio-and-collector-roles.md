@@ -121,11 +121,12 @@ What this costs, and how the design handles it:
 
 Studio is five changes that build on each other. Build order is 1, 2, 3, 4, 5, with a live pipeline run (G7) between 4 and 5.
 
-**Piece 1. Role split (no UI, backend unchanged).** `router/tf-roles.yaml` replaces `content-analyst` with seven entries: `content-analyst-reddit-hn`, `-rss`, `-youtube`, `-linkedin`, `-meta`, `-x`, plus the analyst role (name open). A role entry may carry `held: "<reason>"`. The loader keeps held roles in the role list so the editor and Studio can show them, and `dispatch_task` refuses them before it creates a task row. Each live collector has at most 6 tools. The analyst role holds the shared Qdrant and Postgres read tools. The `mediahouse` team lists all seven. The old slug resolves to the analyst role for a short window (length open) and logs a warning when used.
+**Piece 1. Role split (no UI, backend unchanged).** `router/tf-roles.yaml` replaces `content-analyst` with seven entries: `content-analyst-reddit-hn`, `-rss`, `-youtube`, `-linkedin`, `-meta`, `-x`, plus the analyst role (name open). A role entry may carry `held: "<reason>"`. The loader keeps held roles in the role list so the editor and Studio can show them, and `dispatch_task` refuses them before it creates a task row. Each live collector has at most 6 tools. The analyst role holds the shared Qdrant and Postgres read tools. The `mediahouse` team lists all seven. The old slug resolves to the analyst role for a short window (length open) and logs a warning when used. The window ends 2026-12-31 (`ROLE_ALIASES` in `router/config.py`).
 
 **Piece 2. Run backend.** A new module `router/studio.py` holds the run model and the one enqueue function.
 
-*   *Run record.* A `runs` table in the existing `router/tasks.db`: run id, action, slug, topic, state, current stage, started, finished, last heartbeat, error, and the task ids used. The `tasks` table gets an additive `run_id` column, added the same way `trail` was added. States: `queued`, `waiting_gpu`, `running`, `done`, `failed`.
+*   *Run record.* A `runs` table in the existing `router/tasks.db`: run id, action, slug, topic, state, current stage, started, finished, last heartbeat, error, and the task ids used. The `tasks` table gets an additive `run_id` column, added the same way `trail` was added. States: `queued`, `waiting_gpu`, `running`, `cancelling`, `cancelled`, `done`, `failed`.
+*   *Cancel.* A Cancel button (decided for Piece 4) sets a `cancel_requested` flag on the run record. Cancel is checked at stage boundaries only, never mid-stage: a running stage finishes, then the run moves to `cancelling` and stops before the next stage, ending in `cancelled`. A queued request is cancelled at once. The flag is a plain column write, so it works whether or not the executor is busy.
 *   *Enqueue.* One function validates the action against a fixed list (`collect`, `store`, `pipeline`, plus `shortlist` read-only), checks the slug against the pattern `content_pipeline.py` already uses, caps the body size, and writes one file per request into a `studio_requests/` folder next to `events.jsonl`. Both the UI route and the MCP tool call this function, so they produce the same request.
 *   *Claim.* A poll loop in the router lifespan, next to `reconnect.poll_loop`, claims a request with `os.replace` to a name that carries the router's process id. Only one router wins. The claimer checks that no run is `running` or `waiting_gpu` and, if one is, writes the new request back as `failed: busy`. It then creates the run record.
 *   *Execution.* The claimer runs the action as one orchestrating run. For `pipeline` it runs the seven stages in order, in the router process, and records stage and state in the run record after each. It sends a heartbeat for the run on the same 30 s beat that running tasks use. Before each stage that uses a local model it checks the GPU lease and sets `waiting_gpu` instead of failing.
@@ -282,7 +283,7 @@ Acceptance: the tests below pass, `python -m router.preflight` (or the project's
 *   **Type / Scope**: `write_roles`, which exports `router/roles.json`.
 *   **Proposed Changes**: Include `held` and its reason for each role, so the UI reads it from one place.
 
-#### 6. `profiles/content-analyst.yaml` (Delete after alias window) and new `profiles/content-analyst-reddit-hn.yaml`, `profiles/content-analyst-rss.yaml`, `profiles/content-analyst-youtube.yaml`, `profiles/content-analyst-curator.yaml` (Create; curator file name follows the final role name)
+#### 6. `profiles/content-analyst.yaml` (Deleted with the split: nothing referenced it) and new `profiles/content-analyst-reddit-hn.yaml`, `profiles/content-analyst-rss.yaml`, `profiles/content-analyst-youtube.yaml`, `profiles/content-analyst-curator.yaml` (Create; curator file name follows the final role name)
 
 *   **Type / Scope**: Docker MCP profiles with the `__WORKSPACE__` and `__MEDIA__` placeholders.
 *   **Proposed Changes**: Split the current profile by source. Each collector gets only its own server and the shared media mount. The analyst profile gets the Qdrant and Postgres read servers. Held roles get no profile.
@@ -292,7 +293,7 @@ Acceptance: the tests below pass, `python -m router.preflight` (or the project's
 *   **Type / Scope**: Catalog of MCP servers and their allowlists.
 *   **Proposed Changes**: Rename references from `content-analyst` to the new roles and move each tool to the role that uses it.
 
-#### 8. `router/skills/role-content-analyst/SKILL.md` (Delete after alias window) and new `router/skills/role-content-analyst-reddit-hn/SKILL.md`, `-rss/SKILL.md`, `-youtube/SKILL.md`, `-curator/SKILL.md` (Create)
+#### 8. `router/skills/role-content-analyst/SKILL.md` (Deleted with the split: nothing referenced it) and new `router/skills/role-content-analyst-reddit-hn/SKILL.md`, `-rss/SKILL.md`, `-youtube/SKILL.md`, `-curator/SKILL.md` (Create)
 
 *   **Type / Scope**: Role skill text, each under 1200 characters.
 *   **Proposed Changes**: One source each. The curator skill carries the merge, scoring, ranking and brief-writing parts of the current seven-point mission.
@@ -334,7 +335,7 @@ Acceptance: the Studio tests below pass, a pipeline run for a second slug does n
 #### 15. `router/store.py` (Modify)
 
 *   **Type / Scope**: SQLite task store.
-*   **Proposed Changes**: Add the `runs` table and the `quota` table to `_db()`, an additive `run_id` column on `tasks`, run helpers (create, update stage, beat, finish, list, get), and a slug- and run-scoped version of `last_for`. `sweep_stale` also fails runs whose heartbeat stopped.
+*   **Proposed Changes**: Add the `runs` table and the `quota` table to `_db()`, an additive `run_id` column on `tasks`, a `cancel_requested` column on `runs` (default 0), run helpers (create, update stage, beat, finish, list, get, request cancel), and a slug- and run-scoped version of `last_for`. `sweep_stale` also fails runs whose heartbeat stopped.
 
 #### 16. `router/server.py` (Modify)
 

@@ -1,6 +1,30 @@
 # Content and Trend Intelligence Analyst
 
-This is the design for the `content-analyst` role (profile `content-analyst`, skill `router/skills/role-content-analyst/SKILL.md`). The role is separate from the script pipeline (`content-research` to `content-editor`). It uses web tools plus six native content servers, each a stdio container built from `docker/<name>-mcp` and pinned in `docker/pins.yaml`.
+This is the design for the content analyst, split into four live roles and three held roles (docs/designs/studio-and-collector-roles.md, Piece 1). The analyst is separate from the script pipeline (`content-research` to `content-editor`).
+
+| Role | Kind | Profile | Skill | Status |
+| --- | --- | --- | --- | --- |
+| `content-analyst-reddit-hn` | collector (Reddit, Hacker News) | `content-analyst-reddit-hn` | `role-content-analyst-reddit-hn` | live |
+| `content-analyst-rss` | collector (RSS feeds) | `content-analyst-rss` | `role-content-analyst-rss` | live |
+| `content-analyst-youtube` | collector (YouTube Data API) | `content-analyst-youtube` | `role-content-analyst-youtube` | live |
+| `content-analyst-curator` | analyst (merge, score, brief) | `content-analyst-curator` | `role-content-analyst-curator` | live |
+| `content-analyst-linkedin` | collector | none | none | held |
+| `content-analyst-meta` | collector (Instagram, Facebook) | none | none | held |
+| `content-analyst-x` | collector | none | none | held |
+
+Collectors write raw JSON to `content/trends/raw/<YYYY-MM-DD>-<source>.json` in the shared media folder. The curator reads those files, scores the topics and writes the daily brief. Collectors never score.
+
+The old slug `content-analyst` still resolves to the curator, with a logged warning, until 2026-12-31 (`ROLE_ALIASES` in `router/config.py`). After that date the alias is removed and the slug is unknown.
+
+## Held roles
+
+A held role has a `held` reason in `router/tf-roles.yaml`. `dispatch_task` refuses it before any task row is created, and the refusal names the reason. No tools, profile or model call are involved.
+
+| Role | Reason |
+| --- | --- |
+| `content-analyst-linkedin` | No free collector; terms unresolved. The owner decides on servers, terms and API cost. |
+| `content-analyst-meta` | Instagram and Facebook need a Meta app review and API cost. |
+| `content-analyst-x` | X has no free API tier for search. |
 
 ## Mission
 
@@ -12,35 +36,38 @@ This is the design for the `content-analyst` role (profile `content-analyst`, sk
 6. Recommend content calendars.
 7. Predict trend momentum.
 
-## Tools (12, the maximum)
+## Tools per role
 
-| Server | Tools used by the role | Notes |
+Every live role is at or under the recommended ceiling of 6 tools (`RECOMMENDED_TOOLS`). The old 12-tool exception is gone.
+
+| Role | Native servers | Tools |
 | --- | --- | --- |
-| web (crawl4ai, searxng) | web_search, crawl_markdown | existing |
-| sandbox | run_python | existing |
-| profile content-analyst | read_file, write_file | existing Docker MCP profile (mcp/filesystem) |
-| reddit | search_posts | Arctic Shift archive; has ingestion lag and rate limits |
-| hn | search_stories | Algolia search API |
-| rss | get_feed | any RSS/Atom URL |
-| youtube | searchVideos, getVideoDetails | YouTube Data API v3 (key needed) |
-| qdrant | qdrant-find | read-only: the image is started with `QDRANT_READ_ONLY=true`, so qdrant-store is absent |
-| postgres | execute_sql | restricted mode, read-only DB role required |
+| reddit-hn | reddit, hn | search_posts, search_stories, read_file, write_file |
+| rss | rss | get_feed, read_file, write_file |
+| youtube | youtube | searchVideos, getVideoDetails, read_file, write_file |
+| curator | sandbox, qdrant, postgres | run_python, qdrant-find, execute_sql, read_file, write_file |
 
-This is 12 tools. The router's recommended ceiling for 3B models is 6, so this role is above it on purpose; the tool cap (MAX_TOOLS = 12) still holds. Left out on purpose: qdrant-store, getChannelTopVideos, getChannelStatistics, getTrendingVideos, getVideoComments, getVideoCategories, getTranscripts, and the postgres schema and index tools.
+Server notes:
+- **reddit**: Arctic Shift archive; has ingestion lag and rate limits.
+- **hn**: Algolia search API. `mcp-hn` has no HTTP timeout (see Known gaps).
+- **rss**: any RSS or Atom URL, read from the saved feed list only.
+- **youtube**: YouTube Data API v3 (key needed).
+- **qdrant**: read-only. The image starts with `QDRANT_READ_ONLY=true`, so qdrant-store is absent. Runs as a compose service (`qdrant`, `127.0.0.1:6333`), started by the curator.
+- **postgres**: restricted mode, read-only DB role required.
+- **profiles**: each live role mounts the shared media folder read-write through its own filesystem profile.
+
+Left out on purpose: qdrant-store, getChannelTopVideos, getChannelStatistics, getTrendingVideos, getVideoComments, getVideoCategories, getTranscripts, and the postgres schema and index tools.
 
 ## Agent flow
 
-| Step | Stage | What happens | Tool |
+| Step | Role | What happens | Tool |
 | --- | --- | --- | --- |
-| 1 | Trend Collector | Collect up to 5 items per source: platform, title, URL, engagement, date. | web_search, get_feed, search_stories, search_posts, searchVideos |
-| 2 | Topic Clustering | Group items into the topic clusters below. | model reasoning |
-| 3 | Sentiment | Label each topic positive, neutral or negative, with one quoted line and its URL. | model reasoning |
-| 4 | Content Summary | Summarize each high-performing item in one line with its URL. | model reasoning |
-| 5 | Content Recommendation | Per topic: one LinkedIn post idea, one YouTube idea, one X thread idea, one 5-day calendar entry. | model reasoning |
-| 6 | Trend Scoring | Score each topic with run_python only. | run_python |
-| 7 | Dashboard | Write the daily brief as `content/trends/<YYYY-MM-DD>.md`. This file is the dashboard. | write_file |
-
-Past items for comparison come from qdrant-find (vector store) and execute_sql (PostgreSQL). Both are read-only.
+| 1 | reddit-hn, rss, youtube | Collect up to 5 items per source: platform, title, URL, engagement, date. Write the raw file. | search_posts, search_stories, get_feed, searchVideos, write_file |
+| 2 | curator | Read the raw files for the date. A source with no file is marked not collected. | read_file |
+| 3 | curator | Group items into the topic clusters below. Label each topic positive, neutral or negative, with one quoted line and its URL. Summarize each high-performing item in one line with its URL. | model reasoning |
+| 4 | curator | Per topic: one LinkedIn post idea, one YouTube idea, one X thread idea, one 5-day calendar entry. | model reasoning |
+| 5 | curator | Score each topic with run_python only. Past items for comparison come from qdrant-find and execute_sql. | run_python, qdrant-find, execute_sql |
+| 6 | curator | Write the daily brief as `content/trends/<YYYY-MM-DD>.md`. This file is the dashboard. | write_file |
 
 ## Topic clusters
 
@@ -68,21 +95,22 @@ The score is computed by run_python, never by hand.
 
 ## Daily output
 
-The brief lists the top 5 topics per day, each with its score, a summary, and the content ideas and calendar entry from step 5. Every figure carries a source URL. The role reports the file path, then the top 3 topics with scores.
+The brief lists the top 5 topics per day, each with its score, a summary, and the content ideas and calendar entry. Every figure carries a source URL. The curator reports the file path, then the top 3 topics with scores.
 
 ## Source table
 
 | Source | How collected | Status |
 | --- | --- | --- |
-| YouTube | youtube server: searchVideos, getVideoDetails | collected; quota-limited (see below) |
-| X / Twitter | none | not collected; no free collector |
-| LinkedIn | none | not collected; no free collector |
-| News and blogs (Reuters, TechCrunch, VentureBeat, Microsoft, OpenAI, Google) | web_search, crawl_markdown | collected |
-| Reddit (r/artificial, r/MachineLearning, r/OpenAI, r/technology, r/startups) | reddit server: search_posts | collected; archive lag |
-| Hacker News | hn server: search_stories | collected |
-| RSS (OpenAI, Anthropic, Microsoft AI, Google DeepMind, AWS ML, NVIDIA) | rss server: get_feed | collected |
-| PostgreSQL (past trends and metrics) | postgres server: execute_sql | collected when the DB has data |
-| Qdrant (embeddings, semantic search of past items) | qdrant server: qdrant-find | collected when the collection has data |
+| YouTube | youtube role: searchVideos, getVideoDetails | collected; quota-limited (see below) |
+| X / Twitter | held role `content-analyst-x` | not collected; no free collector |
+| LinkedIn | held role `content-analyst-linkedin` | not collected; no free collector |
+| Instagram and Facebook | held role `content-analyst-meta` | not collected; Meta app review and API cost |
+| News and blogs (Reuters, TechCrunch, VentureBeat, Microsoft, OpenAI, Google) | rss role, only feeds on the saved list | collected only when the feed is on the list. The old web_search and crawl_markdown path was removed from the split roles, so unlisted sites are not collected. |
+| Reddit (r/artificial, r/MachineLearning, r/OpenAI, r/technology, r/startups) | reddit-hn role: search_posts | collected; archive lag |
+| Hacker News | reddit-hn role: search_stories | collected |
+| RSS (OpenAI, Anthropic, Microsoft AI, Google DeepMind, AWS ML, NVIDIA) | rss role: get_feed | collected |
+| PostgreSQL (past trends and metrics) | curator role: execute_sql | collected when the DB has data |
+| Qdrant (embeddings, semantic search of past items) | curator role: qdrant-find | collected when the collection has data |
 
 ### YouTube quota
 
@@ -93,23 +121,23 @@ The default Data API quota is 10,000 units per day, reset at midnight Pacific Ti
 | searchVideos | 100 per page (about 1% of the daily quota) |
 | getVideoDetails | 1 |
 
-The role makes one searchVideos call per run. getTranscripts is not in the role: it scrapes YouTube web pages through an unofficial method that can break and may not match YouTube's terms, so it is best-effort and excluded.
+The youtube role makes one searchVideos call per run. getTranscripts is not in the role: it scrapes YouTube web pages through an unofficial method that can break and may not match YouTube's terms, so it is best-effort and excluded.
 
 ## Secrets and setup
 
-Both secrets are Docker secret files in `~/.docker/mcp/secrets`, outside the repo. Set them with:
+Secrets are Docker secret files in `~/.docker/mcp/secrets`, outside the repo. Set them with:
 
     python -m router.secrets_store set YOUTUBE_API_KEY
     python -m router.secrets_store set DATABASE_URI
 
-- **YOUTUBE_API_KEY**: a YouTube Data API v3 key. The image reads it from `YOUTUBE_API_KEY_FILE`. The key is not in the environment.
-- **DATABASE_URI**: a PostgreSQL connection URL, for example `postgresql://reader:...@host:5432/db`. The wrapper exports it inside the container, then starts `postgres-mcp --access-mode=restricted`.
+- **YOUTUBE_API_KEY**: a YouTube Data API v3 key, needed by the youtube role only. The image reads it from `YOUTUBE_API_KEY_FILE`. The key is not in the environment.
+- **DATABASE_URI**: a PostgreSQL connection URL, for example `postgresql://reader:...@host:5432/db`, needed by the curator only. The wrapper exports it inside the container, then starts `postgres-mcp --access-mode=restricted`.
   - **The role in the URI must be read-only.** Restricted mode blocks writes in the server, but the database must enforce it too. Create a role with `SELECT` only on the tables the analyst needs.
   - Restricted mode is not tested against a live database. The read-only claim comes from upstream documentation.
 
-A missing secret file makes the whole `content-analyst` role fail to open, because compose cannot mount it. Set both secrets before running the role, or remove the postgres and youtube entries from `native` in `router/tf-roles.yaml`.
+A missing secret file makes only the role that needs it fail to open, because compose cannot mount it. Set the secret before running that role, or remove the matching entry from `native` in `router/tf-roles.yaml`.
 
-Qdrant runs as a service (`qdrant`, `127.0.0.1:6333`, named volume `qdrant_data`) and is started by the role's `compose` list. Its contents are not verified against a live Qdrant in this repo.
+The curator's `qdrant` service (`127.0.0.1:6333`, named volume `qdrant_data`) is started by its `compose` list. Its contents are not verified against a live Qdrant in this repo.
 
 ## Known gaps
 
@@ -118,9 +146,8 @@ Qdrant runs as a service (`qdrant`, `127.0.0.1:6333`, named volume `qdrant_data`
 - **Reddit and HN privacy**: queries are sent to Arctic Shift and Algolia.
 - **Digest pinning**: the images are pinned by git commit (`docker/pins.yaml`) and the base images by digest in each SOURCE.md. The qdrant service is pinned by tag and digest. No image digest is recorded for the locally built `tokenfrugal/*-mcp:1` images.
 - **Tool names are not read offline**: the reddit, hn, rss, youtube, qdrant and postgres servers have no in-repo source for `router/preflight.py`, so their tools show as unverified.
-
 - **Qwen3 thinking and time limits**: `router/loop.py` sends `think` (TOKENFRUGAL_THINK, default `medium`) to every model, and there is no per-model or per-slug switch. The ts-qwen3-8b-40960 stages (outline, executive) therefore think. Their time limit comes from the role (content-research 150 s, content-writer 120 s), not the slug, and content-writer is shared by draft, humanize and executive, so it cannot be raised for qwen3 alone. Not measured against a live model yet. TOKENFRUGAL_THINK=off turns thinking off for all models.
 
 ## Note on MCP servers
 
-The Docker MCP catalog has no YouTube, Reddit, Hacker News, RSS or Qdrant server. The six servers used here are local builds, not catalog entries. X and LinkedIn have no collector. Apify actors need a paid token and are not used.
+The Docker MCP catalog has no YouTube, Reddit, Hacker News, RSS or Qdrant server. The servers used here are local builds, not catalog entries. X and LinkedIn have no collector. Apify actors need a paid token and are not used.
