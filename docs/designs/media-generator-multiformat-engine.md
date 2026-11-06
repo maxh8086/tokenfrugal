@@ -275,7 +275,7 @@ Checked against `main` at b6a9efa: each item was matched to code on main and to 
 | Gate approvals with SHA-256, human-bound CLI (D21, D39) | Done | 5367589, 381f085, f7163f9; `lib/approvals.js`, `bin/approve.js` |
 | Gate order enforced before render: G1 to G6 must be approved, G7 after render (D38) | Done | `lib/job-gate.js` (`RENDER_GATE = 'G7'`) |
 | Approval storage per gate under the project, reopened on hash change (D52) | Partial | One approvals file written atomically (`lib/approvals.js`), not per-gate `approvals/G<n>.json` files. Hash is rechecked on read |
-| Gate G2 format choice (D27) | Not done | No G2 gate in code; the render path accepts only `youtube` (`job-gate.js` `RENDERED_DESTINATION`) |
+| Gate G2 format choice (D27) | Partial | Format list and sizes in `lib/formats.js`; optional `format` in `schemas/job.schema.json`; `checkFormat` in `lib/job-gate.js` refuses over-length jobs and formats whose size is not built (only 1920x1080 at 30 fps renders). Video and presentation 5-minute default is D29, still to confirm. Facebook Reel length open (O18) |
 | Gate G3 narration voice choice (D55) | Not done | No G3 code |
 | Gate G4 voice sample, G5 stills, G6 preview generation (D35, D57) | Not done | Gate names only in `approvals.js`; no generation code |
 | Narration through dhvani, Piper removed (D20, D53) | Done | 2fb24d4 (Piper replaced), 98b297b (compose), 9a5b989 (rename to dhvani), ce1b281 (GET /health and healthcheck, PR #67); `lib/dhvani.js` (`MAX_CHUNK = 900`) |
