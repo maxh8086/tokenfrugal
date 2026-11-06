@@ -21,6 +21,10 @@ import {
 } from './lib/render-options.js';
 import { gateJob } from './lib/job-gate.js';
 import { planParts, totalSeconds, PART_MAX_SECONDS } from './lib/job-parts.js';
+import { jobOutputRel, jobOutputUrl, JOB_PRESETS } from './lib/job-output.js';
+
+// Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). Only youtube is rendered.
+const JOB_PRESET = JOB_PRESETS[0];
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -225,7 +229,7 @@ function renderHyperframes(jobDir, args, timeoutMs = RENDER_TIMEOUT_MS) {
 
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
-  const { blurSamples = 32, resolution = '1080p' } = opts;
+  const { blurSamples = 32, resolution = '1080p', preset = null } = opts;
   const id = jobId ?? randomUUID();
   log.id = id;
   const jobDir = path.join(WORK_DIR, id);
@@ -313,21 +317,22 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
       video = muxed;
     }
 
-    const outName = `${id}.mp4`;
+    const outRel = preset ? jobOutputRel(id, preset) : `${id}.mp4`;
+    const outPath = path.join(OUTPUT_DIR, outRel);
     await atStage('move', async () => {
-      await mkdir(OUTPUT_DIR, { recursive: true });
-      await rename(video, path.join(OUTPUT_DIR, outName))
+      await mkdir(path.dirname(outPath), { recursive: true });
+      await rename(video, outPath)
         .catch(async () => {
           // rename fails across devices (tmpfs to a bind mount); fall back to copy.
-          await cp(video, path.join(OUTPUT_DIR, outName));
+          await cp(video, outPath);
         });
     });
-    const { size } = await stat(path.join(OUTPUT_DIR, outName));
+    const { size } = await stat(outPath);
     ok = true;
     return {
       id,
-      file: outName,
-      url: `/output/${outName}`,
+      file: outRel,
+      url: preset ? jobOutputUrl(id, preset) : `/output/${outRel}`,
       bytes: size,
       seconds: Math.round((Date.now() - started) / 100) / 10,
       audio: audio.mode,
@@ -374,17 +379,21 @@ async function renderParts(scenes, fps, log, jobId, opts) {
   await mkdir(joinDir, { recursive: true });
   const list = path.join(joinDir, 'parts.txt');
   await writeFile(list, concatListText(partFiles));
-  const outName = `${base}.mp4`;
-  await atStage('move', () => run(FFMPEG_BIN, [
-    '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', path.join(OUTPUT_DIR, outName),
-  ]));
+  const outRel = jobOutputRel(base, JOB_PRESET);
+  const outPath = path.join(OUTPUT_DIR, outRel);
+  await atStage('move', async () => {
+    await mkdir(path.dirname(outPath), { recursive: true });
+    await run(FFMPEG_BIN, [
+      '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', outPath,
+    ]);
+  });
   await rm(joinDir, { recursive: true, force: true });
   for (const file of partFiles) await rm(file, { force: true });
-  const { size } = await stat(path.join(OUTPUT_DIR, outName));
+  const { size } = await stat(outPath);
   return {
     id: base,
-    file: outName,
-    url: `/output/${outName}`,
+    file: outRel,
+    url: jobOutputUrl(base, JOB_PRESET),
     bytes: size,
     seconds: Math.round((Date.now() - started) / 100) / 10,
     audio: audioMode,
@@ -479,6 +488,7 @@ app.post('/render', async (req, res) => {
     const result = await enqueue(() => renderJob(checked.props, audioScenes, log, jobId ?? undefined, {
       blurSamples: blur.value,
       resolution: res1080.value,
+      preset: gatedJob ? JOB_PRESET : null,
     }));
     res.status(201).json({
       ...result,
