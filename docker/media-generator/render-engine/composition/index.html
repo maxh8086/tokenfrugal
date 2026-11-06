@@ -52,6 +52,21 @@
       display: inline-block;
       margin-right: 0.25em;
     }
+    /* Static blurred backdrop behind every scene: bokeh-style light spots, blurred with a CSS filter.
+       Motion blur is not used here: the HyperFrames renderer turns it off, so it has no effect on output. */
+    #backdrop {
+      position: absolute;
+      left: -80px;
+      top: -80px;
+      width: 2080px;
+      height: 1240px;
+      background:
+        radial-gradient(circle at 20% 30%, #ffd27a 0 90px, transparent 92px),
+        radial-gradient(circle at 70% 60%, #7ad1ff 0 150px, transparent 152px),
+        radial-gradient(circle at 45% 80%, #ff7ab6 0 110px, transparent 112px),
+        radial-gradient(circle at 85% 20%, #b8ff9f 0 70px, transparent 72px);
+      filter: blur(24px);
+    }
     .scene .sub {
       position: absolute;
       left: 160px;
@@ -64,7 +79,7 @@
   </style>
 </head>
 <body>
-  <div id="root" data-composition-id="main" data-start="0" data-duration="3" data-width="1920" data-height="1080" data-fps="60" data-motion-blur="on" data-motion-blur-shutter="180" data-motion-blur-samples="32"></div>
+  <div id="root" data-composition-id="main" data-start="0" data-duration="3" data-width="1920" data-height="1080" data-fps="60"></div>
 
   <!-- props.js is written per job by server.js (window.PROPS). The fallback scene below is used when opened directly. -->
   <script src="props.js"></script>
@@ -79,6 +94,11 @@
       var subColor = p.subColor || '#8b949e';
 
       root.style.background = p.background || '#0d1117';
+
+      // Blurred backdrop goes first so every scene draws above it.
+      var backdrop = document.createElement('div');
+      backdrop.id = 'backdrop';
+      root.appendChild(backdrop);
 
       // Critically damped spring step response (out-type only: no overshoot, no bounce).
       function springEase(p){ if (p<=0) return 0; if (p>=1) return 1; var k=7; return 1 - Math.exp(-k*p)*(1 + k*p); }

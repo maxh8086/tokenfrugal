@@ -1465,3 +1465,14 @@ Checked 2026-11-05: all five chalk drawings in v5 render at each scene's midpoin
 **Open decisions for the user:**
 1. Motion blur: keep the `motion_blur_samples` field as a no-op with a note, make the default 0 so the API does not imply blur, or remove the field until HyperFrames is upgraded.
 2. Budget 409 check: approve a short container restart with a low `RENDER_JOB_BUDGET_MS`, or defer.
+
+## 17. Blurred background in the template (set 2026-11-06)
+
+The reference looks (blurred photo or bokeh behind sharp text) are static background blur, not motion blur. The template now draws a `#backdrop` layer (bokeh-style radial gradients, `filter: blur(24px)`) behind every scene, and the root element no longer carries the `data-motion-blur*` attributes. The scene text stays unblurred.
+
+- Changed: `docker/media-generator/render-engine/composition/index.html`.
+- Tests: 109/109 pass.
+- Live: a 3 s job (`cde43140-...`) rendered at 3.0 s with the blurred backdrop and sharp title. The frame is in scratchpad `blur/template_blur_frame.png`.
+- The running container got the new template by `docker cp`. The image still has the old template until it is rebuilt.
+- `motion_blur_samples` is still accepted and echoed, but it does nothing. The open decision from section 16 still applies.
+- Not done: a photo in place of the gradients, and a rebuild of the image.
