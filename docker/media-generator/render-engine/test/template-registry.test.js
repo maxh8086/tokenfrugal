@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadRegistry, resolveTemplate } from '../lib/template-registry.js';
+import { checkTemplateLimits, loadRegistry, resolveTemplate } from '../lib/template-registry.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const created = [];
@@ -143,4 +143,36 @@ test('duplicate template ids are rejected', async () => {
   });
   const root = await makeRoot(files);
   await assert.rejects(loadRegistry(root), /duplicate template id/);
+});
+
+test('checkTemplateLimits passes limits that tighten the global limits', () => {
+  assert.deepEqual(checkTemplateLimits({ titleMax: 60, bodyMax: 100, sceneCountMax: 50, sceneSecondsMax: 300 }), []);
+  assert.deepEqual(checkTemplateLimits({ titleMax: 80 }), []);
+});
+
+test('checkTemplateLimits fails a looser limit and names the key', () => {
+  const errors = checkTemplateLimits({ titleMax: 200 });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /titleMax/);
+  assert.match(errors[0], /exceeds global limit 80/);
+});
+
+test('checkTemplateLimits fails an unknown key and names it', () => {
+  const errors = checkTemplateLimits({ fooMax: 10 });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /"fooMax"/);
+});
+
+test('checkTemplateLimits fails negative and non-numeric values and names the key', () => {
+  const negative = checkTemplateLimits({ bodyMax: -1 });
+  assert.equal(negative.length, 1);
+  assert.match(negative[0], /bodyMax must be a positive number/);
+  const text = checkTemplateLimits({ sceneSecondsMax: '300' });
+  assert.equal(text.length, 1);
+  assert.match(text[0], /sceneSecondsMax must be a positive number/);
+});
+
+test('checkTemplateLimits passes when limits are absent or empty', () => {
+  assert.deepEqual(checkTemplateLimits(undefined), []);
+  assert.deepEqual(checkTemplateLimits({}), []);
 });
