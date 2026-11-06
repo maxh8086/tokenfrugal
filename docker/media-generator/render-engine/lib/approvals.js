@@ -82,8 +82,9 @@ export function canOpen(approvals, gate, lookup) {
 }
 
 // Appends an approval and writes the file atomically (temp file in the same folder, then rename).
-// Returns the recorded entry.
-export async function recordApproval(approvalsPath, { gate, artifact, sha256, approvedBy, approvedAt }) {
+// Returns the recorded entry. An optional seed (non-negative integer, from job.json) is stored as `seed`
+// for the record only; nothing consumes it. When seed is absent, no seed key is written.
+export async function recordApproval(approvalsPath, { gate, artifact, sha256, approvedBy, approvedAt, seed }) {
   if (!GATES.includes(gate)) {
     throw new Error(`invalid gate ${JSON.stringify(gate)}; expected one of ${GATES.join(', ')}`);
   }
@@ -96,12 +97,16 @@ export async function recordApproval(approvalsPath, { gate, artifact, sha256, ap
   if (typeof approvedBy !== 'string' || approvedBy.trim() === '') {
     throw new Error('approvedBy must be a non-empty string');
   }
+  if (seed !== undefined && (!Number.isInteger(seed) || seed < 0)) {
+    throw new TypeError('seed must be a non-negative integer when given');
+  }
   const entry = {
     gate,
     artifact,
     sha256,
     approvedBy,
     approvedAt: approvedAt ?? new Date().toISOString(),
+    ...(seed !== undefined ? { seed } : {}),
   };
   const current = await readApprovals(approvalsPath);
   const next = { version: 1, approvals: [...current.approvals, entry] };
