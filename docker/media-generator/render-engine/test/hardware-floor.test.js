@@ -1,7 +1,28 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import os from 'node:os';
-import { HARDWARE_FLOOR, checkHardware, measureHardware } from '../lib/hardware-floor.js';
+import {
+  HARDWARE_FLOOR,
+  checkHardware,
+  measureHardware,
+  parseCpuinfoPhysicalCores,
+  parseWindowsCoreCount,
+} from '../lib/hardware-floor.js';
+
+// Two sockets, two cores each, two hyperthread blocks per core: 4 unique physical cores, 8 blocks.
+function cpuBlock(processor, physicalId, coreId) {
+  return [
+    `processor\t: ${processor}`,
+    'vendor_id\t: GenuineIntel',
+    `physical id\t: ${physicalId}`,
+    `core id\t\t: ${coreId}`,
+    'cpu cores\t: 2',
+  ].join('\n');
+}
+const TWO_SOCKET_CPUINFO = [
+  cpuBlock(0, 0, 0), cpuBlock(1, 0, 0), cpuBlock(2, 0, 1), cpuBlock(3, 0, 1),
+  cpuBlock(4, 1, 0), cpuBlock(5, 1, 0), cpuBlock(6, 1, 1), cpuBlock(7, 1, 1),
+].join('\n\n') + '\n';
 
 const MESSAGE =
   'This machine is not capable enough to run the media generator. Free resources or use a larger machine, then retry.';
@@ -72,4 +93,30 @@ test('measureHardware returns three finite positive numbers', async () => {
     assert.ok(Number.isFinite(m[field]), field);
     assert.ok(m[field] > 0, field);
   }
+  assert.ok(['physical', 'logical'].includes(m.cpuSource));
+});
+
+test('parseCpuinfoPhysicalCores counts unique physical id:core id pairs on a 2-socket sample', () => {
+  assert.equal(parseCpuinfoPhysicalCores(TWO_SOCKET_CPUINFO), 4);
+});
+
+test('parseCpuinfoPhysicalCores returns 0 for empty text', () => {
+  assert.equal(parseCpuinfoPhysicalCores(''), 0);
+});
+
+test('parseCpuinfoPhysicalCores ignores a block missing the core id', () => {
+  const text = [cpuBlock(0, 0, 0), 'processor\t: 1\nphysical id\t: 0', cpuBlock(2, 0, 1)].join('\n\n');
+  assert.equal(parseCpuinfoPhysicalCores(text), 2);
+});
+
+test('parseWindowsCoreCount reads a positive integer with a trailing newline', () => {
+  assert.equal(parseWindowsCoreCount('8\n'), 8);
+});
+
+test('parseWindowsCoreCount returns 0 for empty text', () => {
+  assert.equal(parseWindowsCoreCount(''), 0);
+});
+
+test('parseWindowsCoreCount returns 0 for non-numeric text', () => {
+  assert.equal(parseWindowsCoreCount('abc'), 0);
 });
