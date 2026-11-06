@@ -43,6 +43,9 @@ ROUTER_CASES = {
     "plan_overview": ("Show the current plan state.", lambda a: True),
     "plan_revert": ("Undo the latest status change of plan task 7.", lambda a: a.get("task_id") == 7),
     "plan_update_from": ("Plan task 5 changed approach; re-open it and its dependants.", lambda a: a.get("task_id") == 5),
+    "studio_run": ("Queue a content pipeline run for slug ai-banking-2026 on the topic 'AI in banking'.",
+                   lambda a: a.get("action") == "pipeline" and a.get("slug") == "ai-banking-2026" and bool(a.get("topic"))),
+    "studio_status": ("Show the state of the Studio runs and the YouTube quota.", lambda a: True),
 }
 
 

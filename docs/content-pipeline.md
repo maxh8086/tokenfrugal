@@ -31,7 +31,22 @@ The dry plan prints each stage with its role, model, time limit and what a run w
 
 ## Resume
 
-The router's task store keeps the last task for each stage slug. A stage whose last task failed or stopped is resumed from its saved messages. A stage whose last task is done is skipped. The run stops at the first stage that does not finish, so running the same command again continues from there.
+The router's task store keeps the last task for each stage slug, and only tasks of runs for the same slug count. A stage whose last task failed or stopped is resumed from its saved messages. A stage whose last task is done is skipped. A different slug never reuses another slug's stages. The run stops at the first stage that does not finish, so running the same command again continues from there.
+
+## Runs and Studio
+
+Each pipeline run has a row in the `runs` table with one of these states: `queued`, `waiting_gpu`, `running`, `cancelling`, `cancelled`, `done`, `failed`. A run or task whose heartbeat is older than 120 s belongs to a dead router; the router marks it `failed` at startup and at each sweep, so the next run for that slug resumes the failed stage.
+
+The Studio tools queue work through a request folder (`STUDIO_DIR/requests`, one JSON file per request):
+
+- `studio_run(action="pipeline", slug, topic)` queues the seven stages for one slug.
+- `studio_run(action="collect", sources="reddit-hn,rss,youtube")` queues the three collector roles.
+- `studio_run(action="save_feed", feed_url=...)` adds an RSS feed to the saved list. Only http and https; loopback, private, link-local and reserved addresses are refused, and so are URLs over `RSS_MAX_URL` characters.
+- `studio_run(action="cancel")` stops the active run at its next stage boundary.
+- `studio_run(action="store")` is refused. It is Piece 3 and waits for `docs/designs/studio-write-path.md`.
+- `studio_status()` shows the active run, the last five runs, waiting requests, the estimated YouTube quota for the Pacific day and any missing secret names. It never shows a secret value or a file path.
+
+One run is active at a time. A start is refused while a run is active or a request is already waiting. A request nobody claims within `STUDIO_CLAIM_TIMEOUT` seconds expires. The YouTube quota is an estimate: `searchVideos` counts 100 units and `getVideoDetails` 1 unit per successful call, reset at Pacific midnight.
 
 ## Not verified
 

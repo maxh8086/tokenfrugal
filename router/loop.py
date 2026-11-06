@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 from openai import OpenAI
 
-from . import events, gpu_lease, mcp_reap
+from . import events, gpu_lease, mcp_reap, studio
 from .config import (LLM_API_KEY, LLM_TEMPERATURE, LLM_TIMEOUT, OLLAMA_URL, SYNAPTREE_PROJECT, TASK_TIMEOUT, THINK_LEVEL,
                      TOOL_TIMEOUT, TOOLS_PER_STEP, TOOL_MODE, WORKSPACE)
 from .compose import backends
@@ -507,6 +507,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                             out = f"tool error: {out}"
                         else:
                             ok_calls += 1
+                            if c.function.name in studio.QUOTA_UNITS:  # YouTube quota, estimated; never fails the call
+                                studio.record_quota_call(c.function.name)
                             if not out.strip():  # empty result: say so, so the model does not invent data
                                 out = "tool returned no results (empty). Report that no matching data was found; do not invent any."
                             elif c.function.name in ("write_file", "edit_file"):

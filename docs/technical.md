@@ -208,6 +208,10 @@ video-editor/
 
 The profiles `content-writer`, `content-analyst-reddit-hn`, `content-analyst-rss`, `content-analyst-youtube`, `content-analyst-curator` and `media-generator` mount `__MEDIA__:/workspace:rw`. The collectors write raw files under `content/trends/raw/` and the curator writes `content/trends/<date>.md`. `scripts/install_profiles.py` and `router/profile_sync.py` fill `__MEDIA__` with `media_dir()` after ensuring the tree. `mgen` exports the same path as `VIDEO_EDITOR_DIR` so the compose service mounts the same folder.
 
+## Studio runs
+
+The `studio_run` and `studio_status` tools queue and report content pipeline and collector runs. Requests are JSON files in `STUDIO_DIR/requests`; the router's poller claims one at a time and records it in the `runs` table (states and resume rules in [content-pipeline.md](content-pipeline.md#runs-and-studio)). Only one run is active at once. `store` is refused until the write-path design is approved. The router's `_lifespan` starts `studio.poll_loop()` and stops it on exit.
+
 ## Plan store
 
 Multi-step work can use the plan tools. Plans are stored in Neo4j (`neo4j` service, 127.0.0.1:7697) as `Task`, `Run`, `Event` and `Commit` nodes linked by `DEPENDS_ON`, `HAS_RUN`, `HAS_EVENT` and `LINKED_TO`.
