@@ -32,6 +32,28 @@
           "seconds": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 }
         }
       }
+    },
+    "gate_artifacts": {
+      "description": "Optional for validation; a render needs G1 to G6 each naming an artifact under ARTIFACT_DIR (D39).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "G1": { "$ref": "#/$defs/artifactPath" },
+        "G2": { "$ref": "#/$defs/artifactPath" },
+        "G3": { "$ref": "#/$defs/artifactPath" },
+        "G4": { "$ref": "#/$defs/artifactPath" },
+        "G5": { "$ref": "#/$defs/artifactPath" },
+        "G6": { "$ref": "#/$defs/artifactPath" },
+        "G7": { "$ref": "#/$defs/artifactPath" }
+      }
+    }
+  },
+  "$defs": {
+    "artifactPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
     }
   }
 }

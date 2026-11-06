@@ -9,6 +9,18 @@ export const GATES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'];
 
 const SHA256_RE = /^[0-9a-f]{64}$/;
 
+// The artifact path an approval records: absolute, so it matches the path the server resolves under ARTIFACT_DIR.
+// When artifactRoot is set, the file must sit inside it. Returns {ok, path} or {ok: false, error}.
+export function resolveApprovalArtifact(artifactPath, artifactRoot) {
+  const full = path.resolve(artifactPath);
+  if (!artifactRoot) return { ok: true, path: full };
+  const root = path.resolve(artifactRoot);
+  if (full !== root && !full.startsWith(root + path.sep)) {
+    return { ok: false, error: `artifact ${full} is outside ARTIFACT_DIR ${root}; the server will never read it` };
+  }
+  return { ok: true, path: full };
+}
+
 // Returns the lowercase hex SHA-256 of the file's bytes.
 export async function hashArtifact(filePath) {
   const bytes = await readFile(filePath);
