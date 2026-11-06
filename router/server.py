@@ -321,6 +321,9 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
         events.emit("task_refused", agent=agent, reason=err)  # refusal before any model time; logged to events.jsonl
         return err
     role = resolve_role(agent, CFG)
+    if role.get("held"):  # held roles are listed for the owner but never run; refused before any task row exists
+        events.emit("task_refused", agent=agent, reason="held")
+        return f"role '{role['role']}' is held: {role['held']}"
     global _models_ready
     if not _models_ready and team_of(role["role"], CFG) == "mediahouse":
         err = await asyncio.to_thread(ensure_models)  # a first pull can take hours; keep the event loop free

@@ -258,13 +258,27 @@ def lead_for(team: str, cfg: dict) -> str | None:
 load_agents = load_tf_roles  # pre-rename name, kept for callers
 
 
+# Retired slugs that still resolve to a live role until the given date. The old single content-analyst became
+# content-analyst-curator when the collectors were split out (docs/designs/studio-and-collector-roles.md, Piece 1).
+ROLE_ALIASES = {"content-analyst": ("content-analyst-curator", date(2026, 12, 31))}
+_ALIAS_SEEN: set[str] = set()
+
+
 def resolve_role(agent: str, cfg: dict) -> dict:
     """Map an agency-agents slug (e.g. 'engineering-sre') to its role config."""
+    alias = ROLE_ALIASES.get(agent)
+    if alias and date.today() <= alias[1]:
+        if agent not in _ALIAS_SEEN:
+            _ALIAS_SEEN.add(agent)
+            print(f"tokenfrugal: '{agent}' is retired; routed to '{alias[0]}' "
+                  f"(alias ends {alias[1].isoformat()}).", file=sys.stderr)
+        agent = alias[0]
     div = max((d for d in cfg["divisions"] if agent.startswith(d + "-") or agent == d), key=len, default=None)
     div = next((d for d, slugs in cfg.get("members", {}).items() if agent in slugs), div)
     role = cfg["overrides"].get(agent) or (cfg["divisions"][div] if div else "builder")
     r = dict(cfg["roles"][role])
     r["role"] = role
+    r["held"] = str(r.get("held") or "").strip() or None
     r["model"] = cfg.get("role_models", {}).get(role) or cfg["models"][r["model"]]
     own = list(r.get("skills") or [])
     r["skills"] = own + [s for s in cfg.get("agent_skills", {}).get(agent, []) if s not in own]

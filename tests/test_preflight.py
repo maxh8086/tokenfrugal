@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
 
 class MediahouseRoles(unittest.TestCase):
-    NAMES = ("content-writer", "content-analyst", "media-generator", "media-motion")
+    NAMES = ("content-writer", "content-analyst-curator", "media-generator", "media-motion")
 
     def setUp(self):
         from router.config import ROOT, load_tf_roles
@@ -127,9 +127,7 @@ class MediahouseRoles(unittest.TestCase):
             missing, unverified = preflight.tool_gaps(role, self.root)
             self.assertEqual(missing, [], name)
             self.assertLessEqual(set(unverified), off_repo, name)
-            # content-analyst is the documented exception to the recommended 6 (docs/content-analyst.md); MAX_TOOLS still applies.
-            limit = preflight.MAX_TOOLS if name == "content-analyst" else preflight.RECOMMENDED_TOOLS
-            self.assertLessEqual(len(role["tools"]), limit, name)
+            self.assertLessEqual(len(role["tools"]), preflight.RECOMMENDED_TOOLS, name)
 
     def test_media_generator_native_tools_parse_from_source(self):
         self.assertEqual(preflight._native_tools(self.root, "media-generator"), {"list_raw", "list_renders", "mgen", "render_film"})

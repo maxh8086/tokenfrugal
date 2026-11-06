@@ -177,7 +177,7 @@ class ProfilePlaceholders(unittest.TestCase):
         self.assertNotIn("__WORKSPACE__", out)
 
     def test_media_roles_mount_the_media_folder_read_write(self):
-        for name in ("content-writer", "content-analyst", "media-generator"):
+        for name in ("content-writer", "content-analyst-curator", "media-generator"):
             text = (ROOT / "profiles" / f"{name}.yaml").read_text(encoding="utf-8")
             self.assertIn("__MEDIA__:/workspace:rw", text, name)
             self.assertNotIn("__WORKSPACE__", text, name)
