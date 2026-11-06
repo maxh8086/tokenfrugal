@@ -2,12 +2,13 @@
 // Records a human approval for a render gate.
 //
 // Usage: node bin/approve.js <approvalsPath> <gate> <artifactPath> <approvedBy>
-//   gate: G1..G7. artifactPath: relative to the job folder (it is hashed as given, resolved from the cwd).
+//   gate: G1..G7. artifactPath is resolved to an absolute path and stored that way; the server compares
+//   absolute paths. When ARTIFACT_DIR is set, the artifact must sit inside it, because the server reads
+//   nothing outside that folder.
 //
 // This command is meant for a human, run by hand. The approvals file must sit outside any path the agent
 // may write (D39), so the agent cannot approve its own gates.
-import path from 'node:path';
-import { GATES, hashArtifact, recordApproval } from '../lib/approvals.js';
+import { GATES, hashArtifact, recordApproval, resolveApprovalArtifact } from '../lib/approvals.js';
 
 async function main(argv) {
   const [approvalsPath, gate, artifactPath, approvedBy] = argv;
@@ -17,10 +18,14 @@ async function main(argv) {
   if (!GATES.includes(gate)) {
     throw new Error(`invalid gate ${JSON.stringify(gate)}; expected one of ${GATES.join(', ')}`);
   }
-  const sha256 = await hashArtifact(path.resolve(artifactPath));
+  const target = resolveApprovalArtifact(artifactPath, process.env.ARTIFACT_DIR || '');
+  if (!target.ok) {
+    throw new Error(target.error);
+  }
+  const sha256 = await hashArtifact(target.path);
   const entry = await recordApproval(approvalsPath, {
     gate,
-    artifact: artifactPath,
+    artifact: target.path,
     sha256,
     approvedBy,
   });

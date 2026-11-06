@@ -19,6 +19,8 @@ import { planSegments, concatListText, segmentIsValid, coversDuration } from './
 import {
   parseMotionBlurSamples, parseResolution, framesFor, segmentTimeoutMs, fitsBudget, settingsKey,
 } from './lib/render-options.js';
+import { gateJob } from './lib/job-gate.js';
+import { planParts, totalSeconds, PART_MAX_SECONDS } from './lib/job-parts.js';
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -26,6 +28,8 @@ const require = createRequire(import.meta.url);
 
 const PORT = Number(process.env.PORT || 3000);
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/output';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR || '';     // root for gate artifacts named by a job.json
+const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals file written by bin/approve.js
 const WORK_DIR = process.env.WORK_DIR || path.join(os.tmpdir(), 'hf-jobs');
 const TEMPLATE_DIR = path.join(here, 'composition');
 const GSAP_FILE = require.resolve('gsap/dist/gsap.min.js');
@@ -335,6 +339,61 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   }
 }
 
+// A long job (over PART_MAX_SECONDS) is rendered as parts that each fit the props limits, then joined.
+// Each part is a normal renderJob under <base>_p<k>; the joined film is OUTPUT_DIR/<base>.mp4.
+// Parts that finished stay in OUTPUT_DIR if a later part fails, so a retry with the same job_id re-renders them.
+async function renderParts(scenes, fps, log, jobId, opts) {
+  const base = jobId ?? randomUUID();
+  log.id = base;
+  let groups;
+  try {
+    groups = planParts(scenes);
+  } catch (err) {
+    throw stageError(400, 'validate', err.message);
+  }
+  const partFiles = [];
+  let segmentsReused = 0;
+  let audioMode = 'none';
+  const started = Date.now();
+  for (let k = 0; k < groups.length; k++) {
+    const [a, b] = groups[k];
+    const checked = validateProps({ fps, scenes: scenes.slice(a, b) });
+    if (!checked.ok) throw stageError(400, 'validate', checked.error);
+    const timed = toTimeline(checked.props.scenes);
+    const craft = checkScenes(timed);
+    if (applyCraftPolicy(checked.hasScenes, craft.findings).reject) {
+      throw stageError(400, 'craft', 'craft check failed', { findings: craft.findings });
+    }
+    const audioScenes = timed.map((s) => ({ id: s.id, start: s.start, seconds: s.duration }));
+    const part = await renderJob(checked.props, audioScenes, { stage: null }, `${base}_p${k}`, opts);
+    partFiles.push(path.join(OUTPUT_DIR, part.file));
+    segmentsReused += part.segments_reused;
+    audioMode = part.audio;
+  }
+  const joinDir = path.join(WORK_DIR, base);
+  await mkdir(joinDir, { recursive: true });
+  const list = path.join(joinDir, 'parts.txt');
+  await writeFile(list, concatListText(partFiles));
+  const outName = `${base}.mp4`;
+  await atStage('move', () => run(FFMPEG_BIN, [
+    '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', path.join(OUTPUT_DIR, outName),
+  ]));
+  await rm(joinDir, { recursive: true, force: true });
+  for (const file of partFiles) await rm(file, { force: true });
+  const { size } = await stat(path.join(OUTPUT_DIR, outName));
+  return {
+    id: base,
+    file: outName,
+    url: `/output/${outName}`,
+    bytes: size,
+    seconds: Math.round((Date.now() - started) / 100) / 10,
+    audio: audioMode,
+    job_id: base,
+    segments_reused: segmentsReused,
+    parts: groups.length,
+  };
+}
+
 app.post('/render', async (req, res) => {
   const log = req.renderLog;
   // job_id is not a render prop: it is removed from the body before validation and echo.
@@ -361,6 +420,43 @@ app.post('/render', async (req, res) => {
     log.stage = 'validate';
     log.error = error;
     return res.status(400).json({ error });
+  }
+  // A job.json body (schema_version present) takes the gated path: it is validated, every gate before the
+  // full render must be approved against its artifact, then it becomes a props body (D9, D39).
+  let gatedJob = false;
+  if (body && typeof body === 'object' && 'schema_version' in body) {
+    const gated = await gateJob(body, { artifactRoot: ARTIFACT_DIR, approvalsPath: APPROVALS_PATH });
+    if (!gated.ok) {
+      log.stage = 'gate';
+      log.error = gated.payload.error;
+      return res.status(gated.status).json(gated.payload);
+    }
+    body = gated.body;
+    gatedJob = true;
+  }
+  if (gatedJob && totalSeconds(body.scenes) > PART_MAX_SECONDS) {
+    try {
+      const result = await enqueue(() => renderParts(body.scenes, body.fps, log, jobId ?? undefined, {
+        blurSamples: blur.value,
+        resolution: res1080.value,
+      }));
+      return res.status(201).json({
+        ...result,
+        motion_blur_samples: blur.value,
+        props: body,
+        warnings: [],
+      });
+    } catch (err) {
+      log.stage = err.stage || null;
+      log.error = err.message;
+      log.stderr_tail = err.stderrTail || null;
+      const out = { error: err.message };
+      if (err.findings) {
+        out.stage = err.stage;
+        out.findings = err.findings;
+      }
+      return res.status(err.status || 500).json(out);
+    }
   }
   const checked = validateProps(body);
   if (!checked.ok) {
