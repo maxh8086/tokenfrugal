@@ -6,7 +6,8 @@ a start is refused while a run is active or another request is waiting. Runs kee
 `runs` table (store.py), so studio_status can report a run that was killed and restarted.
 
 Actions: `collect` (the three collector roles), `pipeline` (the seven content stages for one slug),
-`save_feed` (adds an RSS feed URL to the saved list; no run). `store` is Piece 3 and is refused here.
+`save_feed` (adds an RSS feed URL to the saved list; no run), `store` (writes today's collector files to Neo4j
+through studio_store; docs/designs/studio-write-path.md).
 """
 import asyncio
 import ipaddress
@@ -19,12 +20,12 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlsplit
 
-from . import events, gpu_lease, secrets_store, store
+from . import events, gpu_lease, media_workspace, secrets_store, store, studio_store
 from .config import RSS_MAX_FEEDS, RSS_MAX_URL, STUDIO_CLAIM_TIMEOUT, STUDIO_DIR, load_tf_roles, resolve_role
 
 POLL_SECONDS = 1  # how often poll_loop looks for a waiting request
 GPU_POLL_SECONDS = 15  # how often a waiting run checks the GPU lease
-RUN_ACTIONS = ("collect", "pipeline")
+RUN_ACTIONS = ("collect", "pipeline", "store")
 ACTIONS = RUN_ACTIONS + ("save_feed",)
 COLLECT_ROLES = {"reddit-hn": "content-analyst-reddit-hn", "rss": "content-analyst-rss", "youtube": "content-analyst-youtube"}
 COLLECT_SLUG = "trends"  # collect runs write under content/trends/raw/
@@ -145,10 +146,8 @@ def _requests_dir():
 
 def validate_request(action: str, params: dict) -> str | None:
     """None when the request is acceptable, else the reason it is refused."""
-    if action == "store":
-        return "store is Piece 3: it stays refused until the owner approves docs/designs/studio-write-path.md"
     if action not in RUN_ACTIONS:
-        return f"unknown action {action!r}; use collect or pipeline"
+        return f"unknown action {action!r}; use collect, pipeline or store"
     if action == "pipeline":
         slug = params.get("slug", "")
         if not isinstance(slug, str) or not SLUG_RE.match(slug):
@@ -273,11 +272,45 @@ async def _collect(rid: str, sources: list[str]) -> int:
     return 1 if failed else 0
 
 
+def store_collected(rid: str, day: str | None = None) -> int:
+    """Store the collector files for one day (content/trends/raw/<day>-*.json) once each. Returns 0 or 1.
+    A refusal ends the run as failed with the refusal text, which names an item index and never its content."""
+    day = day or date.today().isoformat()
+    raw = media_workspace.media_dir() / "content" / COLLECT_SLUG / "raw"
+    files = sorted(raw.glob(f"{day}-*.json")) if raw.is_dir() else []
+    try:
+        rows: list[dict] = []
+        for p in files:
+            suffix = p.stem[len(day) + 1:]  # reddit-hn, rss or youtube
+            rows.extend(studio_store.rows_from_raw(p, suffix if suffix in ("rss", "youtube") else None))
+        if not rows:
+            store.set_run(rid, stage="store:none")
+            events.emit("studio_store", run=rid, files=len(files), stored=0)
+            return 0
+        store.set_run(rid, stage="store:embed")
+        vectors = studio_store.embed([r["title"] + "\n" + r["body"][:2000] for r in rows])
+        for r, vec in zip(rows, vectors):
+            r["embedding"] = vec
+        store.set_run(rid, stage="store:write")
+        n = studio_store.write_items(studio_store.neo4j_write, rows, run_id=rid)
+    except studio_store.StoreRefused as exc:
+        store.finish_run(rid, "failed", str(exc)[:300])
+        return 1
+    events.emit("studio_store", run=rid, files=len(files), stored=n)
+    return 0
+
+
 async def execute(rid: str, action: str, params: dict) -> int:
     """Run one claimed request to its end state. Returns 0 when done, 1 otherwise."""
     beat = asyncio.create_task(_beat(rid))
     try:
-        if action == "pipeline":
+        if action == "store":
+            if store.cancel_requested(rid):
+                store.finish_run(rid, "cancelled")
+                return 1
+            store.set_run(rid, status="running")
+            rc = await asyncio.to_thread(store_collected, rid)
+        elif action == "pipeline":
             if not await _wait_for_gpu(rid):
                 store.finish_run(rid, "cancelled")
                 return 1
@@ -336,7 +369,9 @@ def start(action: str, slug: str = "", topic: str = "", sources: str = "", feed_
             return save_feed(feed_url)
         except FeedRefused as exc:
             return f"feed refused: {exc}"
-    if action == "pipeline":
+    if action == "store":
+        params = {}
+    elif action == "pipeline":
         params = {"slug": (slug or "").strip(), "topic": (topic or "").strip()}
     elif action == "collect":
         names = [s.strip() for s in (sources or "").split(",") if s.strip()]

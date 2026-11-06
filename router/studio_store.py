@@ -3,7 +3,11 @@
 Nothing here is reachable from a model role. The router calls write_items() with items it has validated.
 Refusals never echo item content: they name the item's index and the rule it broke.
 """
+import hashlib
+import json
 import os
+from pathlib import Path
+from urllib.parse import urlsplit
 
 SOURCES = ("reddit", "hn", "rss", "youtube")
 EMBED_DIMS = 384  # all-MiniLM-L6-v2
@@ -79,3 +83,79 @@ def write_items(run_write, items: list, run_id: int | None) -> int:
     """
     rows = validate_items(items)
     return int(run_write(WRITE_CYPHER, {"items": rows, "run_id": run_id}))
+
+
+def neo4j_write(cypher: str, params: dict) -> int:
+    """Production run_write: one write transaction on the plan store's Neo4j (same credential, loopback only).
+    execute_write retries transient errors; MERGE makes a retried batch insert nothing new."""
+    from router import plan  # imported here so the unit tests never touch the driver
+
+    def work(tx):
+        rec = tx.run(cypher, params).single()
+        return rec["n"] if rec else 0
+
+    with plan._drv().session() as session:
+        return int(session.execute_write(work))
+
+
+# ---- collector files ------------------------------------------------------------------------------
+
+def item_id_for(url: str) -> str:
+    """Stable item id for a collector item that has a URL but no id of its own."""
+    return hashlib.sha256(url.encode("utf-8")).hexdigest()[:24]
+
+
+_HOST_SOURCES = {"reddit.com": "reddit", "news.ycombinator.com": "hn"}
+
+
+def _source_from_url(url: str) -> str | None:
+    """reddit or hn from the URL's host (or a subdomain of it); None for anything else."""
+    host = (urlsplit(url).hostname or "").lower() if url else ""
+    for domain, source in _HOST_SOURCES.items():
+        if host == domain or host.endswith("." + domain):
+            return source
+    return None
+
+
+def rows_from_raw(path: Path, file_source: str | None) -> list[dict]:
+    """Read one collector file (a JSON list) into rows with source, item_id, title, url, body.
+    The file's source applies when an item does not name one. Refusals name the item index only."""
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise StoreRefused(f"{Path(path).name}: not readable JSON") from None
+    if not isinstance(data, list):
+        raise StoreRefused(f"{Path(path).name}: not a JSON list")
+    rows = []
+    for idx, it in enumerate(data):
+        if not isinstance(it, dict):
+            raise StoreRefused(f"{Path(path).name} item {idx}: not an object")
+        url = it.get("url") or it.get("source_url") or ""
+        if not isinstance(url, str):
+            raise StoreRefused(f"{Path(path).name} item {idx}: url is not text")
+        source = it.get("source") if it.get("source") in SOURCES else file_source
+        if source not in SOURCES:
+            source = _source_from_url(url)  # reddit-hn files carry both sources; the host tells them apart
+        if source not in SOURCES:
+            raise StoreRefused(f"{Path(path).name} item {idx}: no known source")
+        item_id = it.get("id")
+        if not (isinstance(item_id, str) and item_id.strip()):
+            if not url:
+                raise StoreRefused(f"{Path(path).name} item {idx}: no id and no url")
+            item_id = item_id_for(url)
+        title = it.get("title") or ""
+        body = it.get("body") or it.get("text") or ""
+        if not isinstance(title, str) or not isinstance(body, str):
+            raise StoreRefused(f"{Path(path).name} item {idx}: title or body is not text")
+        rows.append({"source": source, "item_id": item_id, "title": title, "url": url, "body": body})
+    return rows
+
+
+def embed(texts: list[str]) -> list[list[float]]:
+    """all-MiniLM-L6-v2 vectors (384 dimensions) through fastembed. Refused when fastembed is not installed."""
+    try:
+        from fastembed import TextEmbedding
+    except ImportError:
+        raise StoreRefused("embedding model not installed: pip install fastembed") from None
+    model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+    return [[float(x) for x in vec] for vec in model.embed(texts)]

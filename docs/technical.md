@@ -210,7 +210,7 @@ The profiles `content-writer`, `content-analyst-reddit-hn`, `content-analyst-rss
 
 ## Studio runs
 
-The `studio_run` and `studio_status` tools queue and report content pipeline and collector runs. Requests are JSON files in `STUDIO_DIR/requests`; the router's poller claims one at a time and records it in the `runs` table (states and resume rules in [content-pipeline.md](content-pipeline.md#runs-and-studio)). Only one run is active at once. `store` is refused until the write-path design is approved. The router's `_lifespan` starts `studio.poll_loop()` and stops it on exit.
+The `studio_run` and `studio_status` tools queue and report content pipeline and collector runs. Requests are JSON files in `STUDIO_DIR/requests`; the router's poller claims one at a time and records it in the `runs` table (states and resume rules in [content-pipeline.md](content-pipeline.md#runs-and-studio)). Only one run is active at once. `store` writes today's collector files to Neo4j once each (see [studio-write-path.md](designs/studio-write-path.md)). The router's `_lifespan` starts `studio.poll_loop()` and stops it on exit.
 
 ## Plan store
 
