@@ -41,7 +41,7 @@ def _url_tag(url: str) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run scripts.bench (output + realworld) for one model or endpoint.",
+        description="Run scripts.bench (roles + output) for one model or endpoint.",
     )
     parser.add_argument(
         "--model",
@@ -115,7 +115,7 @@ def main(argv=None) -> int:
         "--n",
         str(args.n),
         "--only",
-        "output,realworld",
+        "roles,output",
         "--tag",
         tag,
     ]

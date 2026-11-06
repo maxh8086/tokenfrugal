@@ -71,7 +71,7 @@ class OllamaParamsTest(unittest.TestCase):
         from scripts import bench_csv
         case = {"verified": "1/1", "ran": "1/1", "s": {"mean": 2.0}}
         res = {cid: case for cid, _, _ in bench_csv.LAYOUT}
-        data = {"tag": "x-4b", "results": {"realworld": res}, "model_params": {"builder": "3.8B"}}
+        data = {"tag": "x-4b", "results": {"roles": res}, "model_params": {"builder": "3.8B"}}
         self.assertEqual(bench_csv.rows(data)[0][1], "3.8B")
         del data["model_params"]
         self.assertEqual(bench_csv.rows(data)[0][1], "4B")

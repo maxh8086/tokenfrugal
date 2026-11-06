@@ -324,30 +324,6 @@ function urlTag(u) {
   const p = new URL(u);
   return sanitize(p.port ? `${p.hostname}_${p.port}` : p.hostname);
 }
-function benchSummary(tag) {
-  const dir = path.join(REPO, 'bench', tag);
-  let files;
-  try { files = fs.readdirSync(dir).filter((f) => f.endsWith('.json')); } catch { return null; }
-  files = files.map((f) => [f, fs.statSync(path.join(dir, f)).mtimeMs]).sort((a, b) => b[1] - a[1]);
-  for (const [f] of files) {
-    let data;
-    try { data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch { continue; }
-    const rw = data && data.results && data.results.realworld;
-    if (!rw || typeof rw !== 'object') continue;
-    let verified = 0, ran = 0; const p50 = [];
-    // per-case counts are "passed/total" strings in the result files; plain numbers are accepted too
-    const frac = (v) => { const m = String(v ?? '').match(/^(\d+)\s*\/\s*(\d+)$/); return m ? [+m[1], +m[2]] : [Number(v) || 0, 0]; };
-    for (const c of Object.values(rw)) {
-      const [ok, total] = frac(c.verified);
-      verified += ok; ran += String(c.verified).includes('/') ? total : Number(c.ran) || 0;
-      if (c.s && typeof c.s.p50 === 'number') p50.push(c.s.p50);
-    }
-    const cases = Object.keys(rw).length;
-    return { tag, verified, ran, cases, pct: ran ? Math.round((100 * verified) / ran) : 0,
-      s_per_case: p50.length ? Math.round((10 * p50.reduce((a, b) => a + b, 0)) / p50.length) / 10 : null };
-  }
-  return null;
-}
 // Local runs only (Benchmark/results/benchmark.csv; the cloud baseline is excluded). Ranked by number of checks run,
 // then pass rate (score / max), then mean seconds per case (faster first). Best run per model.
 function csvRows(file) {
@@ -420,7 +396,7 @@ function benchStart(b) {
   const push = (d) => { for (const l of String(d).split(/\r?\n/)) if (l.trim()) JOB.log.push(l); if (JOB.log.length > 400) JOB.log.splice(0, JOB.log.length - 400); };
   proc.stdout.on('data', push); proc.stderr.on('data', push);
   proc.on('error', (e) => { push('failed to start: ' + e.message); JOB.running = false; JOB.proc = null; });
-  proc.on('close', (code) => { JOB.code = code; JOB.running = false; JOB.proc = null; JOB.summary = benchSummary(tag); if (JOB.summary) JOB.summary.model = model || endpoint; });
+  proc.on('close', (code) => { JOB.code = code; JOB.running = false; JOB.proc = null; JOB.summary = null; });
   return tag;
 }
 

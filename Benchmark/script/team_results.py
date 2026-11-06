@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from router.config import load_tf_roles  # noqa: E402
 from scripts.bench import ok  # noqa: E402
+from scripts.bench_team_tasks import BENCH_EXCLUDED_TEAMS  # noqa: E402
 from store import thinking_of  # noqa: E402
 
 OUT = ROOT / "Benchmark" / "results" / "team_results.csv"
@@ -39,6 +40,8 @@ def team_of_role(cfg):
     """Active role -> team name. A role in no team is an error, so the CSV never gets a blank team."""
     out = {}
     for team, spec in cfg["teams"].items():
+        if team in BENCH_EXCLUDED_TEAMS:
+            continue
         for role in spec["roles"]:
             if role in cfg["roles"]:
                 out[role] = team

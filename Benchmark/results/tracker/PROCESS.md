@@ -4,20 +4,16 @@ Not user documentation. The user-facing method lives in `Benchmark/Benchmark.md`
 
 ## Start a queue
 
-From the repo root, with the list file in the tracker folder. One model per line: `TAG` runs all four roles, `TAG ROLES` runs only the listed roles (comma-separated, as in `--role`):
-
-```text
-.venv\Scripts\python.exe Benchmark\script\queue_watch.py Benchmark\results\tracker\<list>.lst
-```
+Not available. The runner is removed: `queue_watch.py` and `run_benchmark.py` (since deleted) were deleted when the realworld benchmark was retired, so no queue can be started from this repo. The steps below are the historical process and are kept for reference only.
 
 Run it in the background. Do not run two queues at once: they share `logs/`, `queue-run.log` and `benchmark.csv`.
 
 To resume after a stop, make a new list containing only the models that have no finished row, in their original order. Check `queue-run.log` for `exit=0` lines and `benchmark.csv` for rows. Do not restart a model that already has a row unless it was stalled or failed.
 
-## Per-model steps (what `queue_watch.py` does)
+## Per-model steps (what `queue_watch.py` did, since deleted)
 
-1. Preflight inside `run_benchmark.py`: Ollama reachable (`/api/version`), `LOCAL_LLM_TEMPERATURE` is 0.0, ts-mcp containers up (self-heals with `scripts/mcp_up.ps1`), synaptree containers up (`docker start`).
-2. Child: `python -I Benchmark/script/run_benchmark.py --model <m> --role builder,thinker,hard,coding`, stdin null, stdout and stderr both to `logs/<safe>.log` (`safe` = tag with characters outside `[A-Za-z0-9._-]` replaced by `_`).
+1. Preflight inside `run_benchmark.py` (since deleted): Ollama reachable (`/api/version`), `LOCAL_LLM_TEMPERATURE` is 0.0, ts-mcp containers up (self-heals with `scripts/mcp_up.ps1`), synaptree containers up (`docker start`).
+2. Child (since deleted): `python -I Benchmark/script/run_benchmark.py --model <m> --role builder,thinker,hard,coding`, stdin null, stdout and stderr both to `logs/<safe>.log` (`safe` = tag with characters outside `[A-Za-z0-9._-]` replaced by `_`).
 3. Poll every 30 s. Stall if:
    - `a` log mtime older than 900 s (idle);
    - `b` `== realworld done` seen and no `wrote` after it for 300 s;
@@ -38,10 +34,12 @@ To resume after a stop, make a new list containing only the models that have no 
 
 1. Read the `STALL` line (reason, idle seconds, last log line) and the last faulthandler dump in the model log.
 2. Confirm the process tree is gone (`tasklist`) and the model is unloaded (`ollama ps`).
-3. Do not edit `run_queue.sh` or `queue_watch.py` while a queue is running. Make the fix, test it on a scratch copy with `--fake` (see below), then restart the queue from the remaining models.
+3. Do not edit `run_queue.sh` or `queue_watch.py` (since deleted) while a queue is running. The runner is removed, so this step is historical. Make the fix, test it on a scratch copy with `--fake` (see below), then restart the queue from the remaining models.
 4. Record the cause in this file under "Known stall causes" when it is confirmed.
 
 ## Test the supervisor without touching real results
+
+Runner removed: `queue_watch.py` (since deleted) cannot be run from this repo. The command below is historical, kept for reference only.
 
 ```text
 .venv\Scripts\python.exe Benchmark\script\queue_watch.py <scratch>\list.txt --tracker <scratch> --fake --idle 20 --post-done 10 --cap 120 --poll 3

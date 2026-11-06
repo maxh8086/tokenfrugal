@@ -21,10 +21,10 @@ This is the reference for plugging a new role or a new test suite into the local
 | File | Holds | Written by |
 |---|---|---|
 | `results/benchmark.csv` | One row per model run: identity, date, run stamp, total score, rank, median speed, one summary cell per test, one reference per test | Benchmark run and the summary step (approval needed for changes) |
-| `results/builder.csv` | Builder detail: one row per case per repeat, `role=builder`, suites `realworld` and `coding` | `run_benchmark.py` and the detail builder |
-| `results/thinker.csv` | Thinker detail: suites `realworld` and `hard` | Same as above |
+| `results/builder.csv` | Builder detail: one row per case per repeat, `role=builder`, suites `roles` and `coding` | the detail builder (`run_benchmark.py` was deleted) |
+| `results/thinker.csv` | Thinker detail: suites `roles` and `hard` | Same as above |
 | `results/<new-role>.csv` | Detail for the new role, same column layout as the other detail files | New role's runner |
-| `results/raw/<stamp>-full-*.json` | Realworld raw JSON per run (named by stamp) | `bench_real.py` |
+| `results/raw/<stamp>-full-*.json` | Roles raw JSON per run (named by stamp) | `bench_real.py` |
 | `results/coding/`, `results/hard/` | Per-suite raw JSON, md and csv per run | Suite runners |
 | `results/cloud.csv` | Cloud reference runs, never ranked | Manual / cloud runner |
 | `results/backups/` | Copies of `benchmark.csv` before each schema or value change | Migration step |
@@ -56,7 +56,7 @@ Refs are keyed by `run_id` and suite, not by a raw JSON path, because a run may 
 
 ## 4. Steps to add a new role
 
-1. **Define the cases** in `script/ranking.py`: a `<ROLE>_CASES` list and, if raw JSON keys differ from case names, a mapping like `ROLE_KEY` (verified against `scripts/bench_real.py` and `script/run_benchmark.py`).
+1. **Define the cases** in `script/ranking.py`: a `<ROLE>_CASES` list and, if raw JSON keys differ from case names, a mapping like `ROLE_KEY` (verified against `scripts/bench_real.py`).
 2. **Create the suite runner output** so every run writes raw JSON named `<stamp>-<suite>-<model>.json` into `results/<suite>/`. Record `git_sha` in its `meta`.
 3. **Create `results/<role>.csv`** with the detail columns in section 2. Include only that role's suites. Do not copy another role's suites into it.
 4. **Back up** `results/benchmark.csv` to `results/backups/`.
@@ -100,6 +100,6 @@ These are open and must be settled or noted before a new role is added:
 - **Explorer rank (open).** The explorer and the post pick rank by total passes, then median seconds per case, over all four suites (81 checks). Scores and medians match benchmark.csv, and the summary rows for ts-qwable-9b-65536 and ts-qwen3-5-9b-iq4xs-65536 were published 2026-10-27. The absolute rank numbers still differ: benchmark.csv also ranks older partial-total rows (/72, /75, /78, /79), and the explorer does not build a complete run for nemotron-3-nano:4b, ts-gemma4-e4b-65536, granite4:tiny-h or hermes3:8b, which have /81 rows in the CSV. The relative order of the complete /81 runs matches.
 - **Stale wording (closed).** The legends no longer say "16 cases". The score is described as the builder, thinker, hard and coding suites together.
 - **Column name.** `benchmark.csv` already has `hard_score` (blank in all rows). The new thinker-hard column is named `thinker_hard_score` for now. Choose one name.
-- **Detail files.** `builder.csv` and `thinker.csv` currently hold both suites under both roles. Builder should keep only coding and thinker only hard (realworld in both). Haiku row 58 stays in the detail files, marked superseded.
+- **Detail files.** `builder.csv` and `thinker.csv` currently hold both suites under both roles. Builder should keep only coding and thinker only hard (roles in both). Haiku row 58 stays in the detail files, marked superseded.
 - **Blank vs partial totals.** It is not yet decided whether a model with only one role complete shows a partial total or a blank.
-- **Coding columns.** `benchmark.csv` has no `coding_*` columns yet; `run_benchmark.py` defines `CODING_COLS` but they were never added to the file.
+- **Coding columns.** `benchmark.csv` has no `coding_*` columns yet; the deleted `run_benchmark.py` defined `CODING_COLS` but they were never added to the file.

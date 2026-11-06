@@ -25,28 +25,45 @@ _ENV_AT_START = dict(os.environ)  # snapshot before the default below, so the ru
 os.environ.setdefault("TOKENFRUGAL_TASK_TIMEOUT", TASK_TIMEOUT_DEFAULT)  # keep one bad run from stalling the matrix
 
 from router import loop, server  # noqa: E402
-from scripts import bench_csv, bench_env, bench_real  # noqa: E402
-from scripts.bench_team_tasks import TEAM_TASKS  # noqa: E402
+from scripts import bench_checks, bench_csv, bench_env  # noqa: E402
+from scripts.bench_team_tasks import BENCH_EXCLUDED_TEAMS, EXPECT_ROOT, SEEDS, TEAM_REQUIRED_TOOLS, TEAM_TASKS, synaptree_dependent_roles  # noqa: E402
 from router.config import LLM_API_KEY, LLM_TEMPERATURE, OLLAMA_URL, ROOT, SYNAPTREE_PROJECT, THINK_LEVEL, load_tf_roles, resolve_role  # noqa: E402
 
 OUT = ROOT / os.getenv("BENCH_OUT_DIR", "bench")  # new rounds set this so old results are never touched
 SECTION_MARGIN = 600  # seconds
+CASE_TIMEOUT = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # per-dispatch limit of the roles section (see bench_roles)
+
+
+def parse_only(ap, raw):
+    """Split the --only value into section names. Any name not in SECTIONS is a usage error (exit 2, names the bad ones)."""
+    names = [x.strip() for x in raw.split(",")]
+    unknown = [x for x in names if x not in SECTIONS]
+    if unknown:
+        ap.error(f"unknown --only section(s): {', '.join(unknown)}; valid sections: {', '.join(SECTIONS)}")
+    return names
 
 
 def section_timeout(n):
-    """Hang safety net only, not a per-case limit (a case timeout is a scored failure in bench_real).
-    BENCH_SECTION_TIMEOUT wins when set; otherwise every realworld case at its full CASE_TIMEOUT for n repeats,
+    """Hang safety net only, not a per-task limit (a task timeout is a scored failure in bench_roles).
+    BENCH_SECTION_TIMEOUT wins when set; otherwise every team task at its full CASE_TIMEOUT for n repeats,
     plus SECTION_MARGIN."""
     env = os.getenv("BENCH_SECTION_TIMEOUT")
     if env:
         return float(env)
-    return len(bench_real.active_cases()) * n * bench_real.CASE_TIMEOUT + SECTION_MARGIN
+    return sum(len(tasks) for tasks in TEAM_TASKS.values()) * n * CASE_TIMEOUT + SECTION_MARGIN
 
 
-SECTIONS = ["roles", "realworld", "context", "output", "concurrency", "resume", "plan", "resources"]
+SECTIONS = ["roles", "context", "output", "concurrency", "resume", "plan", "resources"]
 
-# One short, checkable task per role: (agent slug, task).
-ROLE_TASKS = TEAM_TASKS  # one entry per active role, grouped by team in scripts/bench_team_tasks.py
+# Short, checkable tasks per role: role -> [(agent slug, task, check name)], grouped by team in scripts/bench_team_tasks.py
+ROLE_TASKS = TEAM_TASKS
+
+
+def first_task(role):
+    """The (agent, prompt) pair of a role's first task. Callers that unpack two values use this, so a role can hold
+    several tasks in ROLE_TASKS without breaking them; the check name is dropped here."""
+    agent, prompt, _check = ROLE_TASKS[role][0]
+    return agent, prompt
 
 
 def pct(xs, p):
@@ -101,26 +118,88 @@ async def bench_roles(n, only=None):
     res = {}
     role_timeout = float(os.getenv("BENCH_CASE_TIMEOUT", "600"))  # a hung dispatch is a scored failure, not a stall
     cfg = load_tf_roles()
+    synaptree = synaptree_dependent_roles(cfg)  # roles whose native servers include synaptree (from the yaml)
     missing = set(cfg["roles"]) - set(ROLE_TASKS)
     # assert not missing, f"bench does not cover roles: {sorted(missing)}"
     if missing:  # report uncovered roles instead of aborting the whole section
         print(f"  roles: no bench task for {sorted(missing)}, skipped", flush=True)
+    # BENCH_ROLES=code-l2,code-l4 runs only those roles (comma-separated); unset keeps the default selection
+    env_roles = [x.strip() for x in os.getenv("BENCH_ROLES", "").split(",") if x.strip()]
+    if env_roles:
+        unknown = [r for r in env_roles if r not in ROLE_TASKS]
+        if unknown:
+            raise ValueError(f"BENCH_ROLES names no bench task: {unknown}")
+        only = env_roles
     chosen = ROLE_TASKS if not only else {r: ROLE_TASKS[r] for r in only}
-    for role, (agent, task) in chosen.items():
-        assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
-        runs = []
-        for i in range(n):
-            dt, r = await timed(role_call(agent, task, role_timeout))
-            # a reply shorter than 20 chars (after dropping the leading "[tid] ") is a failure, not a success
-            body = re.sub(r"^\[[^\]]*\]\s*", "", r).strip()
-            role_ok = ok(r) and len(body) >= 20
-            if ok(r) and not role_ok:
-                r = f"FAILED reply too short ({len(body)} chars)"
-            runs.append({"s": round(dt, 1), "ok": role_ok, "out": r[:400]})  # keep the full compose/infra error
-            print(f"  roles/{role} #{i + 1} {dt:5.1f}s {'ok' if role_ok else failure_mode(r)}", flush=True)
-        warm = [x["s"] for x in runs[1:] if x["ok"]]
-        res[role] = {"cold_s": runs[0]["s"], "warm": stats(warm), "success": f"{sum(x['ok'] for x in runs)}/{n}",
-                     "failures": sorted({failure_mode(x["out"]) for x in runs if not x["ok"]}), "runs": runs}
+    for role, tasks in chosen.items():
+        runs = []  # every task of the role, n repeats each; a run keeps the check name it was scored with
+        uses_synaptree = role in synaptree  # the roles runner's synaptree infra gate, for roles that need the container
+        for idx, (agent, task, check_name) in enumerate(tasks):
+            assert resolve_role(agent, cfg)["role"] == role, f"{agent} is not a {role}"
+            seeds = SEEDS.get((role, idx), {})  # seeded files for this task (see bench_team_tasks.SEEDS)
+            expect = EXPECT_ROOT.get((role, idx))  # expected root-cause file for trace tasks
+            needs_scratch = bool(seeds) or check_name in bench_checks.SCRATCH_CHECKS
+            for i in range(n):
+                # Synaptree gate, checked before every dispatch (the HEAD runner did this per repeat): sweep leaked
+                # gateway containers, then do not dispatch while the synaptree container is down. Infra, nothing is sent.
+                started = None
+                if uses_synaptree:
+                    bench_checks.sweep_stale_mcp()
+                    pre_state = bench_checks.container_state()
+                    down = bench_checks.synaptree_down(pre_state)
+                    if down:
+                        runs.append({"s": 0.0, "ok": False, "infra": True, "out": down[:400], "check": check_name})
+                        print(f"  roles/{role} #{len(runs)} infra: {down}", flush=True)
+                        continue
+                    started = pre_state.get("StartedAt")  # compared after the dispatch: a restart during the run is infra
+                # Host scratch folder check before every dispatch: a missing or unmapped folder is infra, nothing is sent.
+                pre = bench_checks.scratch_ready(bench_checks.SCRATCH, bench_checks.WS)
+                if not pre and needs_scratch:  # clean folder, then this task's seeds; a seed that cannot be written is infra
+                    bench_checks.clean_scratch()
+                    pre = bench_checks.seed_files(bench_checks.SCRATCH, seeds)
+                if pre:
+                    runs.append({"s": 0.0, "ok": False, "infra": True, "out": pre[:400], "check": check_name})
+                    print(f"  roles/{role} #{len(runs)} infra: {pre}", flush=True)
+                    continue
+                dt, r = await timed(role_call(agent, task, role_timeout))
+                # a reply shorter than 20 chars (after dropping the leading "[tid] ") is a failure, not a success
+                body = re.sub(r"^\[[^\]]*\]\s*", "", r).strip()
+                # put the seeded test files back, so a model cannot pass by editing its tests; a failed write is infra
+                reseed = bench_checks.seed_files(bench_checks.SCRATCH, {k: v for k, v in seeds.items() if k.startswith("test_")})
+                # a tool reply saying the host folder or mount is missing is infra, not a model failure
+                infra = bench_checks.is_infra_tool_error(body) or bool(reseed)
+                try:
+                    role_ok = ok(r) and len(body) >= 20 and not infra and bench_checks.check_passes(
+                        check_name, body, bench_checks.SCRATCH, expect)
+                except bench_checks.InfraFailure as e:  # docker or host failure during the check: infra, not a model fail
+                    reason = str(e)[:400]
+                    runs.append({"s": round(dt, 1), "ok": False, "infra": True, "out": reason, "check": check_name})
+                    print(f"  roles/{role} #{len(runs)} infra: {reason}", flush=True)
+                    continue
+                # Post-dispatch infra checks. A tool that was not exposed by the profile is infra, not a fail. A failed
+                # (or connection-broken) synaptree run is infra only when the container is down or was restarted.
+                # Ordinary model fails with a healthy container keep their score.
+                trail = bench_checks.trail_of(r) if (uses_synaptree or role in TEAM_REQUIRED_TOOLS) else []
+                reason = ""
+                if role in TEAM_REQUIRED_TOOLS and bench_checks.tool_not_exposed(r, trail):
+                    reason = f"tool {TEAM_REQUIRED_TOOLS[role]} not exposed by profile"
+                elif uses_synaptree and (not role_ok or bench_checks.connection_closed(r, trail)):
+                    reason = bench_checks.synaptree_down(bench_checks.container_state(), started)
+                if reason:
+                    infra, role_ok = True, False
+                    r = f"{reason} | {r[:200]}"
+                if ok(r) and not role_ok and not infra:
+                    r = (f"FAILED reply too short ({len(body)} chars)" if len(body) < 20
+                         else f"FAILED check {check_name} ({len(body)} chars)")
+                runs.append({"s": round(dt, 1), "ok": role_ok, "infra": infra, "out": r[:400], "check": check_name})  # keep the full compose/infra error
+                status = "ok" if role_ok else ("infra" if infra else failure_mode(r))
+                print(f"  roles/{role} #{len(runs)} {dt:5.1f}s {status}", flush=True)
+        live = [x for x in runs if not x.get("infra")]  # infra runs are not fails: left out of success and failures
+        warm = [x["s"] for x in live[1:] if x["ok"]]
+        res[role] = {"cold_s": live[0]["s"] if live else None, "warm": stats(warm),
+                     "success": f"{sum(x['ok'] for x in live)}/{len(live)}" if live else "infra",
+                     "failures": sorted({failure_mode(x["out"]) for x in live if not x["ok"]}),
+                     "infra": sorted({x["out"] for x in runs if x.get("infra")}), "runs": runs}
     return res
 
 
@@ -170,7 +249,7 @@ def bench_output(n, lengths=(128, 512, 1024, 2048, 4096)):
 
 async def bench_concurrency(n, levels=(1, 2, 4, 8)):
     res = {}
-    agent, task = ROLE_TASKS["research"]
+    agent, task = first_task("research")
     for k in levels:
         t = time.perf_counter()
         out = await asyncio.gather(*[timed(server.dispatch_task(agent, task, task_type="benchmark")) for _ in range(k)])
@@ -181,8 +260,8 @@ async def bench_concurrency(n, levels=(1, 2, 4, 8)):
                        "failures": sorted({failure_mode(r) for _, r in out if not ok(r)})}
         print(f"  concurrency/{k} {res[str(k)]}", flush=True)
     # mixed models: builder + thinker at once forces model swaps in VRAM
-    mixed = await asyncio.gather(timed(server.dispatch_task(*ROLE_TASKS["builder"], task_type="benchmark")), timed(server.dispatch_task(*ROLE_TASKS["research"], task_type="benchmark")),
-                                 timed(server.dispatch_task(*ROLE_TASKS["builder"], task_type="benchmark")), timed(server.dispatch_task(*ROLE_TASKS["research"], task_type="benchmark")))
+    mixed = await asyncio.gather(timed(server.dispatch_task(*first_task("builder"), task_type="benchmark")), timed(server.dispatch_task(*first_task("research"), task_type="benchmark")),
+                                 timed(server.dispatch_task(*first_task("builder"), task_type="benchmark")), timed(server.dispatch_task(*first_task("research"), task_type="benchmark")))
     res["mixed_models_4"] = {"s": [round(dt, 1) for dt, _ in mixed], "success": f"{sum(ok(r) for _, r in mixed)}/4"}
     print(f"  concurrency/mixed {res['mixed_models_4']}", flush=True)
     return res
@@ -194,7 +273,7 @@ async def bench_resume(n, rounds=5):
     old = loop.TASK_TIMEOUT
     loop.TASK_TIMEOUT = 2.0
     try:
-        agent, task = ROLE_TASKS["builder"]
+        agent, task = first_task("builder")
         dt, r = await timed(server.dispatch_task(agent, task, task_type="benchmark"))
         tid = r[1:r.find("]")]
         rows = [{"round": 0, "s": round(dt, 1), "ok": ok(r), "msgs": len(store.get(tid)["messages"] or [])}]
@@ -237,7 +316,7 @@ def sh(cmd):
 
 
 async def bench_resources(n):
-    agent, task = ROLE_TASKS["builder"]
+    agent, task = first_task("builder")
     gpu = ["nvidia-smi", "--query-gpu=memory.used,memory.total,utilization.gpu", "--format=csv,noheader"]
     res = {"gpu_before": sh(gpu), "docker_before": sh(["docker", "stats", "--no-stream", "--format", "{{.Name}} {{.CPUPerc}} {{.MemUsage}}"])}
     peak = []
@@ -267,12 +346,6 @@ def markdown(data):
         for k, v in data["results"]["roles"].items():
             w = v["warm"]
             L.append(f"| {k} | {v['cold_s']} | {w.get('p50', '-')} | {w.get('p95', '-')} | {v['success']} | {'; '.join(v['failures']) or '-'} |")
-        L.append("")
-    if ok("realworld"):
-        L += ["## Real-world tasks (verified by running code or checking files)", "",
-              "| task | verified | ran | p50 s | max s | failure notes |", "|---|---|---|---|---|---|"]
-        for k, v in data["results"]["realworld"].items():
-            L.append(f"| {k} | {v['verified']} | {v['ran']} | {(v['s'] or {}).get('p50', '-')} | {(v['s'] or {}).get('max', '-')} | {' / '.join(v['notes']) or '-'} |")
         L.append("")
     if ok("context"):
         L += ["## Context ramp (docs role, prompt tokens)", "", "| tokens | success | recall | p50 s | failures |", "|---|---|---|---|---|"]
@@ -305,13 +378,18 @@ async def main():
     ap.add_argument("--tag", default="run")
     ap.add_argument("--team", default="", help="comma-separated teams; runs every active role in each team (roles section)")
     a = ap.parse_args()
-    want = a.only.split(",")
+    want = parse_only(ap, a.only)
     cfg = load_tf_roles()
     role_only = []  # empty = every active role in ROLE_TASKS
     for t in [x.strip() for x in a.team.split(",") if x.strip()]:
         if t not in cfg["teams"]:
             ap.error(f"unknown team: {t}")
+        if t in BENCH_EXCLUDED_TEAMS:  # has its own suite; skipped here
+            print(f"skip team {t}: not part of the model benchmark", flush=True)
+            continue
         role_only += [r for r in cfg["teams"][t]["roles"] if r in cfg["roles"] and r in ROLE_TASKS and r not in role_only]
+    if a.team.strip() and not role_only:  # every requested team was excluded: never fall back to all roles
+        ap.error("no benchmark team left to run after excluding " + ", ".join(sorted(BENCH_EXCLUDED_TEAMS)))
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     data = {"tag": a.tag, "stamp": stamp, "n": a.n, "results": {},
             "env": bench_env.capture_env(), "task_timeout": bench_env.task_timeout(_ENV_AT_START, TASK_TIMEOUT_DEFAULT)}
@@ -323,13 +401,10 @@ async def main():
         print(f"params {role} {model or '(default)'}: {size or 'not reported by endpoint'}", flush=True)
     sampler = bench_env.HardwareSampler(interval=2.0)
     sampler.start()
-    async def _real(n):
-        return await bench_real.run(n, timed, ok, failure_mode, stats)
-
     async def _roles(n):
         return await bench_roles(n, role_only or None)
 
-    fns = {"roles": _roles, "realworld": _real, "context": bench_context, "concurrency": bench_concurrency, "resume": bench_resume,
+    fns = {"roles": _roles, "context": bench_context, "concurrency": bench_concurrency, "resume": bench_resume,
            "plan": bench_plan, "resources": bench_resources}
     OUT.mkdir(exist_ok=True)
     for s in SECTIONS:
@@ -369,21 +444,6 @@ async def main():
     print("tail: final json written", flush=True)
     (OUT / f"{stamp}-{a.tag}.md").write_text(markdown(data), encoding="utf-8")
     print("tail: md written", flush=True)
-    ran_ids = set((data["results"].get("realworld") or {}).keys())
-    fixed_layout = os.getenv("BENCH_SUITE", "").strip().lower() != "hard" and ran_ids <= {c for c, _, _ in bench_csv.LAYOUT}
-    if fixed_layout:  # the CSV layout only has the default 16 cases; a filtered run would show 0/0 totals
-        bench_csv.write(data, OUT / f"{stamp}-{a.tag}-realworld.csv")
-        print("tail: csv written", flush=True)
-    else:  # hard suite or a filtered/other-case run: one row per case, its own summary CSV, never benchmark.csv
-        import csv
-        suffix = "hard_results" if os.getenv("BENCH_SUITE", "").strip().lower() == "hard" else "cases"
-        with open(OUT / f"{stamp}-{a.tag}-{suffix}.csv", "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["model", "case", "verified", "ran", "status", "median_s", "notes"])
-            for cid, r in (data["results"].get("realworld") or {}).items():
-                med = (r.get("s") or {}).get("p50") if isinstance(r, dict) else None
-                w.writerow([a.tag, cid, r.get("verified", ""), r.get("ran", ""), r.get("status", ""),
-                            med if med is not None else "", " | ".join(r.get("notes", []))])
     print("wrote", OUT / f"{stamp}-{a.tag}.md", flush=True)
 
 

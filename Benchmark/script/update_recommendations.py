@@ -6,6 +6,13 @@ Uses the same per-role ranking and status dots as build_report.py (all local run
 The top model of each role (builder cases -> builder, thinker cases -> thinker) becomes the default.
 """
 import sys as _sys
+
+# Disabled: this script ranks by the retired builder/thinker suites and would rewrite router/tf-roles.yaml.
+# It stays disabled until the team-based rerun defines the per-role defaults.
+print("update_recommendations.py is disabled until the team-based rerun: it would rewrite router/tf-roles.yaml",
+      file=_sys.stderr)
+raise SystemExit(2)
+
 for _s in (_sys.stdout, _sys.stderr):
     if hasattr(_s, "reconfigure"):
         _s.reconfigure(encoding="utf-8", errors="replace")

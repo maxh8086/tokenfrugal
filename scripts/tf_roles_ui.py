@@ -118,17 +118,30 @@ _LOCK = threading.Lock()
 
 
 def bench_summary(tag: str) -> dict | None:
-    """Pass counts from the newest bench/<tag>/*.json (realworld section)."""
+    """Pass counts from the newest bench/<tag>/*.json (team roles section, results["roles"]).
+
+    Infra runs are left out of both verified and ran. s_per_case is the mean of each role's mean run
+    seconds (the "s" field bench.py writes per run), or None when no role has a timing.
+    """
     files = sorted((config.ROOT / "bench" / tag).glob("*.json"))
     if not files:
         return None
-    cases = (_read(files[-1]).get("results") or {}).get("realworld") or {}
-    ver = sum(int(v.get("verified") or 0) for v in cases.values())
-    ran = sum(int(v.get("ran") or 0) for v in cases.values())
-    p50 = [v["s"]["p50"] for v in cases.values() if isinstance(v.get("s"), dict) and v["s"].get("p50")]
-    return {"model": tag, "verified": ver, "ran": ran, "cases": len(cases),
+    # a failed section is stored as {"error": "..."}, so only role entries that carry "runs" count
+    roles = {k: v for k, v in ((_read(files[-1]).get("results") or {}).get("roles") or {}).items()
+             if isinstance(v, dict) and "runs" in v}
+    ver = ran = 0
+    role_means = []
+    for v in roles.values():
+        live = [x for x in v["runs"] if not x.get("infra")]
+        ver += sum(1 for x in live if x.get("ok") is True)
+        ran += len(live)
+        secs = [float(x["s"]) for x in live if isinstance(x.get("s"), (int, float))]
+        if secs:
+            role_means.append(sum(secs) / len(secs))
+    return {"model": tag, "verified": ver, "ran": ran, "cases": len(roles),
             "pct": round(100 * ver / ran) if ran else 0,
-            "s_per_case": round(sum(p50) / len(p50), 1) if p50 else None, "file": files[-1].name}
+            "s_per_case": round(sum(role_means) / len(role_means), 1) if role_means else None,
+            "file": files[-1].name}
 
 
 def _run_bench(cmd: list[str], tag: str) -> None:

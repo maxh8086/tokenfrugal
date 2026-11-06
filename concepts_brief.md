@@ -1,241 +1,122 @@
-# Concept Brief: Mode B for the media-generator role
+# Concept Brief: Retire the Builder, Thinker, Hard and Coding suites
 
-**Status:** Brainstorm output. Not approved. Needs user sign-off on the open decisions in section 8 before any task is dispatched.
+**Status:** Brainstorm output. Not approved. The open decisions in section 4.2 need the user's answer before any task is dispatched.
 **Reviewed by:** egm-design, egm-codebase-details, egm-zoom-out, egm-comprehension, egm-implementation-readiness, egm-structural (BRAINSTORM mode).
-**Scope of checks:** Read-only review of the repo as of 2026-11-02. Licences and VRAM figures were not verified online and are marked unverified.
+**Scope of checks:** Read-only review of tokenfrugal as of 2026-11-02. No tests were run. Pass and fail predictions are from reading the code.
+**Intended final path:** `C:\Users\vaibh\Downloads\Projects\tokenfrugal\concepts_brief.md`. Not written there, because that file was changed by another session while this brief was being drafted (it now holds a Mode B media-generator brief). Decide whether to move this file over it.
 
 ---
 
-## 1. Summary
+## 1. Overview
 
-Mode B turns a plain-text brief into a narrated, motion-graphics video of 20 to 30 seconds. It is for promotional and faceless content. Mode A (the captioned 9:16 short from a raw clip, currently named mgen) stays unchanged.
+The benchmark in tokenfrugal scores each role on four separate test collections: the **Builder** suite, the **Thinker** suite, the **Hard** suite and the **Coding** suite (the code-l1 to code-l6 read-only levels used by the skill gate). The scoreboard, ranking and CSV files all count these four suites.
 
-The reviewers agree on the core shape but find that the anchored decisions conflict with the current code in four places:
+The proposal removes those four suites from the scoreboard, ranking and tests. Their checks move into the existing team roles (builder, reviewer, debugger, docs, and the dev-coding code-l levels). Roles stay. New tasks are added: write, fix, multi-step, test-writing, and opt-in deep checks. The read-only code-l1 to code-l6 tasks are replaced by write-and-test tasks that run in a sandbox test check. The skill gate keeps working by calling code-l2, code-l4 and code-l6 by role, not by suite.
 
-1. The container is not network-disabled in the real compose service. Only a filesystem sidecar is.
-2. The media-generator image already ships HyperFrames 0.8.223, Chromium and ffmpeg. The "host renders because the container cannot" premise is weaker than the brief states.
-3. The GPU lease holder list is closed. A Mode B holder cannot take the lease without a code change, and kalamanch already holds the GPU in its own run.
-4. The existing mgen tool and role require a Raw clip and have a 900 s timeout. A text brief has no clip, and a one-minute run with voice and render may not fit in 900 s.
-
-**Recommended first slice:** a 20 to 30 second, text-in, single-voice (Kokoro-82M on CPU), one-template video, rendered by HyperFrames, with one optional neutral music bed written for this slice (D10). VoxCPM2, the mood picker, style profiles, topic-to-script writing and the 3D acts are deferred until measured.
+The user's five decisions are treated as fixed. Where a reviewer found that a decision conflicts with the code, the conflict is listed in section 4.2 as an open decision. This brief does not override the user's decisions.
 
 ---
 
-## 2. Goals and non-goals
+## 2. Analysis
 
-**Goals (first slice)**
-- Text in (a script the user wrote), MP4 out, about 20 to 30 seconds.
-- Neutral visual style with one built-in default palette and font.
-- Narration from a local voice engine, with a fixed preset voice.
-- Deterministic-enough runs: same inputs produce a manifest that explains any difference.
-- Mode A behaviour and tests unchanged.
+### 2.1 What exists today (verified in the repo)
 
-**Non-goals (first slice)**
-- No BusinessNext brand, voice, assets or sting. The businessnext-video-v3 skill is a method reference only.
-- No voice cloning.
-- No talking avatar.
-- No topic-only input (the system writing the script) until the approval step exists.
-- No 3D (Three.js) acts.
-- No Voicebox.
-- No mood dropdown in slice 1.
-- No change to the Kalamanch pipeline.
+- **Team task file.** `scripts/bench_team_tasks.py` is a flat dict: each role maps to one `(agent, prompt)` tuple (about lines 1 to 41). It has no team keys and no check. `scripts/bench.py` reads it as `ROLE_TASKS` and indexes one task per role (lines 29, 49, 104 to 108, 173 to 197, 240).
+- **Teams.** Teams live in `router/tf-roles.yaml` (about lines 256 to 292: orchestrator, dev-coding, dev-analyst, research). `Benchmark/script/team_results.py` (lines 38 to 44) reads them from there.
+- **Checks.** Pass and fail logic lives in `scripts/bench_real.py`, not in the team task file. `coding_cases()` (about lines 450 to 530) defines code_l1_clamp through code_l6_callers. `_sandbox_tests(files)` (about lines 437 to 447) re-seeds test files and runs unittest in a network-less `python:3.13-slim` container with a 90-second timeout (line 446). `hard_cases()` is the opt-in Hard suite with tolerant word-group checks. `case_status` (about lines 229 to 256) and `path_preflight` (about lines 548 to 552) already exist.
+- **Skill gate.** `scripts/skill_gate_live.py` maps case names code_l2_slugify, code_l4_rename and code_l6_callers (line 25) and runs them with `BENCH_SUITE=coding` and `BENCH_CASES` (line 57). Its path goes through `bench_real`, not the team task file.
+- **Scoreboard and ranking.** `Benchmark/script/ranking.py` hard-codes `BUILDER_CASES` and `THINKER_CASES` (lines 18 to 21), reads all four CSVs (lines 65 to 68), computes `builder_score` and `thinker_score` (about line 270), and defines the score as 81 checks (27 cases times 3 attempts) across all four suites (about lines 310 to 317). The Hard table is at about lines 444 to 527.
+- **Other touch points.** `Benchmark/script/build_report.py` has the 60/40 rank formula (line 683) and the coding section (lines 76, 136, 219). `Benchmark/script/update_recommendations.py` imports the case lists (line 16) and can rewrite default models in `router/tf-roles.yaml` and the explorer HTML. `Benchmark/script/store.py` maps the builder and thinker roles to the suite named "roles" and lists the CSV files (lines 35 to 43, 185 to 194). `scripts/bench_csv.py` fixes a 16-column layout keyed on case ids (lines 14 to 34); `tests/test_csvstore.py` (line 73) depends on it.
+- **Name collisions.** "builder" and "thinker" are also model slots: `router/tf-roles.yaml` (lines 5 to 7, 21 to 36), `router/config.py` (about line 214), and `TOKENFRUGAL_MODEL_BUILDER` / `TOKENFRUGAL_MODEL_THINKER`. The deleted `Benchmark/script/run_benchmark.py` (line 80) used to set builder and thinker to the model under test. Retiring a suite must not touch these slots or the roles.
+- **Workspace mount.** No writable `/workspace` mount is defined in `docker-compose.yml` or `router/docker_mcp.py`. `router/config.py` has `bind_writable` (`MCP_GATEWAY_DOCKER_BIND_ALLOW_WRITABLE_PATHS`). `mount_ok` was in the deleted `run_benchmark.py`, and its test went with it. The infra label exists in `Benchmark/script/team_results.py` (line 28) and in `router/loop.py` (`error_kind`, `failure_reason`).
+- **Tests named in the concept.** `tests/test_coding_suite.py` asserts code_l1_clamp is the active case. `tests/test_bench_paths.py` asserts code_l6_callers and SYNAPTREE_CASES. `tests/test_bench_hard.py` covers the Hard suite. `tests/test_role_timeout.py` tests `router/loop.py` `role_timeout`, which `router/server.py` (line 181) uses; it was touched by commit 998597d and imports `bench_real`.
+- **Tests not named, but affected.** `tests/test_ranking_hard.py`, `tests/test_merge_legacy_coding.py`, `tests/test_bench_b1_b4.py`, `tests/test_bench_status.py`, `tests/test_bench_sweep.py`, `tests/test_bench_mount.py`, `tests/test_skill_gate.py`, and `tests/test_native_wiring.py` (lists code-l6 as a synaptree role). `test_role_timeout.py` has frozen timeouts for the code-l ids.
+- **Git state.** `Benchmark/results/team_results.csv` and `Benchmark/Benchmark.md` are modified; `Benchmark/results/team_results.before-redo.csv` is untracked. The tree is dirty, so the backup step must not disturb these files.
 
-**Deferred (after a measured spike)**
-- VoxCPM2 as an opt-in engine.
-- Mood picker and music choice.
-- Style profile (palette, font, sting).
-- Topic-to-script drafting, with a script approval gate.
-- Full one-minute target.
+### 2.2 Problems the reviewers found
 
----
-
-## 3. Component boundaries
-
-| Component | Where it runs | Responsibility | Crosses boundary as |
-| --- | --- | --- | --- |
-| Brief intake | Router (tf-roles / new MCP tool) | Validate the brief, create run folder, write run manifest | `brief.json` |
-| Narration | Host (decision D1a) | Text to WAV, fixed voice; writes into the mapped media folder | `narration.wav` |
-| Music bed | Container (`make_score.py`) for slice 1 | Optional bed, no mood | `bed.wav` |
-| Scene build | Container or host (see D1) | HTML/CSS scenes on a timeline | `scenes/*.html` |
-| Render | Container (already has HyperFrames and Chromium) or host | Frames to video | `video_raw.mp4` |
-| Mux and encode | Container | Mix audio, final encode, captions if used | `Render/<name>.mp4` |
-| Verify | Router or container | ffprobe checks, manifest hashes | `manifest.json` |
-
-**Concern:** the brief says "host renders, container does file steps". The image already contains the render stack (see section 5). The team must decide where each step runs and record it (D1).
+1. **The team task schema cannot carry checks.** A team task is a two-part tuple with no pass rule. Write, fix and multi-step tasks need one (a sandbox test run, a regex, or a word-group rule). "Add them to `bench_team_tasks.py`" is not enough: the schema must change to a three-part entry or a dict, and a shared check module must be imported by both `bench.py` and `bench_real.py`. `bench.py` also assumes one task per role, so that reaches it too. (Blocker.)
+2. **No replacement scoring denominator.** Every role's score is built from the suites being removed. Nothing says what replaces the 81-check denominator or the 60/40 formula. Removing the suites without changing `ranking.py`, `build_report.py`, `update_recommendations.py`, `store.py`, `bench_csv.py` and the HTML either breaks the ranking or silently changes it. `update_recommendations.py` can rewrite `router/tf-roles.yaml`, so it must be disabled until the rerun. (Blocker.)
+3. **Replacing code-l1..l6 in place breaks comparability and tests.** The skill gate and `test_role_timeout.py` depend on those ids and their frozen timeouts; `test_native_wiring.py` lists code-l6. Changing what a read-only id measures, under the same id, makes archived scores incomparable with new ones. Deleting `test_role_timeout.py` removes coverage of the timeout-labelling fix in commit 998597d; it should be rewritten. (Major.)
+4. **The sandbox check does not prove a writable workspace.** `_sandbox_tests` mounts scratch read-only. Write tasks need a separate probe through the gateway. Reuse `path_preflight` (`mount_ok` was removed with `run_benchmark.py`); do not add a new `docker run` path (`bench_real.py` line 446 bypasses the gateway). (Major.)
+5. **Several features in one.** Suite retirement, a check schema, a mount probe, a sandbox check, a skill-gate remap, a ranking change and a 35-model rerun (3 to 4 days). Each has its own failure mode. (Major.)
+6. **Undefined terms and missing "done".** "Suite", "team", "role", "scoreboard", "ranking", "deep check", "sandbox test check", "infra", "archived", "dev-coding", "code-l1..l6". The concept does not say what "done" looks like for each item. (Major.)
+7. **Timing.** tokenfrugal is off until end of Wednesday 2026-11-04. Offline unit tests can run now (by Haiku subagents). The skill gate, live write tasks, the mount probe and the rerun must wait.
 
 ---
 
-## 4. Interfaces and contracts
+## 3. Goals vs Non-Goals
 
-**Tool and role.** Mode B should not reuse `mgen`. The reviewers agree on this:
-- `mgen` requires the clip to exist in `Raw` (`router/media_generator_mcp.py:63`).
-- It finds its output by diffing the Render listing (`:79-80`), so a text run has no clip to name.
-- The role `media-generator` has `required_tool: list_raw` and `timeout_s: 900` (`router/tf-roles.yaml:43`). Adding tools also breaks the exact-tool-set assertion in `tests/test_preflight.py:135`.
+**Goals**
+- The four suites (Builder, Thinker, Hard, Coding) no longer appear on the scoreboard, in the ranking, or as separate suites in the tests.
+- Each team role is tested on tasks that look like its real work: write, fix, multi-step, test-writing, and opt-in deep checks.
+- The code-l levels test write-and-test work in a sandbox instead of read-only work.
+- The skill gate still runs by role, with a test that every gate case id is in the active list.
+- Old benchmark rows are kept. Backups are dated. Nothing is deleted from the CSVs.
+- A failed workspace mount is recorded as infra, not a model failure.
+- Every stage has an acceptance command or a checkable criterion.
 
-Proposed: one new MCP tool, `media-briefing`, with the same return convention as `mgen` (`exit=N` or `error: ...`). The tool is `media-briefing`; the role is `media-motion`. Two options for the role (D3):
-- **Option 1:** a separate role, `media-motion`, with its own contract and timeout. Mode A is untouched. Recommended by the design and codebase reviewers.
-- **Option 2:** a mode of `media-generator` with one new tool and a test update. Cheaper, but it changes the contract that Mode A depends on.
-
-**Brief schema (draft):**
-- `text` (script), required. Max 90 words. Basis: 30 s at 2.5 words per second is 75 words, plus margin. The spike confirms the rate.
-- `music`, boolean. `true` adds the bed from `make_score.py`; `false` gives narration only.
-- `length_target_s`, default 25. Tolerance: plus or minus 1.0 s (placeholder, set from the spike).
-- Constants, not inputs in slice 1: language `en`, engine `kokoro`, one preset voice, style `neutral`. The manifest records them.
-- `out_name`, which must pass the existing `_check()` name validation.
-
-**Outputs:** `Render/<out_name>.mp4`, and `Render/<out_name>.manifest.json` beside it.
-
-**Manifest fields:** run id, brief hash, script hash, engine name and version, weight sha256 and source revision, engine seed support (record "seed not supported" if Kokoro has none), HyperFrames version (0.8.223 pinned), Chromium version, ffmpeg version, font file and hash, palette, music source and hash, per-stage timings, output duration, audio stream info, frame count.
-
-**Run state.** Defined by the stage table in section 12 and the run's `status.json`. No separate run-state list here.
-
-**Call shape.** Slice 1 is one synchronous call. The 900 s limit (`router/tf-roles.yaml:43`) must cover a 20 to 30 s run, which the spike checks. Add a run id and polling only if the spike measures a run over about 600 s.
+**Non-goals**
+- No commits (user instruction; the tree is dirty).
+- No change to the router, the gateway, or the model slots named builder and thinker.
+- No change to Docker profiles or the writable `/workspace` definition beyond a probe.
+- No new scoring model. The ranking formula stays unless the user says otherwise.
+- No live runs before 2026-11-04. The 35-model rerun is not part of the first slices.
+- No edits by Sonnet or Opus. Haiku subagents do the edits; Sonnet verifies.
 
 ---
 
-## 5. Facts checked against the repo (corrections to the brief)
+## 4. Key Decisions & Staging
 
-| Brief says | Repo says | Source |
-| --- | --- | --- |
-| Container has networking disabled | Compose service `media-generator` sets no network setting. `disableNetwork: true` is only on the filesystem sidecar | `docker-compose.yml:22-33`, `profiles/media-generator.yaml:23` |
-| Container is CPU-only, file steps only | Image installs HyperFrames 0.8.223, Node 22, Chromium, ffmpeg, tesseract; `make_score.py` is present | `docker/media-generator/Dockerfile:10, :15, :26, :29-37, :57, :71-72`; `pipeline.py:202` |
-| Host lacks ffmpeg, soundfile, HyperFrames, Chrome | Accurate for the host | `handoff.md:616` |
-| Image pinned on Docker Hub | Pinned by digest, still named `maxh8086/video-editor` | `docker-compose.yml:27` |
-| Lease is taken by the voice step | Holders are closed to `comfyui` and `kalamanch`. Other names raise `ValueError` | `router/gpu_lease.py:38, :336-337` |
-| Nothing else holds the GPU for kalamanch | `kalamanch/run.py` takes the lease as `kalamanch` and releases in a finally block | `kalamanch/run.py:37, :54` |
-| Mode A is a 9:16 captioned short | Requires a Raw clip; role timeout 900 s | `router/tf-roles.yaml:43`, `router/media_generator_mcp.py:15, :63` |
-| Workspace folders exist for Mode B | No Mode B folder; `LAYOUT` is asserted by a test | `router/media_workspace.py:15`, `tests/test_media_workspace.py:63` |
-| Business Next skill exists | Not found in the tokenfrugal repo. Mentioned only in `docs/designs/video-pipeline-use-cases.md` | Glob, unconfirmed elsewhere |
+### 4.1 Decisions already made by the user (kept as stated)
 
-**Two HyperFrames copies.** If Mode B renders on the host and Mode A renders in the image, the two versions can drift. This breaks reproducibility. Pick one version and pin it in both places, or use only one.
+1. **Team tasks.** Add write, fix, multi-step and test tasks under existing teams: orchestrator to builder; dev-analyst to reviewer (SQL-injection review, two-vulnerability review, compare two functions; opt-in deep check); dev-analyst to debugger (crash, multi-file trace, ambiguous root cause; opt-in deep check); research to docs (long summary with constraints; opt-in deep check); dev-coding to code-l1..l6 (write-and-test, sandbox test check). The read-only code-l1..l6 tasks are replaced and their old scores archived.
+2. **Skill gate.** `scripts/skill_gate_live.py` calls code-l2, code-l4 and code-l6 under dev-coding by role, not by suite. The sandbox check moves with them.
+3. **Tests.** Rewrite or delete `test_coding_suite.py`, `test_bench_hard.py`, `test_bench_paths.py`, `test_role_timeout.py`.
+4. **Benchmark data.** Back up `Benchmark/results/benchmark.csv` and the other suite CSVs to dated copies under `Benchmark/results/` first. Keep old rows. A full rerun of all 35 offline models (3 to 4 days) replaces the file later.
+5. **Workspace.** Write tasks need a writable `/workspace` mount, probed through the docker MCP gateway before any rerun. A mount failure is infra.
 
-**Stale design text.** `docs/designs/video-pipeline-use-cases.md` lines 10 and 24 still say Mode B uses Voicebox on the host and renders on the host. Lines 104 to 108 already use VoxCPM2 and Kokoro. The doc needs updating once decisions are made.
+### 4.2 Decisions the reviewers say need the user's answer
 
----
+- **D1. Replace in place, or add new ids?** The user said "replace". Reviewers recommend adding new code-l ids for the write-and-test versions, keeping the read-only ids until the new ones pass on one or two models, then retiring the old ones. This protects the skill gate, the frozen timeouts and archived comparisons. **Recommendation: add new ids, retire old ids later.**
+- **D2. What does "retire" mean?** Remove from scoreboard and ranking only, or also delete the BENCH_SUITE code paths? The skill gate depends on the code paths. **Recommendation: scoreboard and ranking first; delete code paths after the skill gate is remapped.**
+- **D3. Replacement denominator.** Team tasks alone, the roles 48-case standard, or a new set? Define the BUILDER and THINKER replacement sets in `ranking.py`. **Needed before stage 5.**
+- **D4. Deep checks default-on?** If opt-in only, the retired suites' signal leaves the ranking. **Recommendation: at least one deep check per retired suite is default-on, or the score drop is documented.**
+- **D5. Keep the 60/40 formula?** `build_report.py` line 683. **Recommendation: keep it until the rerun.**
+- **D6. Archive location and label.** Precedent: `Benchmark/results-archive/<tag>-<date>/` (the `pre-n3-20261017` folder). Confirm. Old rows get a `legacy_readonly` or `suite=legacy` label, never a deletion.
+- **D7. Sandbox timeout.** 90 s (`bench_real.py` line 446). Enough for write-and-test tasks? Set per-task timeouts after measuring.
+- **D8. Who reviews Haiku's test-file edits before the offline run?** Sonnet reviews the diff and runs the offline command.
+- **D9. Rerun scope.** `team_results.csv` only, or `benchmark.csv` too?
 
-## 6. Blockers
+### 4.3 Proposed staging (after approval)
 
-**B1. Removed for slice 1.** The GPU lease is not used. The slice-1 default voice runs on CPU, so no step takes a lease. The lease returns only when a GPU engine is enabled (VoxCPM2, deferred).
+Each stage lists its files, one acceptance check, and a tool-call limit for the Haiku subagent doing the work. Stages 0 to 3 can run now (offline only). Stages 4 onward wait for 2026-11-04 for live checks.
 
-**B2. Voice engine not pinned.** VoxCPM2 licence and peak VRAM are unchecked (`video-pipeline-use-cases.md:105-109`). Kokoro-82M weights are Apache-2.0 per `docs/designs/video-pipeline-use-cases.md:108` (checked 2026-11-02). The Kokoro phonemiser uses espeak-ng (GPL-3.0), installed on the host (D11). Review its obligations before any distribution. Use a fallback rule: if VoxCPM2 fails to load or runs out of VRAM, use Kokoro, and record which engine ran.
+- **Stage 0. Confirm the window.** Confirm no live runs before 2026-11-04. Acceptance: user confirms. No edits.
+- **Stage 1. Backup.** Copy `benchmark.csv`, `team_results.csv`, `builder.csv`, `thinker.csv`, `hard_test.csv`, `coder.csv` and any other suite CSVs under `Benchmark/results/` to `Benchmark/results-archive/<tag>-2026-11-02/`. Acceptance: SHA-256 and row count of each copy match its original; originals unchanged; no commit. Tool-call limit: 12.
+- **Stage 2. Check schema.** Extend team task entries to carry a check. Move `_sandbox_tests` and the group checks into a shared module imported by `bench.py` and `bench_real.py`. Select tasks by role, not suite. Keep the existing tasks working. Acceptance: `.venv/Scripts/python.exe -m unittest discover -s tests -t . -q` passes, plus a new test that every task has a check.
+- **Stage 3. Mount probe.** Reuse `path_preflight` (`mount_ok` was removed with `run_benchmark.py`). Map a probe failure to infra in `router/loop.py` (`error_kind`) and `team_results.py`. Acceptance: offline test of the infra mapping passes. Live probe waits for tokenfrugal.
+- **Stage 4. New team tasks, new ids.** Add one write task under orchestrator to builder first, then reviewer, debugger and docs tasks, and the write-and-test code-l ids as new ids. Keep the old read-only ids. Acceptance: each new task has a check and an offline unit test; live run on one model after 2026-11-04.
+- **Stage 5. Scoreboard and ranking.** Define the replacement denominator (D3). Update `ranking.py`, `build_report.py`, `store.py`, `bench_csv.py` (and `tests/test_csvstore.py`), and the HTML. Disable the `tf-roles.yaml` write in `update_recommendations.py` until the rerun. Acceptance: ranking tests pass; the four suite names do not appear in scoreboard output.
+- **Stage 6. Skill gate remap.** Point `scripts/skill_gate_live.py` at the new role-based code-l ids. Add an offline test that every gate case id is in the active list. Acceptance: `tests/test_skill_gate.py` passes.
+- **Stage 7. Tests.** Keep, rewrite or delete each affected file (section 2.1). Rewrite `test_role_timeout.py`; do not delete it. Rewrite `test_coding_suite.py`, `test_bench_hard.py`, `test_bench_paths.py` against the new ids. Acceptance: full offline suite passes.
+- **Stage 8. Retire old ids.** Remove the read-only code-l ids and the four suite code paths once the new ids pass on one or two models (D1, D2). Acceptance: offline suite passes; skill gate still runs.
+- **Stage 9. Full rerun.** All 35 offline models after stage 8, 3 to 4 days. Row counts equal model count. Archived rows are not overwritten.
 
-**B3. The run must fit one synchronous call.** `mgen` and the role both cap at 900 s. The spike measures a 20 to 30 s run against that cap. Async is added only if it does not fit (section 4).
+### 4.4 Acceptance rules for every stage
 
-**B4. No Mode B tool contract.** No signature, input limits, error strings, fps, resolution or timeout is defined yet. Section 4 is a draft.
-
-**B5. Unstable baseline.** `git status` shows an uncommitted `video-editor` to `media-generator` rename, a deleted `role-video-editor` SKILL.md and edits to Mode A tests. Commit or stash this first. Rollback is a revert of the Mode B commit plus the previous digest. Mode A tests must pass before and after.
-
-**B6. One minute on one consumer GPU is unproven.** The design critic estimates VoxCPM2 at about 4 GB of fp16 weights, before activations. The GPU is described as 8 GB in `docs/designs/comfyui-gpu-lease.md:11`, which cannot hold an LLM and a video model together. Nothing has been measured. Start at 20 to 30 seconds. Measure before raising the target.
-
----
-
-## 7. Major concerns and mitigations
-
-- **Mood picker.** Three reviewers gave different answers (chat prompt, local page, form field). Recommendation: a fixed list of five moods plus "none" in the same brief form, with an optional free-text field that maps to the nearest mood and shows the result. Defer the picker to slice 2 anyway, since slice 1 uses no music choice.
-- **Music source.** Decided (D10): slice 1 writes a neutral bed as new code. `make_score.py` is not used because its bed is dramatic. `make_music.py --mood` is a host script from businessnext and outside this repo, so do not copy it unless its licence is cleared.
-- **Approval gate.** When only a topic is given, the system writes the narration. Nothing in the concept says the user reviews it before voice and render run. Make an approval step mandatory before any GPU stage. Use an explicit mode toggle ("I have a script" or "write from topic"); do not infer the mode from input length.
-- **Observability.** `media_generator_mcp.py:16` keeps only the last 20 lines and returns no stage progress. Each mgen call starts a new container (`router/media_generator_mcp.py:67-68`), so `/tmp` is not shared between runs. Write per-stage timings to the run folder.
-- **Shared code.** `docker-compose.yml:25-26` and `Dockerfile:57` pull `compose_intro.py` and `make_score.py` from `kalamanch`. Do not edit those files for Mode B; copy or add new modules to keep Mode A unchanged.
-- **Image coupling.** Decided: Mode B uses the same image as Mode A (D9). Any image change gets its own digest and commit, and the Mode A regression gates apply.
-- **Naming.** Keep `video-editor` names for now. Rename in a separate change.
-- **Python versions.** `pyproject.toml` requires 3.11 or later and the router venv is 3.11.9. CLAUDE.md warns that 3.10.0 breaks pydantic. A dedicated Python 3.11 venv for the voice step satisfies both Kokoro and VoxCPM2 (which accepts 3.10 to 3.12). Do not use the host 3.10 install.
-- **Determinism.** Voice sampling and CUDA kernels are not bit-stable. Claim reproducibility only at the level of: same script, same WAV (the saved WAV is the input to render), same render versions. Record the seed where the engine supports one. Verify with ffprobe.
-- **Existing verification is weak.** The current check for mgen is "returned the Render path with no error" (`tf-roles.yaml:549`). Mode B needs real checks (section 9).
-- **Pins.** Pin the exact Kokoro package version, Hugging Face revision for weights, VoxCPM2 build if used, PyTorch CUDA build, and npm versions. Pin HyperFrames to 0.8.223 to match the image.
+- The offline command `.venv/Scripts/python.exe -m unittest discover -s tests -t . -q` passes before a stage is marked done.
+- Sonnet reviews the diff and records the result. Unrun code is not accepted.
+- No commits.
+- Haiku subagents do all edits and report which work they did.
+- tokenfrugal is not called before 2026-11-04.
 
 ---
 
-## 8. Open decisions (need user answer)
+## 5. Top objections (summary)
 
-- **D1. Where does render run? DECIDED 2026-11-02: in the container** (Option A). HyperFrames and Chromium already live there. Option A needs a Mode B service whose network setting is decided under D7.
-- **D1a. Where does voice run? DECIDED 2026-11-02: on the host.** The Kokoro step runs on the host and writes `narration.wav` into the media folder. The container reads it from the mapped folder (`docker-compose.yml:32`, mounted at `/work`). The host needs a Python 3.11 venv with Kokoro (task 4), and the container needs no voice layer. The folder path is the existing media workspace folder (`VIDEO_EDITOR_DIR`), unless the owner names another.
-- **D2. Default engine. DECIDED 2026-11-02: Kokoro-82M.** VoxCPM2 stays opt-in after a VRAM spike passes. Kokoro licence and espeak-ng check still open (B2).
-- **D3. Tool, mode or role? DECIDED 2026-11-02: separate role.** The assistant (orchestrator) picks the role from the request type: text brief goes to the `media-motion` role, raw clip goes to the clip role. The user never sees role names. Reasons: the film run needs its own timeout (the clip role's 900 s limit does not fit), and the router caps each role at 6 recommended tools (12 maximum). The routing rule lives in the assistant's instructions and the role's skill text.
-- **D4. Mood picker surface.** Form field with five fixed moods and "none" (recommended), or a chat prompt, or a local page. Deferred to slice 2 either way.
-- **D5. Script approval. DECIDED 2026-11-02: mandatory.** The user approves the script before voice and render.
-- **D6. Duration target. DECIDED 2026-11-02: 20 to 30 s for slice 1.** The one-minute target stays for a later slice, after the spike measures VRAM, render time and the 900 s limit. An earlier answer said "full one minute now"; the later answer replaces it.
-- **D7. Network for the container. DECIDED 2026-11-02: keep the current bridge network.** No separate `network_mode: none` service. The "networking disabled" premise in section 1 is dropped. Reproducibility depends on pinned inputs only.
-- **D8. Determinism bar. DECIDED 2026-11-02: no byte-identical requirement.** Fresh runs may differ. Rework and resume reuse every approved stage output, stored in the run folder with its sha256, and regenerate only the stages the user names. Tests check measured properties (duration, frame count, loudness, transcript match), not file bytes. Gate constants (loudness target, transcript tolerance) are set from the spike's measured values (task 3), not guessed. fps is 30 (D12).
-- **D10. Music. DECIDED 2026-11-02: write a neutral bed for slice 1.** The dramatic bed in `make_score.py` is not used. The neutral bed is new code, built and tested in the spike, and the `music` field (D5 and section 4) turns it on or off.
-- **D13. Approval points. DECIDED 2026-11-02: four user approvals, in order.** (1) Script, before any voice work (extends D5). (2) Narration voice, before scenes and render. (3) Stills of each scene, before the full render. (4) Sample video of 20 to 30 s with background music, before the file is treated as final. This reinstates the stills preview removed as stage 4b in PROPOSE FIX 1, so that fix is reversed.
-- **D14. Entry point and error strings. DECIDED 2026-11-02: entry point is assistant routing only.** The user asks for a film in plain words, and the assistant sends the request to `media-motion` through the tool `media-briefing`. There is no separate command. Error strings use the same `error: ...` format as `mgen`, with fixed wording set in the slice-1 task file.
-- **D15. Run folder and `list_renders`. DECIDED 2026-11-02: one run folder per job, and only finished films are listed.** Each job writes to `Render/<out_name>.run/`. The folder keeps every stage output and a status file, so a crash or a rework request resumes or redoes from the named stage. `list_renders` shows finished MP4s only, not run folders.
-- **D12. Template. DECIDED 2026-11-02: defaults.** 16:9, 1920x1080, 30 fps. One neutral palette: dark background, light text, one grey accent. One open-licence sans-serif font, bundled with its licence and hash recorded in the manifest. Three scene types only: title card, text lines, closing card. The exact colour values and font file are set in the slice-1 task file.
-- **D11. Phonemiser. DECIDED 2026-11-02: accept espeak-ng (GPL-3.0).** It installs on the host with the voice step (D1a), not in the image. Before any build is distributed to others, the GPL-3.0 obligations must be reviewed.
-- **D9. Image. DECIDED 2026-11-02: same image as Mode A.** Render, scenes, mux and the music bed all use the existing `media-generator` image. Voice runs on the host (D1a), so the image should need no new packages for slice 1. Task 1 confirms this. If the image changes, it gets a new digest at `docker-compose.yml:27`, and the Mode A regression gates in section 9 must pass before and after.
-
----
-
-## 9. Verification plan (proposed, not yet agreed)
-
-- **Stage tests with fake engines:** a stub voice engine that returns a fixed WAV, a stub renderer, so the state machine and manifest can be tested offline.
-- **Kill and resume:** kill the run during voice and during render; confirm resume from the last good stage.
-- **Output checks (ffprobe):**
-  - Duration within the tolerance for the target (slice 1: target plus or minus 1.0 s).
-  - One video stream and one audio stream (if music or narration is included).
-  - Frame count equals duration times fps.
-  - Narration duration matches the WAV length within 0.1 s.
-- **Manifest check:** every input and output has a sha256 and is listed.
-- **Mode A regression:** the existing media-workspace and preflight tests pass before and after (`tests/test_media_workspace.py`, `tests/test_preflight.py`), plus `docker compose -f docker-compose.yml config --quiet`.
-- **Spike measurements (before any one-minute target):** peak VRAM for each engine, wall-clock time per stage, peak RAM, and the render time for 20 s and 60 s.
-
-Acceptance commands are proposals. They need sign-off with the design.
-
----
-
-## 10. First-slice task order (proposed, after approval)
-
-1. Commit or stash the current rename and Mode A edits (B5). Acceptance: `git status` clean for the affected paths, and Mode A tests pass.
-2. Confirm the Kokoro licence and espeak-ng dependency, and record the VoxCPM2 licence and VRAM as unverified until measured. No acceptance command; a written note in the design doc.
-3. Measure VRAM and time for a 25 s Kokoro narration on this machine. Acceptance: a recorded number in the design doc.
-4. Create the Python 3.11 voice venv and install pinned Kokoro. Acceptance: `<venv>\Scripts\python.exe -c "import sys, soundfile; assert sys.version_info[:2]==(3,11); print('ok')"`.
-5. Add the brief schema and tool stub with validation and error strings. Acceptance: a new unit test file passes.
-6. Silent HyperFrames render at the target length, in the chosen location (D1). Acceptance: ffprobe duration within the tolerance.
-7. Mux narration and bed, then run the verification checks in section 9. Acceptance: ffprobe lists one video and one audio stream, and the frame count matches.
-8. Write the neutral music bed for slice 1 (D10), replacing the dramatic `make_score.py` bed. Acceptance: `bed.wav` exists, its loudness is measured, and the bed is listed in the manifest with its sha256.
-9. Stills gate (D13 point 3): render one still per scene and a contact sheet, then record the user's approval or the scene ids they name in the run manifest. Acceptance: `preview/` holds one still per scene, and the approval field is set before the full render runs.
-
----
-
-## 11. Risks not resolved by this brief
-
-- The licence of each model weight and of the Kokoro phonemiser has not been verified online.
-- Voice cloning consent rules are not needed in slice 1, but must be written before cloning is added.
-- The businessnext-video-v3 skill was not found in this repo. Its method is described second-hand from the design doc.
-- The current git state is dirty. Any Mode B commit must be made after B5.
-- The reviewers did not run any render or engine. All time and VRAM figures are estimates.
-
----
-
-## 12. Stage gates and redo minimisation (added 2026-11-02)
-
-**Principle.** Each stage writes one output file, must pass its gate before the next stage starts, and records the hashes of its inputs. A failed stage reruns alone, and only the stages downstream of a changed input rerun.
-
-**Stage table (slice 1)**
-
-| Stage | Output | Gate (must pass before the next stage) |
-| --- | --- | --- |
-| 1. Script | `script.json` (lines with cue ids) | Word count fits the duration target; no empty cues; banned-term list empty; user approves the script (D13 point 1) |
-| 2. Voice | one WAV per line in `clips/` | Every clip exists; durations measured; the Kokoro transcript of each clip matches its text within a stated tolerance; user approves the narration voice (D13 point 2) |
-| 3. Timing | `acts.json` (single writer) | Total length within the tolerance set from measured runs (see Limits below); every cue lands inside its act |
-| 4. Scenes | `scenes/*.html` | Lint and the guard rules pass for each scene on its own; font sizes and no colour tweens |
-| 4b. Stills | `preview/` stills and one contact sheet | User approves the stills, or names scene ids to change (D13 point 3). Only named scenes rerun |
-| 5. Music | `bed.wav` (optional) | Length matches the video; loudness at the agreed target |
-| 6. Render | `video_raw.mp4` | Encoded duration matches the plan; frame count equals duration times fps |
-| 7. Mux and verify | `Render/<name>.mp4` and manifest | One video and one audio stream; ffprobe duration within tolerance; every input and output has a sha256 |
-| 8. Sample approval | the 20 to 30 s sample with background music | User approves the sample before it is treated as final (D13 point 4) |
-
-**Status file.** One `status.json` per run records, for each stage: its input hashes, its output hashes, its gate result and its timing. On rerun, a stage is skipped when its input hashes match and its last gate passed. Mode B keeps its own status file. Studio's runs table is design-only, so it is not a dependency.
-
-**Clip cache.** Voice clips are keyed by the hash of the line text, the voice id, the engine name and version. Editing one line re-synthesises that line only. Voice is the most expensive stage, so this matters most here.
-
-**Failure handling.** A failed gate stops the run at that stage and writes `failed:<stage>` to the status file. A fix changes that stage's inputs. Downstream stages rerun because their input hashes changed. Stages upstream of the failure are not touched.
-
-**Limits.**
-- The scripts can check length, format, text match and sizes. They cannot judge whether a scene looks right. Stage 8 remains a look, not a script.
-- Gate tolerances (length plus or minus 1.0 s, transcript match, loudness target) are set from measured runs during the spike (section 10, task 3), not guessed.
-- The gates only protect what they check. A gate that passes on a wrong voice clip is still a pass.
-
-**Open questions for this section**
-- None on stage 8: it is a required user sign-off (D13 point 4).
-- Keep the Kokoro transcript check (needs a local ASR model, which adds weight) or check text length and duration only?
+1. **Blocker.** The team task schema cannot carry checks. Stage 2 comes before any new task.
+2. **Blocker.** No replacement scoring denominator. Stage 5 needs D3.
+3. **Major.** Replacing code-l ids in place breaks the skill gate, frozen timeouts and archived comparisons. Needs D1.
+4. **Name collision.** "builder" and "thinker" are also model slots and must stay.
+5. **Scope.** This is several features. Ship stages 1 to 3 first, then review.
