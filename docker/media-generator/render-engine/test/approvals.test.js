@@ -124,3 +124,37 @@ test('canOpen is false until every earlier gate is approved', async () => {
   const changed = { ...current, G2: { artifact: 'g2.md', sha256: 'f'.repeat(64) } };
   assert.equal(canOpen(await readApprovals(approvalsPath), 'G3', (g) => changed[g]), false);
 });
+
+test('recordApproval stores a given seed on the record', async () => {
+  const approvalsPath = path.join(dir, 'approvals.json');
+  const entry = await recordApproval(approvalsPath, {
+    gate: 'G1',
+    artifact: 'out/brief.md',
+    sha256: ABC_SHA,
+    approvedBy: 'vaibhav',
+    seed: 42,
+  });
+  assert.equal(entry.seed, 42);
+  const stored = await readApprovals(approvalsPath);
+  assert.equal(stored.approvals[0].seed, 42);
+});
+
+test('recordApproval without a seed writes no seed key', async () => {
+  const approvalsPath = path.join(dir, 'approvals.json');
+  const entry = await recordApproval(approvalsPath, {
+    gate: 'G1',
+    artifact: 'out/brief.md',
+    sha256: ABC_SHA,
+    approvedBy: 'vaibhav',
+  });
+  assert.equal('seed' in entry, false);
+  const stored = await readApprovals(approvalsPath);
+  assert.equal('seed' in stored.approvals[0], false);
+});
+
+test('recordApproval rejects a negative or non-integer seed with TypeError', async () => {
+  const approvalsPath = path.join(dir, 'approvals.json');
+  const base = { gate: 'G1', artifact: 'x', sha256: ABC_SHA, approvedBy: 'vaibhav' };
+  await assert.rejects(recordApproval(approvalsPath, { ...base, seed: -1 }), TypeError);
+  await assert.rejects(recordApproval(approvalsPath, { ...base, seed: 1.5 }), TypeError);
+});
