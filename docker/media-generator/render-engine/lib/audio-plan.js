@@ -98,9 +98,13 @@ export function audioMode({ narration, music }) {
   return 'none';
 }
 
-// argv for muxing the silent render with the narration and/or music WAV: video copied, audio AAC 192k stereo,
-// stops at the shorter stream. mode is 'narration', 'music' or 'both'.
-export function muxArgs({ videoFile, narrationFile, musicFile, mode, out }) {
+// argv for muxing the silent render with the narration and/or music WAV: video copied, audio AAC 192k stereo.
+// The output length is set explicitly to totalSeconds (the film duration) with -t, not by the shorter stream.
+// mode is 'narration', 'music' or 'both'.
+export function muxArgs({ videoFile, narrationFile, musicFile, mode, out, totalSeconds }) {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    throw new TypeError(`muxArgs needs a positive totalSeconds, got ${totalSeconds}`);
+  }
   const args = ['-y', '-nostdin', '-i', videoFile];
   let audioMap;
   if (mode === 'both') {
@@ -125,7 +129,7 @@ export function muxArgs({ videoFile, narrationFile, musicFile, mode, out }) {
     '-c:a', 'aac',
     '-b:a', '192k',
     '-ac', '2',
-    '-shortest',
+    '-t', String(totalSeconds),
     out,
   );
   return args;
