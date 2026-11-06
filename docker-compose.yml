@@ -9,14 +9,14 @@
 name: tokenfrugal
 
 secrets:
-  CRAWL4AI_API_TOKEN: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/CRAWL4AI_API_TOKEN"}
-  SEARXNG_SECRET: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/SEARXNG_SECRET"}
-  SONARQUBE_TOKEN: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/SONARQUBE_TOKEN"}
-  NEO4J_AUTH: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/NEO4J_AUTH"}
-  TF_DB_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_PASSWORD"}
-  TF_DB_MSSQL_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_MSSQL_PASSWORD"}
-  YOUTUBE_API_KEY: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/YOUTUBE_API_KEY"}
-  DATABASE_URI: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/DATABASE_URI"}
+  CRAWL4AI_API_TOKEN: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/CRAWL4AI_API_TOKEN"}
+  SEARXNG_SECRET: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/SEARXNG_SECRET"}
+  SONARQUBE_TOKEN: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/SONARQUBE_TOKEN"}
+  NEO4J_AUTH: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/NEO4J_AUTH"}
+  TF_DB_PASSWORD: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/TF_DB_PASSWORD"}
+  TF_DB_MSSQL_PASSWORD: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/TF_DB_MSSQL_PASSWORD"}
+  YOUTUBE_API_KEY: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/YOUTUBE_API_KEY"}
+  DATABASE_URI: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/DATABASE_URI"}
 
 services:
   media-generator:
