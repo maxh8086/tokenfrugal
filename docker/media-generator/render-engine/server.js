@@ -15,6 +15,7 @@ import { checkScenes, toTimeline, applyCraftPolicy } from './lib/craft-check.js'
 import { planNarration, narrationArgs, musicArgs, muxArgs, audioMode } from './lib/audio-plan.js';
 import { writeLog, tailLines } from './lib/log.js';
 import { synthesizeScene } from './lib/dhvani.js';
+import { planSegments, concatListText, segmentIsValid, coversDuration } from './lib/segments.js';
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -32,6 +33,8 @@ const DHVANI_VOICE = process.env.DHVANI_VOICE || 'af_heart';
 const FFMPEG_BIN = process.env.FFMPEG_BIN || 'ffmpeg';
 const FFPROBE_BIN = process.env.FFPROBE_BIN || 'ffprobe';
 const LOG_TAIL_LINES = 40;
+const SEGMENTS_FPS_OK = [24, 25, 30, 60]; // fps values HyperFrames accepts for segmented MP4
+const JOB_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 const LOGGED_ROUTES = new Set(['GET /health', 'POST /render']);
 
@@ -197,11 +200,27 @@ async function buildAudio(props, audioScenes, jobDir) {
   return audio;
 }
 
-async function renderJob(props, audioScenes, log) {
-  const id = randomUUID();
+// Runs hyperframes render in jobDir with extra args. Failures are render stage errors carrying the output tail.
+function renderHyperframes(jobDir, args) {
+  return execFileAsync(
+    process.execPath,
+    [HF_BIN, 'render', ...args],
+    { cwd: jobDir, timeout: RENDER_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024 },
+  ).catch((err) => {
+    const tail = `${err.stdout || ''}${err.stderr || ''}`.trim().slice(-600);
+    throw stageError(500, 'render', `hyperframes render failed: ${tail}`, {
+      stderrTail: tailLines(err.stderr, LOG_TAIL_LINES),
+    });
+  });
+}
+
+// With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
+async function renderJob(props, audioScenes, log, jobId) {
+  const id = jobId ?? randomUUID();
   log.id = id;
   const jobDir = path.join(WORK_DIR, id);
   const started = Date.now();
+  let ok = false;
   await mkdir(jobDir, { recursive: true });
   try {
     await cp(TEMPLATE_DIR, jobDir, { recursive: true });
@@ -215,18 +234,36 @@ async function renderJob(props, audioScenes, log) {
     // Audio is built before the render, so a narration that is too long fails without starting Chromium.
     const audio = await atStage('audio', () => buildAudio(props, audioScenes, jobDir));
 
-    await atStage('render', () => execFileAsync(
-      process.execPath,
-      [HF_BIN, 'render', '--output', 'video.mp4', '--fps', String(props.fps)],
-      { cwd: jobDir, timeout: RENDER_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024 },
-    ).catch((err) => {
-      const tail = `${err.stdout || ''}${err.stderr || ''}`.trim().slice(-600);
-      throw stageError(500, 'render', `hyperframes render failed: ${tail}`, {
-        stderrTail: tailLines(err.stderr, LOG_TAIL_LINES),
-      });
-    }));
-
     let video = path.join(jobDir, 'video.mp4');
+    let segmentsReused = 0;
+    // Segments are used only when the scene spans cover the whole film; a gap would make the joined MP4 shorter than the film.
+    const spans = planSegments(audioScenes, props.duration);
+    if (SEGMENTS_FPS_OK.includes(props.fps) && coversDuration(spans, props.duration)) {
+      // One MP4 per scene span; finished segments are kept, so a retry with the same jobId skips them.
+      const segDir = path.join(jobDir, 'segments');
+      await mkdir(segDir, { recursive: true });
+      const files = [];
+      for (const { index, start, end } of spans) {
+        const seg = path.join(segDir, `seg-${index}.mp4`);
+        files.push(seg);
+        if (segmentIsValid(await stat(seg).catch(() => null))) {
+          segmentsReused++;
+          continue;
+        }
+        const tmp = path.join(segDir, `seg-${index}.tmp.mp4`);
+        await atStage('render', () => renderHyperframes(jobDir, [
+          '--output', tmp, '--fps', String(props.fps), '--start', String(start), '--end', String(end),
+        ]));
+        await rename(tmp, seg);
+      }
+      const list = path.join(segDir, 'list.txt');
+      await writeFile(list, concatListText(files));
+      await atStage('render', () => run(FFMPEG_BIN, [
+        '-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', video,
+      ]));
+    } else {
+      await atStage('render', () => renderHyperframes(jobDir, ['--output', 'video.mp4', '--fps', String(props.fps)]));
+    }
     if (audio.mode !== 'none') {
       const muxed = path.join(jobDir, 'muxed.mp4');
       await atStage('audio', () => run(FFMPEG_BIN, muxArgs({
@@ -249,6 +286,7 @@ async function renderJob(props, audioScenes, log) {
         });
     });
     const { size } = await stat(path.join(OUTPUT_DIR, outName));
+    ok = true;
     return {
       id,
       file: outName,
@@ -256,15 +294,28 @@ async function renderJob(props, audioScenes, log) {
       bytes: size,
       seconds: Math.round((Date.now() - started) / 100) / 10,
       audio: audio.mode,
+      job_id: id,
+      segments_reused: segmentsReused,
     };
   } finally {
-    await rm(jobDir, { recursive: true, force: true });
+    if (!jobId || ok) await rm(jobDir, { recursive: true, force: true });
   }
 }
 
 app.post('/render', async (req, res) => {
   const log = req.renderLog;
-  const checked = validateProps(req.body);
+  // job_id is not a render prop: it is removed from the body before validation and echo.
+  let body = req.body;
+  let jobId;
+  if (body && typeof body === 'object' && 'job_id' in body) {
+    ({ job_id: jobId, ...body } = body);
+  }
+  if (jobId != null && !(typeof jobId === 'string' && JOB_ID_RE.test(jobId))) {
+    log.stage = 'validate';
+    log.error = 'bad job_id';
+    return res.status(400).json({ error: 'bad job_id' });
+  }
+  const checked = validateProps(body);
   if (!checked.ok) {
     log.stage = 'validate';
     log.error = checked.error;
@@ -282,10 +333,10 @@ app.post('/render', async (req, res) => {
 
   const audioScenes = timed.map((s) => ({ id: s.id, start: s.start, seconds: s.duration }));
   try {
-    const result = await enqueue(() => renderJob(checked.props, audioScenes, log));
+    const result = await enqueue(() => renderJob(checked.props, audioScenes, log, jobId ?? undefined));
     res.status(201).json({
       ...result,
-      props: echoProps(req.body, checked.props),
+      props: echoProps(body, checked.props),
       warnings: policy.warnings,
     });
   } catch (err) {
