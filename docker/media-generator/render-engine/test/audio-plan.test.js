@@ -93,13 +93,14 @@ test('audioMode names the audio the film carries', () => {
   assert.equal(audioMode({ narration: true, music: true }), 'both');
 });
 
-test('muxArgs copies video and encodes audio as AAC 192k stereo, stopping at the shorter stream', () => {
-  const args = muxArgs({ videoFile: '/job/video.mp4', narrationFile: '/job/n.wav', mode: 'narration', out: '/job/m.mp4' });
+test('muxArgs copies video and encodes audio as AAC 192k stereo, with an explicit -t output length', () => {
+  const args = muxArgs({ videoFile: '/job/video.mp4', narrationFile: '/job/n.wav', mode: 'narration', out: '/job/m.mp4', totalSeconds: 42.5 });
   assert.equal(args[args.indexOf('-c:v') + 1], 'copy');
   assert.equal(args[args.indexOf('-c:a') + 1], 'aac');
   assert.equal(args[args.indexOf('-b:a') + 1], '192k');
   assert.equal(args[args.indexOf('-ac') + 1], '2');
-  assert.ok(args.includes('-shortest'));
+  assert.ok(!args.includes('-shortest'));
+  assert.equal(args[args.indexOf('-t') + 1], '42.5');
   assert.equal(args[args.indexOf('-map') + 1], '0:v:0');
 });
 
@@ -110,11 +111,17 @@ test('muxArgs with both mixes narration and music without normalising', () => {
     musicFile: '/job/m.wav',
     mode: 'both',
     out: '/job/m.mp4',
+    totalSeconds: 42.5,
   });
   const filter = args[args.indexOf('-filter_complex') + 1];
   assert.match(filter, /amix=inputs=2:normalize=0/);
 });
 
+test('muxArgs rejects a missing or non-positive totalSeconds', () => {
+  assert.throws(() => muxArgs({ videoFile: 'v', mode: 'narration', out: 'o' }), TypeError);
+  assert.throws(() => muxArgs({ videoFile: 'v', mode: 'narration', out: 'o', totalSeconds: 0 }), TypeError);
+});
+
 test('muxArgs rejects an unknown mode', () => {
-  assert.throws(() => muxArgs({ videoFile: 'v', mode: 'none', out: 'o' }), TypeError);
+  assert.throws(() => muxArgs({ videoFile: 'v', mode: 'none', out: 'o', totalSeconds: 10 }), TypeError);
 });

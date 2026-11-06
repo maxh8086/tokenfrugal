@@ -381,6 +381,7 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
         musicFile: audio.music,
         mode: audio.mode,
         out: muxed,
+        totalSeconds: props.duration,
       })));
       video = muxed;
     }
