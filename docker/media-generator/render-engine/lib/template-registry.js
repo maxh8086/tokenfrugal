@@ -10,6 +10,42 @@ export const GLOBAL_LIMITS = Object.freeze({
   sceneSecondsMax: 600,
 });
 
+/**
+ * Per-template limits (design D50), declared in a manifest as `limits`.
+ *
+ * Shape: an object whose keys are a subset of GLOBAL_LIMITS (titleMax, bodyMax,
+ * sceneCountMax, sceneSecondsMax). Each value is a positive finite number that
+ * must be less than or equal to the matching global limit. Limits may tighten a
+ * global limit, never loosen it. Missing keys mean "use the global limit".
+ *
+ * checkTemplateLimits(limits, globalLimits) is pure. It returns a list of error
+ * strings (empty when valid). Each string names the offending key, and the
+ * loader prefixes it with the template id.
+ *
+ * @param {unknown} limits  the manifest's `limits` value
+ * @param {Record<string, number>} [globalLimits=GLOBAL_LIMITS]
+ * @returns {string[]}
+ */
+export function checkTemplateLimits(limits, globalLimits = GLOBAL_LIMITS) {
+  if (limits === undefined) return [];
+  if (!isPlainObject(limits)) return ['limits must be an object'];
+  const errors = [];
+  for (const [key, value] of Object.entries(limits)) {
+    if (!Object.hasOwn(globalLimits, key)) {
+      errors.push(`sets unknown limit "${key}"`);
+      continue;
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      errors.push(`limit ${key} must be a positive number`);
+      continue;
+    }
+    if (value > globalLimits[key]) {
+      errors.push(`limit ${key}=${value} exceeds global limit ${globalLimits[key]} (limits may only tighten)`);
+    }
+  }
+  return errors;
+}
+
 export const KNOWN_PRESETS = Object.freeze(Object.keys(presets));
 
 const ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -106,17 +142,8 @@ export async function loadRegistry(rootDir) {
     }
 
     if (!isPlainObject(manifest.limits)) fail(`template "${id}" must have a limits object`);
-    for (const [key, value] of Object.entries(manifest.limits)) {
-      if (!Object.hasOwn(GLOBAL_LIMITS, key)) {
-        fail(`template "${id}" sets unknown limit "${key}"`);
-      }
-      if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
-        fail(`template "${id}" limit ${key} must be a positive number`);
-      }
-      if (value > GLOBAL_LIMITS[key]) {
-        fail(`template "${id}" limit ${key}=${value} exceeds global limit ${GLOBAL_LIMITS[key]} (limits may only tighten)`);
-      }
-    }
+    const limitErrors = checkTemplateLimits(manifest.limits);
+    if (limitErrors.length > 0) fail(`template "${id}" ${limitErrors[0]}`);
 
     if (!isPlainObject(manifest.parameters)) {
       fail(`template "${id}" must have a parameters JSON Schema object`);
