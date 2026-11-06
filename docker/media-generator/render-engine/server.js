@@ -25,6 +25,9 @@ import { jobOutputRel, jobOutputUrl, jobContactSheetRel, jobContactSheetUrl, JOB
 import { buildContactSheetArgs, contactSheetFps } from './lib/contact-sheet.js';
 import { loadRegistry } from './lib/template-registry.js';
 import { parseRenderTemplate } from './lib/render-template.js';
+import { preflightFailure } from './lib/gate-preflight.js';
+import { measureHardware } from './lib/hardware-floor.js';
+import { freeBytesAt } from './lib/disk-gate.js';
 
 // Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). Only youtube is rendered.
 const JOB_PRESET = JOB_PRESETS[0];
@@ -39,6 +42,7 @@ const ARTIFACT_DIR = process.env.ARTIFACT_DIR || '';     // root for gate artifa
 const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals file written by bin/approve.js
 const WORK_DIR = process.env.WORK_DIR || path.join(os.tmpdir(), 'hf-jobs');
 const TEMPLATE_DIR = path.join(here, 'composition');
+const GATES_ENFORCE = process.env.GATES_ENFORCE === '1';
 // Template registry (templates/index.json), loaded once on the first render that names a template.
 let templateRegistryPromise = null;
 function getTemplateRegistry() {
@@ -258,6 +262,16 @@ async function makeContactSheet(videoPath, jobId, seconds, log) {
   }
 }
 
+// Hardware floor and disk gate before a render starts. Does nothing unless GATES_ENFORCE is "1".
+async function runPreflight(props) {
+  if (!GATES_ENFORCE) return;
+  const hardware = await measureHardware(WORK_DIR);
+  const freeBytes = await freeBytesAt(WORK_DIR);
+  const frames = framesFor(props.duration, props.fps);
+  const failure = preflightFailure({ enforce: true, hardware, freeBytes, frames });
+  if (failure) throw stageError(failure.status, failure.stage, failure.message, { findings: failure.findings });
+}
+
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null } = opts;
@@ -268,6 +282,7 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   let ok = false;
   await mkdir(jobDir, { recursive: true });
   try {
+    await runPreflight(props);
     await cp(templateDir, jobDir, { recursive: true });
     // HyperFrames reads the length from the static HTML, so write it there per job.
     const htmlPath = path.join(jobDir, 'index.html');
