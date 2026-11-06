@@ -46,7 +46,8 @@
       font-weight: 700;
       font-size: 120px;
       line-height: 1.1;
-      color: #e6edf3;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.8);
     }
     .scene .title .word {
       display: inline-block;
@@ -62,7 +63,6 @@
       width: 2080px;
       height: 1240px;
     }
-    #backdrop g { filter: blur(14px); }
     /* Halo: a wider, blurred copy of each object, drawn behind it as a light glow. */
     #backdrop .halo { filter: blur(36px); opacity: 0.55; }
     /* Glass panel behind the scene text: a frosted, blurred pane with a light edge and a top highlight. */
@@ -73,9 +73,9 @@
       width: 1680px;
       height: 600px;
       border-radius: 48px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.08));
-      -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.15);
-      backdrop-filter: blur(48px) saturate(180%) brightness(1.15);
+      background: linear-gradient(135deg, rgba(12, 18, 34, 0.5), rgba(12, 18, 34, 0.32));
+      -webkit-backdrop-filter: blur(48px) saturate(160%) brightness(0.85);
+      backdrop-filter: blur(48px) saturate(160%) brightness(0.85);
       border: 2px solid rgba(255, 255, 255, 0.55);
       box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 24px 60px rgba(0, 0, 0, 0.25);
     }
@@ -103,11 +103,13 @@
     .scene .sub {
       position: absolute;
       left: 160px;
-      top: 700px;
+      top: 540px;
       width: 1600px;
       font-weight: 400;
-      font-size: 56px;
-      color: #8b949e;
+      font-size: 36px;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.95), 0 0 14px rgba(0, 0, 0, 0.9), 0 0 28px rgba(0, 0, 0, 0.8), 0 2px 12px rgba(0, 0, 0, 0.8);
     }
   </style>
 </head>
@@ -123,8 +125,8 @@
       var scenes = (window.PROPS && window.PROPS.scenes) || [{text:'Hello from HyperFrames', sub:'', seconds:3}];
       var root = document.getElementById('root');
       var accent = p.accent || '#2f81f7';
-      var textColor = p.textColor || '#e6edf3';
-      var subColor = p.subColor || '#8b949e';
+      var textColor = p.textColor || '#ffffff';
+      var subColor = p.subColor || '#f0f4f8';
 
       root.style.background = p.background || '#0d1117';
 
@@ -223,10 +225,6 @@
         tl.from(sub, { opacity: 0, duration: 0.5, ease: springEase }, T + 0.2);
         tl.set(section, { visibility: 'hidden' }, T + D);
 
-        // Rack focus: one background object comes into focus for this scene's narration, then goes soft again.
-        var focusId = '#ob' + ((scenes.indexOf(sc) * 3) % 16 + 1);
-        tl.to(focusId, { filter: 'blur(0px)', duration: 0.6, ease: 'none' }, T);
-        tl.to(focusId, { filter: 'blur(14px)', duration: 0.6, ease: 'none' }, T + Math.max(D - 0.6, 0.6));
 
         // Straight line only in variant 0. Other variants draw their own shape in the overlay below.
         if (scenes.indexOf(sc) % 5 === 0) {
