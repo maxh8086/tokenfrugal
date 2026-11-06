@@ -20,7 +20,7 @@ test('a valid pinned template resolves to its registry entry', () => {
   const r = parseRenderTemplate({ id: 'plain-scene', version: '1.0.0', parameters: { background: '#101010' } }, registry, 'youtube');
   assert.equal(r.ok, true);
   assert.equal(r.entry.manifest.id, 'plain-scene');
-  assert.match(r.entry.dir, /templates[\/]plain-scene$/);
+  assert.match(r.entry.dir, /templates[\\\/]plain-scene$/);
 });
 
 test('rejects a non-object template', () => {
