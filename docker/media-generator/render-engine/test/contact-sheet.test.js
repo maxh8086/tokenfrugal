@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildContactSheetArgs } from '../lib/contact-sheet.js';
+import { buildContactSheetArgs, contactSheetFps } from '../lib/contact-sheet.js';
+
+test('the sampling rate spreads 16 tiles over the whole film, capped at 1 fps', () => {
+  assert.equal(contactSheetFps(8), 1);
+  assert.equal(contactSheetFps(16), 1);
+  assert.equal(contactSheetFps(60), 16 / 60);
+  assert.throws(() => contactSheetFps(0), /seconds/);
+  assert.throws(() => contactSheetFps(NaN), /seconds/);
+});
 
 test('builds a one-frame PNG tile with dense 1 fps sampling by default', () => {
   const args = buildContactSheetArgs({ input: '/work/renders/a.mp4', output: '/work/renders/a-sheet.png' });
