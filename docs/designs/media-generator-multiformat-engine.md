@@ -288,7 +288,7 @@ Checked against `main` at b6a9efa: each item was matched to code on main and to 
 | New test files added to render-engine `npm test` (D41) | Done | `render-engine/package.json` `test` script lists 19 files |
 | Flash check, WCAG 2.3.1 (D49) | Partial | Module and tests exist (9d26b0d; `lib/flash-check.js`). No import in the render path, so it does not block a render |
 | Per-job budget, scene resume, joined parts (D54) | Done | 29f8c28, 472663c, 701a797; `lib/render-options.js`, `lib/job-parts.js` |
-| Disk gate before render (D48) | Partial | Module and tests exist (8c81a12, PR #71; `lib/disk-gate.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). Estimate is raw RGB: a 5 min 30 fps render is 52.1 GiB, so it needs 92.1 GiB free with the 40 GiB floor. Not calibrated against a real render |
+| Disk gate before render (D48) | Partial | Module and tests exist (be6bc99, PR #71 squash-merged; `lib/disk-gate.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). Estimate is raw RGB: a 5 min 30 fps render is 52.1 GiB, so it needs 92.1 GiB free with the 40 GiB floor. Not calibrated against a real render |
 | Colour tags bt709 and yuv420p on output (D51) | Not done | Not found in render-engine or the media-generator Python |
 | Seed in job.json, consumed by the composition (D55, R3) | Not done | Not found in code |
 | Hardware floor check (D47) | Partial | Module and tests exist (4760136, PR #70; `lib/hardware-floor.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). CPU count is logical threads, not physical cores (known gap) |
