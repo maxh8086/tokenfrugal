@@ -99,6 +99,11 @@ for _n, _spec in claude_import.load()["servers"].items():  # Claude-JSON imports
     NATIVE_SERVERS.setdefault(_n, _spec)
 SYNAPTREE_PROJECT = os.getenv("SYNAPTREE_PROJECT") or Path(__file__).resolve().parent.parent.name
 DB_PATH = Path(os.getenv("GATEWAY_DB", Path(__file__).parent / "tasks.db"))
+# Studio run backend: request files wait here until the router claims them. Saved RSS feed list lives here too.
+STUDIO_DIR = Path(os.getenv("TOKENFRUGAL_STUDIO_DIR", Path(DB_PATH).parent / "studio"))
+STUDIO_CLAIM_TIMEOUT = float(os.getenv("TOKENFRUGAL_STUDIO_CLAIM_TIMEOUT", "600"))  # an unclaimed request expires after this many seconds
+RSS_MAX_FEEDS = int(os.getenv("TOKENFRUGAL_RSS_MAX_FEEDS", "50"))
+RSS_MAX_URL = int(os.getenv("TOKENFRUGAL_RSS_MAX_URL", "500"))
 SUMMARY_MIN_TOKENS, SUMMARY_MAX_TOKENS = 150, 5000
 TOOLS_PER_STEP = 2
 TOOL_MODE = os.getenv("TOKENFRUGAL_TOOL_MODE", "native")  # "text": tools described in the prompt, calls parsed from JSON text (models without a tool template)

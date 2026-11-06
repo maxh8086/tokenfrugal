@@ -80,6 +80,12 @@ def names() -> list[str]:
     return sorted(p.name for p in SECRETS_DIR.iterdir() if p.is_file() and NAME_RE.match(p.name))
 
 
+def missing(wanted) -> list[str]:
+    """Names from `wanted` that have no secret file. Returns names only: never a value or a path."""
+    present = set(names())
+    return [n for n in wanted if n not in present]
+
+
 def resolve(value: str) -> str:
     """`docker-secret:NAME` -> the stored value. Anything else is returned unchanged.
     A missing secret raises SecretStoreError, so a server never starts with an empty credential by accident."""

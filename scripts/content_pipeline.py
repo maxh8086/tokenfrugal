@@ -61,8 +61,8 @@ def plan_lines(slug: str, topic: str, cfg: dict, last_of) -> list[str]:
     return lines
 
 
-async def run_stage(slug: str, stage_slug: str, topic: str, last) -> tuple[str, str]:
-    """Run or resume one stage. Returns (task_id, final status)."""
+async def run_stage(slug: str, stage_slug: str, topic: str, last, run_id: str | None = None) -> tuple[str, str]:
+    """Run or resume one stage. Returns (task_id, final status). New stage rows carry run_id."""
     from router import server  # imported here: it starts the router's MCP app only when a run is requested
 
     cfg = load_tf_roles()
@@ -73,25 +73,50 @@ async def run_stage(slug: str, stage_slug: str, topic: str, last) -> tuple[str, 
         await server._execute(tid, stage_slug, role, row["prompt"], row["messages"] or None)
     else:
         text = stage_prompt(slug, stage_slug, topic)
-        tid = store.create(stage_slug, role["role"], text)
+        tid = store.create(stage_slug, role["role"], text, run_id=run_id)
         await server._execute(tid, stage_slug, role, store.with_templates(role["role"], text), None)
     return tid, store.get(tid)["status"]
 
 
-async def run_pipeline(slug: str, topic: str) -> int:
-    cfg = load_tf_roles()
-    for name, stage_slug in STAGES:
-        last = store.last_for(stage_slug)
-        if last and last["status"] == "done":
-            print(f"{name}: done earlier (task {last['id']}), skipped", flush=True)
-            continue
-        tid, status = await run_stage(slug, stage_slug, topic, last)
-        print(f"{name}: task {tid} {status}", flush=True)
-        if status != "done":
-            print(f"stopped at {name}; fix the cause and run again to resume", file=sys.stderr)
-            return 1
-    print(f"pipeline finished for {slug}; see content/{slug}/")
-    return 0
+async def _beat(run_id: str) -> None:
+    """Keep the run's heartbeat fresh so a long stage is not mistaken for a dead router."""
+    while True:
+        store.run_beat(run_id)
+        await asyncio.sleep(store.HEARTBEAT_EVERY)
+
+
+async def run_pipeline(slug: str, topic: str, run_id: str | None = None) -> int:
+    """Run the stages for one slug. Creates its own run record unless the caller (Studio) passes run_id.
+    Cancel is checked at each stage boundary. A stage whose task failed is resumed; a done stage is skipped."""
+    if run_id is None:
+        run_id = store.create_run(slug, "pipeline", {"topic": topic})
+    store.set_run(run_id, status="running")
+    beat = asyncio.create_task(_beat(run_id))
+    try:
+        for name, stage_slug in STAGES:
+            if store.cancel_requested(run_id):
+                store.finish_run(run_id, "cancelled")
+                print(f"cancelled before {name}", file=sys.stderr)
+                return 1
+            store.set_run(run_id, stage=name)
+            last = store.last_for(stage_slug, slug)
+            if last and last["status"] == "done":
+                print(f"{name}: done earlier (task {last['id']}), skipped", flush=True)
+                continue
+            tid, status = await run_stage(slug, stage_slug, topic, last, run_id)
+            print(f"{name}: task {tid} {status}", flush=True)
+            if status != "done":
+                store.finish_run(run_id, "failed", f"stage {name} ended {status} (task {tid})")
+                print(f"stopped at {name}; fix the cause and run again to resume", file=sys.stderr)
+                return 1
+        store.finish_run(run_id, "done")
+        print(f"pipeline finished for {slug}; see content/{slug}/")
+        return 0
+    except BaseException as exc:
+        store.finish_run(run_id, "failed", f"{type(exc).__name__}: {exc}"[:300])
+        raise
+    finally:
+        beat.cancel()
 
 
 def main(argv=None) -> int:
@@ -104,7 +129,7 @@ def main(argv=None) -> int:
         print(f"invalid slug {args.slug!r}: use lowercase letters, digits and hyphens", file=sys.stderr)
         return 2
     if not args.confirm:
-        print("\n".join(plan_lines(args.slug, args.topic, load_tf_roles(), store.last_for)))
+        print("\n".join(plan_lines(args.slug, args.topic, load_tf_roles(), lambda a: store.last_for(a, args.slug))))
         return 0
     return asyncio.run(run_pipeline(args.slug, args.topic))
 

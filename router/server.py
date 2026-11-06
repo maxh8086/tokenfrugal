@@ -14,7 +14,7 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import checker, compose, events, gpu_lease, kalamanch_cleanup, plan, reconnect, store, ui_launcher
+from . import checker, compose, events, gpu_lease, kalamanch_cleanup, plan, reconnect, store, studio, ui_launcher
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
 from .mcp_client import ensure_backend
 from .model_sync import ensure_models
@@ -96,6 +96,7 @@ async def _lifespan(_server):
                 signal.signal(getattr(signal, name), lambda *_: sys.exit(0))
     warm = asyncio.create_task(_warm_up())
     reconnector = asyncio.create_task(reconnect.poll_loop(CFG["mcp_catalog"]))
+    studio_poller = asyncio.create_task(studio.poll_loop())
     beat = asyncio.create_task(_health_loop())
     try:
         yield
@@ -104,6 +105,7 @@ async def _lifespan(_server):
         events.emit("health", status="down")
         warm.cancel()
         reconnector.cancel()
+        studio_poller.cancel()
         sweeper.cancel()
         ui_launcher.stop()
         compose.release()
@@ -415,6 +417,22 @@ async def resume_task(task_id: str) -> str:
         return f"unknown task {task_id}"
     role = resolve_role(t["agent"], CFG)
     return await _execute(task_id, t["agent"], role, t["prompt"], t["messages"] or None)
+
+
+@mcp.tool()
+async def studio_run(action: str = "", slug: str = "", topic: str = "", sources: str = "", feed_url: str = "") -> str:
+    """Studio run backend. action: 'collect' (sources: comma list of reddit-hn, rss, youtube; default all three),
+    'pipeline' (slug + topic: the seven content stages), 'save_feed' (feed_url: adds an RSS feed to the saved list, no run),
+    'cancel' (stops the active run at its next stage boundary). One run at a time: a start is refused while one is active.
+    'store' is not available yet (Piece 3). Returns a one-line message; use studio_status for state."""
+    return await asyncio.to_thread(studio.start, action, slug, topic, sources, feed_url)
+
+
+@mcp.tool()
+def studio_status() -> str:
+    """State of the Studio run backend: active run and stage, recent runs with their end state, waiting requests,
+    estimated YouTube quota used today (Pacific date), and any missing secret names (never values)."""
+    return studio.format_status(studio.status())
 
 
 @mcp.tool()

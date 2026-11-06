@@ -35,10 +35,11 @@ class DryPlanTests(unittest.TestCase):
         self.assertIn("ts-hf-co-bandtor-gemma-4-E4B-it-GGUF-65536:latest", text)
 
     def test_dry_plan_marks_resume_and_skip_states(self):
-        def last_of(slug):
-            if slug == "content-outline":
+        def last_of(agent, slug=None):  # last_for(agent, slug): the dry plan passes the slug it was given
+            self.assertEqual(slug, "ai-banking-2026")
+            if agent == "content-outline":
                 return {"id": "abc123", "status": "done"}
-            if slug == "content-factcheck":
+            if agent == "content-factcheck":
                 return {"id": "def456", "status": "failed"}
             return None
         out = io.StringIO()
