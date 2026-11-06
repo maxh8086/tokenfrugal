@@ -22,3 +22,15 @@ export function jobOutputRel(jobId, preset) {
 export function jobOutputUrl(jobId, preset) {
   return `/output/${jobOutputRel(jobId, preset)}`;
 }
+
+// The contact sheet for a job sits beside its preset file: "abc/contact.png".
+export function jobContactSheetRel(jobId) {
+  if (typeof jobId !== 'string' || !JOB_ID_RE.test(jobId)) {
+    throw new Error('bad job id for output folder');
+  }
+  return path.posix.join(jobId, 'contact.png');
+}
+
+export function jobContactSheetUrl(jobId) {
+  return `/output/${jobContactSheetRel(jobId)}`;
+}

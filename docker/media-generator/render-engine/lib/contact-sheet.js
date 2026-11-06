@@ -39,3 +39,12 @@ export function buildContactSheetArgs({
   const vf = `fps=${fps},scale=${frameWidth}:-2,tile=${c}x${r}`;
   return ['-y', '-loglevel', 'error', '-i', input, '-vf', vf, '-frames:v', '1', output];
 }
+
+// Sampling rate that spreads one 4x4 sheet (16 tiles) over the whole film: at most 1 frame per second,
+// and fewer for a long film so the last frame is not cut off. Returns a rate in frames per second.
+export function contactSheetFps(seconds, tiles = 16) {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error('seconds must be a number above 0');
+  }
+  return Math.min(1, tiles / seconds);
+}

@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { jobOutputRel, jobOutputUrl, JOB_PRESETS } from '../lib/job-output.js';
+import { jobOutputRel, jobOutputUrl, jobContactSheetRel, jobContactSheetUrl, JOB_PRESETS } from '../lib/job-output.js';
+
+test('the contact sheet sits beside the preset file in the job folder', () => {
+  assert.equal(jobContactSheetRel('abc-123'), 'abc-123/contact.png');
+  assert.equal(jobContactSheetUrl('abc-123'), '/output/abc-123/contact.png');
+  assert.throws(() => jobContactSheetRel('../x'), /bad job id/);
+});
 
 test('a job preset file sits in the job folder', () => {
   assert.equal(jobOutputRel('abc-123', 'youtube'), 'abc-123/youtube.mp4');

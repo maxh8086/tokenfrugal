@@ -21,7 +21,8 @@ import {
 } from './lib/render-options.js';
 import { gateJob } from './lib/job-gate.js';
 import { planParts, totalSeconds, PART_MAX_SECONDS } from './lib/job-parts.js';
-import { jobOutputRel, jobOutputUrl, JOB_PRESETS } from './lib/job-output.js';
+import { jobOutputRel, jobOutputUrl, jobContactSheetRel, jobContactSheetUrl, JOB_PRESETS } from './lib/job-output.js';
+import { buildContactSheetArgs, contactSheetFps } from './lib/contact-sheet.js';
 
 // Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). Only youtube is rendered.
 const JOB_PRESET = JOB_PRESETS[0];
@@ -227,6 +228,23 @@ function renderHyperframes(jobDir, args, timeoutMs = RENDER_TIMEOUT_MS) {
   });
 }
 
+// Review sheet for a finished job film (D41): one PNG of 16 frames spread over the whole film, beside the film.
+// Best effort: a failure is logged and returns null, so the film itself still counts as rendered.
+async function makeContactSheet(videoPath, jobId, seconds, log) {
+  const sheetPath = path.join(OUTPUT_DIR, jobContactSheetRel(jobId));
+  try {
+    await run(FFMPEG_BIN, buildContactSheetArgs({
+      input: videoPath,
+      output: sheetPath,
+      fps: contactSheetFps(seconds),
+    }));
+    return jobContactSheetUrl(jobId);
+  } catch (err) {
+    log.contact_sheet_error = err.message;
+    return null;
+  }
+}
+
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   const { blurSamples = 32, resolution = '1080p', preset = null } = opts;
@@ -328,6 +346,7 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
         });
     });
     const { size } = await stat(outPath);
+    const contactSheet = preset ? await makeContactSheet(outPath, id, props.duration, log) : undefined;
     ok = true;
     return {
       id,
@@ -338,6 +357,7 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
       audio: audio.mode,
       job_id: id,
       segments_reused: segmentsReused,
+      contact_sheet: contactSheet,
     };
   } finally {
     if (!jobId || ok) await rm(jobDir, { recursive: true, force: true });
@@ -390,6 +410,7 @@ async function renderParts(scenes, fps, log, jobId, opts) {
   await rm(joinDir, { recursive: true, force: true });
   for (const file of partFiles) await rm(file, { force: true });
   const { size } = await stat(outPath);
+  const contactSheet = await makeContactSheet(outPath, base, totalSeconds(scenes), log);
   return {
     id: base,
     file: outRel,
@@ -400,6 +421,7 @@ async function renderParts(scenes, fps, log, jobId, opts) {
     job_id: base,
     segments_reused: segmentsReused,
     parts: groups.length,
+    contact_sheet: contactSheet,
   };
 }
 
