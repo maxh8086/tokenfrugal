@@ -13,9 +13,12 @@
     "test": "node --test test/render-options.test.js test/craft-check.test.js test/props.test.js test/log.test.js test/audio-plan.test.js test/flash-check.test.js test/approvals.test.js test/job-schema.test.js test/template-registry.test.js test/dhvani.test.js test/segments.test.js"
   },
   "dependencies": {
-    "ajv": "8.17.1",
+    "ajv": "^8.20.0",
     "express": "5.1.0",
     "gsap": "3.15.0",
     "hyperframes": "0.8.223"
+  },
+  "overrides": {
+    "undici": "7.30.1"
   }
 }
