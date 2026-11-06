@@ -1,4 +1,4 @@
-"""Shared media workspace: one folder used by content-writer, content-analyst, the content-* roles and media-generator.
+"""Shared media workspace: one folder used by content-writer, the content-analyst collectors and curator, the content-* roles and media-generator.
 
 Resolution order (identical everywhere, stdlib only):
   1. env VIDEO_EDITOR_DIR (read from the real environment, then .env)
