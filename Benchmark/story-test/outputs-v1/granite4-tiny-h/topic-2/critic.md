@@ -1,0 +1,3 @@
+1. Plot gaps: The story doesn't explain why the drone's load sensor reported four sealed boxes that were not on the manifest, or why the dispatch screen showed them as "reserved cargo."
+2. Choices with no reason: The loader and dispatcher both shrug off Ines's questions about the sealed boxes, without providing any explanation or taking any action.
+3. Vague detail: The story doesn't provide enough information about the advanced medical equipment and spare parts, or the clandestine operation they were intended for, to fully understand their significance or the potential consequences of their use.

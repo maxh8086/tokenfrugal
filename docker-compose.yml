@@ -9,27 +9,60 @@
 name: tokenfrugal
 
 secrets:
-  CRAWL4AI_API_TOKEN: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/CRAWL4AI_API_TOKEN"}
-  SEARXNG_SECRET: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/SEARXNG_SECRET"}
-  SONARQUBE_TOKEN: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/SONARQUBE_TOKEN"}
-  NEO4J_AUTH: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/NEO4J_AUTH"}
-  TF_DB_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_PASSWORD"}
-  TF_DB_MSSQL_PASSWORD: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/TF_DB_MSSQL_PASSWORD"}
-  YOUTUBE_API_KEY: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/YOUTUBE_API_KEY"}
-  DATABASE_URI: {file: "${TF_SECRETS_DIR:?run scripts/mcp_up first}/DATABASE_URI"}
+  CRAWL4AI_API_TOKEN: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/CRAWL4AI_API_TOKEN"}
+  SEARXNG_SECRET: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/SEARXNG_SECRET"}
+  SONARQUBE_TOKEN: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/SONARQUBE_TOKEN"}
+  NEO4J_AUTH: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/NEO4J_AUTH"}
+  TF_DB_PASSWORD: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/TF_DB_PASSWORD"}
+  TF_DB_MSSQL_PASSWORD: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/TF_DB_MSSQL_PASSWORD"}
+  YOUTUBE_API_KEY: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/YOUTUBE_API_KEY"}
+  DATABASE_URI: {file: "${TF_SECRETS_DIR:-${USERPROFILE:-${HOME}}/.docker/mcp/secrets}/DATABASE_URI"}
 
 services:
-  video-editor:
+  media-generator:
     build:
-      context: ./docker/video-editor
+      context: ./docker/media-generator
       additional_contexts:
         scripts: ./kalamanch
-    image: ${VIDEO_EDITOR_IMAGE:-maxh8086/video-editor:1@sha256:6c222cd6518427127a5fd2fc125e9a5fa2ceb0e27d6f1a7bd4bc79abf90d3e94}   # pulled from Docker Hub; "docker compose build video-editor" rebuilds from docker/video-editor
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
+    environment:
+      - VIDEO_EDITOR_RENDER_DIR=${VIDEO_EDITOR_RENDER_DIR:-Render}   # render folder name under the workspace; mgen reads it from .env
     volumes:
-      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/video_editor_mcp.py (vedit) and resolved by router/media_workspace.py; this default is the fallback when run by hand
+      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work   # Raw / References / Render. VIDEO_EDITOR_DIR is exported by router/media_generator_mcp.py (mgen) and resolved by router/media_workspace.py; this default is the fallback when run by hand
+      - ./docker/media-generator/templates:/templates:ro   # composition templates (Mode B first). Read-only; the render copies a project to a scratch folder first
+    restart: "no"
+
+  dhvani:
+    build: ./docker/dhvani   # Kokoro narration over HTTP (POST /api/kokoro/speak on port 8080). Built locally; no registry push.
+    image: ${DHVANI_IMAGE:-tokenfrugal/dhvani:local}
+    profiles: [video]
+    expose: ["8080"]   # reachable from render-engine on the default network only; not published to the host
+    mem_limit: 4g
+    restart: "no"
+
+  render-engine:
+    build:
+      context: ./docker/media-generator
+      additional_contexts:
+        scripts: ./kalamanch
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}   # same tag as media-generator: one image, two services
+    command: ["node", "/opt/render-engine/server.js"]
+    profiles: [video]
+    depends_on: [dhvani]
+    shm_size: 256m
+    working_dir: /work
+    environment:
+      - OUTPUT_DIR=/output
+      - RENDER_LOG=/work/logs/render-engine.jsonl
+      - DHVANI_URL=http://dhvani:8080
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}:/work
+      - ${MEDIA_OUTPUT_DIR:-${VIDEO_EDITOR_DIR:-${OneDrive:-${USERPROFILE:-${HOME}}/OneDrive}/Videos/video-editor}/${VIDEO_EDITOR_RENDER_DIR:-Render}}:/output
     restart: "no"
 
   crawl4ai:
@@ -49,7 +82,7 @@ services:
       start_period: 10s
 
   mcp-crawl4ai:
-    image: tokenfrugal/crawl4ai-mcp:1
+    image: maxh8086/crawl4ai-mcp:1
     build: ./docker/crawl4ai-mcp   # built on first use, then reused
     profiles: [research]
     environment:
@@ -132,7 +165,7 @@ services:
       start_period: 15s
 
   penpot-mcp:
-    image: tokenfrugal/penpot-mcp:1
+    image: maxh8086/penpot-mcp:1
     build: ./docker/penpot-mcp   # built on first use, then reused
     profiles: [design]
     environment:
@@ -165,7 +198,7 @@ services:
       start_period: 5s
 
   mcp-qdrant:
-    image: tokenfrugal/qdrant-mcp:1
+    image: maxh8086/qdrant-mcp:1
     build: ./docker/qdrant-mcp   # built on first use, then reused
     profiles: [content]
     depends_on:
@@ -177,21 +210,21 @@ services:
     stdin_open: true
 
   mcp-reddit:
-    image: tokenfrugal/reddit-mcp:1
+    image: maxh8086/reddit-mcp:1
     build: ./docker/reddit-mcp   # built on first use, then reused
     profiles: [content]
     mem_limit: 256m
     stdin_open: true
 
   mcp-hn:
-    image: tokenfrugal/hn-mcp:1
+    image: maxh8086/hn-mcp:1
     build: ./docker/hn-mcp   # built on first use, then reused
     profiles: [content]
     mem_limit: 256m
     stdin_open: true
 
   mcp-rss:
-    image: tokenfrugal/rss-mcp:1
+    image: maxh8086/rss-mcp:1
     build: ./docker/rss-mcp   # built on first use, then reused
     profiles: [content]
     # Own network: cannot reach the backends on the default network. It can still reach LAN addresses; see docs/content-analyst.md.
@@ -200,7 +233,7 @@ services:
     stdin_open: true
 
   mcp-youtube:
-    image: tokenfrugal/youtube-mcp:1
+    image: maxh8086/youtube-mcp:1
     build: ./docker/youtube-mcp   # built on first use, then reused
     profiles: [content]
     # The image's entrypoint reads the key file itself, so the key is not in the environment.
@@ -211,7 +244,7 @@ services:
     stdin_open: true
 
   mcp-postgres:
-    image: tokenfrugal/postgres-mcp:1
+    image: maxh8086/postgres-mcp:1
     build: ./docker/postgres-mcp   # built on first use, then reused
     profiles: [content]
     # Wrapper: exports the secret file as DATABASE_URI (the server reads only the environment), then runs the server.

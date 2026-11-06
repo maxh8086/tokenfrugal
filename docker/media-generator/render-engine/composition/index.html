@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920">
+  <title>Film composition (HyperFrames)</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #0d1117;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background: #0d1117;
+      overflow: hidden;
+    }
+    /* Each scene fills the canvas and is hidden until its cut-in time. Cuts are hard: no crossfade. */
+    .scene {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      visibility: hidden;
+      font-family: "DejaVu Sans", sans-serif;
+    }
+    .scene .bar {
+      position: absolute;
+      left: 160px;
+      top: 300px;
+      width: 1600px;
+      height: 12px;
+      background: #2f81f7;
+      transform-origin: left center;
+    }
+    .scene .title {
+      position: absolute;
+      left: 160px;
+      top: 380px;
+      width: 1600px;
+      font-weight: 700;
+      font-size: 120px;
+      line-height: 1.1;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.8);
+    }
+    .scene .title .word {
+      display: inline-block;
+      margin-right: 0.25em;
+    }
+    /* Static backdrop behind every scene: several separate objects (circles, rings, blocks). Each object is
+       blurred on its own, and one object per scene is brought into focus (see the script below).
+       Motion blur is not used here: the HyperFrames renderer turns it off, so it has no effect on output. */
+    #backdrop {
+      position: absolute;
+      left: -80px;
+      top: -80px;
+      width: 2080px;
+      height: 1240px;
+    }
+    /* Halo: a wider, blurred copy of each object, drawn behind it as a light glow. */
+    #backdrop .halo { filter: blur(36px); opacity: 0.55; }
+    /* Glass panel behind the scene text: a frosted, blurred pane with a light edge and a top highlight. */
+    .scene .glass {
+      position: absolute;
+      left: 120px;
+      top: 240px;
+      width: 1680px;
+      height: 600px;
+      border-radius: 48px;
+      background: linear-gradient(135deg, rgba(12, 18, 34, 0.5), rgba(12, 18, 34, 0.32));
+      -webkit-backdrop-filter: blur(48px) saturate(160%) brightness(0.85);
+      backdrop-filter: blur(48px) saturate(160%) brightness(0.85);
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 24px 60px rgba(0, 0, 0, 0.25);
+    }
+    /* Overlay for line variants that follow a shape (curve, circle or rectangle edge, frame edge). */
+    .scene .ov { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; overflow: visible; }
+    /* Line that draws across, and a blurred glow copy of it that flashes on and off with the narration. */
+    .scene .gline {
+      position: absolute;
+      left: 160px;
+      top: 230px;
+      width: 1600px;
+      height: 6px;
+      transform-origin: left center;
+    }
+    .scene .gglow {
+      position: absolute;
+      left: 160px;
+      top: 217px;
+      width: 1600px;
+      height: 32px;
+      filter: blur(16px);
+      opacity: 0;
+      transform-origin: left center;
+    }
+    .scene .sub {
+      position: absolute;
+      left: 160px;
+      top: 540px;
+      width: 1600px;
+      font-weight: 400;
+      font-size: 36px;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.95), 0 0 14px rgba(0, 0, 0, 0.9), 0 0 28px rgba(0, 0, 0, 0.8), 0 2px 12px rgba(0, 0, 0, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-start="0" data-duration="3" data-width="1920" data-height="1080" data-fps="60"></div>
+
+  <!-- props.js is written per job by server.js (window.PROPS). The fallback scene below is used when opened directly. -->
+  <script src="props.js"></script>
+  <script src="gsap.min.js"></script>
+  <script>
+    (function () {
+      var p = window.PROPS || {};
+      var scenes = (window.PROPS && window.PROPS.scenes) || [{text:'Hello from HyperFrames', sub:'', seconds:3}];
+      var root = document.getElementById('root');
+      var accent = p.accent || '#2f81f7';
+      var textColor = p.textColor || '#ffffff';
+      var subColor = p.subColor || '#f0f4f8';
+
+      root.style.background = p.background || '#0d1117';
+
+      // Blurred backdrop goes first so every scene draws above it.
+      var backdrop = document.createElement('div');
+      backdrop.id = 'backdrop';
+      // Separate objects, each in its own group so the timeline can move it. The blur is on the whole layer.
+      backdrop.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="2080" height="1240" viewBox="0 0 2080 1240">' +
+        '<rect width="2080" height="1240" fill="#14213d"/>' +
+        '<g id="ob1"><circle cx="260" cy="260" r="150" fill="#ffd27a"/></g>' +
+        '<g id="ob2"><circle cx="820" cy="180" r="90" fill="#7ad1ff"/></g>' +
+        '<g id="ob3"><circle cx="1400" cy="300" r="200" fill="#2f81f7" opacity="0.85"/></g>' +
+        '<g id="ob4"><circle cx="1850" cy="160" r="120" fill="#b8ff9f"/></g>' +
+        '<g id="ob5"><circle cx="560" cy="700" r="180" fill="#ff7ab6" opacity="0.9"/></g>' +
+        '<g id="ob6"><circle cx="1100" cy="820" r="110" fill="#ffd27a" opacity="0.8"/></g>' +
+        '<g id="ob7"><circle cx="1760" cy="760" r="170" fill="#7ad1ff" opacity="0.85"/></g>' +
+        '<g id="ob8"><circle cx="120" cy="980" r="130" fill="#f78166"/></g>' +
+        '<g id="ob9"><circle cx="1000" cy="520" r="140" fill="none" stroke="#b8ff9f" stroke-width="28"/></g>' +
+        '<g id="ob10"><circle cx="1950" cy="1010" r="100" fill="none" stroke="#ffd27a" stroke-width="22"/></g>' +
+        '<g id="ob11"><rect x="380" y="1000" width="340" height="170" rx="60" fill="#2f81f7" opacity="0.8"/></g>' +
+        '<g id="ob12"><rect x="1180" y="1040" width="260" height="140" rx="50" fill="#ff7ab6" opacity="0.75"/></g>' +
+        '<g id="ob13"><circle cx="700" cy="420" r="40" fill="#ffffff" opacity="0.7"/></g>' +
+        '<g id="ob14"><circle cx="1300" cy="640" r="55" fill="#ffffff" opacity="0.6"/></g>' +
+        '<g id="ob15"><circle cx="1620" cy="480" r="32" fill="#ffd27a"/></g>' +
+        '<g id="ob16"><circle cx="950" cy="1100" r="46" fill="#7ad1ff"/></g>' +
+        '</svg>';
+      // Put a halo copy of each object behind it.
+      backdrop.querySelectorAll('g').forEach(function (g) {
+        var shape = g.firstElementChild;
+        if (!shape) return;
+        var halo = shape.cloneNode(true);
+        halo.setAttribute('class', 'halo');
+        g.insertBefore(halo, shape);
+      });
+      root.appendChild(backdrop);
+
+      // Critically damped spring step response (out-type only: no overshoot, no bounce).
+      function springEase(p){ if (p<=0) return 0; if (p>=1) return 1; var k=7; return 1 - Math.exp(-k*p)*(1 + k*p); }
+
+      // Deterministic timeline: paused, seeked by the renderer.
+      var tl = gsap.timeline({ paused: true });
+      var T = 0;
+
+      scenes.forEach(function (sc) {
+        var section = document.createElement('section');
+        section.className = 'scene';
+
+        var bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.background = accent;
+
+        var title = document.createElement('div');
+        title.className = 'title';
+        title.style.color = textColor;
+        // Text is set with textContent, never innerHTML, so props cannot inject markup.
+        String(sc.text || '').split(/\s+/).filter(Boolean).forEach(function (w) {
+          var span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = w;
+          title.appendChild(span);
+        });
+
+        var sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.style.color = subColor;
+        sub.textContent = sc.sub || '';
+
+        // Line that draws across, and a blurred glow copy of it.
+        var gline = document.createElement('div');
+        gline.className = 'gline';
+        gline.style.background = accent;
+        var gglow = document.createElement('div');
+        gglow.className = 'gglow';
+        gglow.style.background = accent;
+
+        // Glass panel goes first so every other element in the scene draws above it.
+        var glass = document.createElement('div');
+        glass.className = 'glass';
+        section.appendChild(glass);
+        section.appendChild(gglow);
+        section.appendChild(gline);
+        section.appendChild(bar);
+        section.appendChild(title);
+        section.appendChild(sub);
+        root.appendChild(section);
+
+        var D = Number(sc.seconds) || 0;
+
+        // Cut in at T, cut out at T + D.
+        tl.set(section, { visibility: 'visible' }, T);
+        tl.from(section.querySelectorAll('.word'), {
+          opacity: 0, y: 40, duration: 0.5, ease: springEase, stagger: 0.08
+        }, T);
+        tl.from(bar, { scaleX: 0, duration: 0.6, ease: springEase }, T);
+        tl.from(sub, { opacity: 0, duration: 0.5, ease: springEase }, T + 0.2);
+        tl.set(section, { visibility: 'hidden' }, T + D);
+
+
+        // Straight line only in variant 0. Other variants draw their own shape in the overlay below.
+        if (scenes.indexOf(sc) % 5 === 0) {
+          tl.from(gline, { scaleX: 0, duration: 0.8, ease: springEase }, T + 0.1);
+          tl.from(gglow, { scaleX: 0, duration: 0.8, ease: springEase }, T + 0.1);
+          tl.to(gglow, { opacity: 1, duration: 0.2, ease: 'none' }, T + D * 0.4);
+          tl.to(gglow, { opacity: 0, duration: 0.25, ease: 'none' }, T + D * 0.75);
+        } else {
+          gline.style.display = 'none';
+          gglow.style.display = 'none';
+        }
+
+        // Line variants by scene: 0 straight (above), 1 curve, 2 circle edge, 3 frame edge, 4 rectangle edge.
+        // Each draws on with a stroke, then its glow copy flashes on and off with the narration.
+        var variant = scenes.indexOf(sc) % 5;
+        if (variant !== 0) {
+          var svgNS = 'http://www.w3.org/2000/svg';
+          var ov = document.createElementNS(svgNS, 'svg');
+          ov.setAttribute('class', 'ov');
+          ov.setAttribute('viewBox', '0 0 1920 1080');
+          var shape = document.createElementNS(svgNS, variant === 1 ? 'path' : (variant === 2 ? 'circle' : 'rect'));
+          if (variant === 1) {
+            shape.setAttribute('d', 'M 160 230 C 520 90, 900 380, 1760 200');
+          } else if (variant === 2) {
+            // Edge of the first background object (page position = its centre minus the -80px backdrop offset).
+            shape.setAttribute('cx', '180'); shape.setAttribute('cy', '180'); shape.setAttribute('r', '150');
+          } else if (variant === 3) {
+            // Edge of the frame the title sits in.
+            shape.setAttribute('x', '80'); shape.setAttribute('y', '80');
+            shape.setAttribute('width', '1760'); shape.setAttribute('height', '920'); shape.setAttribute('rx', '24');
+          } else {
+            // Edge of the rounded block (background object 11).
+            shape.setAttribute('x', '300'); shape.setAttribute('y', '920');
+            shape.setAttribute('width', '340'); shape.setAttribute('height', '170'); shape.setAttribute('rx', '60');
+          }
+          var glowCopy = shape.cloneNode(true);
+          [glowCopy, shape].forEach(function (el) {
+            el.setAttribute('fill', 'none');
+            el.setAttribute('stroke', accent);
+            el.setAttribute('stroke-linecap', 'round');
+          });
+          shape.setAttribute('stroke-width', '6');
+          glowCopy.setAttribute('stroke-width', '22');
+          glowCopy.style.filter = 'blur(14px)';
+          glowCopy.style.opacity = '0';
+          ov.appendChild(glowCopy);
+          ov.appendChild(shape);
+          section.appendChild(ov);
+
+          var L = shape.getTotalLength();
+          tl.fromTo([shape, glowCopy], { strokeDasharray: L, strokeDashoffset: L },
+            { strokeDashoffset: 0, duration: 1.0, ease: 'none' }, T + 0.1);
+          tl.to(glowCopy, { opacity: 1, duration: 0.2, ease: 'none' }, T + D * 0.4);
+          tl.to(glowCopy, { opacity: 0, duration: 0.25, ease: 'none' }, T + D * 0.75);
+        }
+
+        T += D;
+      });
+
+      var totalDuration = T;
+      root.setAttribute('data-duration', String(totalDuration));
+
+      // Gentle push-in across the whole film.
+      tl.to('#root', { scale: 1.03, duration: totalDuration, ease: 'none', transformOrigin: '50% 50%' }, 0);
+
+      // Background objects drift slowly across the whole film. Each gets its own fixed offset (no randomness),
+      // so the render is deterministic. The whole layer is blurred, so the drift reads as soft movement.
+      for (var i = 1; i <= 16; i++) {
+        var dx = ((i * 37) % 7 - 3) * 36;
+        var dy = ((i * 53) % 5 - 2) * 28;
+        tl.to('#ob' + i, { x: dx, y: dy, duration: totalDuration, ease: 'none' }, 0);
+      }
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+    })();
+  </script>
+</body>
+</html>

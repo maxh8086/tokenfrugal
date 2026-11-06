@@ -37,7 +37,7 @@ router/persona_mcps.json
 .claude/*
 !.claude/agents/
 .github/
-.gitattributes
+!.gitattributes
 
 # local run state and scratch (not source)
 plan/
@@ -76,3 +76,8 @@ gfpgan/
 # ComfyUI GPU lease: outputs, inputs and user data (docker-compose.gpu.yml)
 comfy_data/
 Benchmark/results/comfy_reference/
+
+.venv-voice/
+
+# session scratch output (logs, renders, downloads), not source
+scratchpad/

@@ -63,7 +63,7 @@ def heal_skill(skill_file: Path, expected_text: str) -> str:
 RECOMMENDED_TOOLS = 6  # the local models are 3B; a role should stay at or under this
 MAX_TOOLS = 12  # hard ceiling for any role; role_errors reports a role above it
 MODELS = {"builder", "thinker"}  # the two local models; the role's `model` key names one of them
-NATIVE = {"synaptree", "sandbox", "plan", "sonarqube", "crawl4ai", "video-editor",
+NATIVE = {"synaptree", "sandbox", "plan", "sonarqube", "crawl4ai", "media-generator", "media-briefing",
           "qdrant", "reddit", "hn", "rss", "youtube", "postgres"}  # native servers a role may use
 
 # In-repo native servers: their tool names are read from the @mcp.tool() definitions, so no model or Docker is needed.
@@ -72,7 +72,8 @@ NATIVE_SOURCES = {
     "sandbox": "router/sandbox_mcp.py",
     "plan": "router/plan_mcp.py",
     "crawl4ai": "docker/crawl4ai-mcp/server.py",
-    "video-editor": "router/video_editor_mcp.py",
+    "media-generator": "router/media_generator_mcp.py",
+    "media-briefing": "router/media_briefing_mcp.py",
 }
 _TOOL_DEF = re.compile(r"@mcp\.tool\([^)]*\)\s*\n(?:async\s+)?def\s+(\w+)")
 

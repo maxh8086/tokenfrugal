@@ -1,0 +1,50 @@
+{
+  "bed": {
+    "path": "renders/bed.wav",
+    "sha256": "efb5c4e356a16879c893012086301009cdc1b8ce47453208ba9545f3b338b7ba",
+    "duration_s": 25.0,
+    "sample_rate": 48000,
+    "channels": 1,
+    "integrated_lufs": -22.7,
+    "true_peak_dbfs": -12.0,
+    "generator": "make_bed.py",
+    "generator_args": [
+      "25.0",
+      "scratchpad\\hf_spike\\renders\\bed.wav"
+    ]
+  },
+  "narration_source": {
+    "path": "../narration_spike.wav",
+    "sha256": "69438cd3f0b41742a64ee6f2ff2f157d19a042ac954b0e1edc1b1da1fa126d63"
+  },
+  "stills_gate": {
+    "status": "approved_spike_only",
+    "approved_by": "owner, in chat",
+    "approved_at": "2026-11-02",
+    "note": "Spike composition, not the real template. Stills are from hf_narrated_25s.mp4. Owner approved these spike stills only. The real-template stills gate (one still per scene, D13) is still open. Known issues: still_00 is blank (title not yet animated); still_01 and still_02 are byte-identical (no motion after the intro).",
+    "stills": [
+      {
+        "path": "renders/stills/still_00.png",
+        "time_s": 0.5,
+        "sha256": "fc21df173ca913509b619207e1a29f2172ccc6a23a4bf0db80765dee28d8389a",
+        "yavg": 30.6962
+      },
+      {
+        "path": "renders/stills/still_01.png",
+        "time_s": 12.5,
+        "sha256": "ff37b4d04b11a374d881b66996f78508a6cfce192597a576f8bcdd5cb9ed68a2",
+        "yavg": 32.1357
+      },
+      {
+        "path": "renders/stills/still_02.png",
+        "time_s": 24.5,
+        "sha256": "ff37b4d04b11a374d881b66996f78508a6cfce192597a576f8bcdd5cb9ed68a2",
+        "yavg": 32.1357
+      }
+    ],
+    "contact_sheet": {
+      "path": "renders/stills/contact_sheet.png",
+      "sha256": "56a18d0eff08577c904b2652b1986af6ad24e6afafdb421aacaf2b47051dd2a0"
+    }
+  }
+}

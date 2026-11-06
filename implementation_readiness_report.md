@@ -1,82 +1,188 @@
-# Implementation Readiness Report (Stage 9): docs/designs/comfyui-gpu-lease.md, lines 239-end
+# Implementation readiness review: concepts_brief.md (Stage 9)
 
-Reviewers: egm-implementation-readiness, egm-codebase-details, egm-style (run in parallel as subagents, deduplicated below). Lines 1-238 were context. Owner decisions were not reopened. Existing paths and symbols were checked in the repo; the codebase reviewer's results are marked "verified".
+**Target:** `concepts_brief.md` (lines 1-246, full file; no Detailed Implementation section, so DetailedRange is N/A)
+**Question:** could an engineer build slice 1 from this file alone without making impactful decisions?
+**Reviewers:** egm-implementation-readiness, egm-codebase-details, egm-style, plus a direct check of the repo citations by the orchestrator.
+**Prior stages:** Stage 5 to 8 findings are not restated. Stage 8's recommendation (move exact contracts to a slice-1 task file written after sign-off) is accepted in principle, with the limits noted in section 3 below.
 
-## Blockers
+---
 
-1. **Lease lifecycle between release and the next job is undefined (lines 134-142, 175, 271-272).** The plan never says when the bridge calls `acquire`: at Start, or when the queue becomes non-empty. After a release on empty queue, a job queued from the embedded editor runs with no lease. Acquire would then unload Ollama after the job has started, which breaks the order "pending, unload, empty, held". *(readiness B1)*
-   - Direction: state the acquire trigger (for example Start acquires and holds until the first debounce), what happens if acquire fails with a job already queued (interrupt or clear the queue through the ComfyUI API), and whether the proxy rejects `POST /prompt` while no lease is held.
-2. **The Node dashboard is not a standalone supervisor (lines 75, 154, 175, 210, 272).** `router/ui_launcher.py` spawns Node from the first router (`start()`, `_proc`) and `stop()` terminates it, wired by `atexit.register(ui_launcher.stop)` in `router/server.py` line 88. Closing the client session that launched Node kills Node, then the bridge exits, and the lease expires after 30 s while the container keeps rendering. That is a routine event, not a rare "UI restart" gap. `router/ui_launcher.py` is in no file list. *(codebase B2)*
-   - Direction: decouple the bridge from the launcher (detached process, or the launcher skips termination while a lease is held), or list this as a primary failure mode with the fix in Piece 3. Add `ui_launcher.py` to the file list.
-3. **The router venv assumption for host scripts is false, and the new-folder claim is wrong (lines 79, 246, 249, 251).** `router/leases/` already exists (`LEASES` in `router/compose.py` line 13; `.gitignore` line 50 already ignores it), so "new folder" and the `.gitignore` edit are wrong. Existing files are named `{service}.{pid}.{uuid}` and `lease_release` deletes non-live matches (compose.py lines 128, 154-160); `GATEWAY_DB` relocates `LEASES` (config.py line 100). *(codebase B1)*
-   - Direction: say "shared existing folder", drop the `.gitignore` edit, and note the relocation by `GATEWAY_DB`; keep the `gpu.*` names reserved so no service named `gpu` can collide.
-4. **Pieces 2a and 2b are circular on the node list (lines 197, 257, 307-308).** The nodes are "fixed by the spike", but 2a must build the pinned image, nodes and lockfile before the spike runs. The implementer would guess the nodes, the ComfyUI commit and the torch/CUDA version. *(readiness B3)*
-   - Direction: name the nodes, commit and CUDA stack, or add an explicit unpinned spike-image step before the pinned build.
-5. **Free-VRAM measurement is unspecified (lines 139, 142, 245, 252).** Acquire step 4 and the post-release check need a reading, but the tool is not named (`nvidia-smi --query-gpu=memory.free`, ComfyUI `/system_stats`, other). Failure or timeout behaviour, the wait after `/free`, and the threshold for the second check are undefined. Line 252 tests "`nvidia-smi` timeout handling" for a check the plan defers. *(readiness B2, style 4)*
-   - Direction: pick the tool, the timeout and failure rule (refuse is the safe default), the post-`/free` wait and threshold. Drop or tie the line 252 test to this.
+## 1. Verdict: not buildable as written
 
-## Major
+An engineer would have to make at least six impactful choices before writing code for slice 1, and several more would be guesses. The largest gaps are:
 
-6. **`GpuBusy` mapping is under-specified and files are missing (lines 247-248).** Failures flow through `router/server.py` `_execute` (lines 270-288), `failure_reason` and `error_kind` in `router/loop.py` (lines 292-328), and `failure_message` / `RESUME_HINT` in `router/server.py` (lines 28-62). A "GpuBusy" string classes as `unknown`, so the hint says "resume_task once, then re-scope", which is wrong. `hard_trim(full, 120)` (line 279) cuts the holder, elapsed and ETA text. `summarize()` at server.py line 258 runs after the work is done, so a `GpuBusy` there fails a finished task and a resume repeats the run. In `loop.py` the request sits inside `try/except Exception` (lines 421-441), so the check must go before the `try`. `tests/test_error_kind.py` is not listed. Lines 247 and 248 also disagree on which layer maps the error. *(codebase 3, style 8)*
-   - Direction: define a `gpu_busy` kind with its own hint, state the layer that maps it, put the check before the `try`, and place the summarize-stage check before the work starts or skip it.
-7. **Piece 1 has no API, and the shared `_alive` move is not listed (lines 111, 245-250).** No signatures, error class names, return types, JSON field types, timestamp format, `generation` handling on the `pending` to `held` write, lock-takeover steps or Windows atomic-replace call. The wrapper name and call pattern are undefined. `_alive` is said to be both "moved to a small shared module" (111) and "reused from `router/compose.py`" (245); no piece lists the module or the `compose.py` edit. `tests/test_compose.py` (lines 119, 125) and `tests/test_plan.py` (lines 93, 97) patch `compose._alive`, so a `compose._alive` name must stay. *(readiness 4, codebase 4, style 2)*
-   - Direction: add a short interface list (names, arguments, exceptions), name the shared module, keep the `compose._alive` alias, and list the `compose.py` edit under Piece 1.
-8. **`gpu_lease` must run in the kalamanch venv (lines 249-250).** `kalamanch/requirements.txt` has no `yaml`, `dotenv` or `keyring`, but `router/config.py` imports them (lines 9-12) and `router/compose.py` imports config. `run.py` cannot import either. The native Ollama URL added to `config.py` is unreachable from `run.py`. *(codebase 4)*
-   - Direction: state that `gpu_lease` and the pid module are stdlib-only and import neither `router.config` nor `router.compose`, say how `run.py` gets the Ollama URL (environment variable or its own default), and how it imports `router` (path setup).
-9. **The wrapper ignores `_LOCAL` (lines 146, 249).** `loop.py` line 21 and `summarize.py` line 6 compute `_LOCAL` from `OLLAMA_URL`; it may point at a hosted endpoint. Refusing hosted calls and stripping `/v1` for `/api/ps` is wrong there. Also, "two call sites" should read "two in `router/`"; the root `server.py` has its own client (covered by the Non-Goal). *(codebase 5)*
-   - Direction: apply the wrapper only when `_LOCAL`.
-10. **Router refusal window has no clock (line 117, timing table).** `check_for_ollama` is stateless. For an expired lease the window can run from `heartbeat_at + ttl_s`; for an unreadable or missing file there is no timestamp. Missing versus corrupt is not distinguished. *(readiness 5)*
-    - Direction: use `heartbeat_at + ttl_s` for expired, file mtime for unreadable, and treat a missing file as free.
-11. **`kalamanch/run.py` takes the lease for every invocation (lines 41, 250).** Acquire unloads Ollama and needs 6 GB free. Not said: whether `preflight`, `list` and non-GPU scripts are exempt, how that is decided, the `task` and `job_id` text for scripts, and heartbeat behaviour when `run.py` spawns a subprocess or is killed. *(readiness 6)*
-    - Direction: list which subcommands take the lease, define `task` and `job_id`, and say the heartbeat thread lives in `run.py` and dies with it.
-12. **Piece 1 acceptance depends on Piece 2 work (lines 265, 306).** The Piece 1 command runs `tests.test_compose` and the `tokenfrugal-gpu` shutdown test, but the `compose.py` guard and test edit are under Piece 2. `tests/test_compose.py` has no `stop_all_sync` test today; it would be new, mocking `subprocess.run` and the label filter (compose.py line 183). *(readiness 7, style 1, codebase 16)*
-    - Direction: move the guard and test into Piece 1.
-13. **Compose file choice and container specifics are left open (lines 175, 264, 329-330).** `docker-compose.yml` has top-level `secrets:` using `${TF_SECRETS_DIR:?...}` (lines 11-19), so any `-f docker-compose.yml` call from Node fails without it; it also declares `name: tokenfrugal`. This settles Open Question 5 for a separate `docker-compose.gpu.yml`. Still open: egress mechanism default, host and container mount paths, ComfyUI directory flags and `--listen`, healthcheck for `up --wait`, UID, tmpfs size, base image and CUDA version. *(readiness 11, codebase 7)*
-    - Direction: resolve Q5 now, give a default for Q6 and the container specifics.
-14. **CPU mode in the 2a acceptance is undefined (line 307).** Line 264 defines a GPU device reservation; the container fails without the NVIDIA runtime. No CPU startup path or override exists. *(style 6, readiness 18, codebase 7)*
-    - Direction: specify an override file or `--cpu` flag and who selects it.
-15. **2a acceptance does not run the tests it relies on (line 307).** "The hash check fails when a pin is altered" is a negative test that lives in `tests/test_pinned_build.py` and `tests/test_check_pins.py` (line 259) but the command does not run them. *(style 7)*
-    - Direction: add them to the 2a command.
-16. **Embedding mechanism and `ui.yaml` use (lines 185, 272, 274, 325).** The choice is gated on a Piece 3 test but built in Piece 3. The proxy needs a URL prefix, handling of ComfyUI's absolute asset and websocket paths, websocket upgrade code in a dependency-free `server.js`, and an upload limit. `router/ui.yaml` holds user-visible strings with `port` as the only config key, so debounce and embed mode bend its convention. The debounce appears twice (line 106 constants, line 274 `ui.yaml`) without a stated winner. *(readiness 8, 9; codebase 6)*
-    - Direction: pick the proxy as the default and spec it, or give the decision procedure and the config key; say which debounce source wins and where config lives.
-17. **New mutating routes need Host and Origin checks (lines 175, 177, 272).** Only proxy routes are promised the check. Start, Stop and Force release run `docker compose` and delete the lease. Existing mutating routes (`/api/config` POST line 445, `/api/mcp/restart`, `/api/bench/start`) have none. *(codebase 6)*
-    - Direction: apply the check to every new mutating route.
-18. **Bridge and websocket details are undefined (lines 179, 271, 275).** Python has no stdlib websocket client; the library and its pin in `requirements.txt` are not named. Missing: the `comfy_status.json` schema (states, fields, units, "loading models"), the SSE route name and write cadence, the bridge CLI arguments, and the recorded-event file format for `test_comfy_bridge`. *(readiness 9, codebase 14)*
-19. **ETA parameters are open (lines 182, 272).** EMA alpha, workflow-hash definition, history length, how post-sampling time is aggregated, multi-sampler workflows, and behaviour on interrupt or failure. *(readiness 10)*
-    - Direction: give the formula and the `comfy_history.json` structure.
-20. **`pins.yaml` and tree-hash method are not specified (lines 167, 257-258, 261).** No example `nodes:` entry. `pinned_build.py` today checks only `rev-parse HEAD == sha` (line 42), so tree-hash verification is new, not an extension. `load_pins` requires `repo`, `sha`, `image`, `dockerfile`; `check_pins.py` also reads `tag_regex`; `--write` rewrites by `sha:` regex, so node `sha` lines must not match the ComfyUI one. "Not covered by the lockfile" has no detection method, "produced by hand" no tool, and `check_pins.py` has two alternatives left. *(readiness 12, codebase 13)*
-    - Direction: add an example entry, name the tree-hash method and lock tool (for example `pip-compile --generate-hashes`), and pick one `check_pins` behaviour.
-21. **PSNR and SSIM reference is invalid (lines 40, 289-292, 311).** `generate_ltx.py` is diffusers with `torch.Generator(device="cuda").manual_seed(42)` (line 69). A ComfyUI sampler at the same seed will not reproduce those latents, so metrics against the kalamanch clip would measure implementation drift. `--workflow ltx098` resolves to no listed file. *(readiness 13, codebase 9)*
-    - Direction: Tier A compares against the unchanged ComfyUI baseline; the kalamanch comparison covers wall time and VRAM plus a human check. Add the API-format workflow JSON to a piece, with how seed and prompt are injected.
-22. **Model reuse claim contradicts the manifest (lines 192-196, 280-281).** `kalamanch/common/manifest.py` already provisions `ltxv-2b-0.9.8-distilled.safetensors` in `models/video_generation/ltx-video-2b-distilled/`, and `generate_ltx.py` loads it with `from_single_file` (line 37). ComfyUI can likely map to it; only the text encoder, VAE and any fp8 variant may be new. Disk-cost estimate is overstated. Manifest paths are relative to `models_root()/<entry name>` (`_models.py` line 25), so each entry needs its own subfolder mapping. Quantisation, encoder name, repo ids, filenames and `extra_model_paths.yaml` keys are also unspecified. *(codebase 8, readiness 14)*
-    - Direction: correct the reuse claim, mark Piece 4 as blocked on 2b with the output format, or give defaults.
-23. **Spike measurement method is missing (lines 267, 308).** Peak-VRAM sampling method and interval, spill detection, whose RAM is measured (container, WSL VM, host), and the quality criterion behind Open Question 7. *(readiness 15)*
-24. **Baseline CSV ownership (lines 267, 289).** The spike writes "one row to the baseline CSV" but `comfy_baseline.csv` is created in Piece 5 with different columns. *(style 3)*
-    - Direction: the spike creates it and Piece 5 extends it, or give the spike its own file.
-25. **Load-time recording has no owner (lines 205, 215, 281, 310).** Risks assign "record load time per job" to pieces 2b and 4, but no Piece 4 item records it. *(style 5)*
+- Where the voice step runs.
+- Whether slice 1 has a GPU step at all.
+- What sets the video length.
+- What the one video template looks like.
+- What the tool and role are called, and whether the tool blocks or returns a run id.
 
-## Nits
+The task list in section 10 also does not produce a finished video. Tasks 1 to 8 cover a commit, a licence note, one measurement, a venv, a lease, a schema stub, a silent render and a mux. Nothing builds the script-to-voice step, the timing step, the scene HTML, or the status and resume logic. Task 7 renders scenes that no task creates, and task 8 muxes narration that no task makes (brief lines 185-192).
 
-- Piece headings use "Piece 2" while the table, risks and questions use 2a and 2b. Split the section; `comfy_spike.py` and the GPU parts of `doctor.py` belong to 2b (lines 243-269). *(style 9)*
-- `extra_model_paths.yaml` is listed in Piece 2 and Piece 4. Keep one owner; say 2a ships a stub (lines 263, 280). *(style 10)*
-- Piece 4 acceptance `python kalamanch/preflight.py` shows only that entries are listed; the load-through-yaml and load-time claims are manual (line 310). The line 285 test edit targets the wrong file: `tests/test_preflight.py` tests `router.preflight`, and no kalamanch manifest test exists. Use a new `tests/test_kalamanch_manifest.py`. *(style 11, codebase 11)*
-- `kalamanch/preflight.py` `models_for` (line 19) already lists every entry with non-empty `required_by`; the edit is needed only if the new entries leave it empty. `require()` lives in `_models.py` line 69, not `manifest.py` (lines 283, 196). *(codebase 10, 12)*
-- Piece 5 acceptance: "every Tier A setting reports PSNR and SSIM" versus a threshold pass (line 292), and `--seeds 3` versus "two repeat runs" for the noise. Settings column has no format (line 289). *(style 12, 16)*
-- Line 241: "each piece can ship on its own" conflicts with the order on line 313; "were checked in the repo" is unverifiable; "Functions in prose" is awkward. *(style 13)*
-- Line 266: name the Docker GPU test command (for example a CUDA container running `nvidia-smi`), and make the doctor checks warnings, not failures, on machines without a GPU. `doctor.py` uses `report(name, ok, fix)`. *(style 14, codebase 15, readiness 17)*
-- Line 317: confirm `ui/server.js` has no dependencies. Verified: it is stdlib only. *(style 15)*
-- Lines 284, 291: `.gitignore` "verify, change nothing" is not a check. Verified: line 17 `models/video_generation/*/` exists. Say whether `Benchmark/results/comfy_reference/` is ignored or committed. *(readiness 19)*
-- Line 253: name the diagram format used in `docs/architecture.md`. *(readiness 20)*
-- Line 309: the "run one job by hand" step needs a checklist. *(readiness 21)*
-- Lines 312-313: "RTX 4060 free of other work" should read "no Ollama model loaded and no other GPU process". *(style 18)*
-- Open Questions: add or cross-reference the `_alive` relocation, CPU mode, and Q7 versus the Piece 2b go/no-go. *(style 17)*
+---
 
-## Verified OK
+## 2. Findings
 
-- `router/compose.py` (`_alive` line 193, `PERSISTENT = {"neo4j"}` line 12, `stop_all_sync` line 179 filters by project label `tokenfrugal`, so the isolation claim at line 166 holds). `config.py` `OLLAMA_URL` line 37. `loop.py` and `summarize.py` each build their own client; `router/preflight.py` only lists `/models`. `kalamanch/run.py` calls `require()` before `subprocess.call` with no lease. `_models.fetch` uses `allow_patterns`. `docker/pins.yaml`, `scripts/pinned_build.py`, `scripts/check_pins.py`, both pin tests, `ui/server.js` (127.0.0.1:7777, SSE at `/events`), `ui/index.html` (tabs via `data-tab`), `docs/architecture.md`, `docs/technical.md`, `Benchmark/Benchmark.md`, `CLAUDE.md`, `handoff.md` line 10 and `generate_ltx.py` exist.
-- No collisions for `router/gpu_lease.py`, `router/comfy_bridge.py`, `docker/comfyui/`, `docker-compose.gpu.yml`, `scripts/comfy_spike.py`, `scripts/comfy_quality.py`, `tests/test_gpu_lease.py`, `tests/test_comfy_bridge.py`, `Benchmark/results/comfy_*`. The only collision is the folder `router/leases/` (Blocker 3).
-- Piece lists mark `(new)` and `(edit)` consistently.
+### Blockers
 
-## Verdict
+**B1. Where the voice step runs contradicts itself.**
+The brief says Kokoro runs on CPU (lines 20, 27). D1 (line 154) says render is in the container and assumes the voice step is also in the container. Task 4 (line 188) creates a Python 3.11 venv that is only meaningful on the host. The image installs no voice stack: `docker/media-generator/Dockerfile:15, :18, :26, :54` add ffmpeg, yt-dlp, whisper, Remotion, HyperFrames and Manim, but no TTS package.
+*Decision needed:* container or host for voice. If container, the Dockerfile and the image digest change (`docker-compose.yml:27`). If host, the render location in task 7 and the drift risk in line 114 change.
 
-Not ready to build. Piece 1 can start once Blockers 1, 3 and 5 and Majors 6-12 are settled. Pieces 2-5 leave impactful decisions open (Blockers 2 and 4, Majors 13-25). One process note: the reviewer persona file is `agents/implementation_readiness.md` with an underscore; the hyphenated path does not exist. The three lenses ran as nested subagents, not inline.
+**B2. Slice 1 may need no GPU lease, but the brief requires one.**
+Kokoro is CPU-only in the brief's own default (lines 20, 27), yet section 3 says the lease covers "the GPU voice step only" (line 63), B1 requires a holder (line 122), and task 5 builds it (line 189). If there is no GPU step, the 6 GB floor (`router/gpu_lease.py:35`) and the holder work are out of slice 1.
+*Decision needed:* does slice 1 take the lease at all. If yes, the lease call must run where the lease file is reachable (see B3).
+
+**B3. A container cannot reach the lease file as the brief assumes.**
+Reported by egm-codebase-details, not independently re-read: `lease_dir()` resolves to `router/leases` unless `GPU_LEASE_DIR` or `GATEWAY_DB` is set (`gpu_lease.py:118-125`); the VRAM probe calls `nvidia-smi` (`:305-310`); the image installs no `nvidia-smi` and the compose service has no GPU reservation (`docker-compose.yml:22-33`); and only `/work` is mounted (`:31-32`). A lease call inside the container cannot see the shared `gpu.json`.
+*Decision needed:* run the lease step on the host and pass the result in, or add the mount and GPU access (and change the brief).
+
+**B4. The lease takeover rule cannot be applied to a new holder as written.**
+Verified. `gpu_lease.py:228-235` applies the pid-based takeover only to `kalamanch` (`:230-231`). Every other holder needs a `container_id` and a stopped container (`:233`). B1 asks for "a pid-based takeover" for a new holder. Adding the name to `HOLDERS` (`:38`) and the check in `acquire()` (`:336-337`) is not enough; `_may_take_over` must change too. Otherwise a crashed Mode B run blocks the GPU until `force_release`.
+*Decision needed:* which takeover rule the new holder uses, and whether a container id is recorded.
+
+**B5. The task list does not build slice 1.**
+Verified against lines 185-192. No task covers: script to WAV (stages 1-2, lines 214-215), timing (stage 3), scene HTML for the template (stage 4), the preview gate (stage 4b), or status and resume (line 169). Task 2 has no acceptance command, so it cannot be marked done.
+*Decision needed:* the owner accepts an amended task list before a slice-1 task file is written.
+
+**B6. Stage 8's recommendation cannot be fully applied at sign-off.**
+Stage 8 is right that exact contracts belong in a task file. Three gaps remain:
+- Several values come only from the spike (task 3): timeouts, tolerances, words per second, loudness, and VRAM. A task file written at sign-off would carry placeholders.
+- Some items are decisions, not values (B1, B2, D3 naming, the template, the music rule). A task file cannot decide them.
+- A few values are needed before any task can be written, such as the maximum script length (line 81, "to be set") and the duration rule (B7).
+*Decision needed:* the owner closes the decision list in section 4, and the spike numbers are pulled forward or the task file is split into a "decided" part and a "measured" part.
+
+**B7. Length source and duration target are undefined.**
+Section 1 says "about one minute" (line 11, and `length_target_s` note at line 87). Sections 2, 8 (D6) and 10 say 20 to 30 s for slice 1. The brief does not say whether narration sets the length or whether the video length is fixed and narration is fitted. No words-per-second rate exists, and task 3 measures only VRAM and time (line 187). The stage 1 gate ("word count fits the duration target", line 214) cannot be coded without this.
+*Decision needed:* who adapts to whom, and the words-per-second rate (set by the spike).
+
+**B8. The one template is undefined.**
+No aspect ratio (Mode A is 9:16; Mode B never says), no palette values, no font file, no scene list, no layout. "Neutral visual style with one built-in default palette and font" (line 28) is a goal, not a spec. The image already has `fonts-dejavu-core` (`Dockerfile:15`), which the owner can accept or reject.
+*Decision needed:* aspect ratio, resolution, fps, palette values, font, and the scene list for the one template.
+
+**B9. The tool and role contract is not set.**
+- Tool name: `mode_b_brief` "name to confirm" (line 76).
+- Role name: `media-motion` is an example only (line 77). D3 (line 156) refers to "the film role" and "the clip role", which appear nowhere else.
+- Sync or async: section 4 says Mode B "should" return a run id (line 96) but also reuses `mgen`'s return convention (line 71), which blocks. B3 (line 126) says it "needs" the async pattern. Not a listed decision.
+- Error strings, input limits and the maximum script length (line 81) are not set (B4 in the brief).
+- The role needs a `tf-roles.yaml` entry (pattern at `:43`), a contracts entry checked by preflight, a teams entry, a skill and a native server (reported by egm-codebase-details; `tests/test_preflight.py:135` asserts the exact tool set).
+*Decision needed:* names, sync or async, timeout, error strings, and the role wiring.
+
+**B10. No Mode B container entry point exists.**
+Verified. `docker/media-generator/Dockerfile:57-59` copies `pipeline.py` and symlinks only `mgen`. `router/media_generator_mcp.py:67-68` hard-codes `mgen` as the command. A Mode B command, its `COPY` and its argv are unnamed.
+*Decision needed:* the Mode B command name and whether it lives in the same image (line 143 leaves this open).
+
+### Major
+
+**M1. Stage list is defined twice, with different contents.**
+Section 4 (line 94) lists script, voice, music, scenes, render, mux, verify (7 stages). Section 12 (lines 210-222) lists script, voice, timing, scenes, preview 4b, music, render, mux and verify, review (9 stages). The status keys and resume logic depend on which list is canonical.
+*Decision needed:* one canonical stage list.
+
+**M2. The approval points conflict.**
+D5 (line 158) says the script is approved "before voice and render". Section 7 (line 140) says approval is "before any GPU stage". Section 12 has no script approval; its only human gate is stills approval at 4b, which comes after voice. No section 10 task covers either.
+*Decision needed:* whether script approval is in slice 1, and where stills approval sits relative to voice.
+
+**M3. The existing run-state store does not match the brief's status strings.**
+Verified. `router/store.py:47` updates heartbeat only `WHERE status='running'`, and `:75` sweeps only `status='running'` exactly. The brief's states `running:<stage>` and `failed:<stage>` (line 94) would never be beaten or swept. Reusing `store.py` needs a SQL change or exact status values.
+*Decision needed:* exact status values, or a change to the SQL.
+
+**M4. The "reuse the Studio record" claim points at nothing built.**
+Reported by egm-codebase-details (`docs/designs/studio-and-collector-roles.md:128`, status "Design complete; awaiting egm-review"). No runs table, studio module or `waiting_gpu` state exists in `router/`. The Studio states differ from the brief's states.
+*Decision needed:* either build the record in slice 1 (new work, add to task list) or define a new small one.
+
+**M5. The music bed is not neutral.**
+Verified. `kalamanch/pipeline/make_score.py:29-37` builds a dark drone (55, 82.5, 110.4, 164.8 Hz), a pink-noise riser, a 48 Hz pulse and echo, with `loudnorm I=-20`. Section 2 asks for a neutral style. The score function is `make_score(ff, seconds, out)` at `:26`; it calls `sys.exit` on ffmpeg failure (`:21-22`), so a Python caller gets `SystemExit`.
+Reported by egm-codebase-details: score mode also calls `publish()` (`:61`), which copies the WAV into Render unless `VIDEO_PUBLISH_DIR` is set; the image sets it to `0` (`Dockerfile:73`), so a host run would write into Render.
+*Decision needed:* accept the dramatic score, write a neutral bed, or drop music in slice 1 (section 2 says `music: bed` is allowed in slice 1 while music choice is deferred; see M9).
+
+**M6. Output location collides with the listing tools.**
+Verified. Output goes to `Render` (line 90). `router/media_generator_mcp.py:33-36` and `:49-50` list every file in Render, so `scratch`, `clips/`, `preview/` and `status.json` would appear in `list_renders`. A new `LAYOUT` folder breaks `tests/test_media_workspace.py:63`. The run folder path is never given (section 4 says "create run folder", no path).
+*Decision needed:* run-folder location, and whether Mode B output is listed by `list_renders`.
+
+**M7. Weights and download policy are unset.**
+D7 keeps the bridge network (line 160). Section 7 pins Hugging Face revisions (line 148), but nothing says whether weights are downloaded at run time or baked at build time. Compose mounts only `/work` (`docker-compose.yml:31-32`), so there is no model cache. A build-time bake changes the Dockerfile and the digest (line 27).
+*Decision needed:* run-time download or baked weights; if baked, a separate image or the same image (line 143).
+
+**M8. Voice package and phonemiser are not chosen.**
+Task 4 (line 188) says "install pinned Kokoro" but gives no package name, version, voice id, sample rate or weight source. B2 flags espeak-ng (GPL-3.0) without a decision.
+*Decision needed:* package and version (from task 2 or 4), voice id, and accept or replace espeak-ng.
+
+**M9. Schema values are unbounded.**
+`engine`, `voice`, `language` and `style` have defaults but no allowed values (lines 82-86). `style` clashes with the deferred style profile (line 46). `music: bed` is allowed in slice 1 while music choice is deferred (line 85 vs line 40).
+*Decision needed:* allowed values, and whether `music: bed` is in slice 1.
+
+**M10. Pins are incomplete for the manifest.**
+Section 4 (line 92) requires Chromium and ffmpeg versions. Verified: `Dockerfile:3` uses a tag, not a digest, for `node:22-bookworm-slim`, and `:15` installs unpinned apt `ffmpeg` and `chromium`. Section 7 pins only HyperFrames. These two values can only be recorded at run time, not pinned.
+*Decision needed:* accept run-time recording, or pin by apt version and base digest.
+
+**M11. Gate tolerances are fixed in one place and measured in another.**
+Section 4 and section 9 fix ±1.0 s (lines 87, 171). Section 12 (line 240) says tolerances are "set from measured runs ... not guessed". Several gates have no number at all: "within a stated tolerance" (stage 2), "guard rules" and "font sizes" (stage 4), "loudness at the agreed target" (stage 5), and fps and resolution for the frame-count check (stage 6, line 173).
+*Decision needed:* a fixed constant or a measured value, and the constants themselves.
+
+**M12. Determinism claim is not testable.**
+"Deterministic-enough" (line 30) and the D8 bar (line 161) are open. Section 7 (line 146) claims only "same script, same WAV". The brief does not say what the manifest must prove or what a failing check means.
+*Decision needed:* D8 answered.
+
+**M13. Multi-output stages conflict with the one-output principle.**
+Section 12 says each stage writes one output file (line 208). Stage 2 writes one WAV per line in `clips/`, stage 4 writes `scenes/*.html`, and 4b writes three stills per scene plus a contact sheet. The brief does not say how hashes and gates are scoped for these.
+*Decision needed:* hash and gate scope for multi-file stages.
+
+### Nit
+
+**N1.** Section 8 D1 says "Option A", but Option B is never listed.
+**N2.** Section 3 "captions if used" (line 61) has no defined condition.
+**N3.** Section 9 says "one audio stream (if music or narration is included)" (line 172). Narration is always included, so the condition misleads.
+**N4.** Undefined terms: "slice" (first and second), "act" and "cue" (section 12), "guard rules" (stage 4), "Mode A / Mode B" in some places.
+**N5.** B2 (line 124) proposes a VoxCPM2-to-Kokoro fallback. VoxCPM2 is out of slice 1, so the rule has no slice-1 effect.
+**N6.** `_check()` is private to `media_generator_mcp.py:25-30`, inside a module that creates a FastMCP instance at import (`:11`). Section 4 (line 90) requires the same name rule without saying where it lives. Decide whether to import or copy.
+**N7.** `start_heartbeat` is at `gpu_lease.py:391` (reported). The brief gives no reference.
+**N8.** `Dockerfile:57` also copies `common/_publish.py` and `common/_paths.py`. The brief cites only `compose_intro.py` and `make_score.py`.
+**N9.** Section 5 says the host "lacks ffmpeg, soundfile, HyperFrames, Chrome" and cites `handoff.md:616`. Reported by egm-codebase-details: that line mentions only ffmpeg and ffprobe. Not verified by the orchestrator.
+**N10.** Section 11 and line 112 say `businessnext-video-v3` is mentioned only in `video-pipeline-use-cases.md`. Reported by egm-codebase-details as wrong (the name also appears in other review files). Not verified.
+**N11.** Section 2 calls `businessnext-video-v3` a "method reference", but section 5 and section 11 say it was not found in the repo. An implementer cannot consult it. Decide whether it counts as a reference.
+**N12.** Section 4 (line 81) has no maximum script length; "1200 words" is an example only.
+
+---
+
+## 3. Stage 8 check
+
+Stage 8's move (exact contracts to a slice-1 task file after sign-off) is sound for error strings, fps, resolution, status-file shape and the manifest field list. It does not cover:
+
+- Decisions (B1, B2, B8, B9 naming, M2, M5, M7, M8), which a task file cannot take.
+- Values that only the spike can set (B7, M11, the timeouts in B9), which a task file would have to leave as placeholders.
+- Two items that already contradict the repo (B3 lease path, M3 SQL), which need a repo-side change, not a value.
+
+Recommendation: close the decisions in section 4 first, then write the task file, and split it into a "decided" part (written at sign-off) and a "measured" part (written after task 3).
+
+---
+
+## 4. Decisions the owner must make before a slice-1 task file can be written
+
+1. **Voice location:** container or host (B1). If container, accept a Dockerfile and digest change.
+2. **GPU in slice 1:** does slice 1 take the lease at all (B2)? If yes, where the lease call runs (B3) and the takeover rule for the new holder (B4).
+3. **Length source:** narration sets length, or video length is fixed and narration is fitted (B7). Accept the 20 to 30 s target and the words-per-second value (set by spike).
+4. **Template:** aspect ratio, resolution, fps, palette, font (`fonts-dejavu-core` is already in the image), and the scene list (B8).
+5. **Voice package:** Kokoro package and version, voice id, sample rate, and whether espeak-ng (GPL-3.0) is accepted or replaced (M8).
+6. **Weights:** downloaded at run time or baked at build time, and whether Mode B has its own image (M7, line 143).
+7. **Music:** accept the dramatic score in `make_score.py`, write a neutral bed, or drop music in slice 1 (M5, M9).
+8. **Approval points:** script approval before voice (D5), and whether stills approval (4b) is in slice 1 (M2).
+9. **Tool contract:** tool name, role name, sync or async, timeout, error strings, maximum script length, and the role wiring (B9).
+10. **Command and image:** the Mode B container command name and where it lives (B10).
+11. **Run folder and listing:** run-folder path, and whether Mode B output appears in `list_renders` (M6).
+12. **Status record:** exact status strings and whether the Studio record is built or replaced (M3, M4).
+13. **Canonical stage list** (M1), and the hash scope for multi-file stages (M13).
+14. **Gate numbers:** tolerances as constants or measured values, plus loudness, fps and the transcript check (M11, section 12 open question).
+15. **Determinism bar** (M12, D8).
+16. **Manifest pins:** accept run-time recording of Chromium and ffmpeg, or pin them (M10).
+17. **Task list:** accept an amended section 10 that covers script, voice, timing, scenes, status and resume (B5).
+
+---
+
+## 5. Method and limits
+
+- Read in full: `concepts_brief.md`, `docker/media-generator/Dockerfile`, `docker-compose.yml:18-37`, `router/gpu_lease.py:220-245` and `:330-340`, `router/media_generator_mcp.py:10-85`, `router/store.py:40-80`, `router/tf-roles.yaml:38-49`, `kalamanch/pipeline/make_score.py:14-63`.
+- Confirmed by the orchestrator's own reads: compose `:22-33` and `:27` (no network key; digest pin); Dockerfile `:3, :10, :15, :26, :57-59, :73`; `gpu_lease.py:38, :228-235, :336-337`; `store.py:47, :75`; `media_generator_mcp.py:15, :25-30, :33-36, :49-50, :63-68, :79`; `make_score.py:26, :29-37, :41-49, :61`; `tf-roles.yaml:43`.
+- Reported by reviewers and not re-read by the orchestrator: `gpu_lease.py:118-125, :305-310, :391`; `kalamanch/common/_publish.py:13-23`; `studio-and-collector-roles.md:128`; `handoff.md:616`; the businessnext mention count.
+- Not checked: licences, VRAM figures, Python version claims, the 6-tool cap, host installs.
+- No engine, render or test was run. All figures are as stated in the brief or the repo.
+- No files other than this report were changed.

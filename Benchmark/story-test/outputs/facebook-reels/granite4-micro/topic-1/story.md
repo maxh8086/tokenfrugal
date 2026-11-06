@@ -1,0 +1,5 @@
+In Port Marrow, a coastal city, water was a precious resource. The rooftop-garden co-op on Grey Stair had felt the drought for three years. The co-op shared a large concrete cistern on the roof, feeding all twelve flats. When a notice arrived, Mara read it twice. A developer named Lindqvist Partners had purchased the rights to the tank. The letter was polite, mentioning "managed going forward" and "reviewed in due course." Mara felt a knot in her stomach. This felt like a game-changer.
+
+At the Thursday meeting, everyone had something to say. Old Tobin said he had seen this coming. Priya suggested calling a lawyer. Mara remained silent, then spoke. "We have the tank key, pump receipts, and nine years of meter readings. That counts for something." The room went quiet. It was a testament to her steady nature that people listened.
+
+They decided to shed light on the situation. They photographed the meters, copied the receipts, and posted the timeline on the stairwell wall. By the weekend, the whole street knew.

@@ -1,0 +1,3 @@
+1. Plot Gap: The story does not explain why Renata was reviewing the fleet planner's output in the first place. There is no context for why this particular task was important or what the consequences of the planner's error might be.
+2. Choices with No Reason: Renata's decision to revisit the original rule book seems arbitrary and lacks a clear rationale. There is no indication why she specifically chose to check the document or why she suspected the planner's output was incorrect.
+3. Vague Detail: The story mentions a "flood" that closed the south dock but does not provide any additional context or details about the flood or its impact, making the situation less clear to the reader.

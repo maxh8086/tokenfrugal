@@ -40,7 +40,10 @@ roles:
   content-writer: {model: builder, profile: content-writer, max_steps: 8, timeout_s: 120, required_tool: read_file, tools: [read_file, write_file, edit_file], skills: [role-content-writer], improve: gated}  # stages 3, 5, 7: draft, humanize, executive rewrite
   content-editor: {model: thinker, profile: content-writer, max_steps: 8, timeout_s: 90, required_tool: read_file, tools: [read_file, write_file], skills: [role-content-editor], improve: gated}  # stages 4, 6: critic, anti-slop
   content-analyst: {model: thinker, profile: content-analyst, max_steps: 14, timeout_s: 300, compose: [crawl4ai, searxng, qdrant], native: [crawl4ai, sandbox, reddit, hn, rss, youtube, qdrant, postgres], required_tool: web_search, tools: [web_search, crawl_markdown, read_file, write_file, run_python, search_posts, search_stories, get_feed, searchVideos, getVideoDetails, qdrant-find, execute_sql], skills: [role-content-analyst], improve: gated}  # trend intelligence; separate from the script pipeline
-  video-editor: {model: thinker, profile: video-editor, max_steps: 8, timeout_s: 900, native: [video-editor], required_tool: list_raw, tools: [list_raw, list_renders, vedit, read_file], skills: [role-video-editor], improve: gated}  # one raw clip to a captioned 9:16 short (docker compose video-editor)
+  media-generator: {model: thinker, profile: media-generator, max_steps: 8, timeout_s: 900, native: [media-generator], required_tool: list_raw, tools: [list_raw, list_renders, mgen, render_film, read_file], skills: [role-media-generator], improve: gated}  # generator: text brief to motion-graphics film (Mode B, planned); one raw clip to a captioned 9:16 short (Mode A, docker compose media-generator)
+  media-motion: {model: thinker, profile: media-generator, max_steps: 8, timeout_s: 900, native: [media-briefing], required_tool: brief, tools: [brief, read_file], skills: [role-media-motion], improve: gated}  # Mode B: text brief to narrated motion-graphics film (media-briefing tool; slice 1 stub returns "error: not built yet" for a valid brief)
+  manim-style: {model: thinker, profile: media-generator, max_steps: 4, timeout_s: 300, required_tool: read_file, tools: [read_file], skills: [role-manim-style], improve: gated}  # style lookup: reads docs/designs/manim-style-<name>.md and returns its settings for a media-motion brief; writes nothing
+  voice-artist: {model: thinker, profile: media-generator, max_steps: 4, timeout_s: 300, required_tool: read_file, tools: [read_file], skills: [role-voice-artist], improve: gated}  # voice lookup, reads docs/designs/voice-artist-<name>.md and returns its voice settings; writes nothing
   github-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, required_tool: list_pull_requests, tools: [list_pull_requests, pull_request_read, issue_read, list_issues, get_file_contents], skills: [role-github-read], improve: gated}  # read-only; create/close/merge PRs stay with Haiku
   github-actions-read: {model: thinker, profile: github, max_steps: 8, timeout_s: 90, required_tool: actions_list, tools: [actions_list, actions_get, get_job_logs], skills: [role-github-actions-read], improve: gated}  # read-only Actions; actions_run_trigger (run, rerun, cancel, delete logs) stays with Haiku
   devops:   {model: builder, profile: [build, analyze, debug], max_steps: 12, timeout_s: 120, required_tool: read_file, tools: [read_file, write_file, edit_file, git_diff, git_log, execute_code], skills: [role-devops], improve: gated}
@@ -100,6 +103,7 @@ divisions:
   support: research
   testing: reviewer
 overrides:
+  video-editor: media-generator  # alias: old name kept so existing task rows and calls still resolve
   engineering-code-reviewer: reviewer
   security-architect: analyzer
   security-cloud-security-architect: analyzer
@@ -287,8 +291,8 @@ teams:
     description: Research, finance analysis and documentation.
     roles: [research, finance, docs]
   mediahouse:
-    description: Media production. Script pipeline (content-* roles, research to executive rewrite), the separate kalamanch video pipeline and video-editor (one raw clip to a captioned short).
-    roles: [kalamanch, content-research, content-factcheck, content-writer, content-editor, content-analyst, video-editor]
+    description: Media production. Script pipeline (content-* roles, research to executive rewrite), the separate kalamanch video pipeline and media-generator (generates motion-graphics films from a brief and captioned 9:16 shorts from a raw clip).
+    roles: [kalamanch, content-research, content-factcheck, content-writer, content-editor, content-analyst, media-generator, media-motion, manim-style, voice-artist]
 
 # Self-improvement gate (scripts/role_improve.py). A role may propose a diff to its own skill files.
 # Nothing is applied automatically: only 'python -m scripts.role_improve approve <id>' applies one.
@@ -538,16 +542,43 @@ contracts:
       - {text: "Platforms with no collector are marked not collected.", kind: deterministic}
       - {text: "Each top topic has a LinkedIn, YouTube and X idea and a 5-day calendar entry.", kind: deterministic}
       - {text: "Each top topic has a LinkedIn, YouTube and X idea tied to its evidence.", kind: judgement}
-  video-editor:
-    purpose: Turn one raw talking clip in Raw into a finished 9:16 short with captions and music.
+  media-generator:
+    purpose: Generate a finished video. Mode A turns one raw talking clip in Raw into a captioned 9:16 short. Mode B (planned, not built) turns a text brief into a motion-graphics film. Output goes to Render.
     inputs: [clip file name in Raw, no_music flag if the task asks for it, output name if the task gives one]
-    output_format: Render file name, then the vedit exit line.
+    output_format: Render file name, then the mgen exit line.
     stop_condition: the Render file is listed, or 8 steps used.
     checklist:
       - {text: "The clip exists in list_raw.", kind: deterministic}
-      - {text: "vedit returned the Render path with no error.", kind: deterministic}
+      - {text: "mgen returned the Render path with no error.", kind: deterministic}
       - {text: "The output file exists in list_renders.", kind: deterministic}
       - {text: "Only the options the task asked for were passed, and no Raw clip was changed.", kind: judgement}
+  media-motion:
+    purpose: Generate a narrated motion-graphics film of 30 to 120 seconds from a text brief. Output goes to Render.
+    inputs: [brief text, length_target_s, music flag if the task asks for it, output name if the task gives one]
+    output_format: Render file name, then the brief exit line.
+    stop_condition: the brief returns the Render path, or 8 steps used.
+    checklist:
+      - {text: "brief returned the Render path with no error.", kind: deterministic}
+      - {text: "Only the options the task asked for were passed.", kind: judgement}
+      - {text: "The narration fits the word limit for the clip length (about 3 words per second).", kind: judgement}
+  manim-style:
+    purpose: Look up a media style profile in docs/designs and return its settings for a media-motion brief. Reads only.
+    inputs: [style name, optional section the task asks about]
+    output_format: the section 7 settings table, then one line on the section asked about.
+    stop_condition: the profile file is read, or 4 steps used.
+    checklist:
+      - {text: "read_file was called on docs/designs/manim-style-<name>.md or manim-style-profile.md.", kind: deterministic}
+      - {text: "Every setting returned appears in the profile file.", kind: judgement}
+      - {text: "No setting was invented; a missing file is reported with the path tried.", kind: judgement}
+  voice-artist:
+    purpose: return the voice settings (engine, voice id, speed, reference clip, consent note) for a named voice profile
+    inputs: [voice name, optional section the task asks about]
+    output_format: the voice settings, then one line on the section asked about.
+    stop_condition: the profile file is read, or 4 steps used.
+    checklist:
+      - {text: "read_file was called on docs/designs/voice-artist-<name>.md or voice-artist-profile.md.", kind: deterministic}
+      - {text: "The settings appear in the profile file.", kind: judgement}
+      - {text: "Nothing is invented; a missing file is reported with the path tried, and a reference clip of a real person with no consent note in the file is reported as missing.", kind: judgement}
   db-postgres-dev:
     purpose: Run read and write statements in a named dev database for one change.
     inputs: [database name, statements or query, expected result]

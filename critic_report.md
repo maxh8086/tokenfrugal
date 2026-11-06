@@ -1,49 +1,134 @@
-# Critic Report (Stage 7): docs/designs/comfyui-gpu-lease.md, lines 1-179
+# Stage 7 Critic Review: concepts_brief.md
 
-Reviewers: egm-design, egm-structural, egm-style (run in parallel, deduplicated below). Standard: `feature-spec-standard.md`.
+* **Scope:** whole file, lines 1 to 246.
+* **Standard:** feature-spec-standard.md (design and structure); egm-style REVIEW mode (style).
+* **Produced by:** three read-only subagents, relayed as messages. The orchestrator saved their text here.
+  * `egm:egm-design` (subagent `a8b36bbb405f64eb3`): 3 blockers, 14 majors, 5 nits. Its verdict says "two blockers" but it lists three (F1, F2, F4). This report uses the list.
+  * `egm:egm-structural` (subagent `a48571fe5c19db442`): 1 blocker, 12 majors, 8 nits.
+  * `egm:egm-style` (subagent `ae6673015f11ef228`): 4 blockers, 17 majors, 26 nits.
+* **Status of findings:** critic output only. No finding has been applied to `concepts_brief.md`. No decision was changed.
+
+## Cross-reviewer themes
+
+Three reviewers found the same problems independently. These are the most important:
+
+1. **The GPU lease is applied to slice 1, which runs on CPU.** Design F1, structural 6, style B2.
+2. **The stage lists and run states disagree.** Design F4, structural 7, style M8.
+3. **Decision status is stale.** Structural 5, style B3, design F20.
+4. **The 1200-word example is about 8 minutes of speech, not one minute.** Design F10, style B1, structural (none). The word cap for slice 1 should be about 60 to 90 words.
+5. **Mode A's pinned image and Mode B share one container.** Design F2, F8.
+6. **Alternatives are scattered and no section records the rejections.** Structural 1, design F13.
+7. **Approval points are unclear.** Style B4, design F16, F17.
 
 ## Blockers
 
-1. **The core design depends on the "optional" live GPU check (lines 95, 107-113, 171).** Acquire step 4 makes the live check a required step. Line 109 says it is optional and not part of piece 1. Alternative 6 justifies fail-open by citing it as the second opinion. Line 107 says the lease file alone solves the root problem. A reader cannot tell what is specified. *(style B1/B2, design M1, structural M2)*
-   - Direction: split the required free-VRAM check (step 4) from the optional process-name check. Rename the section at line 100 to "Router check" and give the optional check its own subsection ("Deferred: live GPU check, post-spike"). Replace line 107 with a bounded claim (the lease stops the router loading Ollama models while held; other Ollama clients are not blocked). Reword Alternative 6 so it does not depend on the deferred check. Define "piece 1" or drop the term.
-2. **The `ollama` holder and `releasing` state are defined but never specified (lines 76-77, 92, 98, 109).** Neither is used in the core flow. *(style B3, design 2)*
-   - Direction: remove both from the core schema, or mark them "reserved, used only if the live check is adopted". Reword line 92 to "if a valid lease is held by `comfyui` or `kalamanch`, refuse with `GpuBusy`".
+* **C-B1 (design F1).** The GPU lease in blocker B1 and task 5 applies to slice 1, which is CPU-only. Calling `acquire()` would unload Ollama models (`router/gpu_lease.py:359`) and require 6 GB free VRAM (`:318-319`). The pid takeover applies only to the kalamanch holder (`:230-231`). The fix is to remove the lease from slice 1.
+* **C-B2 (design F2).** D1 puts render and voice in the media-generator image. That image is pinned by digest (`docker-compose.yml:27`). Adding voice dependencies changes the Mode A pin, and the brief says Mode A is unchanged. The brief has not decided between a separate Mode B service with its own digest and a digest change with Mode A regression gates.
+* **C-B3 (design F4 / structural 7 / style M8).** The run states (`queued`, `waiting_gpu`, `running:<stage>`, `done`, `failed:<stage>`) do not match the stage list. They have no approval state, so the run cannot wait for a user decision. The stage order differs between line 94 and section 12.
+* **C-B4 (style B1).** The example "1200 words for a one-minute target" is about 8 minutes of speech at roughly 150 words per minute. A 20 to 30 s film is about 50 to 75 words.
+* **C-B5 (style B2).** The file contradicts itself on whether voice runs on GPU. Line 20 and D1 say CPU. Lines 63, 122 and 140 refer to a GPU voice step.
+* **C-B6 (style B3).** Decision status is unclear. Line 3 and the heading at line 152 do not say which decisions are still open. Lines 76 to 78 still present D3 as options.
+* **C-B7 (style B4).** D5 requires script approval, but the stage table has no user approval at stage 1. Only stage 4b has one.
 
-## Major
+## Majors
 
-3. **Fail-open is unproven (lines 105, 171, 113).** If the file is unreadable or the lease expires while the container still holds VRAM (laptop sleep), the router loads Ollama onto a busy GPU, which is the failure the design exists to prevent. *(design 1, 2)*
-   - Direction: state what protects the user in piece 1. Make the `nvidia-smi` visibility test a go/no-go criterion in the spike, and say what fail-open degrades to if it fails (a `/api/ps` or `docker inspect` probe, or a short fail-closed window).
-4. **Expiry and takeover are described twice with different outcomes (lines 77, 92, 105).** Define where `docker inspect` runs: `check_for_ollama` is read-only and fails open; acquire takes over only after `docker inspect` (or the pid check for kalamanch). Cover expired lease with live container, expired with dead container, and a `pending` that never completed. *(design 2, style M4)*
-5. **Holder and heartbeat failure modes are missing (lines 29, 83, 98).** If the bridge dies during a render, the container keeps rendering while the lease expires after 30 s. `releasing` has no timeout. Sleep and resume make the clocks inconsistent. *(design 3)*
-   - Direction: add a failure-mode table (bridge crash mid-render, node crash, sleep/resume, stuck `pending`/`releasing`) with the lease outcome and a mitigation, such as checking the ComfyUI `/queue` before treating an expired lease as free. Tie `ttl_s` to the heartbeat as a multiple, and run the heartbeat on its own thread.
-6. **No Risks & Mitigations section (lines 111-114, 122, 148-160).** Risks are spread over four places and several have no mitigation or owner (spill, 8 GB feasibility with no fallback, two processes breaking a stale lock). *(design 4, structural 1)*
-   - Direction: add one `## Risks & Mitigations` table (risk, impact, mitigation, owner/test) and a spike go/no-go criterion (fit in 8 GB, `nvidia-smi` visibility, mount load time). Put 8 GB feasibility first.
-7. **Security posture has gaps (lines 120, 122, 136-137).** The container has outbound network access. An embedded editor with CORS or a proxy on localhost exposes an unauthenticated ComfyUI to any local web page (DNS rebinding, cross-origin). A same-origin proxy would forward arbitrary ComfyUI API calls. *(design 5)*
-   - Direction: evaluate an internal-only Docker network plus a single proxied port, or an egress block. Add Host and Origin validation and state the dashboard's own authentication stance.
-8. **Supervision across Node and Python is unspecified (lines 29, 67, 126, 128).** No policy for a Node restart mid-render, a Stop during a render (it kills the job), or Force release while ComfyUI still holds models (breaks the invariant at line 27). *(design 6)*
-   - Direction: Force release must also free or stop the container, or warn clearly. Specify bridge restart or adoption of an existing lease, and what Stop does to a running job.
-9. **Open decisions are scattered (lines 86, 109, 132, 134-137).** Add an `## Open Questions` section with an owner and a resolution gate for each (debounce, embedding mechanism, live-check policy, spike-tuned timings). *(structural 3, design 9)*
-10. **Goals are not testable (lines 13, 27, 29-33).** "A usable tab", "quality before speed" with no metric, "measured against `generate_ltx.py`" with no quantities, "cannot leave GPU busy forever" with no maximum stale time, an undefined retry hint. *(style M1, M2)*
-    - Direction: list the tab features with an acceptance condition; name PSNR/SSIM as the metric or defer thresholds to the spike; name the compared quantities (wall time, peak VRAM); state maximum stale lease time (TTL plus check interval); define the retry hint.
-11. **Timing values are inconsistent (lines 71, 83, 86, 94).** 10 s stale lock vs "a couple of seconds" wait; "every few seconds" heartbeat vs `ttl_s` 30; 60 s unload wait. Give a number for each. *(style M5, design 7)*
-12. **`generation` rejection is not described (lines 84, 98).** Say writers pass their generation on heartbeat and release, and what a rejected writer does. *(style M6)*
-13. **Unquantified performance claims (lines 19, 151).** "Slows to a crawl", "several times slower": cite a measurement or write "to be measured in the spike". *(style M3)*
-14. **Unload and release races (lines 94, 98, 132).** Another Ollama client can reload a model between "empty" and `held`; the debounce is undecided. Re-check after writing `pending`, define rollback on timeout, and set a default debounce (for example 60-120 s, configurable). *(design 8)*
-15. **kalamanch scripts run directly bypass the lease (lines 34, 62-64).** Add to Non-Goals or the weak points, as done for direct Ollama clients (line 41). *(design 10)*
-16. **The stress-test paragraph is a dense block (lines 109-114) in second person.** Convert to a short list: purpose, decision pending, open questions. *(style M7)*
+* **Structural (12):**
+  * S-M1. The "Alternatives considered" section is missing.
+  * S-M2. The problem statement is missing. Section 1 says what Mode B does, not why it is needed.
+  * S-M3. Security is not covered under risks.
+  * S-M4. The summary says "about one minute". Slice 1 is 20 to 30 s (D6).
+  * S-M5. The status line and the open-decisions list are stale.
+  * S-M6. The GPU lease requirement contradicts the CPU voice decision.
+  * S-M7. The stage lists disagree.
+  * S-M8. The narration format is one WAV in one place and one WAV per line in another.
+  * S-M9. The script approval gate is missing from the stage gates.
+  * S-M10. The role name is inconsistent: the title says "media-generator", section 4 says "media-motion", D3 says "film role".
+  * S-M11. The naming note says "keep video-editor names", but the paths already use the new names.
+  * S-M12. Host or container wording is still conditional after D1.
+  * S-M13. Several blockers are stale after the decisions. B6 is superseded by D6.
+  * S-M14. Open items are spread across sections.
+  * S-M15. Cross-references point to the wrong task (section 10, task 3).
+  * S-M16. Section 12 sits after the closing risks section.
+  * S-M17. Several items are repeated with diverging status.
+* **Style (17):**
+  * Y-M1. The summary states the one-minute target as current (line 11).
+  * Y-M2. "one-minute run" appears in risk and measurement lines.
+  * Y-M3. "anchored decisions" is undefined.
+  * Y-M4. "holder list is closed" and "holder" are undefined.
+  * Y-M5. "deterministic-enough" cannot be measured.
+  * Y-M6. Mood-picker wording conflicts with the music field in slice 1.
+  * Y-M7. The mode toggle has no slice-1 status.
+  * Y-M8. Stage lists disagree (same as structural S-M7).
+  * Y-M9. "Each stage writes one output file" is contradicted by the table.
+  * Y-M10. "within a stated tolerance" states no tolerance.
+  * Y-M11. Scene-gate fragment: font size, guard rules and tweens are undefined.
+  * Y-M12. "loudness at the agreed target" has no value.
+  * Y-M13. The narration duration check compares a file to itself.
+  * Y-M14. The preview capture reference points to a task that does not cover it.
+  * Y-M15. "what the user approves is what gets rendered" is absolute, but the next sentence limits it.
+  * Y-M16. "Reproducibility depends on pinned inputs only" contradicts line 146.
+  * Y-M17. The reproducibility claim has two readings.
+  * Y-M18. The role name is not settled (same as structural S-M10).
+  * Y-M19. "Option A" is not defined for D1.
+  * Y-M20. The 8 GB VRAM claim is unmeasured and stated as certain.
+  * Y-M21. "pid-based takeover" is undefined.
+  * Y-M22. Lines 65 and 116 describe decisions that are already made.
+  * Y-M23. "unverified", "unchecked" and "not verified online" are three terms for one state.
+  * Y-M24. "the brief says" is ambiguous between this file and an earlier one.
+  * Y-M25. Many terms and acronyms are undefined. A glossary is needed.
+  * Y-M26. `_check()` has no file path.
+  * Y-M27. "Dockerfile:57" is ambiguous.
+  * Y-M28. "Reuse it" refers to a record that is not described.
+* **Design (14):**
+  * D-F3. The acceptance command for task 4 uses a Windows host venv path, which contradicts D1. The image's apt list does not include espeak-ng.
+  * D-F5. The poll cadence and step budget for the async pattern are not defined. The role has a max of 8 steps.
+  * D-F6. Network is open during render, and the whole media folder is mounted read-write. Scene HTML could read or send local files. Chromium runs with `--no-sandbox`.
+  * D-F7. Fonts, images and model files can be fetched at run time and are not hashed. The shared `make_score.py` and `compose_intro.py` come from a working tree, not a pinned source.
+  * D-F8. The media-generator service sets no memory, CPU or process limits. It runs Chromium and Kokoro alongside Mode A.
+  * D-F9. There is no storage plan. The default workspace is under OneDrive, so every run's files would sync to the cloud. Nothing sets a retention rule.
+  * D-F10. The 1200-word max is wrong for a 20 to 30 s film (same as C-B4).
+  * D-F12. The Studio run record is not built, and it has fewer states than Mode B needs. It is not listed as a dependency.
+  * D-F13. "Alternatives" are split across the document. D1 names only Option A. Remotion, CosyVoice and OpenVoice V2 are not compared.
+  * D-F14. The brief marks Kokoro licence as open. `docs/designs/video-pipeline-use-cases.md:108` already records Apache-2.0 for the weights, checked on 2026-11-02. The brief does not cite it.
+  * D-F15. No licence review covers the music bed, voice output or fonts for commercial use. The product is promotional, so distribution is the purpose.
+  * D-F16. The schema has no mode field. The toggle has no contract, and D5 makes approval mandatory either way.
+  * D-F17. The stage-2 transcript gate depends on a local ASR model that is not chosen.
+  * D-F18. The frame-count check needs an fps that the brief never sets. The lease tests cover code slice 1 does not use. The compose check tests syntax only.
 
 ## Nits
 
-- Headings: "The Problem" and "Technical Plan (Architecture)" vs the standard's "Problem Statement" and "Proposed Architecture". Rename "Weak points to review" (line 155) or fold it into Risks. Make "Stress-test of the live check" (line 111) and the "Reuse:" paragraph (line 88) proper subheadings.
-- Voice: "you", "your", "settled by you" at lines 109, 164, 166, 170, 175, 176. Use "the author" or the passive voice.
-- Alternatives labelling: "(fixed)", "(fixed against)", "(fixed: ...)" are cryptic and vary (lines 164, 170, 174-176). Use one tag, for example "[Pre-decided]", with an objective reason. List item 10 has different marker spacing (line 175).
-- Missing alternatives: querying ComfyUI or Docker as the source of truth instead of a heartbeat file; OS file lock or small localhost service; SQLite or named mutex; a no-egress container network.
-- Define terms once: "lease" before line 13, "kalamanch" and `kalamanch/run.py` at line 11. Goals bullets 31-34 use inconsistent bold lead-ins.
-- Wording: line 67 "Node does not rewrite its logic" to "does not reimplement the lease logic"; line 11 "That is too small"; line 22 heading "Unreviewed code risk" to "Unpinned third-party code" and name the mechanism (runtime `pip install`); line 39 first Non-Goal is a fragment; line 136 "mishandles" to "does not forward"; line 168 "UI-side owner" is vague.
-- Line 20 and 151: the WDDM spill claim is unbacked; label it an observation to confirm in the spike.
-- Line 118-119 acceptance tests are scattered; add one short acceptance list (shutdown path, competing writers, sleep, bridge crash).
-- Cross-references at lines 40 and 176 name no subsection; link to anchors. Add a language tag to the diagram fence at line 50.
+* **Structural (8):** S-N1 to S-N8 cover the repetition in the summary, the review log in section 5, the bold labels instead of headings, the overlap between deferred items and non-goals, and the undefined term "anchored decisions". Full text: structural hand-back.
+* **Style (26):** Y-N1 to Y-N32 cover internal reviewer IDs, jargon ("faceless", "signature", "pydantic"), vague phrases ("reliably", "real", "weak"), undefined placeholders (`<venv>`), and the "one-minute" history sentence in D6. Full text: style hand-back.
+* **Design (5):**
+  * D-F11. Tolerance is ±1.0 s at line 87 but "set from measurement" at line 240.
+  * D-F19. "colour tween" and the font-size rule are not defined.
+  * D-F20. Section 3 still lists host as an option after D1. The two-HyperFrames paragraph describes a choice that no longer exists. The role name varies.
+  * D-F21. The "BusinessNext skill exists" row in section 5 should also name the other files that mention it.
+  * D-F22. "The reviewers agree" and similar claims have no attached output.
 
-## Verdict
+## What the reviewers confirmed as correct
 
-No findings on the problem statement, goals or architecture shape. The root issue is that the core flow and the optional live check are mixed, so fail-open safety is claimed but not delivered in piece 1. Fix blockers 1 and 2 and major 3-6 first.
+* The compose media-generator service has no network setting. `disableNetwork` appears only on the filesystem sidecar (`docker-compose.yml:22-33`, `profiles/media-generator.yaml:23`).
+* The image includes HyperFrames 0.8.223, Chromium and ffmpeg (`docker/media-generator/Dockerfile:10, 15, 26`).
+* The lease holder list is closed (`router/gpu_lease.py:38, 336-337`).
+* kalamanch takes and releases the lease (`kalamanch/run.py:37, 54`).
+* `mgen` needs a Raw clip and diffs Render (`router/media_generator_mcp.py:63, 79-80`).
+* The role timeout is 900 s (`router/tf-roles.yaml:43`).
+* The exact tool-set test is at `tests/test_preflight.py:135`.
+* `LAYOUT` is at `router/media_workspace.py:15`.
+* `/tmp/mgen` is at `docker/media-generator/pipeline.py:157`.
+* The tool caps (6 recommended, 12 maximum) are at `router/preflight.py:63-64`.
+* The heartbeat and stale sweep are at `router/store.py`.
+* The 8 GB GPU figure is at `docs/designs/comfyui-gpu-lease.md:11`.
+* pyproject requires Python 3.11 or later (`pyproject.toml:5`).
+* The Voicebox and host-render text in `docs/designs/video-pipeline-use-cases.md:10, 24` is stale.
+
+## Priority order for the author
+
+Design reviewer's order: C-B1 (lease), C-B2 (image pin), C-B3 (state and stage lists), then D-F3, D-F5, D-F6, D-F8, D-F9, D-F10, D-F12, D-F13, D-F14, D-F15, D-F16, D-F17, D-F18, then the nits.
+
+## Limits
+
+* No review was able to measure anything. VRAM, RAM and render-time figures in the brief are estimates.
+* Licence status was checked only against `docs/designs/video-pipeline-use-cases.md`, not against upstream sources.
+* The businessnext skill is not in this repo. Its method is unverified.

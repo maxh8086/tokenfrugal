@@ -175,6 +175,7 @@
     <button type="button" role="tab" data-tab="benchmark" aria-selected="false" onclick="showTab('benchmark')">Benchmark</button>
     <button type="button" role="tab" data-tab="explorer" aria-selected="false" onclick="showTab('explorer')">Explorer</button>
     <button type="button" role="tab" data-tab="comfy" aria-selected="false" onclick="showTab('comfy')">ComfyUI</button>
+    <button type="button" role="tab" data-tab="voice" aria-selected="false" onclick="showTab('voice')">Voice</button>
   </nav>
   <section id="tab-dashboard">
   <div class="brand">
@@ -271,6 +272,15 @@
     <p id="cmf-msg" role="status" aria-live="polite"></p>
     <p id="cmf-off" style="opacity:.8"></p>
     <iframe id="cmf-frame" title="ComfyUI editor" style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px" hidden></iframe>
+  </section>
+  <section id="tab-voice" hidden>
+    <h2>Voice</h2>
+    <div class="cfg-actions">
+      <button type="button" id="vcs-start" class="cfg-save-btn" onclick="voiceStart()" hidden>Start voice container</button>
+      <button type="button" id="vcs-stop" onclick="voiceStop()" hidden>Stop</button>
+      <span id="vcs-status" class="meta">Checking…</span>
+    </div>
+    <iframe id="vcs" title="Voice samples" hidden style="width:100%;height:80vh;border:1px solid #8884;border-radius:8px"></iframe>
   </section>
 </main>
 <script>
@@ -445,7 +455,7 @@ const num = (n) => Number(n || 0).toLocaleString();
 let activeTab = 'dashboard';
 function showTab(name) {
   activeTab = name;
-  for (const n of ['dashboard', 'configuration', 'usage', 'benchmark', 'explorer', 'comfy']) {
+  for (const n of ['dashboard', 'configuration', 'usage', 'benchmark', 'explorer', 'comfy', 'voice']) {
     $('tab-' + n).hidden = n !== name;
     const b = document.querySelector(`.tabs button[data-tab="${n}"]`);
     b.setAttribute('aria-selected', String(n === name)); b.classList.toggle('active', n === name);
@@ -456,7 +466,53 @@ function showTab(name) {
   if (name === 'benchmark') { benchInit(); if (!$('bidx').src) $('bidx').src = '/Benchmark/index.html'; }
   if (name === 'explorer' && !$('expl').src) $('expl').src = '/Benchmark/explorer.html';
   if (name === 'comfy') renderComfy(lastComfy);
+  if (name === 'voice') voiceRefresh();
 }
+
+// ---- Voice tab: the dashboard server starts and stops the voice container (ui/server.js, /api/voice/*).
+// The voice UI is published on host port 18080 (8080 is often taken by other containers).
+async function voiceRefresh() {
+  let s;
+  try {
+    const r = await fetch('/api/voice/status', { cache: 'no-store' });
+    s = r.ok ? await r.json() : null;
+  } catch (e) { s = null; }
+  if (!s) {
+    $('vcs-status').textContent = 'The dashboard server has no voice routes yet. Restart it (node ui/server.js) and reload this page.';
+    $('vcs-start').hidden = true; $('vcs-stop').hidden = true; $('vcs').hidden = true;
+    return;
+  }
+  const frame = $('vcs');
+  if (!s.docker) {
+    $('vcs-status').textContent = 'Docker is not running, so the voice container cannot start.';
+    $('vcs-start').hidden = true; $('vcs-stop').hidden = true; frame.hidden = true;
+    return;
+  }
+  $('vcs-start').hidden = s.running; $('vcs-stop').hidden = !s.running;
+  frame.hidden = !s.running;
+  if (s.running) {
+    $('vcs-status').textContent = 'Voice container running.';
+    if (!frame.src) frame.src = 'http://' + location.hostname + ':' + s.port + '/';
+  } else {
+    frame.removeAttribute('src');
+    $('vcs-status').textContent = 'Voice container is not running.';
+  }
+}
+
+async function voiceAction(name) {
+  const btn = name === 'start' ? $('vcs-start') : $('vcs-stop');
+  btn.disabled = true;
+  $('vcs-status').textContent = name === 'start' ? 'Starting… the first start can take a minute while the model loads.' : 'Stopping…';
+  try {
+    const r = await fetch('/api/voice/' + name, { method: 'POST' });
+    const body = await r.json().catch(() => ({}));
+    $('vcs-status').textContent = body.message || r.statusText;
+  } catch (e) { $('vcs-status').textContent = String(e); }
+  btn.disabled = false;
+  voiceRefresh();
+}
+const voiceStart = () => voiceAction('start');
+const voiceStop = () => voiceAction('stop');
 
 // ---- ComfyUI tab. The state arrives as the named SSE event "comfy" (see ui/server.js pollComfy).
 let lastComfy = {};

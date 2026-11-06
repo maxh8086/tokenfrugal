@@ -517,6 +517,41 @@ function proxyComfy(req, res, upPath, search) {
   req.pipe(up);
 }
 
+// ---- Voice tab: start/stop the Kokoro voice UI container (image maxh8086/dhvani:1). Fixed name and host port.
+const VOICE_NAME = 'tokenfrugal-voice-ui', VOICE_IMAGE = 'maxh8086/dhvani:1', VOICE_PORT = 18080;
+const execDocker = (args, timeout) => new Promise((ok) => execFile('docker', args, { timeout, windowsHide: true },
+  (e, out, err) => ok({ ok: !e, out: String(out || '') + String(err || '') })));
+async function voiceState() {
+  const r = await execDocker(['ps', '--filter', 'name=^' + VOICE_NAME + '$', '--format', '{{.State}}'], 4000);
+  return { docker: r.ok, running: r.ok && r.out.trim() === 'running', port: VOICE_PORT };
+}
+async function voiceStart() {
+  if ((await voiceState()).running) return { ok: true, code: 200, message: 'voice container already running' };
+  await execDocker(['rm', '-f', VOICE_NAME], 30000); // clear a stopped leftover with the same name
+  const r = await execDocker(['run', '-d', '--name', VOICE_NAME, '-p', '127.0.0.1:' + VOICE_PORT + ':8080', VOICE_IMAGE,
+    '/opt/venv-kokoro/bin/python', '/opt/voice-ui/server.py'], 300000);
+  if (!r.ok) return { ok: false, code: 500, message: 'docker run failed: ' + r.out.trim().split('\n').pop() };
+  return { ok: true, code: 200, message: 'voice container started' };
+}
+async function voiceStop() {
+  const r = await execDocker(['rm', '-f', VOICE_NAME], 30000);
+  return { ok: r.ok, code: r.ok ? 200 : 500, message: r.ok ? 'voice container stopped' : 'docker rm failed: ' + r.out.trim() };
+}
+async function voiceRoute(req, res, url) {
+  if (url.pathname === '/api/voice/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify(await voiceState()));
+  }
+  const action = url.pathname.slice('/api/voice/'.length);
+  if (!hostOk(req)) return res.writeHead(403).end('forbidden');
+  let r;
+  if (action === 'start') r = await voiceStart();
+  else if (action === 'stop') r = await voiceStop();
+  else return res.writeHead(404).end('not found');
+  res.writeHead(r.code || (r.ok ? 200 : 500), { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  return res.end(JSON.stringify(r));
+}
+
 async function comfyRoute(req, res, url) {
   if (url.pathname === '/api/comfy/status') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
@@ -613,6 +648,7 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify(usage()));
   }
   if (url.pathname.startsWith('/api/comfy/')) return comfyRoute(req, res, url);
+  if (url.pathname.startsWith('/api/voice/')) return voiceRoute(req, res, url);
   const upPath = comfyUpstreamPath(url, req); // the ComfyUI editor: /comfy/... and its absolute paths from the editor page
   if (upPath !== null) return proxyComfy(req, res, upPath, url.search);
   if (url.pathname === '/events') {

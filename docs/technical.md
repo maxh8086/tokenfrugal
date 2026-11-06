@@ -183,7 +183,7 @@ python scripts/pinned_build.py chrome-devtools-mcp  # one pin; --keep leaves the
 
 ## Shared media workspace
 
-content-writer, content-analyst and the video-editor share one folder. Its path comes from `router/media_workspace.py` `media_dir()`, resolved in this order:
+content-writer, content-analyst and the media-generator role share one folder. Its path comes from `router/media_workspace.py` `media_dir()`, resolved in this order:
 
 1. env `VIDEO_EDITOR_DIR`
 2. `%OneDrive%\Videos\video-editor` when the `OneDrive` env var is set
@@ -194,7 +194,7 @@ Layout (created by `python scripts/ensure_media_workspace.py`):
 
 ```text
 video-editor/
-  Raw/          clips for video-editor (vedit reads from here)
+  Raw/          clips for video-editor (mgen reads from here)
   References/   reference material
   Render/       finished videos (the final video goes here)
   content/      content/<slug>/ per script; stage files and scripts go here (created by the roles)
@@ -206,7 +206,7 @@ video-editor/
 - `--check` verifies only and exits 1 if anything is missing. It creates nothing.
 - `--print-path` prints the resolved path and creates nothing.
 
-The profiles `content-writer`, `content-analyst` and `video-editor` mount `__MEDIA__:/workspace:rw`. `scripts/install_profiles.py` and `router/profile_sync.py` fill `__MEDIA__` with `media_dir()` after ensuring the tree. `vedit` exports the same path as `VIDEO_EDITOR_DIR` so the compose service mounts the same folder.
+The profiles `content-writer`, `content-analyst` and `media-generator` mount `__MEDIA__:/workspace:rw`. `scripts/install_profiles.py` and `router/profile_sync.py` fill `__MEDIA__` with `media_dir()` after ensuring the tree. `mgen` exports the same path as `VIDEO_EDITOR_DIR` so the compose service mounts the same folder.
 
 ## Plan store
 

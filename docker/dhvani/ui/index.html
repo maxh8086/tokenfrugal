@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice profiles</title>
+<style>
+  :root { --bg: #f7f7f5; --fg: #1d1d1b; --muted: #6b6b66; --card: #ffffff; --line: #d9d9d4; --accent: #2a5db0; --bad: #a82a2a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #161615; --fg: #ecece8; --muted: #9a9a94; --card: #1f1f1e; --line: #3a3a37; --accent: #7aa7e8; --bad: #e07a7a; }
+  }
+  :root[data-theme="dark"] { --bg: #161615; --fg: #ecece8; --muted: #9a9a94; --card: #1f1f1e; --line: #3a3a37; --accent: #7aa7e8; --bad: #e07a7a; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 22px; margin: 8px 0 16px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  label { display: block; margin: 10px 0 4px; color: var(--muted); font-size: 13px; }
+  input[type="text"], textarea { width: 100%; box-sizing: border-box; padding: 8px; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+  textarea { min-height: 60px; }
+  button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; margin: 4px 4px 4px 0; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .status { min-height: 1.4em; margin-top: 8px; font-size: 14px; }
+  .status.error { color: var(--bad); }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { border-top: 1px solid var(--line); padding: 10px 0; }
+  li:first-child { border-top: 0; }
+  audio { width: 100%; margin-top: 8px; }
+  input[type="checkbox"] { margin-right: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Voice profiles</h1>
+
+  <section>
+    <h2>1. Reference clip</h2>
+    <p class="muted">Record 10–30 seconds of clear speech from the speaker, or upload a file. Only record or upload a voice the speaker has agreed to.</p>
+    <div class="row">
+      <button id="recStart" type="button">Start recording</button>
+      <button id="recStop" type="button" disabled>Stop</button>
+      <span class="muted" id="recTime"></span>
+    </div>
+    <label for="upload">Or upload an audio file</label>
+    <input id="upload" type="file" accept="audio/*">
+    <audio id="preview" controls hidden></audio>
+  </section>
+
+  <section>
+    <h2>2. Name and consent</h2>
+    <label for="name">Profile name (lowercase letters, digits, - or _)</label>
+    <input id="name" type="text" maxlength="41" placeholder="narrator-calm">
+    <label for="note">Consent note (who agreed, when, and for what use)</label>
+    <textarea id="note" maxlength="500" placeholder="Name of speaker, date agreed, allowed use"></textarea>
+    <label><input id="consent" type="checkbox"> The speaker has agreed to this clip being used to create a voice profile.</label>
+    <div class="row">
+      <button id="save" class="primary" type="button">Save profile</button>
+    </div>
+    <div id="saveStatus" class="status" role="status"></div>
+  </section>
+
+  <section>
+    <h2>3. Saved profiles</h2>
+    <ul id="profiles"><li class="muted">Loading…</li></ul>
+  </section>
+
+  <section>
+    <h2>4. Try a voice</h2>
+    <label for="speakProfile">Profile</label>
+    <select id="speakProfile"></select>
+    <label for="speakText">Text</label>
+    <textarea id="speakText" placeholder="A line to speak in this voice"></textarea>
+    <div class="row"><button id="speak" type="button">Speak</button></div>
+    <div id="speakStatus" class="status" role="status"></div>
+    <audio id="speakAudio" controls hidden></audio>
+  </section>
+
+  <section>
+    <h2>5. Kokoro voice sample</h2>
+    <p class="muted">Preset Kokoro voices, no reference clip needed. Generated on this machine.</p>
+    <label for="kokoroVoice">Voice</label>
+    <select id="kokoroVoice"><option>Loading…</option></select>
+    <label for="kokoroSpeed">Speed (0.5 to 2.0)</label>
+    <input id="kokoroSpeed" type="number" min="0.5" max="2" step="0.05" value="1">
+    <label for="kokoroText">Text (up to 1000 characters)</label>
+    <textarea id="kokoroText">The quick brown fox jumps over the lazy dog. This is a voice sample.</textarea>
+    <div class="row"><button id="kokoroSpeak" class="primary" type="button">Generate sample</button></div>
+    <div id="kokoroStatus" class="status" role="status"></div>
+    <audio id="kokoroAudio" controls hidden></audio>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let recorder = null;
+  let chunks = [];
+  let clipBlob = null;
+  let clipSource = null;
+  let timer = null;
+  let startedAt = 0;
+
+  const setStatus = (el, msg, isError) => {
+    el.textContent = msg || "";
+    el.className = "status" + (isError ? " error" : "");
+  };
+
+  const showClip = (blob) => {
+    clipBlob = blob;
+    const audio = $("preview");
+    audio.src = URL.createObjectURL(blob);
+    audio.hidden = false;
+  };
+
+  $("recStart").addEventListener("click", async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        clearInterval(timer);
+        $("recTime").textContent = "";
+        const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+        clipSource = "recorded";
+        showClip(blob);
+      };
+      recorder.start();
+      startedAt = Date.now();
+      timer = setInterval(() => {
+        $("recTime").textContent = Math.floor((Date.now() - startedAt) / 1000) + " s";
+      }, 250);
+      $("recStart").disabled = true;
+      $("recStop").disabled = false;
+    } catch (err) {
+      setStatus($("saveStatus"), "Microphone not available: " + err.message, true);
+    }
+  });
+
+  $("recStop").addEventListener("click", () => {
+    recorder.stop();
+    $("recStart").disabled = false;
+    $("recStop").disabled = true;
+  });
+
+  $("upload").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    clipSource = "uploaded";
+    showClip(file);
+  });
+
+  const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
+  $("save").addEventListener("click", async () => {
+    const status = $("saveStatus");
+    if (!clipBlob) return setStatus(status, "Record or upload a clip first.", true);
+    if (!$("consent").checked) return setStatus(status, "Tick the consent box first.", true);
+    const body = {
+      name: $("name").value.trim(),
+      consent_note: $("note").value.trim(),
+      consent_confirmed: true,
+      source: clipSource,
+      mime: clipBlob.type,
+      audio_b64: await blobToBase64(clipBlob),
+    };
+    $("save").disabled = true;
+    setStatus(status, "Saving…");
+    try {
+      const res = await fetch("/api/profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) return setStatus(status, data.error || "Save failed", true);
+      setStatus(status, "Saved profile '" + data.name + "'.");
+      loadProfiles();
+    } catch (err) {
+      setStatus(status, "Save failed: " + err.message, true);
+    } finally {
+      $("save").disabled = false;
+    }
+  });
+
+  const loadProfiles = async () => {
+    const list = $("profiles");
+    const picker = $("speakProfile");
+    try {
+      const res = await fetch("/api/profiles");
+      const { profiles } = await res.json();
+      list.textContent = "";
+      picker.textContent = "";
+      if (!profiles.length) {
+        list.innerHTML = '<li class="muted">No profiles yet.</li>';
+      }
+      profiles.forEach((p) => {
+        const li = document.createElement("li");
+        const title = document.createElement("strong");
+        title.textContent = p.name;
+        const meta = document.createElement("div");
+        meta.className = "muted";
+        meta.textContent = "Source: " + p.source + " · " + p.created + " · Consent: " + p.consent_note;
+        li.append(title, meta);
+        list.append(li);
+        const opt = document.createElement("option");
+        opt.value = p.name;
+        opt.textContent = p.name;
+        picker.append(opt);
+      });
+    } catch (err) {
+      list.innerHTML = '<li class="muted">Could not load profiles: ' + err.message + "</li>";
+    }
+  };
+
+  $("speak").addEventListener("click", async () => {
+    const status = $("speakStatus");
+    const text = $("speakText").value.trim();
+    if (!text) return setStatus(status, "Enter some text.", true);
+    setStatus(status, "Generating…");
+    const res = await fetch("/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: $("speakProfile").value, text }),
+    });
+    const data = await res.json();
+    setStatus(status, data.error || "", !!data.error);
+  });
+
+  const loadKokoroVoices = async () => {
+    const picker = $("kokoroVoice");
+    try {
+      const res = await fetch("/api/kokoro/voices");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "request failed");
+      picker.textContent = "";
+      data.voices.forEach((v) => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        picker.append(opt);
+      });
+      if (data.voices.includes("af_heart")) picker.value = "af_heart";
+    } catch (err) {
+      picker.textContent = "";
+      setStatus($("kokoroStatus"), "Could not load Kokoro voices: " + err.message, true);
+    }
+  };
+
+  let kokoroUrl = null;
+  $("kokoroSpeak").addEventListener("click", async () => {
+    const status = $("kokoroStatus");
+    const btn = $("kokoroSpeak");
+    const text = $("kokoroText").value.trim();
+    if (!text) return setStatus(status, "Enter some text.", true);
+    btn.disabled = true;
+    setStatus(status, "Generating… the first sample can take a little longer while the model loads.");
+    try {
+      const res = await fetch("/api/kokoro/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: $("kokoroVoice").value, speed: Number($("kokoroSpeed").value) }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return setStatus(status, data.error || "Generation failed (HTTP " + res.status + ")", true);
+      }
+      const blob = await res.blob();
+      if (kokoroUrl) URL.revokeObjectURL(kokoroUrl);
+      kokoroUrl = URL.createObjectURL(blob);
+      const audio = $("kokoroAudio");
+      audio.src = kokoroUrl;
+      audio.hidden = false;
+      setStatus(status, "Sample ready.");
+      audio.play().catch(() => {});
+    } catch (err) {
+      setStatus(status, "Generation failed: " + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadKokoroVoices();
+  loadProfiles();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+1. **Plot Gap: The nature of the "invariant" and its significance.** The story introduces a mathematical object called "the invariant" that Helena believes is a "tapestry" of old ideas, but it is never defined or explained. The reader is left wondering what this invariant actually is, why it is considered a major breakthrough, and how it relates to knot theory. The story treats it as a given concept without providing any context or background.
+
+2. **Plot Gap: The "gap" in the proof.** The story mentions a "single line of text" about how two boundary surfaces intersect that Helena marks as "clearly" true, but it never specifies what this claim actually is. The reader is never told what the specific mathematical statement is, what the surfaces are, or why it would be considered a gap. This makes the central conflict of the story (the gap between intuition and proof) impossible to fully grasp.
+
+3. **Plot Gap: The counterexamples and the "covering argument."** Tomas sends back "sketches and counterexamples" that dismantle Helena's argument, but these are never described. The story then says Tomas finds a "covering argument" that works, but again, no details are given about what this argument is, how it works, or why it was previously dismissed. The resolution of the conflict is presented without any explanation of the actual mathematical content.
+
+4. **Vague Detail: The timeline and stakes.** The story mentions a conference talk in "six weeks" and a "final Friday," but the specific date, the name of the conference, or the consequences of failing to present the result are never clarified. The stakes feel somewhat arbitrary.
+
+5. **Vague Detail: The emotional arc.** Helena's transition from confidence to doubt to acceptance is described in broad strokes ("frantic scrawl," "tired smile") without specific moments or dialogue that would ground these emotions in concrete events. The story relies on telling rather than showing the emotional dynamics between Helena and Tomas.
+
+6. **Vague Detail: The setting and atmosphere.** While the story mentions a "kitchen table," "city," and "sun setting," these details are generic and do not contribute meaningfully to the narrative. The setting feels interchangeable and does not add depth to the characters or the plot.
+
+7. **Vague Detail: The resolution's significance.** The ending states that the journey from "a simple 'clearly' to a rigorous proof" was the "most important part of the discovery," but this is stated as a conclusion without any prior setup or reflection that would make this insight feel earned or specific to the characters' experiences.

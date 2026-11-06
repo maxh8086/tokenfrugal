@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="icon" href="data:," />
+    <script src="vendor/gsap.min.js"></script>
+    <style>
+      /* Neutral template (D12). Palette approved by the owner on 2026-11-02. */
+      /* Font: Inter (SIL OFL 1.1), bundled under vendor/fonts with its licence. No network at render time. */
+      @font-face { font-family: "Template Sans"; src: url("vendor/fonts/inter-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Template Sans"; src: url("vendor/fonts/inter-latin-700-normal.woff2") format("woff2"); font-weight: 700; }
+      :root {
+        --ground: #0e1013;
+        --ink: #f2f2f2;
+        --accent: #8a909a;
+        --font-display: "Template Sans", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
+      #root { width: 1920px; height: 1080px; position: relative; font-family: var(--font-display); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="25" data-width="1920" data-height="1080">
+      <div id="host-title" data-composition-id="scene-title" data-composition-src="compositions/scene-title.html" data-start="0" data-duration="8" data-track-index="0"></div>
+      <div id="host-lines" data-composition-id="scene-lines" data-composition-src="compositions/scene-lines.html" data-start="8" data-duration="10" data-track-index="1"></div>
+      <div id="host-closing" data-composition-id="scene-closing" data-composition-src="compositions/scene-closing.html" data-start="18" data-duration="7" data-track-index="2"></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.to({}, { duration: 25 }, 0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

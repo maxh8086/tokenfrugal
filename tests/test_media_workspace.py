@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from router import docker_mcp, media_workspace as mw, profile_sync, video_editor_mcp as v
+from router import docker_mcp, media_workspace as mw, profile_sync, media_generator_mcp as v
 from scripts import ensure_media_workspace as emw
 from scripts import install_profiles as ip
 
@@ -52,17 +52,44 @@ class ResolutionOrder(unittest.TestCase):
         self.assertFalse((self.home / "Videos").exists())
 
 
+class RenderAndLayoutConfig(unittest.TestCase):
+    def test_defaults_when_unset(self):
+        with mock.patch.dict(os.environ, {"VIDEO_EDITOR_LAYOUT": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+            self.assertEqual(mw.render_name(), "Render")
+            self.assertEqual(mw.layout(), ("Raw", "References", "Render", "content", "analyst", "analyst/daily"))
+
+    def test_env_sets_render_name_and_layout(self):
+        env = {"VIDEO_EDITOR_RENDER_DIR": "Final", "VIDEO_EDITOR_LAYOUT": "Raw, Work/tmp ,"}
+        with mock.patch.dict(os.environ, env):
+            self.assertEqual(mw.render_name(), "Final")
+            self.assertEqual(mw.layout(), ("Raw", "Work/tmp", "Final"))
+            self.assertEqual(mw.render_dir(Path("ws")), Path("ws") / "Final")
+            self.assertEqual(mw.raw_dir(Path("ws")), Path("ws") / "Raw")
+
+    def test_render_folder_is_always_created(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name) / "ws"
+        with mock.patch.dict(os.environ, {"VIDEO_EDITOR_RENDER_DIR": "Final", "VIDEO_EDITOR_LAYOUT": "Raw"}):
+            mw.ensure_tree(root)
+        self.assertTrue((root / "Final").is_dir())
+        self.assertFalse((root / "Render").exists())
+
+
 class Tree(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name) / "ws"
+        patcher = mock.patch.dict(os.environ, {"VIDEO_EDITOR_LAYOUT": "", "VIDEO_EDITOR_RENDER_DIR": ""})
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_ensure_creates_layout_then_is_idempotent(self):
         first = mw.ensure_tree(self.root)
-        self.assertEqual([rel for rel, _ in first], ["."] + list(mw.LAYOUT))
+        self.assertEqual([rel for rel, _ in first], ["."] + list(mw.layout()))
         self.assertTrue(all(status == "CREATED" for _, status in first))
-        for rel in mw.LAYOUT:
+        for rel in mw.layout():
             self.assertTrue((self.root / rel).is_dir(), rel)
         second = mw.ensure_tree(self.root)
         self.assertTrue(all(status == "OK" for _, status in second))
@@ -81,7 +108,8 @@ class ScriptCli(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name) / "ws"
-        patcher = mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(self.root)})
+        patcher = mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(self.root), "VIDEO_EDITOR_LAYOUT": "",
+                                               "VIDEO_EDITOR_RENDER_DIR": ""})
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -149,7 +177,7 @@ class ProfilePlaceholders(unittest.TestCase):
         self.assertNotIn("__WORKSPACE__", out)
 
     def test_media_roles_mount_the_media_folder_read_write(self):
-        for name in ("content-writer", "content-analyst", "video-editor"):
+        for name in ("content-writer", "content-analyst", "media-generator"):
             text = (ROOT / "profiles" / f"{name}.yaml").read_text(encoding="utf-8")
             self.assertIn("__MEDIA__:/workspace:rw", text, name)
             self.assertNotIn("__WORKSPACE__", text, name)
@@ -164,7 +192,7 @@ class ProfilePlaceholders(unittest.TestCase):
     def test_profile_sync_fills_media_and_records_it(self):
         pdir = self.tmp / "profiles"
         pdir.mkdir()
-        (pdir / "video-editor.yaml").write_text("- __MEDIA__:/workspace:rw\n", encoding="utf-8")
+        (pdir / "media-generator.yaml").write_text("- __MEDIA__:/workspace:rw\n", encoding="utf-8")
         marker = self.tmp / "marker.json"
         seen = []
 
@@ -194,7 +222,7 @@ class ProfilePlaceholders(unittest.TestCase):
 
 
 class VeditExportsResolvedFolder(unittest.TestCase):
-    def test_vedit_passes_the_resolved_folder_to_compose(self):
+    def test_mgen_passes_the_resolved_folder_to_compose(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         ws = Path(tmp.name)
@@ -203,9 +231,68 @@ class VeditExportsResolvedFolder(unittest.TestCase):
         with mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(ws)}), \
              mock.patch.object(v.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=0, stdout="", stderr="")
-            v.vedit("clip.mp4")
+            v.mgen("clip.mp4")
         self.assertEqual(run.call_args.kwargs["env"]["VIDEO_EDITOR_DIR"], str(ws))
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OutputDirConfig(unittest.TestCase):
+    def test_unset_uses_render_folder(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+            self.assertEqual(mw.output_dir(root), root / "Render")
+
+    def test_set_overrides_render_folder(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        target = Path(tempfile.gettempdir()) / "films-out"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target)}):
+            self.assertEqual(mw.output_dir(root), Path(os.path.abspath(target)))
+
+    def test_resolving_creates_nothing(self):
+        target = Path(tempfile.gettempdir()) / "films-not-created"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target)}):
+            mw.output_dir(Path(tempfile.gettempdir()))
+        self.assertFalse(target.exists())
+
+
+class PipelineFolders(unittest.TestCase):
+    def test_films_and_shorts_sit_under_output_dir(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        target = Path(tempfile.gettempdir()) / "films-out"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": str(target), "VIDEO_EDITOR_RENDER_DIR": ""}):
+            out = Path(os.path.abspath(target))
+            self.assertEqual(mw.films_dir(root), out / "films")
+            self.assertEqual(mw.shorts_dir(root), out / "shorts")
+
+    def test_unset_puts_both_under_render_folder(self):
+        root = Path(tempfile.gettempdir()) / "mw-root"
+        with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+            self.assertEqual(mw.films_dir(root), root / "Render" / "films")
+            self.assertEqual(mw.shorts_dir(root), root / "Render" / "shorts")
+
+    def test_place_short_moves_into_a_job_folder_and_avoids_overwrite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            render = root / "Render"
+            render.mkdir()
+            with mock.patch.dict(os.environ, {"MEDIA_OUTPUT_DIR": "", "VIDEO_EDITOR_RENDER_DIR": ""}):
+                (render / "a.mp4").write_bytes(b"1")
+                first = v._place_short(render / "a.mp4", root)
+                (render / "a.mp4").write_bytes(b"2")
+                second = v._place_short(render / "a.mp4", root)
+                self.assertEqual(first, render / "shorts" / "a" / "a.mp4")
+                self.assertEqual(second, render / "shorts" / "a-2" / "a.mp4")
+                self.assertFalse((render / "a.mp4").exists())
+                self.assertEqual(first.read_bytes(), b"1")
+                self.assertEqual(second.read_bytes(), b"2")
+
+    def test_free_job_counts_up(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            self.assertEqual(v._free_job(parent, "film"), parent / "film")
+            (parent / "film").mkdir()
+            (parent / "film-2").mkdir()
+            self.assertEqual(v._free_job(parent, "film"), parent / "film-3")

@@ -92,7 +92,8 @@ for _n, _svc in (("crawl4ai", "mcp-crawl4ai"), ("sonarqube", "mcp-sonarqube"),
                                                          "run", "--rm", "-T", _svc]}
 NATIVE_SERVERS["plan"] = {"command": sys.executable, "args": ["-m", "router.plan_mcp"]}
 NATIVE_SERVERS["sandbox"] = {"command": sys.executable, "args": ["-m", "router.sandbox_mcp"]}  # run_tests / run_python in a network-less container
-NATIVE_SERVERS["video-editor"] = {"command": sys.executable, "args": ["-m", "router.video_editor_mcp"]}  # Raw/Render list and vedit in the video-editor container
+NATIVE_SERVERS["media-generator"] = {"command": sys.executable, "args": ["-m", "router.media_generator_mcp"]}  # Raw/Render list and mgen in the media-generator container
+NATIVE_SERVERS["media-briefing"] = {"command": sys.executable, "args": ["-m", "router.media_briefing_mcp"]}  # Mode B: brief to narrated film (slice 1 stub)
 # synaptree-mcp project = checkout folder name; SYNAPTREE_PROJECT overrides it
 for _n, _spec in claude_import.load()["servers"].items():  # Claude-JSON imports (python -m router.claude_import)
     NATIVE_SERVERS.setdefault(_n, _spec)

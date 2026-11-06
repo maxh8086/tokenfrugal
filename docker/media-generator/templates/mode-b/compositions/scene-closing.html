@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      #scene-closing { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0; }
+      #scene-closing .closing-wrap { position: absolute; left: 0; right: 0; top: 460px; text-align: center; }
+      #scene-closing .closing { font-size: 96px; font-weight: 700; color: var(--ink); }
+      #scene-closing .sub { font-size: 40px; font-weight: 400; color: var(--accent); margin-top: 32px; }
+    </style>
+  </head>
+  <body>
+    <div id="scene-closing" data-composition-id="scene-closing" data-width="1920" data-height="1080" class="clip">
+      <div class="closing-wrap">
+        <div class="closing">Ready for review</div>
+        <div class="sub">Approve the stills to continue</div>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // Local time 0 to 7 s (absolute 18 to 25 s)
+      tl.fromTo("#scene-closing", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, 0);
+      tl.fromTo("#scene-closing .closing-wrap", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" }, 0.4);
+      tl.to({}, { duration: 7 }, 0);
+      window.__timelines["scene-closing"] = tl;
+    </script>
+  </body>
+</html>

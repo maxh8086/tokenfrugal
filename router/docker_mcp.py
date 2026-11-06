@@ -40,11 +40,13 @@ def gateway_argv(profile: str, cpus: str = "1", memory: str = "2Gb", docker: str
 
 
 def profile_text(path: Path, workspace: str) -> str:
-    """Profile YAML with the __WORKSPACE__ and __MEDIA__ placeholders replaced (__MEDIA__ = shared media folder)."""
+    """Profile YAML with the __WORKSPACE__, __MEDIA__ and __REPO__ placeholders replaced (__MEDIA__ = shared media folder,
+    __REPO__ = this checkout, used by the dbhub volume mounts)."""
     from .media_workspace import media_dir
     return (Path(path).read_text(encoding="utf-8")
             .replace("__WORKSPACE__", workspace)
-            .replace("__MEDIA__", media_dir().as_posix()))
+            .replace("__MEDIA__", media_dir().as_posix())
+            .replace("__REPO__", Path(__file__).resolve().parent.parent.as_posix()))
 
 
 def load_profile(path: Path, workspace: str) -> dict:

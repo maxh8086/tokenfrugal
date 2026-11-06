@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="1000" height="620" role="img" aria-labelledby="t d" font-family="Segoe UI, Arial, sans-serif" fill="#1f2933">
+  <title id="t">content-analyst: workflow</title>
+  <desc id="d">Builds a daily trend brief from public sources, with post and video ideas.</desc>
+  <defs>
+    <marker id="arr" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" viewBox="0 0 10 10" refX="9" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="620" fill="#ffffff"/>
+  <text x="30" y="40" font-size="24" font-weight="bold">content-analyst</text>
+  <text x="30" y="66" font-size="13" fill="#475569">Model: Local Thinker (prism-bonsai-4b) | Profile: content-analyst | Max steps: 14 | Timeout: 300 s</text>
+  <!-- flow row -->
+  <rect x="22" y="110" width="136" height="70" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+<text x="90" y="141" font-size="12" text-anchor="middle">
+  <tspan x="90" dy="0">Input: topics or</tspan>
+  <tspan x="90" dy="16">niche, sources, date</tspan>
+</text>
+  <rect x="186" y="110" width="136" height="70" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="254" y="133" font-size="12" text-anchor="middle">
+  <tspan x="254" dy="0">1 Collect up to 5</tspan>
+  <tspan x="254" dy="16">items per source</tspan>
+  <tspan x="254" dy="16">with URL and date</tspan>
+</text>
+  <rect x="350" y="110" width="136" height="70" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="418" y="133" font-size="12" text-anchor="middle">
+  <tspan x="418" dy="0">2 Cluster into 3-6</tspan>
+  <tspan x="418" dy="16">topics, with</tspan>
+  <tspan x="418" dy="16">sentiment, 1 quote</tspan>
+</text>
+  <rect x="514" y="110" width="136" height="70" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="582" y="133" font-size="12" text-anchor="middle">
+  <tspan x="582" dy="0">3 Ideas per topic,</tspan>
+  <tspan x="582" dy="16">then 5-day</tspan>
+  <tspan x="582" dy="16">calendar</tspan>
+</text>
+  <rect x="678" y="110" width="136" height="70" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="746" y="133" font-size="12" text-anchor="middle">
+  <tspan x="746" dy="0">4 Score with</tspan>
+  <tspan x="746" dy="16">run_python, write</tspan>
+  <tspan x="746" dy="16">content/trends/date.md</tspan>
+</text>
+  <rect x="842" y="110" width="136" height="70" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+<text x="910" y="133" font-size="12" text-anchor="middle">
+  <tspan x="910" dy="0">Output: date.md path</tspan>
+  <tspan x="910" dy="16">and top 3 topics</tspan>
+  <tspan x="910" dy="16">with scores</tspan>
+</text>
+  <line x1="160" y1="145" x2="184" y2="145" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="324" y1="145" x2="348" y2="145" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="488" y1="145" x2="512" y2="145" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="652" y1="145" x2="676" y2="145" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="816" y1="145" x2="840" y2="145" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="30" y="220" font-size="13" font-weight="bold">Tools:</text>
+  <rect x="90.0" y="204" width="88.0" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="134.0" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">web_search</text>
+  <rect x="186.0" y="204" width="116.8" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="244.4" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">crawl_markdown</text>
+  <rect x="310.8" y="204" width="80.8" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="351.2" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">read_file</text>
+  <rect x="399.6" y="204" width="88.0" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="443.6" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">write_file</text>
+  <rect x="495.6" y="204" width="88.0" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="539.6" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">run_python</text>
+  <rect x="591.6" y="204" width="102.4" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="642.8" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">search_posts</text>
+  <rect x="702.0" y="204" width="116.8" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="760.4" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">search_stories</text>
+  <rect x="826.8" y="204" width="73.6" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="863.6" y="220" font-family="Consolas, monospace" font-size="12" text-anchor="middle">get_feed</text>
+  <rect x="90.0" y="236" width="102.4" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="141.2" y="252" font-family="Consolas, monospace" font-size="12" text-anchor="middle">searchVideos</text>
+  <rect x="200.4" y="236" width="124.0" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="262.4" y="252" font-family="Consolas, monospace" font-size="12" text-anchor="middle">getVideoDetails</text>
+  <rect x="332.4" y="236" width="95.2" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="380.0" y="252" font-family="Consolas, monospace" font-size="12" text-anchor="middle">qdrant-find</text>
+  <rect x="435.59999999999997" y="236" width="95.2" height="24" rx="10" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="483.2" y="252" font-family="Consolas, monospace" font-size="12" text-anchor="middle">execute_sql</text>
+  <text x="30" y="270" font-size="12" fill="#7c2d12">Fallback: LinkedIn and X have no collector: write "not collected". Never invent numbers.</text>
+  <rect x="30" y="300" width="940" height="240" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="50" y="330" font-size="15" font-weight="bold">Checks before the task is done</text>
+  <text x="50" y="358" font-size="13"><tspan fill="#15803d" font-weight="bold">[auto]</tspan><tspan dx="6">Every figure has a source URL from a tool result.</tspan></text>
+  <text x="50" y="384" font-size="13"><tspan fill="#15803d" font-weight="bold">[auto]</tspan><tspan dx="6">Scores come from a run_python result.</tspan></text>
+  <text x="50" y="410" font-size="13"><tspan fill="#15803d" font-weight="bold">[auto]</tspan><tspan dx="6">Platforms with no collector are marked "not collected".</tspan></text>
+  <text x="50" y="436" font-size="13"><tspan fill="#15803d" font-weight="bold">[auto]</tspan><tspan dx="6">Each top topic has LinkedIn, YouTube and X ideas and a 5-day calendar entry.</tspan></text>
+  <text x="50" y="462" font-size="13"><tspan fill="#92400e" font-weight="bold">[review]</tspan><tspan dx="6">Each idea is tied to its evidence.</tspan></text>
+  <text x="30" y="590" font-size="11" fill="#64748b">Source: router/tf-roles.yaml; router/skills/role-content-analyst/SKILL.md</text>
+  <text x="970" y="610" font-size="11" fill="#64748b" text-anchor="end">Diagram: content-analyst, hand-drawn from the role's config and skill file.</text>
+</svg>

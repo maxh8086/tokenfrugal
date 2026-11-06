@@ -1,0 +1,1 @@
+The depot at Eastmoor handles 40 pallets per shift. Planner reroutes 12 trucks from the coast. Overflow should go to Western Yard. Shorter route; switch immediately. Renata notices something’s wrong. Checks the old rule book, finds the truth. Eastmoor’s south dock is closed. Memo corrects the error. Planner reruns; trucks head back. 40 pallets per shift, only on the north dock.

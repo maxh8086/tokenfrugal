@@ -1,0 +1,15 @@
+{
+ "id": "plain-scene",
+ "version": "1.0.0",
+ "description": "Plain title-and-text scenes on a solid background.",
+ "composition": "composition.html",
+ "supported_presets": ["youtube"],
+ "limits": {"titleMax": 80, "bodyMax": 120, "sceneCountMax": 200, "sceneSecondsMax": 600},
+ "parameters": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {"background": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}, "accent": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}},
+   "required": []
+ }
+}

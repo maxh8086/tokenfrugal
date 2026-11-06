@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tokenfrugal/media-generator/job.schema.json",
+  "title": "Job",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "seed", "destinations", "template", "template_version", "voice_profile", "scenes"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "destinations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["youtube", "shorts"] }
+    },
+    "template": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "template_version": { "type": "integer", "minimum": 1 },
+    "voice_profile": { "type": ["string", "null"], "maxLength": 64 },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "body", "seconds"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "body": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "seconds": { "type": "number", "exclusiveMinimum": 0, "maximum": 600 }
+        }
+      }
+    },
+    "gate_artifacts": {
+      "description": "Optional for validation; a render needs G1 to G6 each naming an artifact under ARTIFACT_DIR (D39).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "G1": { "$ref": "#/$defs/artifactPath" },
+        "G2": { "$ref": "#/$defs/artifactPath" },
+        "G3": { "$ref": "#/$defs/artifactPath" },
+        "G4": { "$ref": "#/$defs/artifactPath" },
+        "G5": { "$ref": "#/$defs/artifactPath" },
+        "G6": { "$ref": "#/$defs/artifactPath" },
+        "G7": { "$ref": "#/$defs/artifactPath" }
+      }
+    }
+  },
+  "$defs": {
+    "artifactPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    }
+  }
+}

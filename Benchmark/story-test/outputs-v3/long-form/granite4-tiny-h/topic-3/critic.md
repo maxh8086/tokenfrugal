@@ -1,0 +1,7 @@
+1. Three acts are clear: a setup, a conflict, and a resolution. The setup is the introduction of Harrow Creek's midnight show and Dale Ransome's role as the host. The conflict arises when June makes an unusual weather prediction, which Dale initially dismisses but later finds accurate. The resolution occurs when Dale watches the sky turn grey and accepts the inexplicable event, deciding not to say "clear" on air again.
+
+2. The setting, lore, and atmosphere are specific. The story is set in Harrow Creek during the midnight show at WKRV, with Dale Ransome as the host. The lore includes Dale's eleven years of running the show and his skepticism towards June's prediction. The atmosphere is tense yet calm, with Dale's skepticism and the station's anticipation of the weather event.
+
+3. The character's motive is stated and drives an action. Dale Ransome's motive is to provide accurate weather forecasts to his listeners. This drives him to take June's unusual prediction seriously, despite his skepticism, and later to investigate the event.
+
+4. Tension rises and releases, and the resolution settles the conflict from act one. The tension rises as Dale listens to June's detailed and accurate weather prediction. The tension releases when the actual weather events occur, matching her prediction. The resolution settles the conflict by Dale accepting the inexplicable event and choosing not to say "clear" on air again, indicating a shift in his perspective.
