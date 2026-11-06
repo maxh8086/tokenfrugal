@@ -28,6 +28,8 @@ import { parseRenderTemplate } from './lib/render-template.js';
 import { preflightFailure } from './lib/gate-preflight.js';
 import { measureHardware } from './lib/hardware-floor.js';
 import { freeBytesAt } from './lib/disk-gate.js';
+import { checkFlashes } from './lib/flash-check.js';
+import { flashFailure } from './lib/flash-preflight.js';
 
 // Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). Only youtube is rendered.
 const JOB_PRESET = JOB_PRESETS[0];
@@ -272,6 +274,22 @@ async function runPreflight(props) {
   if (failure) throw stageError(failure.status, failure.stage, failure.message, { findings: failure.findings });
 }
 
+// WCAG 2.3.1 check on the finished MP4 (D49). Frames are decoded to 160x90 RGBA (57600 bytes per frame), so a
+// 60 s film at 30 fps holds about 104 MB in memory. The check measures mean luminance per frame.
+// Assumed frame size: 160x90 RGBA. Not yet run against a real MP4: the extraction path is unverified until a render runs with GATES_ENFORCE=1.
+async function flashCheckVideo(videoPath, fps, jobDir) {
+  const W = 160;
+  const H = 90;
+  const raw = path.join(jobDir, 'flash-check.rgba');
+  await run(FFMPEG_BIN, ['-y', '-i', videoPath, '-vf', `scale=${W}:${H}`, '-f', 'rawvideo', '-pix_fmt', 'rgba', raw]);
+  const buf = await readFile(raw);
+  await rm(raw, { force: true });
+  const size = W * H * 4;
+  const frames = [];
+  for (let o = 0; o + size <= buf.length; o += size) frames.push({ rgba: buf.subarray(o, o + size) });
+  return checkFlashes(frames, fps);
+}
+
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null } = opts;
@@ -365,6 +383,12 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
         out: muxed,
       })));
       video = muxed;
+    }
+
+    if (GATES_ENFORCE) {
+      const flash = await atStage('flash', () => flashCheckVideo(video, props.fps, jobDir));
+      const flashBlock = flashFailure({ enforce: true, findings: flash.pass ? [] : [flash] });
+      if (flashBlock) throw stageError(flashBlock.status, flashBlock.stage, flashBlock.message, { findings: flashBlock.findings });
     }
 
     const outRel = preset ? jobOutputRel(id, preset) : `${id}.mp4`;
