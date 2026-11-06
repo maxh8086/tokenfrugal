@@ -271,7 +271,7 @@ Checked against `main` at b6a9efa: each item was matched to code on main and to 
 | Job schema validated with Ajv (D18) | Done | 036017b; `render-engine/lib/job-schema.js` |
 | Template registry and template manifests (D15, D50) | Done | cee778b; `templates/index.json`, `templates/plain-scene/manifest.json` |
 | Template conformance tests, every template against every preset (D50) | Done | 7c843c0, dd10669 |
-| Per-template limits in the registry (D50) | Partial | Registry exists; per-template limits not checked in code |
+| Per-template limits in the registry (D50) | Done | Loader already rejected looser limits; the check is now the pure `checkTemplateLimits` with tests (PR #81; `lib/template-registry.js`). No template declares limits beyond plain-scene's |
 | Gate approvals with SHA-256, human-bound CLI (D21, D39) | Done | 5367589, 381f085, f7163f9; `lib/approvals.js`, `bin/approve.js` |
 | Gate order enforced before render: G1 to G6 must be approved, G7 after render (D38) | Done | `lib/job-gate.js` (`RENDER_GATE = 'G7'`) |
 | Approval storage per gate under the project, reopened on hash change (D52) | Partial | One approvals file written atomically (`lib/approvals.js`), not per-gate `approvals/G<n>.json` files. Hash is rechecked on read |
@@ -292,7 +292,7 @@ Checked against `main` at b6a9efa: each item was matched to code on main and to 
 | Colour tags bt709 and yuv420p on output (D51) | Not done | Not found in render-engine or the media-generator Python |
 | Seed in job.json, recorded in the approval record (D55, R3) | Partial | Recorded only (PR #74; `lib/approvals.js`, `bin/approve.js --seed`). Nothing consumes it: the composition and `make_music_bed` are deterministic today. Record-only decision, 2026-11-07 |
 | Output duration from explicit `-t`, not `-shortest` (R2) | Partial | PR #77 (a11534c; `lib/audio-plan.js` `muxArgs`). Not verified against a real render |
-| Hardware floor check (D47) | Partial | Module and tests exist (4760136, PR #70; `lib/hardware-floor.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). CPU count is logical threads, not physical cores (known gap) |
+| Hardware floor check (D47) | Partial | Module and tests exist (4760136, PR #70; `lib/hardware-floor.js`). Wired into POST /render behind GATES_ENFORCE=1, off by default (PR #72). CPU count is physical cores: `/proc/cpuinfo` on Linux, Win32_Processor on Windows, logical fallback reported as `cpuSource` (PR #80; `lib/hardware-floor.js`). Not verified on a multi-socket machine |
 | Licence report written by the build (D46(c)) | Partial | Script and Dockerfile step (PR #76; `render-engine/scripts/licence-report.js`). The Docker build was not run |
 
 Result: stage 1 is partly built. Sub-project 1 stays open. The next steps are the Not done and Partial rows.
