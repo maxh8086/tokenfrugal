@@ -8,6 +8,7 @@
 import path from 'node:path';
 import { GATES, canOpen, hashArtifact, isApproved, readApprovals } from './approvals.js';
 import { presets, validateJob } from './job-schema.js';
+import { checkFormat } from './formats.js';
 
 // A full render may open only once G1 to G6 are approved; G7 is the publish approval after the render.
 export const RENDER_GATE = 'G7';
@@ -88,6 +89,10 @@ export async function gateJob(job, { artifactRoot, approvalsPath }) {
   const checked = await validateJob(job);
   if (!checked.valid) {
     return { ok: false, status: 400, payload: { error: 'invalid job', findings: checked.errors } };
+  }
+  const format = checkFormat(job);
+  if (!format.ok) {
+    return { ok: false, status: 400, payload: { error: format.error } };
   }
   const mapped = jobToPropsBody(job);
   if (!mapped.ok) {
