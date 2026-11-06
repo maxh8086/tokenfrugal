@@ -2,9 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=1920">
 <title>plain-scene</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0d1117; }
+  #root { position: relative; width: 1920px; height: 1080px; background: #0d1117; overflow: hidden; font-family: "DejaVu Sans", sans-serif; }
+  #title { position: absolute; left: 160px; top: 440px; width: 1600px; font-size: 120px; font-weight: 700; color: #ffffff; opacity: 0; }
+  #bar { position: absolute; left: 160px; top: 600px; width: 1600px; height: 12px; background: #2f81f7; transform-origin: left center; transform: scaleX(0); }
+</style>
 </head>
 <body>
-<!-- Placeholder composition. The real HyperFrames composition is built in stage 2. -->
+<!-- Minimal two-second scene: a title fades in and an accent bar wipes across. Parameters (background, accent)
+     are not applied yet; the defaults above are used. -->
+<div id="root" data-composition-id="main" data-start="0" data-duration="2" data-width="1920" data-height="1080">
+  <div id="title">Plain scene</div>
+  <div id="bar"></div>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+  var tl = gsap.timeline({ paused: true });
+  tl.to('#title', { opacity: 1, duration: 0.5, ease: 'none' }, 0);
+  tl.to('#bar', { scaleX: 1, duration: 1, ease: 'none' }, 0.5);
+  tl.to({}, { duration: 0.5 }, 1.5);
+  window.__timelines = window.__timelines || {};
+  window.__timelines['main'] = tl;
+</script>
 </body>
 </html>
