@@ -285,7 +285,7 @@ Checked against `main` at b6a9efa: each item was matched to code on main and to 
 | Gate G2 format choice (D27) | Done | Format list and sizes in `lib/formats.js` (PR #83); optional `format` in `schemas/job.schema.json`; `checkFormat` in `lib/job-gate.js` refuses over-length jobs and formats whose size is not built (only 1920x1080 at 30 fps renders). The 5-minute default is tracked under D29 and the Facebook Reel length under O18 |
 | Gate G3 narration voice choice (D55) | Done | PR #94 (merge commit 02b38b2): `lib/voice-choice.js` validates the voice; `jobToPropsBody` sets `narration_voice`; `server.js` sends it to dhvani as the Kokoro voice (D61). Tests in `test/voice-choice.test.js` and `test/job-gate.test.js`. Not yet run against a real dhvani service |
 | Gate G4 voice sample and G6 preview generation (D35, D57, D59, D64) | Done (code; no real render) | PR #95 (merge commit 6617e45): `lib/voice-sample.js` (`buildVoiceSample`, first 60 s with the G3 voice), `lib/preview.js` (`buildPreview`, `POST /preview` at full template resolution, refused unless G4 is approved against the current sample hash). Unit tests only (`test/voice-sample.test.js`, `test/preview.test.js`); no real dhvani or HyperFrames run |
-| Gate G5 stills generation (D59, D65) | Done (code; stills route not run end to end) | PR number in the change log below: `lib/stills.js` (`buildStills`, one PNG per scene at its author-set start time, refused unless G1 to G4 are approved), `POST /stills` in `server.js`. 15 unit tests in `test/stills.test.js`. A live `hyperframes snapshot --at ... --no-end` run on the default composition wrote `frame-NN-at-<t>s.png` per time plus a `contact-sheet.jpg` (ignored by the route). Stills skip props limits (scene 0.83 to 8 s, 60 s), so a job /render refuses can still get stills |
+| Gate G5 stills generation (D59, D65) | Done (code; stills route not run end to end) | PR #96 (merge commit 18b5daa): `lib/stills.js` (`buildStills`, one PNG per scene at its author-set start time, refused unless G1 to G4 are approved), `POST /stills` in `server.js`. 15 unit tests in `test/stills.test.js`. A live `hyperframes snapshot --at ... --no-end` run on the default composition wrote `frame-NN-at-<t>s.png` per time plus a `contact-sheet.jpg` (ignored by the route). Stills skip props limits (scene 0.83 to 8 s, 60 s), so a job /render refuses can still get stills |
 | Narration through dhvani, Piper removed (D20, D53) | Done | 2fb24d4 (Piper replaced), 98b297b (compose), 9a5b989 (rename to dhvani), ce1b281 (GET /health and healthcheck, PR #67); `lib/dhvani.js` (`MAX_CHUNK = 900`) |
 | Manim in the image (D19) | Done | 2d371f8; `docker/media-generator/Dockerfile` (`/opt/manim-venv`) |
 | Output folder per job under the output path (D25, D57) | Done | d40a550, 7bed3e4, d7127c1, 25d8158; `lib/job-output.js` |
@@ -367,7 +367,15 @@ Note: the platform specs come from third-party guides except YouTube video (Goog
 
 Answer each line. Items answered in this round are recorded in section 7 and removed here.
 
-None. All five were answered on 2026-11-07 and recorded in section 7: the hardware floor (D47), the stage 1 list (D57), the MEDIA_OUTPUT_DIR default (O23), the Facebook Reel length (O18) and the default length (D29).
+Parked by the media-generator loop (2026-11-07), each needs a user decision or a manual check, not code:
+
+- **Disk gate calibration (D48):** the estimate overstates plain-scene disk use by 50 to 300 times. Decide: keep the raw-RGB estimate and the floor, or calibrate. The floor and the `GATES_ENFORCE` default were not changed.
+- **Gate enforcement default:** the flash check, disk gate and hardware floor stay behind `GATES_ENFORCE=1`, off by default. Decide whether to turn it on.
+- **Hardware floor on a multi-socket machine:** physical-core detection is not verified on one.
+- **O18 verify:** platform specs still need checking against official pages before publish.
+- **G5 stills limits:** stills skip the props limits (scene 0.83 to 8 s, 60 s total). Decide whether `/stills` should enforce them.
+
+Answered earlier: None. All five were answered on 2026-11-07 and recorded in section 7: the hardware floor (D47), the stage 1 list (D57), the MEDIA_OUTPUT_DIR default (O23), the Facebook Reel length (O18) and the default length (D29).
 
 ## 13. Rejected alternatives
 
