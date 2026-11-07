@@ -185,13 +185,15 @@ async function probeSeconds(file) {
 // so a long scene comes back in several chunks, which are joined with ffmpeg. Returns the file path.
 // One chunk through dhvani. With PROJECT_DIR set, a chunk already in cache/narrate/<key>/ is reused, and a new
 // one is stored there. The key covers the chunk text, voice and speed, so the same text is never synthesized twice.
-async function synthesizeChunkCached(chunk) {
-  const opts = { baseUrl: DHVANI_URL, voice: DHVANI_VOICE, speed: NARRATE_SPEED };
+// voice is the job's narration voice (props.narration_voice); null falls back to DHVANI_VOICE.
+async function synthesizeChunkCached(chunk, voice) {
+  const v = voice ?? DHVANI_VOICE;
+  const opts = { baseUrl: DHVANI_URL, voice: v, speed: NARRATE_SPEED };
   if (!PROJECT_DIR) return { wav: await callDhvani(chunk, opts), key: null, cached: false };
   const key = stepKey({
     inputs: [sha256Hex(chunk)],
     stepVersion: NARRATE_STEP_VERSION,
-    parameters: { voice: DHVANI_VOICE, speed: NARRATE_SPEED },
+    parameters: { voice: v, speed: NARRATE_SPEED },
   });
   const hit = await readCacheEntry(PROJECT_DIR, NARRATE_STEP, key);
   if (hit) return { wav: await readFile(path.join(hit.dir, 'chunk.wav')), key, cached: true };
@@ -200,7 +202,7 @@ async function synthesizeChunkCached(chunk) {
     step: NARRATE_STEP,
     stepVersion: NARRATE_STEP_VERSION,
     key,
-    voice: DHVANI_VOICE,
+    voice: v,
     speed: NARRATE_SPEED,
     chars: chunk.length,
     createdAt: new Date().toISOString(),
@@ -217,11 +219,11 @@ async function callDhvani(chunk, opts) {
   }
 }
 
-async function narrateScene(text, jobDir, i) {
+async function narrateScene(text, jobDir, i, voice) {
   const jobId = path.basename(jobDir);
   const chunks = splitForKokoro(text);
   const results = [];
-  for (const chunk of chunks) results.push(await synthesizeChunkCached(chunk));
+  for (const chunk of chunks) results.push(await synthesizeChunkCached(chunk, voice));
   const wav = path.join(jobDir, `s${i}.wav`);
   const parts = [];
   for (let k = 0; k < results.length; k++) {
@@ -234,7 +236,7 @@ async function narrateScene(text, jobDir, i) {
         scene: i,
         chunk: k,
         text: chunks[k],
-        voice: DHVANI_VOICE,
+        voice: voice ?? DHVANI_VOICE,
         speed: NARRATE_SPEED,
         stepKey: results[k].key,
         cacheHit: results[k].cached,
@@ -273,7 +275,7 @@ async function buildAudio(props, audioScenes, jobDir) {
     const clips = [];
     for (let i = 0; i < audioScenes.length; i++) {
       const scene = props.scenes[i];
-      const wav = await narrateScene(`${scene.text}. ${scene.sub || ''}`, jobDir, i);
+      const wav = await narrateScene(`${scene.text}. ${scene.sub || ''}`, jobDir, i, props.narration_voice);
       clips.push({ file: wav, startSeconds: audioScenes[i].start });
     }
     const durations = [];

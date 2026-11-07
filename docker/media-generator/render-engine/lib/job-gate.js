@@ -9,6 +9,7 @@ import path from 'node:path';
 import { GATES, canOpen, hashArtifact, isApproved, readApprovals } from './approvals.js';
 import { presets, validateJob } from './job-schema.js';
 import { checkFormat } from './formats.js';
+import { checkVoiceChoice } from './voice-choice.js';
 
 // A full render may open only once G1 to G6 are approved; G7 is the publish approval after the render.
 export const RENDER_GATE = 'G7';
@@ -31,6 +32,7 @@ export function jobToPropsBody(job) {
     ok: true,
     body: {
       fps: presets.youtube.fps,
+      narration_voice: checkVoiceChoice(job).voice,
       scenes: job.scenes.map((s) => ({ text: s.title, sub: s.body, seconds: s.seconds })),
     },
   };
@@ -93,6 +95,10 @@ export async function gateJob(job, { artifactRoot, approvalsPath }) {
   const format = checkFormat(job);
   if (!format.ok) {
     return { ok: false, status: 400, payload: { error: format.error } };
+  }
+  const voice = checkVoiceChoice(job);
+  if (!voice.ok) {
+    return { ok: false, status: 400, payload: { error: voice.error } };
   }
   const mapped = jobToPropsBody(job);
   if (!mapped.ok) {
