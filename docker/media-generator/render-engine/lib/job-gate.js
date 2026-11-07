@@ -32,6 +32,8 @@ export function jobToPropsBody(job) {
     ok: true,
     body: {
       fps: presets.youtube.fps,
+      // Narration is stage 1 (D20): G1 reviews the narrated script, so a gated render always carries it.
+      narration: true,
       narration_voice: checkVoiceChoice(job).voice,
       scenes: job.scenes.map((s) => ({ text: s.title, sub: s.body, seconds: s.seconds })),
     },

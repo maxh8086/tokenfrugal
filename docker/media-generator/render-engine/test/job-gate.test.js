@@ -56,7 +56,11 @@ async function approve(job, gates) {
 test('jobToPropsBody maps scenes to props scenes and uses the youtube fps', () => {
   const result = jobToPropsBody(validJob({ scenes: [{ title: 'A', body: 'B', seconds: 4 }] }));
   assert.equal(result.ok, true);
-  assert.deepEqual(result.body, { fps: 30, narration_voice: null, scenes: [{ text: 'A', sub: 'B', seconds: 4 }] });
+  assert.deepEqual(result.body, { fps: 30, narration: true, narration_voice: null, scenes: [{ text: 'A', sub: 'B', seconds: 4 }] });
+});
+
+test('jobToPropsBody always turns narration on for a gated render (D20)', () => {
+  assert.equal(jobToPropsBody(validJob()).body.narration, true);
 });
 
 test('jobToPropsBody passes the chosen narration voice through as narration_voice', () => {
