@@ -106,6 +106,7 @@ COPY render-engine/server.js /opt/render-engine/server.js
 COPY render-engine/lib /opt/render-engine/lib
 COPY render-engine/composition /opt/render-engine/composition
 COPY render-engine/templates /opt/render-engine/templates
+COPY render-engine/schemas /opt/render-engine/schemas
 
 # Needs the named context "scripts" (compose sets it to ./kalamanch). A plain `docker build` needs --build-context scripts=./kalamanch.
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/

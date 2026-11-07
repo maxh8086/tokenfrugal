@@ -13,8 +13,8 @@ test('a job preset file sits in the job folder', () => {
   assert.equal(jobOutputUrl('abc-123', 'youtube'), '/output/abc-123/youtube.mp4');
 });
 
-test('the youtube preset is the only one for now (shorts is refused upstream)', () => {
-  assert.deepEqual(JOB_PRESETS, ['youtube']);
+test('the job presets are youtube and shorts (one destination per job, see job-gate.js)', () => {
+  assert.deepEqual(JOB_PRESETS, ['youtube', 'shorts']);
 });
 
 test('a job id that could escape the output folder is refused', () => {
@@ -24,6 +24,6 @@ test('a job id that could escape the output folder is refused', () => {
 });
 
 test('an unknown preset is refused', () => {
-  assert.throws(() => jobOutputRel('abc', 'shorts'), /unknown output preset/);
+  assert.equal(jobOutputRel('abc', 'shorts'), 'abc/shorts.mp4');
   assert.throws(() => jobOutputRel('abc', '../youtube'), /unknown output preset/);
 });

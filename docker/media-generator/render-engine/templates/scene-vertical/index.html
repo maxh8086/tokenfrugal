@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1080">
+  <title>Shorts composition (HyperFrames, 1080x1920)</title>
+  <style>
+    /* Vertical 1080x1920 composition for the shorts destination (D60). It reads the same props contract as
+       composition/index.html (window.PROPS.scenes with text, sub and seconds) but lays the scene out for a
+       portrait frame: the title sits in the middle third and the glass panel is taller than it is wide. */
+    html, body {
+      margin: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #0d1117;
+    }
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      background: #0d1117;
+      overflow: hidden;
+    }
+    .scene {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 1920px;
+      visibility: hidden;
+      font-family: "DejaVu Sans", sans-serif;
+    }
+    .scene .bar {
+      position: absolute;
+      left: 120px;
+      top: 640px;
+      width: 840px;
+      height: 12px;
+      background: #2f81f7;
+      transform-origin: left center;
+    }
+    .scene .title {
+      position: absolute;
+      left: 120px;
+      top: 700px;
+      width: 840px;
+      font-weight: 700;
+      font-size: 96px;
+      line-height: 1.1;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.8);
+    }
+    .scene .title .word {
+      display: inline-block;
+      margin-right: 0.25em;
+    }
+    /* Backdrop: the same separate objects as the landscape composition, placed for a portrait frame.
+       The layer is offset by 80px on each side so blurred edges do not show; object positions are page
+       coordinates plus 80px. */
+    #backdrop {
+      position: absolute;
+      left: -80px;
+      top: -80px;
+      width: 1240px;
+      height: 2080px;
+    }
+    #backdrop .halo { filter: blur(36px); opacity: 0.55; }
+    .scene .glass {
+      position: absolute;
+      left: 80px;
+      top: 600px;
+      width: 920px;
+      height: 700px;
+      border-radius: 48px;
+      background: linear-gradient(135deg, rgba(12, 18, 34, 0.5), rgba(12, 18, 34, 0.32));
+      -webkit-backdrop-filter: blur(48px) saturate(160%) brightness(0.85);
+      backdrop-filter: blur(48px) saturate(160%) brightness(0.85);
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 24px 60px rgba(0, 0, 0, 0.25);
+    }
+    .scene .ov { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; pointer-events: none; overflow: visible; }
+    .scene .tip {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 110px;
+      height: 110px;
+      margin-left: -55px;
+      margin-top: -55px;
+      border-radius: 50%;
+      filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .scene .gline {
+      position: absolute;
+      left: 120px;
+      top: 597px;
+      width: 840px;
+      height: 6px;
+      transform-origin: left center;
+    }
+    .scene .sub {
+      position: absolute;
+      left: 120px;
+      top: 1080px;
+      width: 840px;
+      font-weight: 400;
+      font-size: 44px;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.95), 0 0 14px rgba(0, 0, 0, 0.9), 0 0 28px rgba(0, 0, 0, 0.8), 0 2px 12px rgba(0, 0, 0, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-start="0" data-duration="3" data-width="1080" data-height="1920" data-fps="60"></div>
+
+  <!-- props.js is written per job by server.js (window.PROPS). The fallback scene below is used when opened directly. -->
+  <script src="props.js"></script>
+  <script src="gsap.min.js"></script>
+  <script>
+    (function () {
+      var p = window.PROPS || {};
+      var scenes = (window.PROPS && window.PROPS.scenes) || [{text:'Hello from HyperFrames', sub:'', seconds:3}];
+      var root = document.getElementById('root');
+      var accent = p.accent || '#2f81f7';
+      var textColor = p.textColor || '#ffffff';
+      var subColor = p.subColor || '#f0f4f8';
+      // Page-coordinate geometry of the portrait frame.
+      var LINE_X = 120, LINE_W = 840, LINE_Y = 600;
+
+      root.style.background = p.background || '#0d1117';
+
+      var backdrop = document.createElement('div');
+      backdrop.id = 'backdrop';
+      // Page position + 80px (the backdrop offset). Each object sits in its own group so the timeline can move it.
+      backdrop.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="2080" viewBox="0 0 1240 2080">' +
+        '<rect width="1240" height="2080" fill="#14213d"/>' +
+        '<g id="ob1"><circle cx="260" cy="280" r="150" fill="#ffd27a"/></g>' +
+        '<g id="ob2"><circle cx="780" cy="220" r="90" fill="#7ad1ff"/></g>' +
+        '<g id="ob3"><circle cx="1080" cy="460" r="200" fill="#2f81f7" opacity="0.85"/></g>' +
+        '<g id="ob4"><circle cx="200" cy="600" r="120" fill="#b8ff9f"/></g>' +
+        '<g id="ob5"><circle cx="600" cy="900" r="180" fill="#ff7ab6" opacity="0.9"/></g>' +
+        '<g id="ob6"><circle cx="1040" cy="1060" r="110" fill="#ffd27a" opacity="0.8"/></g>' +
+        '<g id="ob7"><circle cx="260" cy="1260" r="170" fill="#7ad1ff" opacity="0.85"/></g>' +
+        '<g id="ob8"><circle cx="980" cy="1500" r="130" fill="#f78166"/></g>' +
+        '<g id="ob9"><circle cx="500" cy="1640" r="140" fill="none" stroke="#b8ff9f" stroke-width="28"/></g>' +
+        '<g id="ob10"><circle cx="1080" cy="1800" r="100" fill="none" stroke="#ffd27a" stroke-width="22"/></g>' +
+        '<g id="ob11"><rect x="200" y="1640" width="340" height="170" rx="60" fill="#2f81f7" opacity="0.8"/></g>' +
+        '<g id="ob12"><rect x="680" y="1700" width="260" height="140" rx="50" fill="#ff7ab6" opacity="0.75"/></g>' +
+        '<g id="ob13"><circle cx="720" cy="440" r="40" fill="#ffffff" opacity="0.7"/></g>' +
+        '<g id="ob14"><circle cx="380" cy="960" r="55" fill="#ffffff" opacity="0.6"/></g>' +
+        '<g id="ob15"><circle cx="980" cy="680" r="32" fill="#ffd27a"/></g>' +
+        '<g id="ob16"><circle cx="600" cy="1340" r="46" fill="#7ad1ff"/></g>' +
+        '</svg>';
+      backdrop.querySelectorAll('g').forEach(function (g) {
+        var shape = g.firstElementChild;
+        if (!shape) return;
+        var halo = shape.cloneNode(true);
+        halo.setAttribute('class', 'halo');
+        g.insertBefore(halo, shape);
+      });
+      root.appendChild(backdrop);
+
+      // Critically damped spring step response (out-type only: no overshoot, no bounce).
+      function springEase(p){ if (p<=0) return 0; if (p>=1) return 1; var k=7; return 1 - Math.exp(-k*p)*(1 + k*p); }
+
+      var tl = gsap.timeline({ paused: true });
+      var T = 0;
+
+      scenes.forEach(function (sc) {
+        var section = document.createElement('section');
+        section.className = 'scene';
+
+        var bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.background = accent;
+
+        var title = document.createElement('div');
+        title.className = 'title';
+        title.style.color = textColor;
+        // Text is set with textContent, never innerHTML, so props cannot inject markup.
+        String(sc.text || '').split(/\s+/).filter(Boolean).forEach(function (w) {
+          var span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = w;
+          title.appendChild(span);
+        });
+
+        var sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.style.color = subColor;
+        sub.textContent = sc.sub || '';
+
+        var gline = document.createElement('div');
+        gline.className = 'gline';
+        gline.style.background = accent;
+        var tip = document.createElement('div');
+        tip.className = 'tip';
+        tip.style.background = 'radial-gradient(circle, ' + accent + ' 0%, transparent 70%)';
+
+        var glass = document.createElement('div');
+        glass.className = 'glass';
+        section.appendChild(glass);
+        section.appendChild(gline);
+        section.appendChild(bar);
+        section.appendChild(title);
+        section.appendChild(sub);
+        root.appendChild(section);
+
+        var D = Number(sc.seconds) || 0;
+
+        tl.set(section, { visibility: 'visible' }, T);
+        tl.from(section.querySelectorAll('.word'), {
+          opacity: 0, y: 40, duration: 0.5, ease: springEase, stagger: 0.08
+        }, T);
+        tl.from(bar, { scaleX: 0, duration: 0.6, ease: springEase }, T);
+        tl.from(sub, { opacity: 0, duration: 0.5, ease: springEase }, T + 0.2);
+        tl.set(section, { visibility: 'hidden' }, T + D);
+
+        // Straight line only in variant 0. Other variants draw their own shape in the overlay below.
+        if (scenes.indexOf(sc) % 5 === 0) {
+          tl.from(gline, { scaleX: 0, duration: 0.8, ease: springEase }, T + 0.1);
+          var sp = { p: 0 };
+          tl.set(tip, { opacity: 1 }, T + 0.1);
+          tl.to(sp, { p: 1, duration: 0.8, ease: springEase, onUpdate: function () {
+            tip.style.left = (LINE_X + LINE_W * sp.p) + 'px';
+            tip.style.top = (LINE_Y + 3) + 'px';
+          } }, T + 0.1);
+          tl.set(tip, { opacity: 0 }, T + 0.9);
+        } else {
+          gline.style.display = 'none';
+        }
+
+        // Line variants by scene: 0 straight (above), 1 curve, 2 circle edge, 3 frame edge, 4 rectangle edge.
+        var variant = scenes.indexOf(sc) % 5;
+        if (variant !== 0) {
+          var svgNS = 'http://www.w3.org/2000/svg';
+          var ov = document.createElementNS(svgNS, 'svg');
+          ov.setAttribute('class', 'ov');
+          ov.setAttribute('viewBox', '0 0 1080 1920');
+          var shape = document.createElementNS(svgNS, variant === 1 ? 'path' : (variant === 2 ? 'circle' : 'rect'));
+          if (variant === 1) {
+            shape.setAttribute('d', 'M 120 600 C 380 470, 640 740, 960 580');
+          } else if (variant === 2) {
+            // Edge of the first background object (page position = its svg centre minus 80px).
+            shape.setAttribute('cx', '180'); shape.setAttribute('cy', '200'); shape.setAttribute('r', '150');
+          } else if (variant === 3) {
+            // Edge of the frame the title sits in.
+            shape.setAttribute('x', '40'); shape.setAttribute('y', '40');
+            shape.setAttribute('width', '1000'); shape.setAttribute('height', '1840'); shape.setAttribute('rx', '24');
+          } else {
+            // Edge of the rounded block (background object 11, page position = svg position minus 80px).
+            shape.setAttribute('x', '120'); shape.setAttribute('y', '1560');
+            shape.setAttribute('width', '340'); shape.setAttribute('height', '170'); shape.setAttribute('rx', '60');
+          }
+          shape.setAttribute('fill', 'none');
+          shape.setAttribute('stroke', accent);
+          shape.setAttribute('stroke-linecap', 'round');
+          shape.setAttribute('stroke-width', '6');
+          ov.appendChild(shape);
+          section.appendChild(ov);
+
+          var L = shape.getTotalLength();
+          tl.fromTo(shape, { strokeDasharray: L, strokeDashoffset: L },
+            { strokeDashoffset: 0, duration: 1.0, ease: 'none' }, T + 0.1);
+          var sp2 = { p: 0 };
+          tl.set(tip, { opacity: 1 }, T + 0.1);
+          tl.to(sp2, { p: 1, duration: 1.0, ease: 'none', onUpdate: function () {
+            var pt = shape.getPointAtLength(L * sp2.p);
+            tip.style.left = pt.x + 'px';
+            tip.style.top = pt.y + 'px';
+          } }, T + 0.1);
+          tl.set(tip, { opacity: 0 }, T + 1.1);
+        }
+        section.appendChild(tip);
+
+        T += D;
+      });
+
+      var totalDuration = T;
+      root.setAttribute('data-duration', String(totalDuration));
+
+      // Gentle push-in across the whole film.
+      tl.to('#root', { scale: 1.03, duration: totalDuration, ease: 'none', transformOrigin: '50% 50%' }, 0);
+
+      // Background objects drift slowly across the whole film. Fixed offsets keep the render deterministic.
+      for (var i = 1; i <= 16; i++) {
+        var dx = ((i * 37) % 7 - 3) * 36;
+        var dy = ((i * 53) % 5 - 2) * 28;
+        tl.to('#ob' + i, { x: dx, y: dy, duration: totalDuration, ease: 'none' }, 0);
+      }
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+    })();
+  </script>
+</body>
+</html>
