@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 
-export const HARDWARE_FLOOR = Object.freeze({ cpuCores: 8, ramGB: 16, freeDiskGB: 40 });
+export const HARDWARE_FLOOR = Object.freeze({ cpuCores: 2, ramGB: 4, freeDiskGB: 5 });
 
 // Message shown to the user when the floor is not met (D32: tell the user and offer a retry).
 export const HARDWARE_FLOOR_MESSAGE =
