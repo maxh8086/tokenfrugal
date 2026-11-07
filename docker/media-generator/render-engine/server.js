@@ -13,6 +13,7 @@ import { createRequire } from 'node:module';
 import { validateProps, propsToJs, echoProps } from './lib/props.js';
 import { checkScenes, toTimeline, applyCraftPolicy, CRAFT_RULES } from './lib/craft-check.js';
 import { planNarration, narrationArgs, musicArgs, muxArgs, audioMode } from './lib/audio-plan.js';
+import { colourArgs } from './lib/colour.js';
 import { writeLog, tailLines } from './lib/log.js';
 import { synthesizeScene } from './lib/dhvani.js';
 import { planSegments, concatListText, segmentIsValid, coversDuration } from './lib/segments.js';
@@ -385,6 +386,10 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
       })));
       video = muxed;
     }
+    // Every output is re-encoded once with the D51 colour tags, with or without audio.
+    const tagged = path.join(jobDir, 'tagged.mp4');
+    await atStage('colour', () => run(FFMPEG_BIN, colourArgs({ input: video, out: tagged })));
+    video = tagged;
 
     if (GATES_ENFORCE) {
       const flash = await atStage('flash', () => flashCheckVideo(video, props.fps, jobDir));
