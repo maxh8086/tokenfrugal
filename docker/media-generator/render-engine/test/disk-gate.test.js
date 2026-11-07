@@ -46,16 +46,16 @@ test('checkDiskBeforeRender: one byte below fails with the exact message', () =>
   assert.equal(result.freeBytes, freeBytes);
   assert.equal(
     result.message,
-    'Not enough free disk for this render: need 42.5 GB (estimate plus 40.0 GB floor), have 42.5 GB.',
+    'Not enough free disk for this render: need 12.5 GB (estimate plus 10.0 GB floor), have 12.5 GB.',
   );
 });
 
 test('checkDiskBeforeRender: clearly short disk reports one-decimal GB values', () => {
-  const result = checkDiskBeforeRender({ freeBytes: 30 * GIB, estimatedBytes: 2.5 * GIB });
+  const result = checkDiskBeforeRender({ freeBytes: 10 * GIB, estimatedBytes: 2.5 * GIB });
   assert.equal(result.ok, false);
   assert.equal(
     result.message,
-    'Not enough free disk for this render: need 42.5 GB (estimate plus 40.0 GB floor), have 30.0 GB.',
+    'Not enough free disk for this render: need 12.5 GB (estimate plus 10.0 GB floor), have 10.0 GB.',
   );
 });
 
