@@ -1,460 +1,475 @@
 # HyperFrames catalogue licence rows (2026-11-07)
 
-Scope: 448 items from `npx hyperframes catalog --json` (210 blocks, 238 components). The registry has no licence field, so each row comes from a text scan of the fetched files. This is not a legal review.
+Scope: 448 items from `npx hyperframes catalog --json` (210 blocks, 238 components), fetched with `npx hyperframes@0.9.20 add <name> --dir <folder> --json --no-clipboard` and `HYPERFRAMES_NO_TELEMETRY=1 DO_NOT_TRACK=1`. The registry has no licence field. Each row comes from a text scan of the fetched files (keyword match, not a legal review).
 
-Status key: BLOCKED-REVIEW = reserved-rights, proprietary or MPL wording, needs a decision before use. NOTICE-FOUND = open-source notice (MIT, Apache-2.0, OFL) present, owner of the item still to confirm. UNKNOWN = no licence text in any file, blocked under D46(c) until confirmed upstream.
+## Upstream licence check
 
-Counts: {"UNKNOWN":396,"NOTICE-FOUND":47,"BLOCKED-REVIEW":5}
+- [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) states Apache-2.0 for the repository. The repo does not state a separate licence for the registry blocks and components.
+- A third-party fork ([leopeak/hyperframes](https://github.com/leopeak/hyperframes)) says the code is under a Remotion licence. This was not verified against Remotion's own licence page, so it is not used here.
+- Result: no single upstream licence covers the whole catalogue. Each item's status below comes from its own files.
 
-Telemetry: HyperFrames telemetry disabled before the run. External hosts per item are in the manifest.
+## Decision (2026-11-07)
 
-| Item | Status | Licence terms found | Files | External hosts |
-|---|---|---|---|---|
-| agent-cursor | UNKNOWN | none | 2 | none |
-| ai-answer-rank | UNKNOWN | none | 3 | cdn.jsdelivr.net |
-| ai-chat-reveal | UNKNOWN | none | 3 | cdn.jsdelivr.net |
-| animated-bar-chart | UNKNOWN | none | 2 | none |
-| app-showcase | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, www.w3.org |
-| apple-money-count | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| arc-motion-path | UNKNOWN | none | 2 | none |
-| ascii-render-pass | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| ascii-trail-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| aurora | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| aurora-drift | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| avatar-cloud | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| avatar-group-hover | UNKNOWN | none | 2 | none |
-| badge-pop | UNKNOWN | none | 2 | none |
-| bar-chart-race | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| beat-accent | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| beat-freeze-cut | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| beat-pulse-background | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| beat-timeline | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| before-after-wipe | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| blob | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| blue-sweater-intro-video | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| blur-in | UNKNOWN | none | 2 | none |
-| blur-out-up | UNKNOWN | none | 2 | none |
-| bottom-up-letters | UNKNOWN | none | 2 | none |
-| browser-device-stage | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| camcorder-hud | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| camera-dolly-zoom | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| camera-rig-depth-stack | UNKNOWN | none | 2 | none |
-| camera-scan-gate | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| camera-shake | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| canopy-part-title | UNKNOWN | none | 3 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-blend-difference | UNKNOWN | none | 2 | none |
-| caption-camera-follow | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| caption-clip-wipe | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-editorial-emphasis | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-emoji-pop | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-glitch-rgb | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-gradient-fill | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-highlight | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-kinetic-slam | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-matrix-decode | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-neon-accent | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-neon-glow | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-parallax-layers | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-particle-burst | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-pill-karaoke | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-texture | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| caption-weight-shift | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| card-resize | UNKNOWN | none | 2 | none |
-| caret-swap | NOTICE-FOUND | mit license, copyright, sil open font, ofl | 3 | cdn.jsdelivr.net, github.com, openfontlicense.org |
-| carousel-circle-1 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-circle-2 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-circle-3 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-circle-4 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-circle-5 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-orbit-1 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-orbit-2 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-orbit-3 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-orbit-4 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-orbit-5 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-path-1 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-path-2 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-path-3 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-path-4 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-path-5 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-text-circle-1 | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| carousel-text-circle-2 | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| carousel-text-circle-3 | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| carousel-text-circle-4 | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| carousel-text-circle-5 | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| carousel-vision-1 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-vision-2 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-vision-3 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-vision-4 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| carousel-vision-5 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| char-slam-explode | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| chart-story | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| chat-message | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| chat-thread | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| chatgpt-exchange | NOTICE-FOUND | copyright, sil open font, ofl | 4 | cdn.jsdelivr.net, github.com, scripts.sil.org |
-| chromatic-aberration-wipe | UNKNOWN | none | 2 | none |
-| chromatic-radial-split | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| chrome-orb | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| cinemagraph | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| cinematic-zoom | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| claude-exchange | NOTICE-FOUND | copyright, sil open font, ofl | 5 | cdn.jsdelivr.net, github.com, scripts.sil.org |
-| code-3d-extrude | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-diff | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-highlight | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-morph | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-particle-assemble | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-scroll | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-shader-dissolve | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-slice-hero | BLOCKED-REVIEW | copyright, sil open font, ofl, all rights reserved | 8 | gsap.com, scripts.sil.org, www.w3.org |
-| code-snippet-apple-terminal-pro | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-snippet-dark-2026 | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-snippet-dark-modern | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-terminal-run | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| code-typing | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| color-wheel | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| colorama-wipe | UNKNOWN | none | 2 | none |
-| comparison-split | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| confetti | UNKNOWN | none | 2 | none |
-| conic-progress-ring | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| constellation-hub | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| cosmic-orb | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| count-up | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| cross-warp-morph | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| cta-close | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| cta-lockup | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| cuboid-carousel | BLOCKED-REVIEW | copyright, all rights reserved, mit license | 11 | fonts.googleapis.com, fonts.gstatic.com, github.com, gsap.com, jcgt.org, www.w3.org |
-| cursor-annotate | UNKNOWN | none | 2 | www.w3.org |
-| cursor-context-menu | UNKNOWN | none | 2 | none |
-| cursor-drag-drop | UNKNOWN | none | 2 | none |
-| cursor-glyph-trail | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| cursor-marquee-select | UNKNOWN | none | 2 | none |
-| cursor-text-select | UNKNOWN | none | 2 | none |
-| cursor-zoom-follow | UNKNOWN | none | 2 | none |
-| curtain-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| cut-the-curve | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| dart-cursor | UNKNOWN | none | 2 | none |
-| data-chart | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| decline-chart | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| device-frame-stage | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| directional-wipe | UNKNOWN | none | 2 | none |
-| domain-warp-dissolve | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| drift-hold | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| dynamic-grid | UNKNOWN | none | 2 | none |
-| echo-smear | UNKNOWN | none | 2 | none |
-| echo-trail | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| editorial-flash-overlay | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| exploded-stack | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| extended-keyframe | UNKNOWN | none | 2 | www.w3.org |
-| extruded-logo | NOTICE-FOUND | copyright, sil open font, ofl | 4 | cdn.jsdelivr.net, github.com, openfontlicense.org, scripts.sil.org |
-| facet-morph | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| fade-through | UNKNOWN | none | 2 | none |
-| falling-lines | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| filmed-screen | UNKNOWN | none | 2 | none |
-| flash-through-white | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| flowchart | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| flowchart-vertical | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| flowing-gradient | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| focus-blur-resolve | UNKNOWN | none | 2 | none |
-| focus-rack | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| focus-swap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| fractal-noise | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| freeze-frame-dressing | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| frost | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| frost-sequence-camera-orbit | BLOCKED-REVIEW | copyright, sil open font, ofl, mpl, all rights reserved, mit license | 11 | books.google.com, github.com, gsap.com, portal.acm.org, scripts.sil.org, www.angusj.com, www.boost.org, www.me.berkeley.edu, www.shadertoy.com, www.w3.org |
-| gabor-noise | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| gallery-tunnel | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| gesture-tap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| glass-hero | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| glass-shard-title | NOTICE-FOUND | copyright, sil open font, ofl, mit license | 7 | cdn.jsdelivr.net, jcgt.org, scripts.sil.org, www.w3.org |
-| glitch | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| gloss-sweep | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| godrays | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| goo | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| gooey-split | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| grade-split-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| grain-field | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| grain-overlay | UNKNOWN | none | 2 | www.w3.org |
-| gravitational-lens | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| grid-card-assemble | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| grid-pixelate-wipe | UNKNOWN | none | 2 | none |
-| halftone-dissolve | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| halftone-field | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| headline-slam | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| heatmap | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| heygen-avatar-promo-card | BLOCKED-REVIEW | copyright, sil open font, ofl, proprietary | 5 | cdn.jsdelivr.net, github.com, scripts.sil.org |
-| hologram | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| holographic | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| hw-arrow | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-boil | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-box-label | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-callout-circle | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-frame | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-path-text | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-pipeline | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-scribble-transition | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| hw-text-cloud | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| hw-title | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| hw-underline | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| hw-write-title | UNKNOWN | none | 3 | cdn.jsdelivr.net, www.w3.org |
-| icon-morph-beat | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| icon-swap | UNKNOWN | none | 2 | none |
-| ink-bleed-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| inline-highlight | UNKNOWN | none | 2 | none |
-| input-feedback | UNKNOWN | none | 2 | none |
-| instagram-follow | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| ios26-liquid-glass | UNKNOWN | none | 3 | cdn.jsdelivr.net, www.gstatic.com |
-| iris-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| keyframe-scrub-stack | UNKNOWN | none | 2 | none |
-| kinetic-center-build | NOTICE-FOUND | mit license, copyright | 2 | cdn.jsdelivr.net, fonts.googleapis.com, github.com |
-| kinetic-type-swap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lens-flare | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| light-edge | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| light-leak | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| light-sweep-pass | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| line-by-line-slide | UNKNOWN | none | 2 | none |
-| line-swap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| liquid-glass-notification | UNKNOWN | none | 3 | cdn.jsdelivr.net, cdnjs.cloudflare.com |
-| liquid-glass-widgets | UNKNOWN | none | 3 | cdn.jsdelivr.net, cdnjs.cloudflare.com |
-| liquid-metal | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| locked-nucleus-orbit | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| logo-brand-close | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| logo-outro | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| logo-sting | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| logo-wall | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lottie-character-walk | UNKNOWN | none | 3 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| lower-third-bild | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-accent-underline | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-bold-block | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-clean-bar | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-color-block | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-dark-card | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-kicker-name | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-mask-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-neon-border | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| lt-side-rule | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-soft-pill | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| lt-stack-bars | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| macos-notification | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| macos-tahoe-liquid-glass | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.gstatic.com |
-| magnetic-cursor | UNKNOWN | none | 2 | none |
-| marble | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| marker-checklist-card | NOTICE-FOUND | apache-2.0, ofl | 2 | cdn.jsdelivr.net |
-| marker-highlight | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| match-cut | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| matrix-decode | UNKNOWN | none | 2 | none |
-| menu-morph | UNKNOWN | none | 2 | none |
-| mesh-gradient | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| mesh-gradient-bg | UNKNOWN | none | 2 | none |
-| message-thread-reveal | UNKNOWN | none | 3 | cdn.jsdelivr.net |
-| micro-transitions | UNKNOWN | none | 2 | none |
-| mk-background | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-callout-highlight | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-clone-wall-transition | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-emphasis-type | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-line-graph | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| mk-placeholder-grid | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-progress-stat | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-specs-list | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| mk-usage-arc | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| modal-morph | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| morph-swap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| morph-text | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| motion-blur | UNKNOWN | none | 2 | none |
-| multi-device-splay | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| multiplayer-cursors | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| native-notification-pop | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| nebula | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| news-ticker | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| north-korea-locked-down | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| notes-reveal | UNKNOWN | none | 3 | cdn.jsdelivr.net |
-| notes-typing | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| notification-cascade | UNKNOWN | none | 3 | cdn.jsdelivr.net |
-| notification-pileup | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| notification-stack | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| number-pop-in | UNKNOWN | none | 2 | none |
-| number-wheel | UNKNOWN | none | 2 | none |
-| nyc-paris-flight | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| obsidian | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| offset-path-traveler | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| onboarding-stepper-flow | UNKNOWN | none | 2 | none |
-| orbit-card | BLOCKED-REVIEW | copyright, sil open font, ofl, all rights reserved, mit license | 11 | github.com, gsap.com, jcgt.org, scripts.sil.org, www.w3.org |
-| ordered-dither-pass | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| organic-light-leak-overlay | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| oscilloscope-trace | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| outline-draw | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| oversized-cursor | UNKNOWN | none | 2 | none |
-| overwhelm-surround | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| page-slide | UNKNOWN | none | 2 | none |
-| pan-stations | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| panel-reveal | UNKNOWN | none | 2 | none |
-| paper-collage-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| parallax-device-dive | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| parallax-unzoom | UNKNOWN | none | 2 | none |
-| parallax-zoom | UNKNOWN | none | 2 | none |
-| particle-image-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| particle-text-dissolve | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| pendulum-swing | UNKNOWN | none | 2 | none |
-| per-word-crossfade | UNKNOWN | none | 2 | none |
-| per-word-rise | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| perspective-marquee | UNKNOWN | none | 2 | none |
-| physical-exit | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| plasma | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| plastic | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| press-ripple | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| prism | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| product-turntable | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| pull-back-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| pull-to-refresh | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| push-in | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| rack-focus | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| radial-surround | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| reddit-post | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| rgb-glitch-text | UNKNOWN | none | 2 | none |
-| ridged-burn | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| ripple-waves | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| ripples | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| rubber-band-bumper | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| scan-band | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| scramble-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| screen-flow-carousel | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| scroll-camera-story | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| scroll-feed | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| sdf-iris | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| segmentation-flood | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| separator | UNKNOWN | none | 2 | none |
-| settings-toggle-flow | UNKNOWN | none | 2 | none |
-| share-sheet-carousel | UNKNOWN | none | 3 | cdn.jsdelivr.net |
-| shared-axis-y | UNKNOWN | none | 2 | none |
-| shared-axis-z | UNKNOWN | none | 2 | none |
-| sheet-spring-up | UNKNOWN | none | 2 | none |
-| shimmer-sweep | UNKNOWN | none | 2 | none |
-| shutter-slam | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| signup-flow | UNKNOWN | none | 2 | none |
-| sine-wave | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| skeleton-reveal | UNKNOWN | none | 2 | none |
-| slack-notification-ad | NOTICE-FOUND | copyright, sil open font, ofl | 4 | cdn.jsdelivr.net, github.com, scripts.sil.org |
-| slit-scan-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| slot-machine-roll | UNKNOWN | none | 2 | none |
-| snow | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| social-proof-card | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| soft-blob-touch | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| soft-blur-in | UNKNOWN | none | 2 | none |
-| spain-map | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| spiral | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| spiral-galaxy | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| split-flap-board | NOTICE-FOUND | apache-2.0 | 2 | cdn.jsdelivr.net |
-| split-tilt-cards | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| spotify-card | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| spotlight-card | UNKNOWN | none | 2 | none |
-| spring-pop | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| spring-stack-shuffle | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| stagger-cascade | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| stagger-lattice | UNKNOWN | none | 2 | none |
-| staggered-fade-up | UNKNOWN | none | 2 | none |
-| star-rating-fill | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| starfield | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| state-chip-rail | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| sticky-mock-swap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| stitched-text-draw | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| stop-motion-cadence | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| store-badge-lockup | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| strands | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| streaming-text | UNKNOWN | none | 2 | none |
-| strikethrough-replace | UNKNOWN | none | 2 | none |
-| stripes | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| success-check | UNKNOWN | none | 2 | none |
-| sun-burst | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| svg-line-draw-loader | UNKNOWN | none | 2 | none |
-| svg-mask-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| svg-stroke-trace | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| swipe-rail | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| swirl | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| swirl-vortex | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| tabs-slide-indicator | UNKNOWN | none | 2 | none |
-| telemetry-hud | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| terminal-simulator | UNKNOWN | none | 2 | none |
-| testimonial-card | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| testimonial-proof-card | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| text-match-cut | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| text-shimmer | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| text-stagger | UNKNOWN | none | 2 | none |
-| text-state-swap | UNKNOWN | none | 2 | none |
-| texture-mask-text | UNKNOWN | none | 2 | none |
-| thermal-distortion | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| thin-film | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| thread-message-stack | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| three-orbiting-cards | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| ticker-takeover | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| tiktok-follow | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| tilt-card | UNKNOWN | none | 2 | none |
-| titlecard-calm | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| titlecard-lockup | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| toggle-flip | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| top-down-letters | UNKNOWN | none | 2 | none |
-| torn-paper-rip | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| touch-indicator | UNKNOWN | none | 2 | none |
-| tracing-beam | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| tracking-in | UNKNOWN | none | 2 | none |
-| transitions-3d | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-blur | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-cover | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-destruction | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-dissolve | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-distortion | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-grid | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-light | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-mechanical | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-other | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-push | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-radial | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| transitions-scale | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| trust-strip | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| type-match-cut | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| typed-prompt | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| typewriter | UNKNOWN | none | 2 | none |
-| typing-indicator | UNKNOWN | none | 2 | none |
-| ui-3d-reveal | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| ui-focus-zoom | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| us-map | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| us-map-bubble | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| us-map-flow | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| us-map-hex | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
-| variable-axis-type | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| variable-font-flex | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| vector-editor-rig | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| velocity-throw-snap | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| vfx-anamorphic-flare | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| vfx-iphone-device | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.gstatic.com |
-| vfx-liquid-background | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, www.w3.org |
-| vfx-liquid-glass | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| vfx-magnetic | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| vfx-portal | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| vfx-shatter | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| vfx-text-cursor | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, www.w3.org |
-| vignette | UNKNOWN | none | 2 | none |
-| voronoi | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| vox-annotate | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| vpn-youtube-spot | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| water | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| waveform | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| week-in-merges | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| weight-wave | NOTICE-FOUND | copyright, sil open font, ofl | 3 | cdn.jsdelivr.net, github.com, scripts.sil.org |
-| whip-pan | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com |
-| whip-pan-cut | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| whiteboard-ink | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| wireframe-portal-title | NOTICE-FOUND | copyright, sil open font, ofl | 4 | cdn.jsdelivr.net, scripts.sil.org |
-| wordmark-tiles | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| world-map | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| worley-noise | NOTICE-FOUND | copyright, mit license, apache license | 4 | github.com, www.apache.org, www.w3.org |
-| x-follow-card | UNKNOWN | none | 2 | none |
-| x-post | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| yt-camera-move | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-circle-pointer | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-comment-card | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-feather-highlight | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-lcd-background | UNKNOWN | none | 2 | cdn.jsdelivr.net, www.w3.org |
-| yt-logo-intro | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-lower-third | UNKNOWN | none | 2 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
-| yt-prism-title | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-screen-warp | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| yt-vertical-fill | UNKNOWN | none | 2 | cdn.jsdelivr.net |
-| zoom-through-transition | UNKNOWN | none | 2 | cdn.jsdelivr.net |
+- The user accepted UNKNOWN items (no licence text in their files) for the media-generator image. This overrides D46(c) for those 396 items, which blocked unknown licences. Recorded here; D46(c) in [media-generator-multiformat-engine.md](media-generator-multiformat-engine.md) is not edited.
+- NOTICE-FOUND items (open-source notice present, owner still to confirm) are accepted.
+- The 5 BLOCKED-REVIEW items are blocked, not accepted: their files contain 'all rights reserved', proprietary or MPL wording, which is not an open licence. This is the default chosen when the user said to finish; the user has not said otherwise.
+- `macos-tahoe-liquid-glass` contains a copyright line but no licence text, so it stays UNKNOWN.
+
+## Status key
+
+BLOCKED-REVIEW = reserved-rights, proprietary or MPL wording: blocked. NOTICE-FOUND = open-source notice (MIT, Apache-2.0, OFL, BSD) present: accepted. UNKNOWN = no licence text in any file: accepted by user decision above.
+
+Counts: {"BLOCKED-REVIEW": 5, "NOTICE-FOUND": 47, "UNKNOWN": 396}
+
+Columns: Files = file count; Digest = first 16 hex of sha256 over the item's sorted file hashes (per-file sha256 values are in the scratchpad extract.json); Hosts = external hosts found in the item's text files.
+
+| Item | Type | Purpose (registry description) | Status | Licence terms found | Files | Digest | External hosts |
+|---|---|---|---|---|---|---|---|
+| agent-cursor | component | An AI agent operating a UI: a cursor with an accent name label that types out each step, clicks each target with a small ring, and ends on a check. | UNKNOWN | none | 2 | d1765957cd0144ff | none |
+| ai-answer-rank | block | Is your brand in the AI answer? A question types into a chat card, the assistant answers with a ranked list of three picks, then re-ranks: the promoted brand slides into its slot, the picks below step down, and the brand row lands with the one accent highlight and a check. For answer-engine and AI-visibility marketing | UNKNOWN | none | 3 | 13daae17bf1dd185 | cdn.jsdelivr.net |
+| ai-chat-reveal | block | A question is typed on a rising keyboard, sent, and answered by an AI that streams its reply word by word on a measured token rhythm - thinking dot, uneven bursts, bulleted list - before the app cuts to a branded closing card | UNKNOWN | none | 4 | 51e4acd31d46ab4d | cdn.jsdelivr.net, www.w3.org |
+| animated-bar-chart | component | A compact data card with deterministic bar growth and value callouts. | UNKNOWN | none | 2 | 584573d39cd6abf0 | none |
+| app-showcase | block | Fitness app product showcase with three floating smartphone screens | UNKNOWN | none | 2 | 0ec41388a969f9c2 | cdn.jsdelivr.net, fonts.googleapis.com, www.w3.org |
+| apple-money-count | block | Apple-style finance counter that counts from $0 to $10,000, flashes green, and bursts money icons with sound. | UNKNOWN | none | 3 | 4aa5c77b940ba1bc | cdn.jsdelivr.net |
+| arc-motion-path | component | A GSAP MotionPath primitive that flies a callout along a curved arc with autorotation. | UNKNOWN | none | 2 | e3c568cab68ee534 | none |
+| ascii-render-pass | component | A slotted scene renders as live ASCII: a canvas samples the source's luminance grid (rasterized once at mount) and draws glyphs from a density ramp charset; resolution steps coarse to fine as the piece resolves, then holds legible-fine. | UNKNOWN | none | 2 | fae9fa85bf38b3eb | cdn.jsdelivr.net, www.w3.org |
+| ascii-trail-reveal | component | An authored S-curve sweeps through a deterministic ASCII grid, flipping cells away to reveal a labeled panel. | UNKNOWN | none | 2 | 27e5eb537dfa49b1 | cdn.jsdelivr.net |
+| aurora | block | Green and violet aurora curtains ripple across a night sky. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | fc85ebf5f53899ef | github.com, www.apache.org, www.w3.org |
+| aurora-drift | component | Three soft accent-derived aurora fields drift in an exact ambient loop over a deep base and faint vignette. | UNKNOWN | none | 2 | 3b010977234fe63f | cdn.jsdelivr.net |
+| avatar-cloud | component | Lettermark avatars populate a loose elliptical cloud while fine SVG links draw between the community and its central proof label. | UNKNOWN | none | 2 | 4aad4881d3706ac8 | cdn.jsdelivr.net, www.w3.org |
+| avatar-group-hover | component | A distance-falloff avatar group lift with bouncy hover return | UNKNOWN | none | 2 | 8bf16ce4a4e99153 | none |
+| badge-pop | component | A transitions.dev-inspired notification badge pop with elastic scale and count reveal | UNKNOWN | none | 2 | 1943796252f7a8c7 | none |
+| bar-chart-race | block | Ranked bars grow and overtake each other as a time series advances, with the axis rescaling as values climb and the accent handing over to whoever leads | UNKNOWN | none | 2 | f12f1900dbe9c4b1 | cdn.jsdelivr.net |
+| beat-accent | component | A single music-hit sting: impact flash, micro scale-pulse on the subject, immediate decay. | UNKNOWN | none | 2 | dfd2286324a7b39b | cdn.jsdelivr.net |
+| beat-freeze-cut | block | A beat-driven speed ramp, freeze-frame hit, and hard-cut sequence for music-led promos and montages. | UNKNOWN | none | 2 | a52cc8b48dd27962 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| beat-pulse-background | component | An accent-derived backdrop pulses its glow intensity and saturation on a deterministic, supplied beat grid. | UNKNOWN | none | 2 | 575643b7ad0fa6d8 | cdn.jsdelivr.net |
+| beat-timeline | component | A paused master-timeline orchestration spine that pins titled beat rows to evenly spaced named labels. Each row enters on its label, holds with the sequence, then exits with the group. | UNKNOWN | none | 2 | bf4d2642d4224bde | cdn.jsdelivr.net |
+| before-after-wipe | component | Two full-bleed content slots compare before and after states as a persistent divider wipes the after layer over the before layer and rests at a configurable split. Callers fill the named before/after slot panels; token-styled defaults render when a slot is left empty. | UNKNOWN | none | 2 | 1744f0f7b6469c97 | cdn.jsdelivr.net |
+| blob | block | A soft coral and pink blob with a warm highlight slowly changes shape on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | c01aac5cc737b362 | github.com, www.apache.org, www.w3.org |
+| blue-sweater-intro-video | block | Warm AI creator intro sequence that resolves into an X follow card for @_blue_sweater_. | UNKNOWN | none | 4 | eb378321f6acc2a7 | ca.trufo.ai, cdn.jsdelivr.net, cv.iptc.org, ocsp.trufo.ai0++0�, trufo.ai, www.w3.org |
+| blur-in | component | An Operator Black word-level content reveal that resolves its own text from controlled blur | UNKNOWN | none | 2 | 6fe4ea7d366b26eb | none |
+| blur-out-up | component | Words arrive clean and depart upward with increasing blur for airy exits. | UNKNOWN | none | 2 | 4f31fd63e1c699ae | none |
+| bottom-up-letters | component | Splits text into letters and reveals each glyph from below with deterministic staggered timing | UNKNOWN | none | 2 | 80c8e7208eec535d | none |
+| browser-device-stage | component | A generic app surface in token-native device chrome (browser, window, or phone). The screen is a slot for caller img/video/HTML with a token-styled skeleton default; one settle entrance, a readable hold, and an optional screen swap. | UNKNOWN | none | 2 | 2010afb511ce31aa | cdn.jsdelivr.net |
+| camcorder-hud | block | Responsive REC, battery, editable date placeholder, and timeline-driven counter overlay for creator-camera and camcorder treatments | UNKNOWN | none | 2 | 97e438f45292dc5c | cdn.jsdelivr.net |
+| camera-dolly-zoom | block | Camera tracks toward or away from the subject while the field of view changes the opposite way, so the subject holds its frame size while the background collapses behind it or rushes in. Focal length is solved from dolly distance every frame against d * tan(FOV/2) = const, not keyframed beside it. Requires depth: the subject sits on the z = 0 plane and the content behind it must be layered or genuinely 3D (translateZ at two or more distinct depths) -- a flat element gains nothing from this move. | UNKNOWN | none | 2 | 098d4e0c369b217b | cdn.jsdelivr.net |
+| camera-rig-depth-stack | component | A 3D camera-rig-style card stack with depth, parallax, and focus shift. | UNKNOWN | none | 2 | 2816481c524af5d4 | none |
+| camera-scan-gate | component | A camera and QR recognition moment with a viewfinder sweep, bracket lock, confirmation pulse, and verified next beat. | UNKNOWN | none | 2 | d9c070709eeaec88 | cdn.jsdelivr.net |
+| camera-shake | component | Procedural handheld, telephoto and rig camera shake for any wrapper: nine measured profiles with per-lens projection, closed-form and seek-safe | UNKNOWN | none | 2 | 12c5e24626f312c4 | cdn.jsdelivr.net |
+| canopy-part-title | block | Leaves sweep through the frame and part to reveal the headline. | UNKNOWN | none | 5 | 5040beac55110412 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-blend-difference | component | Auto-inverting text using mix-blend-mode: difference — flips between white and black per-pixel against the background | UNKNOWN | none | 2 | 225737cf10b8f509 | none |
+| caption-camera-follow | component | One sentence written across a world far larger than the frame. Each word is sized against everything already written, so the block grows geometrically and the camera pulls back at a steady rate to keep landing the new word at the same size. Old words stay lit and simply become small. | UNKNOWN | none | 2 | d82cdfda1f881ab8 | cdn.jsdelivr.net |
+| caption-clip-wipe | component | Left-to-right clip-path wipe reveal per word | UNKNOWN | none | 2 | f6aebc6f6091a638 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-editorial-emphasis | component | Dual-font system with dramatic size contrast for emphasis words | UNKNOWN | none | 2 | f402ca9330a2190b | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-emoji-pop | component | Emoji integration with stroked text and horizontal squeeze entrance | UNKNOWN | none | 2 | 22e6e4912e627fb4 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-glitch-rgb | component | RGB chromatic aberration with CRT scanline overlay | UNKNOWN | none | 2 | f1c9d9f10bae7649 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-gradient-fill | component | Gradient-clipped text with elastic bounce entrance | UNKNOWN | none | 2 | 2322fcf86475c5f1 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-highlight | component | Red background sweep behind each active word, TikTok-style | UNKNOWN | none | 2 | c1eda152463bc1b9 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-kinetic-slam | component | Full-screen single-word display with alternating entrance directions | UNKNOWN | none | 2 | f450ee53296c645b | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-matrix-decode | component | Character scramble animation before text reveal | UNKNOWN | none | 2 | 6b09f13e6ec25350 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-neon-accent | component | Multi-color neon glow accents with wiggle drift animation | UNKNOWN | none | 2 | d9aff959c9705d68 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-neon-glow | component | Cyan and magenta neon glow with keyword accent colors | UNKNOWN | none | 2 | 15c0c311dafa4f6d | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-parallax-layers | component | Behind-subject 3D text layering with vertical stretch effect | UNKNOWN | none | 2 | e4df4d47e7bd0940 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-particle-burst | component | Keyword words trigger colored particle explosions | UNKNOWN | none | 2 | e8c6adc261bd05ac | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-pill-karaoke | component | Pill-shaped container with per-word karaoke color highlight | UNKNOWN | none | 2 | 23aeee46b2c43bf3 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-texture | component | Flowing texture mask over large uppercase text — ships with 6 textures (lava, marble, metal, wood, concrete, rock), configurable via the texture variable | UNKNOWN | none | 8 | 24f4c67f3a20a934 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| caption-weight-shift | component | Elegant font-weight transition between caption lines | UNKNOWN | none | 2 | acd0ff4809271b1c | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| card-resize | component | A transitions.dev-inspired card resize primitive that expands a compact card into a detail panel | UNKNOWN | none | 2 | 018cb47ef3ea5bd5 | none |
+| caret-swap | component | A gradient caret expands over one phrase, collapses to the left, then types its replacement with a blinking caret. | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 4 | e9127c6b19c9b300 | cdn.jsdelivr.net, github.com, openfontlicense.org |
+| carousel-circle-1 | block | Image cards ride a circle with a size gradient by depth angle, sweeping in fast-slow-fast swings (Circle style 1); 12 image slots. | UNKNOWN | none | 14 | c55afb36e59cbcc5 | cdn.jsdelivr.net |
+| carousel-circle-2 | block | Image cards ride a circle with a size gradient by depth angle, sweeping in fast-slow-fast swings (Circle style 2); 12 image slots. | UNKNOWN | none | 14 | b1ee2b438d2e3a07 | cdn.jsdelivr.net |
+| carousel-circle-3 | block | Image cards ride a circle with a size gradient by depth angle, sweeping in fast-slow-fast swings (Circle style 3); 12 image slots. | UNKNOWN | none | 14 | 4af5c0940035d983 | cdn.jsdelivr.net |
+| carousel-circle-4 | block | Image cards ride a circle with a size gradient by depth angle, sweeping in fast-slow-fast swings (Circle style 4); 12 image slots. | UNKNOWN | none | 14 | ea978630736c88e2 | cdn.jsdelivr.net |
+| carousel-circle-5 | block | Image cards ride a circle with a size gradient by depth angle, sweeping in fast-slow-fast swings (Circle style 5); 12 image slots. | UNKNOWN | none | 14 | e1e0125385d6e97d | cdn.jsdelivr.net |
+| carousel-orbit-1 | block | Image cards on a spinning 3D Fibonacci sphere, billboarded to the camera, sized by camera distance (Orbit style 1); 24 image slots. | UNKNOWN | none | 26 | 04598c20b95553b2 | cdn.jsdelivr.net |
+| carousel-orbit-2 | block | Image cards on a spinning 3D Fibonacci sphere, billboarded to the camera, sized by camera distance (Orbit style 2); 24 image slots. | UNKNOWN | none | 26 | ea6f1480207db1bd | cdn.jsdelivr.net |
+| carousel-orbit-3 | block | Image cards on a spinning 3D Fibonacci sphere, billboarded to the camera, sized by camera distance (Orbit style 3); 24 image slots. | UNKNOWN | none | 26 | 3b6341cbc2616fed | cdn.jsdelivr.net |
+| carousel-orbit-4 | block | Image cards on a spinning 3D Fibonacci sphere, billboarded to the camera, sized by camera distance (Orbit style 4); 24 image slots. | UNKNOWN | none | 26 | b3c22a65ca63fb4c | cdn.jsdelivr.net |
+| carousel-orbit-5 | block | Image cards on a spinning 3D Fibonacci sphere, billboarded to the camera, sized by camera distance (Orbit style 5); 24 image slots. | UNKNOWN | none | 26 | 15ce6a9898df0650 | cdn.jsdelivr.net |
+| carousel-path-1 | block | Image cards ride an open bezier path (arc, V, diagonal, wave, S-curve) with depth scaling and tangent rotation (Path style 1); 24 image slots. | UNKNOWN | none | 26 | 1f59c362ba318514 | cdn.jsdelivr.net |
+| carousel-path-2 | block | Image cards ride an open bezier path (arc, V, diagonal, wave, S-curve) with depth scaling and tangent rotation (Path style 2); 12 image slots. | UNKNOWN | none | 14 | 18fda1067e10fd92 | cdn.jsdelivr.net |
+| carousel-path-3 | block | Image cards ride an open bezier path (arc, V, diagonal, wave, S-curve) with depth scaling and tangent rotation (Path style 3); 12 image slots. | UNKNOWN | none | 14 | bbf38f7abf264f61 | cdn.jsdelivr.net |
+| carousel-path-4 | block | Image cards ride an open bezier path (arc, V, diagonal, wave, S-curve) with depth scaling and tangent rotation (Path style 4); 24 image slots. | UNKNOWN | none | 26 | dfa41b88609b5bbd | cdn.jsdelivr.net |
+| carousel-path-5 | block | Image cards ride an open bezier path (arc, V, diagonal, wave, S-curve) with depth scaling and tangent rotation (Path style 5); 24 image slots. | UNKNOWN | none | 26 | 882466f1985d4f76 | cdn.jsdelivr.net |
+| carousel-text-circle-1 | block | A headline mask-reveals word by word while a circle carousel converges from off-frame and threads the line, collapses to centre, hard-cuts to a second line that arrives at 1.4× (Circle style 1). | UNKNOWN | none | 14 | 3ee4231f7db852bf | cdn.jsdelivr.net, fonts.googleapis.com |
+| carousel-text-circle-2 | block | A headline mask-reveals word by word while a circle carousel converges from off-frame and threads the line, collapses to centre, hard-cuts to a second line that arrives at 1.4× (Circle style 2). | UNKNOWN | none | 14 | 29db2576578f773d | cdn.jsdelivr.net, fonts.googleapis.com |
+| carousel-text-circle-3 | block | A headline mask-reveals word by word while a circle carousel converges from off-frame and threads the line, collapses to centre, hard-cuts to a second line that arrives at 1.4× (Circle style 3). | UNKNOWN | none | 14 | 59ece38604fe1389 | cdn.jsdelivr.net, fonts.googleapis.com |
+| carousel-text-circle-4 | block | A headline mask-reveals word by word while a circle carousel converges from off-frame and threads the line, collapses to centre, hard-cuts to a second line that arrives at 1.4× (Circle style 4). | UNKNOWN | none | 14 | b5b1ae2ce1aa4de8 | cdn.jsdelivr.net, fonts.googleapis.com |
+| carousel-text-circle-5 | block | A headline mask-reveals word by word while a circle carousel converges from off-frame and threads the line, collapses to centre, hard-cuts to a second line that arrives at 1.4× (Circle style 5). | UNKNOWN | none | 14 | 1185d45ab6a11474 | cdn.jsdelivr.net, fonts.googleapis.com |
+| carousel-vision-1 | block | A ring of large image cards tilted into a row under a 3D camera, each card turning toward the centre (Vision style 1); 12 image slots. | UNKNOWN | none | 14 | 82373f4e85e3b5ec | cdn.jsdelivr.net |
+| carousel-vision-2 | block | A ring of large image cards tilted into a row under a 3D camera, each card turning toward the centre (Vision style 2); 12 image slots. | UNKNOWN | none | 14 | 5a29e786a1378d25 | cdn.jsdelivr.net |
+| carousel-vision-3 | block | A ring of large image cards tilted into a row under a 3D camera, each card turning toward the centre (Vision style 3); 12 image slots. | UNKNOWN | none | 14 | e10e34f2fdd8176e | cdn.jsdelivr.net |
+| carousel-vision-4 | block | A ring of large image cards tilted into a row under a 3D camera, each card turning toward the centre (Vision style 4); 12 image slots. | UNKNOWN | none | 14 | 0417674bea80ea51 | cdn.jsdelivr.net |
+| carousel-vision-5 | block | A ring of large image cards tilted into a row under a 3D camera, each card turning toward the centre (Vision style 5); 12 image slots. | UNKNOWN | none | 14 | c619263901bc984f | cdn.jsdelivr.net |
+| char-slam-explode | component | Headline glyphs hold in a deterministic scatter, then reassemble with an overshooting slam and a three-frame landing shake. | UNKNOWN | none | 2 | 3d68b60358778738 | cdn.jsdelivr.net |
+| chart-story | component | One chart builds from data in reading order and lands the exact supplied values: staggered bars, a left-to-right line with area fill, a sweeping donut, or filling progress bars, with an accented value callout on the emphasized datum. | UNKNOWN | none | 2 | 2316d3531d1734bf | cdn.jsdelivr.net, www.w3.org |
+| chat-message | component | One message arrives on the measured entry - scale 0.75, 0.12s, growing from its sender's corner. The type is an enum switched like marker-highlight's style: a received or sent bubble with a real tail, a large emoji row, an image, or a link card with title and domain. The atom that chat-thread builds conversations from | UNKNOWN | none | 2 | d4fffd3b4d98beb3 | cdn.jsdelivr.net |
+| chat-thread | component | The measured conversation as one mountable scene at full fidelity: status bar, back badge, avatar and name pill, bubbles with real iMessage tails, a Delivered receipt, large emoji rows, a media placeholder, a link card, and typing dots holding the beat. Every message picks its type by prefix - recv:/sent: text, emoji: a large row, img media, card:Title~domain a link card - and heights are measured at mount so any thread fits | UNKNOWN | none | 2 | d915b6de88776be2 | cdn.jsdelivr.net |
+| chatgpt-exchange | block | A portrait ChatGPT-style exchange types and sends a prompt, streams an answer, assembles a comparison table, and scrolls back through the result | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 7 | d9fcd46bb33a3450 | cdn.jsdelivr.net, github.com, scripts.sil.org |
+| chromatic-aberration-wipe | component | A fast slide wipe with RGB channel split on peak frames. | UNKNOWN | none | 2 | 6deb57ff61811d3f | none |
+| chromatic-radial-split | block | Shader transition with chromatic aberration radial split | UNKNOWN | none | 2 | 8929bf3da1d15621 | cdn.jsdelivr.net, fonts.googleapis.com |
+| chrome-orb | block | A mirror-chrome orb reflects a bright studio light, on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 129f0723c365884f | github.com, www.apache.org, www.w3.org |
+| cinemagraph | block | A still photograph with one living region: the frame is frozen while a single feathered window keeps moving - here, steam rising over a cup - drawn from the seek time alone with a period that divides the duration, so the render loops seamlessly. Swap the placeholder scene for a freeze-frame still masked over a looping video to cinemagraph real footage. | UNKNOWN | none | 2 | 4267731597c0c160 | cdn.jsdelivr.net |
+| cinematic-zoom | block | Shader transition with dramatic zoom blur | UNKNOWN | none | 2 | 0623c4dc6771df78 | cdn.jsdelivr.net, fonts.googleapis.com |
+| claude-exchange | block | A portrait Claude-style exchange types a prompt, works through search and reasoning steps, then streams a detailed answer with citations and actions | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 10 | 39a0e0661fae9dd6 | cdn.jsdelivr.net, github.com, scripts.sil.org |
+| code-3d-extrude | block | Syntax-highlighted code on a lit, beveled 3D slab that rotates through real space and settles to a readable rest — true WebGL depth and lighting, not a 2D transform. | UNKNOWN | none | 2 | b2037e849bd4e0f2 | cdn.jsdelivr.net |
+| code-diff | block | An edit shown as a colored diff — removed lines collapse in red, added lines expand in green. | UNKNOWN | none | 2 | 87264b327a6713f6 | cdn.jsdelivr.net |
+| code-highlight | block | A highlight band sweeps across a target line while the surrounding context dims — draws the eye to one line. | UNKNOWN | none | 2 | 48d5d7aa1291ee70 | cdn.jsdelivr.net |
+| code-morph | block | One snippet transforms into another — tokens glide between positions, leavers fade out, enterers fade in. Shiki Magic Move re-driven as a paused GSAP timeline. | UNKNOWN | none | 2 | 25d0f70d448530a3 | cdn.jsdelivr.net |
+| code-particle-assemble | block | Thousands of GPU points scatter through space and fly to the exact glyph pixels of the code, resolving into readable syntax-highlighted text — a particle system, not a token tween. | UNKNOWN | none | 2 | 4827ff8c91206ecb | cdn.jsdelivr.net |
+| code-scroll | block | The camera scrolls a long file to bring a target line to center and spotlights it — for walking through real modules. | UNKNOWN | none | 2 | 2cc714c215dcbff3 | cdn.jsdelivr.net |
+| code-shader-dissolve | block | The code compiles into existence: a GPU fragment shader resolves it out of seeded noise with a chromatic dissolve front and edge glow, then holds crisp. | UNKNOWN | none | 2 | 2a9c819269314f88 | cdn.jsdelivr.net |
+| code-slice-hero | block | A tiled headline surface flips cell by cell under a sweeping depth field to reveal the rear headline. | BLOCKED-REVIEW | all rights reserved, copyright, mit license, ofl, sil open font | 9 | dfd7913b4051f737 | gsap.com, scripts.sil.org, www.w3.org |
+| code-snippet-apple-terminal-pro | block | Apple Terminal Pro profile: black background with grey text and lime green cursor, per-character typing animation of a shell session. | UNKNOWN | none | 2 | 41a0bf56889671a0 | cdn.jsdelivr.net |
+| code-snippet-dark-2026 | block | VS Code workbench with per-character typing animation in the Dark 2026 theme. Full editor chrome with activity bar, sidebar, tabs, terminal, and status bar. | UNKNOWN | none | 3 | 3800236a152e2b1e | cdn.jsdelivr.net |
+| code-snippet-dark-modern | block | VS Code workbench with per-character typing animation in the Dark Modern theme. Full editor chrome with activity bar, sidebar, tabs, terminal, and status bar. | UNKNOWN | none | 3 | ccab6f43e088c805 | cdn.jsdelivr.net |
+| code-terminal-run | component | A token-chrome terminal panel runs one command: the prompt line types deterministically behind an integer-cycle caret, executes after a beat, and output lines print one per cue before a fresh prompt appears. | UNKNOWN | none | 2 | a4301ef9ee011f58 | cdn.jsdelivr.net |
+| code-typing | block | Token-streamed typing reveal with a caret that tracks the frontier — deterministic, no CSS animation. | UNKNOWN | none | 2 | c56d2273f125aa24 | cdn.jsdelivr.net |
+| color-wheel | block | A wide gradient slides slowly through the colours of the rainbow. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 1c16196a65cbaf71 | github.com, www.apache.org, www.w3.org |
+| colorama-wipe | component | Headline reveal through a feathered, leaning wipe front that is blurred and colour-mapped as it passes, then settles to clean type and wipes off again — the After Effects masked-text + Compound Blur + Colorama 'shiny wipe' as a deterministic canvas effect on any text element | UNKNOWN | none | 2 | 10e741ae889fdf73 | none |
+| comparison-split | component | Two full-bleed panels compare before and after states as a persistent divider wipes the vivid after layer over the muted before layer and rests at a configurable split. | UNKNOWN | none | 2 | 28f35606cd61524b | cdn.jsdelivr.net |
+| confetti | component | A deterministic celebration burst with seeded particles and gravity. | UNKNOWN | none | 2 | 408ba520bd448f1b | none |
+| conic-progress-ring | component | A token-driven conic progress ring whose angular fill and center count settle together from one registered percentage. | UNKNOWN | none | 2 | 6d0d2fae1f304f23 | cdn.jsdelivr.net |
+| constellation-hub | component | Feature nodes brighten in narration order as real-length SVG connectors draw outward from a fixed central hub, then settle into one lockup. | UNKNOWN | none | 2 | f5d71cd076e9f78a | cdn.jsdelivr.net, www.w3.org |
+| cosmic-orb | block | An iridescent soap-bubble planet: a slowly spinning sphere of nebula bands, dust lanes and twinkling stars wrapped in a refracting glass limb with chromatic aberration at the edge. | UNKNOWN | none | 2 | cac692f01686e9ce | cdn.jsdelivr.net |
+| count-up | component | A token-native stat counter that eases between values, counting up or down, and lands with a restrained scale pulse. | UNKNOWN | none | 2 | 20e1280d9298e71d | cdn.jsdelivr.net |
+| cross-warp-morph | block | Shader transition with cross-warped morphing | UNKNOWN | none | 2 | dde81783f36f7175 | cdn.jsdelivr.net, fonts.googleapis.com |
+| cta-close | component | A display-scale action line lands per word and fills the frame with air, one generous CTA capsule pops beneath it with a single overshoot, and the finished close holds completely still. | UNKNOWN | none | 2 | c5efd61e2caa3e08 | cdn.jsdelivr.net |
+| cta-lockup | component | A canonical closing lockup that reveals an action line, pops in an accent CTA capsule, settles supporting microcopy, and holds with confidence. | UNKNOWN | none | 2 | 64afcb9dadc02c06 | cdn.jsdelivr.net |
+| cuboid-carousel | block | A chain of bevelled cuboids rides a travelling wave as a content carousel. | BLOCKED-REVIEW | all rights reserved, copyright, mit license | 11 | 797a3336ee1ffe1c | fonts.googleapis.com, fonts.gstatic.com, github.com, gsap.com, jcgt.org, www.w3.org |
+| cursor-annotate | component | A marker pen glides onto the frame and hand-draws a loose loop, an underline, or an arrow around a region, the ink laid exactly under its nib, then lifts and leaves. | UNKNOWN | none | 2 | 3b8d4c48dca98fba | www.w3.org |
+| cursor-context-menu | component | A cursor right-clicks a file, a context menu blooms from its tip, the hover highlight tracks the item under it, and the chosen action plays out: duplicate, rename, move to trash, or a confirmation toast. | UNKNOWN | none | 2 | 75ce33cc63c43d6f | none |
+| cursor-drag-drop | component | A cursor grabs a task card, lifts and tilts it into its motion, carries it in lockstep to an empty column, drops it with a small settle, and the list closes the gap behind it. | UNKNOWN | none | 2 | 274c7c7d94da7ab1 | none |
+| cursor-glyph-trail | component | A tutorial cursor path: on a settings screen the arrow clicks through three steps, leaving a dotted trail spaced evenly by distance and a numbered marker at each click; each step's trail fades as the next move begins. | UNKNOWN | none | 2 | c8ee9997cef10515 | cdn.jsdelivr.net |
+| cursor-marquee-select | component | A cursor drags a selection rectangle across a photo grid; each tile rings and pops a check the frame the rectangle touches it, while a pill counts the selection up. | UNKNOWN | none | 2 | 8972f7fe3134c0ba | none |
+| cursor-text-select | component | An arrow turns into an I-beam over a document, drags a selection across a phrase character by character, raises a format toolbar, turns back into an arrow and clicks Bold. | UNKNOWN | none | 2 | 0d89e6ec2d841d50 | none |
+| cursor-zoom-follow | component | Screen-recording auto-zoom: the camera pushes in toward each upcoming click, trails the cursor on a smooth spring, marks every click with a press and a ring, then eases back out to the full screen as the cursor leaves. | UNKNOWN | none | 2 | 47bcadd9d0d05394 | none |
+| curtain-reveal | component | Two pleated stage curtains gather outward from center, the way real velvet bunches at the tieback, revealing the stage underneath. A static pelmet frames the top; a soft spotlight can bloom in as they part. | UNKNOWN | none | 2 | 55a3794b0dfa12e5 | cdn.jsdelivr.net |
+| cut-the-curve | component | A velocity-matched directional hard cut: the outgoing subject accelerates with power4.in, swaps at peak velocity, and the incoming subject continues in the same direction with power4.out. | UNKNOWN | none | 2 | 40260d8aa0681e39 | cdn.jsdelivr.net |
+| dart-cursor | component | A bold outlined arrowhead that dives in from camera depth, flies nose-first with motion blur along its path, squashes on two clicks, and whips out of frame. | UNKNOWN | none | 2 | 4839abc58c625d79 | none |
+| data-chart | block | Animated bar + line chart with staggered reveal, NYT-style typography, and value labels | UNKNOWN | none | 2 | 5c0bddf5276c41a7 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| decline-chart | component | A metric line draws downward as its value counts down and the ambient background darkens in lockstep. | UNKNOWN | none | 2 | 7f25d4fc3b27602a | cdn.jsdelivr.net |
+| device-frame-stage | component | A phone or tablet mockup staged as a physical scene prop with a screen slot for arbitrary reconstructed UI, rising onto the stage, settling, and holding an idle float | UNKNOWN | none | 2 | 62e45ed9136ba731 | cdn.jsdelivr.net |
+| directional-wipe | component | A directional scene push that slides one panel over another. | UNKNOWN | none | 2 | f5625be94546cef9 | none |
+| domain-warp-dissolve | block | Shader transition with fractal noise domain warping | UNKNOWN | none | 2 | 9899d6914269eda8 | cdn.jsdelivr.net, fonts.googleapis.com |
+| drift-hold | component | A centered content card stays subtly alive through loop-exact rotation, scale breathing, and a slow light sweep. | UNKNOWN | none | 2 | a6e7ee13ef2b1c33 | cdn.jsdelivr.net |
+| dynamic-grid | component | A responsive animated grid background driven by CSS variables for SaaS, code, and data scenes | UNKNOWN | none | 2 | a5ff15fedb0d6307 | none |
+| echo-smear | component | Distance-adaptive streak — records each element's real trajectory (position, rotation, scale, opacity), then trails time-offset copies behind it in proportion to its speed, combined by brightest pixel, so fast moves smear and slow ones stay sharp; spinning edges stay smooth | UNKNOWN | none | 2 | 90eb85f3405ade84 | none |
+| echo-trail | component | A moving element renders with N ghosted copies of itself at t minus i times delta, opacity stepped down per ghost; one traversal, echoes collapsing into the settled element at rest. | UNKNOWN | none | 2 | 5bdbe4648c51a121 | cdn.jsdelivr.net |
+| editorial-flash-overlay | block | Finite neutral-warm light layers for a seek-safe camera-flash cut or social reveal | UNKNOWN | none | 2 | 5ac2bb42535a5de2 | cdn.jsdelivr.net |
+| exploded-stack | block | Isometric layer plates explode apart with a label beside each layer, hold, then collapse back into one stack. Built for architecture and system diagrams. | UNKNOWN | none | 2 | e0ce86921e6e3bc1 | cdn.jsdelivr.net, www.w3.org |
+| extended-keyframe | component | The never-fully-lands arrival: an element covers most of its move in the first fifth of the duration and creeps the rest to the last frame, exits along its arrival vector, and carries shutter motion blur — from any side or by scale, one call per element, plus the ease on its own for any tween | UNKNOWN | none | 2 | 06edf4ccc10a5d28 | www.w3.org |
+| extruded-logo | block | Beveled 3D letters flip up one by one, the word swings so light runs across the bevels, then settles for a readable hold. Chrome, gold or matte. | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 4 | e090627dca1d816f | cdn.jsdelivr.net, github.com, openfontlicense.org, scripts.sil.org |
+| facet-morph | component | A faceted low-poly mass of 36 triangles continuously reshapes between three authored silhouettes (blob, mark, badge) with per-facet flat shading that recomputes as the vertices move. Light reads from the upper left; lit facets lift toward a pale accent-tinted tone while turned-away facets fall toward near-black. One calm continuous morph, then a settled hold. | UNKNOWN | none | 2 | 94e088c2e501f930 | cdn.jsdelivr.net, www.w3.org |
+| fade-through | component | A calm transition primitive that fades one layer out, passes through a wash, and reveals the next layer | UNKNOWN | none | 2 | 5cf482de20a9242a | none |
+| falling-lines | block | White lines fall down the frame at varied speeds, each fading into a trail. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 34d44132cfa17b2f | github.com, www.apache.org, www.w3.org |
+| filmed-screen | component | Your scene, filmed off a screen: perspective, depth of field that follows an element you name, LED sub-pixels and per-shot colour grades. Shots glide into each other, focus racks between elements, and the focused element stays sharp. | UNKNOWN | none | 2 | 252ccc0ab445f100 | none |
+| flash-through-white | block | Shader transition with white flash crossfade | UNKNOWN | none | 2 | caae42ad53eff6b0 | cdn.jsdelivr.net, fonts.googleapis.com |
+| flowchart | block | Animated decision tree with SVG connectors, sticky-note nodes, cursor interaction, and typing correction | UNKNOWN | none | 2 | b2f2fd968154e814 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| flowchart-vertical | block | Portrait animated decision tree with SVG connectors, sticky-note nodes, cursor interaction, and typing correction | UNKNOWN | none | 2 | 3a84745bc6a4b3c6 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| flowing-gradient | block | Bands of orange and violet flow across the frame in a smooth gradient. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 2740c6b855682f19 | github.com, www.apache.org, www.w3.org |
+| focus-blur-resolve | component | A premium focus pull from heavy blur to crisp text, then a soft blur-out exit. | UNKNOWN | none | 2 | 75e893f93ab0450b | none |
+| focus-rack | component | Focus shifts once between two cards at different apparent depths through synchronized blur, dimming, scale, and parallax. | UNKNOWN | none | 2 | d11c37ddd4933f23 | cdn.jsdelivr.net |
+| focus-swap | component | Moves attention between two side-by-side cards as one recedes with scale, blur, and dimming while the other advances to full focus. | UNKNOWN | none | 2 | 73c3522c0494a6f6 | cdn.jsdelivr.net |
+| fractal-noise | block | Soft grey fractal noise drifts across the frame like slow clouds. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 182dd48d223eeaf4 | github.com, www.apache.org, www.w3.org |
+| freeze-frame-dressing | block | Timeline-driven paper, tape, and flash dressing for a freeze-frame or background-removed subject | UNKNOWN | none | 2 | 9d2e1ae8136522da | cdn.jsdelivr.net |
+| frost | block | A frozen blue orb with frost creeping in from its edge, on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | ae3c6302fcca6c30 | github.com, www.apache.org, www.w3.org |
+| frost-sequence-camera-orbit | block | An orbiting camera follows an ice logo as it breaks apart, reforms into two text moments, and fades. | BLOCKED-REVIEW | all rights reserved, copyright, mit license, ofl, sil open font | 20 | 47ce016dc9b31064 | books.google.com, github.com, gsap.com, portal.acm.org, scripts.sil.org, www.angusj.com, www.boost.org, www.me.berkeley.edu, www.shadertoy.com, www.w3.org |
+| gabor-noise | block | Grey streaky noise drifts across the frame like a moving fingerprint. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 0f8a597c8baa9e06 | github.com, www.apache.org, www.w3.org |
+| gallery-tunnel | block | An infinite corridor of panels: a square tunnel receding to a vanishing point, its floor, ceiling and walls tiled with saturated colour slabs and caller-supplied images that swell toward camera and exit past you, the far end dissolving into fog. | UNKNOWN | none | 2 | f5db32d778ad6017 | cdn.jsdelivr.net |
+| gesture-tap | component | A contact circle taps a mobile pill button, releases it into a new labeled accent state, and lifts away. | UNKNOWN | none | 2 | 6de970dda2b737cc | cdn.jsdelivr.net |
+| glass-hero | block | A solid glass object rises in front of a giant headline and keeps turning, so the type bends and splits into colour through it. | UNKNOWN | none | 2 | d4b10850484a7ed2 | cdn.jsdelivr.net |
+| glass-shard-title | block | Glass shards fly in through fog and tile themselves into the headline. | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 13 | 4abf864fcd5462c8 | cdn.jsdelivr.net, jcgt.org, ns.adobe.com, purl.org, scripts.sil.org, www.w3.org |
+| glitch | block | Shader transition with digital glitch artifacts | UNKNOWN | none | 2 | aa3fbeb5e0ac3a5a | cdn.jsdelivr.net, fonts.googleapis.com |
+| gloss-sweep | component | A card lands with a restrained slam, catches one diagonal specular gloss, and holds perfectly still. | UNKNOWN | none | 2 | e2b1eaa75959908d | cdn.jsdelivr.net |
+| godrays | block | Rays of light fan out from a corner and drift across a deep blue field. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 5ad0bffc48403eb8 | github.com, www.apache.org, www.w3.org |
+| goo | block | A glossy green liquid ball whose surface bulges and ripples like wet goo, centred on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 8493acdce10b0c81 | github.com, www.apache.org, www.w3.org |
+| gooey-split | block | A dot splits into a three-dot menu with a gooey metaball neck, spins into a swirl mark under directional shutter motion blur, then breaks back into three dots and merges into one. The goo is an SVG blur-and-threshold filter on the dots; the blur integrates each part along its real trajectory, so the smear follows the direction and speed of the spin. | UNKNOWN | none | 2 | 246d0d24fae35a22 | cdn.jsdelivr.net |
+| grade-split-reveal | component | The same picture twice, one flat and one finished, with a hard edge sweeping between them. It stops in the middle long enough to compare, then commits and the graded look takes the frame. Both looks are real HyperFrames color grading run through the WebGL shader, so the preview and the render match. | UNKNOWN | none | 2 | 534fe028f6cd8d83 | cdn.jsdelivr.net, www.w3.org |
+| grain-field | component | A clearly visible accent-tinted dot field drifts over a subtle luminance gradient in an exact ambient loop. | UNKNOWN | none | 2 | f5f396afd70c7d17 | cdn.jsdelivr.net |
+| grain-overlay | component | Animated film grain texture overlay using CSS keyframes — adds warmth and analog character to any composition | UNKNOWN | none | 2 | 39d58d3886787eaa | www.w3.org |
+| gravitational-lens | block | Shader transition with gravitational lensing distortion | UNKNOWN | none | 2 | 3e741d1398951ef2 | cdn.jsdelivr.net, fonts.googleapis.com |
+| grid-card-assemble | component | N capability cards (thin-line icon that draws on, mono label, optional muted body) stagger-assemble into a grid or vertical list with a fade plus short slide into slot, then hold perfectly still. | UNKNOWN | none | 2 | 21702d383016ff0c | cdn.jsdelivr.net, www.w3.org |
+| grid-pixelate-wipe | component | Transition effect where the screen dissolves into a grid of squares that fade out with staggered timing — use between scenes | UNKNOWN | none | 2 | 27a16f5bedff736d | none |
+| halftone-dissolve | component | Scene A dissolves into scene B through a growing halftone dot field: accent ink dots pop onto a fixed grid smallest-first, each opens into a window onto B, until the windows merge and B fully replaces A. | UNKNOWN | none | 2 | a801116786264fb0 | cdn.jsdelivr.net |
+| halftone-field | block | A full-bleed halftone light field: a grid of dots whose size and colour track a slow flowing simplex-noise field, so broad bands of light sweep across a mostly-black frame like a giant LED wall showing a plasma. Built to run under type. | UNKNOWN | none | 2 | 3e7cf05f3b82c686 | cdn.jsdelivr.net |
+| headline-slam | component | A heavyweight headline scales down into frame, lands with a deterministic three-frame shake, holds with subtle drift, and whips upward on exit. | UNKNOWN | none | 2 | d0a3cb50cd129387 | cdn.jsdelivr.net |
+| heatmap | block | Thermal colours flow through a glowing orb, on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 79f856448853d22d | github.com, www.apache.org, www.w3.org |
+| heygen-avatar-promo-card | block | A portrait HeyGen offer card pairs a moving avatar mosaic with bold promotional typography and a branded callout | BLOCKED-REVIEW | copyright, mit license, ofl, proprietary, sil open font | 17 | 9f7bb33b6e63236f | cdn.jsdelivr.net, github.com, scripts.sil.org, www.videolan.org, www.w3.org |
+| hologram | block | A pale blue holographic orb with scan rings and flicker, on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 35e108c6c47f8d5f | github.com, www.apache.org, www.w3.org |
+| holographic | block | An iridescent foil orb with a shifting rainbow sheen, centred on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 402dd3e9e7295292 | github.com, www.apache.org, www.w3.org |
+| hw-arrow | component | Wobbled draw-on arrow with straight, gentle, and swoop curve poses, a four-way stroke texture matrix (plain/soft/sharp/spray), and a travel-aligned head-arrival stretch pulse with spring recovery; boils while on screen | UNKNOWN | none | 3 | 56c90f48e55ac8d0 | cdn.jsdelivr.net, www.w3.org |
+| hw-boil | component | Hand-drawn jitter that re-poses every N frames, as seek-safe helpers: pose derives from quantized timeline time through a seeded hash; includes the shared onUpdate dispatcher, a wobbled-ellipse path generator, the boil pose control (off/calm/lively over the family-locked frameDrop), a curvature-adaptive pen-velocity ease, and the completed stroke matrix (plain/soft/sharp/spray — spray is index-seeded deterministic dots, no turbulence) with texture-safe draw-on | UNKNOWN | none | 3 | 8990e6c2e632e1d7 | cdn.jsdelivr.net, www.w3.org |
+| hw-box-label | component | Wobbled rounded rectangle draws on — across the authored stroke matrix (plain/soft/sharp/spray) — or drops in and lands with a volume-true contact squash and bouncy spring recovery, with a handwritten label above or centered; boils | UNKNOWN | none | 3 | cf0f95c5af2ee4f6 | cdn.jsdelivr.net, www.w3.org |
+| hw-callout-circle | component | Wobbled ellipse draws around a target with optional scribble fill and curved connector; the handwritten label pops in WITH momentum and the drawn shapes absorb the arrival with a volume-preserving contact squash; outline and connector take the family stroke matrix (plain/soft/sharp/spray); boils | UNKNOWN | none | 3 | 432399b69732c353 | cdn.jsdelivr.net, www.w3.org |
+| hw-frame | block | Media in a hand-drawn border with corner doodles and a handwritten caption; the unit tilts slightly and boils (images inside the block; keep live footage in the host) | UNKNOWN | none | 3 | f52e064f00d86a9d | cdn.jsdelivr.net, www.w3.org |
+| hw-path-text | block | Handwriting flowing along any SVG path with a per-character reveal; the path is the only geometry input | UNKNOWN | none | 3 | c3b187666f4967c2 | cdn.jsdelivr.net, www.w3.org |
+| hw-pipeline | block | Wobbled boxes with handwritten labels joined by curved connectors, drawing on in sequence from a node list | UNKNOWN | none | 3 | b9e0c77ecc8568e6 | cdn.jsdelivr.net, www.w3.org |
+| hw-scribble-transition | block | Overlay transition: scribble bands accumulate to cover the frame with a solid backstop, the host cuts beneath, and the scribble clears | UNKNOWN | none | 2 | 3bd8a6d78299ffd2 | cdn.jsdelivr.net, www.w3.org |
+| hw-text-cloud | block | Hand-drawn speech bubble with a positionable tail: outline draws on, paper fill fades in, handwritten text types per character; boils | UNKNOWN | none | 3 | 22b3ea65a56f8cf1 | cdn.jsdelivr.net |
+| hw-title | block | Handwritten display text with a scalar-driven word-by-word highlight sweep and a seeded squiggle underline sized to the text; boils | UNKNOWN | none | 3 | 81d247de195bf2a3 | cdn.jsdelivr.net |
+| hw-underline | component | Hand-drawn squiggle underline, double-pass strikethrough, and bracket marks that draw on | UNKNOWN | none | 3 | e3115f618b18f874 | cdn.jsdelivr.net |
+| hw-write-title | block | True glyph write-on: filled Caveat letterforms revealed by baked per-glyph centerline strokes traced in real stroke order with a curvature-adaptive pen-velocity ease (fast on straights, slow into curves, inter-stroke pen lifts); optional squiggle underline; boils | UNKNOWN | none | 4 | 9be4a345c92fa12d | cdn.jsdelivr.net, www.w3.org |
+| icon-morph-beat | component | An icon morphs between authored state silhouettes, shifts to an accent color, and marks completion with one restrained pulse. | UNKNOWN | none | 2 | 2947134eff85adee | cdn.jsdelivr.net |
+| icon-swap | component | A scale-and-blur icon swap primitive for toolbar and action state changes | UNKNOWN | none | 2 | 7b53a3534e3ec5b6 | none |
+| ink-bleed-reveal | component | Liquid ink blooms through paper under a gooey blur-plus-threshold filter, merges, then contracts as a crisp slotted mark resolves beneath it, with static seeded paper grain riding the result. | UNKNOWN | none | 2 | 3e5a55f28be6275a | cdn.jsdelivr.net |
+| inline-highlight | component | A clean marker-style inline highlight that animates behind text using a CSS scale variable | UNKNOWN | none | 2 | bd7add0c1a5b867b | none |
+| input-feedback | component | A transitions.dev-inspired input feedback primitive with shake, clear affordance, and success state | UNKNOWN | none | 2 | 2f824658e153e03f | none |
+| instagram-follow | block | Animated Instagram follow overlay with profile card and follow button | UNKNOWN | none | 3 | 427c0e30f22be8a8 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| ios26-liquid-glass | block | 3D iPhone with a normal iOS 26 home screen, liquid glass app icons, shader wallpaper, dock, and fluid glass notifications that drop from the status area onto a GLTF device model. | UNKNOWN | none | 30 | 5840fc131037b62d | cdn.jsdelivr.net, www.gstatic.com |
+| iris-reveal | component | A circle clip-path opens from an authored origin revealing state B over state A in one confident pass, then holds on B. Classic register dims and desaturates the before state so the after state lands in full color; a thin accent rim rides the iris edge. Callers fill the named before/after slot panels; token-styled defaults render when a slot is left empty. | UNKNOWN | none | 2 | 820f22e843121d74 | cdn.jsdelivr.net |
+| keyframe-scrub-stack | component | A keyframe-sequenced stack of cards with offset timing and easing presets. | UNKNOWN | none | 2 | 0780ecba2706fff7 | none |
+| kinetic-center-build | component | Words enter from the right and push the growing phrase left until the final line locks centered. | NOTICE-FOUND | copyright, mit license | 2 | 030c7bf86e49e4b9 | cdn.jsdelivr.net, fonts.googleapis.com, github.com |
+| kinetic-type-swap | component | A held sentence keeps its fixed text in place while one widest-word masked slot rolls through alternatives and settles on the final option. | UNKNOWN | none | 2 | dbedac5a023b1ca5 | cdn.jsdelivr.net |
+| lens-flare | block | A camera lens flare: a bright star burst and a faint rainbow halo that slowly shimmer on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 4fa47c8431efedc8 | github.com, www.apache.org, www.w3.org |
+| light-edge | block | Purple and cyan light races around the edge of an orb on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | acf8d6b21cc54ad6 | github.com, www.apache.org, www.w3.org |
+| light-leak | block | Shader transition with cinematic light leak overlay | UNKNOWN | none | 2 | 08198b5336ef2b4e | cdn.jsdelivr.net, fonts.googleapis.com |
+| light-sweep-pass | component | A traveling key light re-shades a slotted scene: a soft diagonal gradient band crosses the frame once while every per-element highlight and shadow shifts in lockstep (all driven by one --light-x property), then the light settles into a resting key. Quiet, expensive-feeling; the scene itself never moves. Callers fill the named scene slot; a token hero-and-cards default renders when it is left empty. | UNKNOWN | none | 2 | 1d019f98038a4876 | cdn.jsdelivr.net |
+| line-by-line-slide | component | Each line enters from the left with staggered slide and exits to the right. | UNKNOWN | none | 2 | 261a157bc1a8ac32 | none |
+| line-swap | component | A masked full-line beat replacement: line A holds center then exits up through an overflow-hidden mask as line B enters bottom-up on the same beat, with an optional accent underline drawing beneath one word of line B. | UNKNOWN | none | 2 | a2e11dc7dda41fd6 | cdn.jsdelivr.net |
+| liquid-glass-notification | block | Frosted glass notification cards floating over an aurora shader background | UNKNOWN | none | 4 | d9a01a59380d26b9 | cdn.jsdelivr.net, cdnjs.cloudflare.com, www.w3.org |
+| liquid-glass-widgets | block | Frosted glass stat cards, showcase panel and pill chips over an aurora shader background | UNKNOWN | none | 4 | 8260cf7a067e8ce0 | cdn.jsdelivr.net, cdnjs.cloudflare.com, www.w3.org |
+| liquid-metal | block | A chrome sphere ripples and flows like molten metal on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 4301d1f41fc4b50f | github.com, www.apache.org, www.w3.org |
+| locked-nucleus-orbit | component | A fixed center nucleus anchors deterministic satellite orbits that settle into a composed lockup. | UNKNOWN | none | 2 | b648a57d71a79912 | cdn.jsdelivr.net |
+| logo-brand-close | component | A display-scale wordmark cascades letter by letter into a centered lockup, the accent brand period lands last, an optional tagline and wide-tracked mono URL settle beneath, and the finished identity holds dead still to the end of the film. | UNKNOWN | none | 2 | 3a6f6d32defa26d0 | cdn.jsdelivr.net |
+| logo-outro | block | Cinematic logo reveal with piece-by-piece assembly, glow bloom, tagline fade-in, and URL pill | UNKNOWN | none | 2 | e2e44f9451565967 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| logo-sting | component | A wordmark slams into its final scale, fires one accent ring and one white impact frame, then holds completely still. | UNKNOWN | none | 2 | c9b99781b18a69b1 | cdn.jsdelivr.net |
+| logo-wall | component | A trusted-by wall of placeholder lettermark logos that fades and scales into place with a deterministic per-cell stagger. | UNKNOWN | none | 2 | d502d35cf09da1c0 | cdn.jsdelivr.net |
+| lottie-character-walk | block | A jointed flat character walks in on planted feet, stops and points at a card; the body acting is a Lottie file and the stage is GSAP. | UNKNOWN | none | 3 | 8f52fe004e4b0cfa | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| lower-third-bild | block | News-style lower third with tight-fit text boxes: white headline bar with red drop-shadow, red sub-line with white drop-shadow. | UNKNOWN | none | 4 | 9c162810fdca3bbe | cdn.jsdelivr.net |
+| lt-accent-underline | block | Cardless lower third for footage overlay: name rises, an accent rule draws left-to-right, role fades in; text-shadowed for legibility | UNKNOWN | none | 2 | ec19a72e03a4711b | cdn.jsdelivr.net |
+| lt-bold-block | block | High-energy podcast lower third: solid dark block wipes in, uppercase name slams up, accent tag pops | UNKNOWN | none | 2 | 662ff8f45733b42b | cdn.jsdelivr.net |
+| lt-clean-bar | block | Minimal white-card lower third for podcasts/interviews: accent tab, name + role, clip-wipe entrance | UNKNOWN | none | 2 | da717d745cc96390 | cdn.jsdelivr.net |
+| lt-color-block | block | High-energy lower third: bold accent-color block slides in with overshoot, condensed name + mono role | UNKNOWN | none | 2 | b9d2300d7b88d1de | cdn.jsdelivr.net |
+| lt-dark-card | block | Charcoal card lower third for bright footage: name, drawn accent underline, role; slide-up entrance | UNKNOWN | none | 2 | ebcc94e2ead29b41 | cdn.jsdelivr.net |
+| lt-kicker-name | block | Cardless lower third with an accent eyebrow/kicker tag, heavy name, and a drawn baseline; for footage | UNKNOWN | none | 2 | 3fd78409f409877b | cdn.jsdelivr.net |
+| lt-mask-reveal | block | Cardless lower third: an accent sweep crosses and clip-path-reveals a heavy name, role fades up; for footage | UNKNOWN | none | 2 | aa149479b5b35fad | cdn.jsdelivr.net |
+| lt-neon-border | block | Two arcs of light travel the edge of a rounded panel and snap corner to corner, trailing a soft three-layer bloom. A lower third for a name and role. | UNKNOWN | none | 2 | 06980e77ab4fc9f2 | cdn.jsdelivr.net, www.w3.org |
+| lt-side-rule | block | Cardless lower third with a vertical accent bar; condensed display name + mono role, text-shadowed for footage | UNKNOWN | none | 2 | 597c57dc101bceeb | cdn.jsdelivr.net |
+| lt-soft-pill | block | Rounded white pill lower third for podcasts/interviews: status dot, name + role, scale-pop entrance | UNKNOWN | none | 2 | dc5a545329953fd5 | cdn.jsdelivr.net |
+| lt-stack-bars | block | Two stacked bars: a dark name bar wipes from the left, an accent role bar wipes from the right | UNKNOWN | none | 2 | 5e49121d14db94cc | cdn.jsdelivr.net |
+| macos-notification | block | Animated macOS-style notification banner with app icon and message | UNKNOWN | none | 2 | d5ef973e6e3a878b | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| macos-tahoe-liquid-glass | block | 3D MacBook with a macOS Tahoe-style desktop, glass menu bar, Finder window, dock, and cinematic device camera move. | UNKNOWN | copyright | 20 | e40678d1952e0d71 | cdn.jsdelivr.net, www.gstatic.com, www.iec.ch                                              desc       .iec, www.iec.ch           iec |
+| magnetic-cursor | component | A soft dot pointer glides across an editor toolbar, is pulled into each button and morphs into its rounded hover plate while the icon leans toward it, presses one, and leaves as a dot. | UNKNOWN | none | 2 | 6aa47877a2d6ea9b | none |
+| marble | block | Ink-dark veins wind through white in a marbled pattern that slowly shifts. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 68063bb52c40f349 | github.com, www.apache.org, www.w3.org |
+| marker-checklist-card | component | A hand-lettered paper card: marker headline with an underline and a drawn ellipse around one word, then three checklist rows whose checks draw themselves on - typewriter labels, marker values. The paper-and-marker sibling of mk-specs-list's clean professional rows | NOTICE-FOUND | apache license | 4 | bdbdc38ab7f437ef | cdn.jsdelivr.net |
+| marker-highlight | component | Display text settles in, then one hand-drawn marker stroke (highlight, circle, underline, or scribble) draws over the emphasized word on cue. | UNKNOWN | none | 2 | 2a461dfdc4b19b93 | cdn.jsdelivr.net, www.w3.org |
+| match-cut | component | A circle accelerates into a hard single-frame scene swap, matches the incoming circle exactly, and continues into a smaller resting pose. | UNKNOWN | none | 2 | a1b8fdff5f40c20e | cdn.jsdelivr.net |
+| matrix-decode | component | Random scramble resolves left-to-right into the target text. | UNKNOWN | none | 2 | 38a28e899aa02069 | none |
+| menu-morph | component | A transitions.dev-inspired hamburger and plus-menu morph primitive for compact action menus | UNKNOWN | none | 2 | 68ca485829196c7f | none |
+| mesh-gradient | block | Soft coral, orange and violet fields blend and drift in a mesh gradient. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | c067499302a45e20 | github.com, www.apache.org, www.w3.org |
+| mesh-gradient-bg | component | A render-safe mesh gradient using animated radial layers. | UNKNOWN | none | 2 | c271fd08e8b7f3a2 | none |
+| message-thread-reveal | block | A full text conversation plays out on a phone - bubbles popping in, typing indicators, a shared link card, emoji, delivered receipts - with the whole thread scrolling up beat by beat until a closing card lands. The complete chat ad-template, measured message by message | UNKNOWN | none | 5 | 9e1365e53e07f9fc | cdn.jsdelivr.net, www.w3.org |
+| micro-transitions | component | A transitions.dev-inspired pack of badge, dropdown, modal, tabs, tooltip, and success-check micro transitions | UNKNOWN | none | 2 | a35f5630798103d9 | none |
+| mk-background | block | Procedural soft-blob gradient backdrop in a minimalist presentation style: two radial blobs drifting over a base color, with an animatable rounded-card bar mask and optional frosted-glass mode | UNKNOWN | none | 2 | 37a6d4d73a58b710 | cdn.jsdelivr.net |
+| mk-callout-highlight | block | A sentence whose word-by-word emphasis is driven by a single scalar — tween it to sync the highlight with a voiceover | UNKNOWN | none | 2 | 98cb3b1f77adf938 | cdn.jsdelivr.net |
+| mk-clone-wall-transition | block | Overlay transition: a tiled word wall covers the frame, inverts via difference blending, and clears — hard-cut the content beneath while covered | UNKNOWN | none | 2 | ff021e38502362d7 | cdn.jsdelivr.net |
+| mk-emphasis-type | component | Oversized low-contrast background word drifting slowly behind the subject — typography as texture | UNKNOWN | none | 2 | 0965e536fac1a215 | cdn.jsdelivr.net |
+| mk-line-graph | block | One or two SVG series draw on with dots popping and value labels riding the draw front; dim baseline axis, x-labels, color-dot legend | UNKNOWN | none | 2 | 5616cf58b2935266 | cdn.jsdelivr.net, www.w3.org |
+| mk-placeholder-grid | block | N-up rounded-corner media grid (2-up, 3-up, 4-up, 3x2, hero plus two): per-cell inside-scale framing, staggered box-in entrance, slow settle | UNKNOWN | none | 2 | 00b091dea544ae4b | cdn.jsdelivr.net |
+| mk-progress-stat | block | Big-numeral statistic with count-up, label, thin progress track filling to value/max, and caption; light and dark schemes | UNKNOWN | none | 2 | 020888aa57d96a4f | cdn.jsdelivr.net |
+| mk-specs-list | block | Left-aligned specs/traits checklist over footage or a board: rows slide in staggered with an accent underline sweep; light and dark schemes | UNKNOWN | none | 2 | 805dba7c171ce2e3 | cdn.jsdelivr.net |
+| mk-usage-arc | component | Thin circular gauge that draws on while its percentage counts up; one helper call drives both | UNKNOWN | none | 2 | 3087eefb7e5cf062 | cdn.jsdelivr.net |
+| modal-morph | component | A small card expands into a full panel, shared-element style: both layouts measured once at mount, the container morphs by transform only (never width/height tweens) while keyed children counter-scale and re-flow onto their own measured targets as pure functions of time. | UNKNOWN | none | 2 | f314d36fbacefd14 | cdn.jsdelivr.net |
+| morph-swap | component | Two slotted siblings stacked at one shared center: A holds, then condenses or reshapes into B on a shared 50% 50% transform origin. Condense shrink-fades A exactly as B scales up; reshape morphs the silhouette on scaleX/scaleY, never width or height tweens. Token card defaults render when a slot is left empty. | UNKNOWN | none | 2 | 61f95ba6ce08b417 | cdn.jsdelivr.net |
+| morph-text | component | Gooey text morph — cycles through an editable word list using SVG threshold + GSAP-driven blur for a fluid, satisfying transition effect | UNKNOWN | none | 2 | 3bfa0138cdf446d3 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| motion-blur | component | After Effects-style motion blur — integrates each element over a shutter window (shutter angle, phase, samples per frame) by sampling the GSAP timeline at sub-frame times and averaging equal-weight additive copies of the element along its real trajectory, so translation, scale, rotation, 3D rotation and skew all drive the smear | UNKNOWN | none | 2 | 06508cbf65a61877 | none |
+| multi-device-splay | component | Phone, tablet, and desktop product mockups fan from a centered stack into a proud splayed arrangement with a subtle idle float. | UNKNOWN | none | 2 | d40ce2630571d722 | cdn.jsdelivr.net |
+| multiplayer-cursors | component | Labeled collaborator cursors with token-derived colors and soft glows drift from spread positions into a shared center zone, proving live multiplayer presence. | UNKNOWN | none | 2 | 27147edf81ba1e81 | cdn.jsdelivr.net |
+| native-notification-pop | component | One system-faithful notification banner (iOS or macOS) drops in over any scene on an accurate interruptible spring: fast arrival, soft overshoot, settled mass, backdrop blur, app dot, title, one body line. Holds; tucks away only via exit. | UNKNOWN | none | 2 | 3563713c8ad0dc23 | cdn.jsdelivr.net |
+| nebula | block | A small world of pink and blue gas swirls inside a sphere on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 639c1a384e42b439 | github.com, www.apache.org, www.w3.org |
+| news-ticker | block | Premium broadcast-style lower-third ticker with live label, headline ribbon, and scrolling news crawl. | UNKNOWN | none | 2 | 0be7f62162a98fee | cdn.jsdelivr.net |
+| north-korea-locked-down | block | Realistic map zoom into North Korea with a red scribble circle, locked-down pop-up label, and reddish editorial wash. | UNKNOWN | none | 3 | 01ca5bca3a6657a7 | cdn.jsdelivr.net |
+| notes-reveal | block | A personal note is typed character by character in a notes app - caret riding every letter, the page scrolling up on measured settle curves as each line lands - then cuts to a hand-lettered paper card with a marker headline and a ticked checklist | UNKNOWN | none | 7 | 8fd12f4ff1ee4bff | cdn.jsdelivr.net, www.w3.org |
+| notes-typing | component | The notes-app confession as a mountable scene: a bold title, then body lines typed character by character on the measured human keystroke rhythm, the caret riding every landed character and jumping down at each paragraph. For a bare prompt line use typed-prompt; for an even mechanical reveal use typewriter | UNKNOWN | none | 2 | c0315839f661c671 | cdn.jsdelivr.net |
+| notification-cascade | block | Phone notifications land one after another and stack up the screen, each banner pushing the pile down as it arrives, before the whole stack lifts away into a closing card | UNKNOWN | none | 5 | 8401bd53cae7fc91 | cdn.jsdelivr.net, www.w3.org |
+| notification-pileup | component | Mobile notification cards arrive faster and faster, each new alert pushing the existing stack downward into a dense, anxious tower. | UNKNOWN | none | 2 | d83096abf61f5a4f | cdn.jsdelivr.net |
+| notification-stack | component | 1 to 5 token notification cards slide-settle into a vertical stack on cues, newest on top; one card grows slightly and brightens as the focus while the rest dim by position. | UNKNOWN | none | 2 | 0d4e386b9797e204 | cdn.jsdelivr.net |
+| number-pop-in | component | A transitions.dev-inspired digit pop-in with blur, lift, and staggered value reveal | UNKNOWN | none | 2 | 9e201ce103ff304b | none |
+| number-wheel | component | A rolling digit counter primitive for metrics, prices, counts, and scoreboards | UNKNOWN | none | 2 | 56aa34f32e6e511c | none |
+| nyc-paris-flight | block | Apple-style realistic map animation with a plane flying from New York to Paris, marker circle, landing pop, and sound effects. | UNKNOWN | none | 4 | 99bc32a277a16067 | cdn.jsdelivr.net |
+| obsidian | block | A dark glass orb catches pink and cyan iridescent light on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 68033a8d5603f662 | github.com, www.apache.org, www.w3.org |
+| offset-path-traveler | component | A slotted traveler follows an authored path with tangent rotation, curved entry, and curved exit. | UNKNOWN | none | 2 | c54d18f47a415ab8 | cdn.jsdelivr.net |
+| onboarding-stepper-flow | component | A composed onboarding flow with milestone rail, active step card, and next-action button | UNKNOWN | none | 2 | b3bf4139aa4bf6c7 | none |
+| orbit-card | block | A single feature card orbits a dot sphere on approved Blender camera motion. | BLOCKED-REVIEW | all rights reserved, copyright, mit license, ofl, sil open font | 13 | 9b3a050c33772863 | github.com, gsap.com, jcgt.org, scripts.sil.org, www.w3.org |
+| ordered-dither-pass | component | Bayer-matrix ordered dithering quantizes a slotted scene (rasterized once at mount): the image emerges from pure 2-tone noise to clean, or dissolves the reverse. Stateless per frame, never error diffusion. | UNKNOWN | none | 2 | fe6f4fbf95b00e14 | cdn.jsdelivr.net, www.w3.org |
+| organic-light-leak-overlay | block | Finite CSS light-leak overlay for memory beats and motivated transitions | UNKNOWN | none | 2 | 9bd175de6a528c99 | cdn.jsdelivr.net |
+| oscilloscope-trace | block | CRT oscilloscope beam sweeping a waveform across a 10x8 graticule, with closed-form phosphor persistence: the tail decays as exp(-age/tau) and brightens where the beam slows | UNKNOWN | none | 2 | 3a86a22aec1df2eb | cdn.jsdelivr.net |
+| outline-draw | component | A rounded outline that proves a callout by drawing clockwise as a hollow conic-gradient border with a clean closure. | UNKNOWN | none | 2 | 4539183c1ab99e34 | cdn.jsdelivr.net |
+| oversized-cursor | component | The look-here pointer for a video: the macOS arrow at 3.5x its normal size lands its tip on one control, clicks it on, settles just below it so the result stays in view, then exits off-screen | UNKNOWN | none | 2 | f4a2737ed7eba3a5 | none |
+| overwhelm-surround | component | Tasks, tabs, pings, and notification bubbles accelerate inward around a calm central subject, turning overload into visible spatial pressure. | UNKNOWN | none | 2 | daf62437454e2583 | cdn.jsdelivr.net |
+| page-slide | component | A transitions.dev-inspired page slide primitive with outgoing and incoming panels | UNKNOWN | none | 2 | c75349125e2b5e4f | none |
+| pan-stations | component | A lateral camera move across a continuous row of labeled feature stations, with a steady dwell at each stop before the next pan. | UNKNOWN | none | 2 | 384f765c253369a8 | cdn.jsdelivr.net |
+| panel-reveal | component | A panel reveal primitive with height expansion and content fade | UNKNOWN | none | 2 | d4e643fa3b5051ca | none |
+| paper-collage-reveal | component | A scrapbook patchwork of torn paper scraps, each with its own texture and tilt, flutters away in a staggered scatter to reveal the content underneath. | UNKNOWN | none | 2 | 42ed2d6a4118744b | cdn.jsdelivr.net |
+| parallax-device-dive | component | A canonical phone rises into view before the camera pushes through its screen and layered app UI expands to fill the frame. | UNKNOWN | none | 2 | bc4e77f78ac56920 | cdn.jsdelivr.net |
+| parallax-unzoom | component | Reveal transition — focus card scales down from full frame as siblings parallax in to form a grid (reverse of parallax-zoom) | UNKNOWN | none | 2 | cd60d069a0bcbf7c | none |
+| parallax-zoom | component | Center card scales up to fill the frame while siblings parallax outward — inspired by the eBay Playbook hero transition | UNKNOWN | none | 2 | 84eb7368247622b1 | none |
+| particle-image-reveal | component | A seeded deterministic particle field converges and settles while a slotted image reveals beneath it, the trail thinning until the image holds clean. | UNKNOWN | none | 2 | 8f274b16de4bbec9 | cdn.jsdelivr.net |
+| particle-text-dissolve | component | Text assembles from a seeded particle cloud (or dissolves into it): per-particle targets sampled once from the rendered text bitmap at mount, table-driven particles, zero per-particle tweens, one onUpdate painter. | UNKNOWN | none | 2 | 281d4518b9c11e85 | cdn.jsdelivr.net |
+| pendulum-swing | component | Content hangs from a fixed pivot and swings into rest with gravity-damped oscillation, like a hanging sign settling on its hook. | UNKNOWN | none | 2 | 8b5764ec8a34a2bc | none |
+| per-word-crossfade | component | Words gently fade into place with a short vertical drift for calm keynote rhythm. | UNKNOWN | none | 2 | 8d65e35e5c29b37b | none |
+| per-word-rise | component | Words or characters rise into place in a controlled blur-to-sharp cascade, settle softly on landing, and hold still until the cut (optional fade or up exit). | UNKNOWN | none | 2 | dcfbdc24208a4f13 | cdn.jsdelivr.net |
+| perspective-marquee | component | A 3D tilted marquee with depth feel as items roll toward the horizon. | UNKNOWN | none | 2 | 2239133f1fca847a | none |
+| physical-exit | component | A card exits with physical momentum in toss, drop, or slide mode, carrying acceleration and rotation through the final offscreen pose without fading. | UNKNOWN | none | 2 | e24e996e3bf77ea6 | cdn.jsdelivr.net |
+| plasma | block | Deep violet plasma folds and churns across the whole frame. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 788a9b0a3f7f52cb | github.com, www.apache.org, www.w3.org |
+| plastic | block | A glossy white plastic orb with soft studio reflections, on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | b166e1a1f0d20847 | github.com, www.apache.org, www.w3.org |
+| press-ripple | component | A cursor decel-arrives from off-stage, lands slightly off-center on a caller-positioned target, compresses with it in lockstep, releases with two small click rings while the label swaps to a check, then exits off-stage while the confirmed state holds. | UNKNOWN | none | 2 | 272e6b6a046be715 | cdn.jsdelivr.net |
+| prism | block | A white beam of light splits into a slowly turning rainbow. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 7d4dac69d3b4f07b | github.com, www.apache.org, www.w3.org |
+| product-turntable | block | A product turns a full revolution on a studio plinth in a seamless loop. Drop in a GLB or glTF model, or keep the built-in drink can with your own label. | UNKNOWN | none | 2 | 8e4b4fc6051c6ea5 | cdn.jsdelivr.net |
+| pull-back-reveal | component | A tight stat detail holds, then one decelerating camera pull-back reveals the headline and supporting cards that recontextualize it. | UNKNOWN | none | 2 | 56fe849974c11d88 | cdn.jsdelivr.net |
+| pull-to-refresh | component | A mobile list pulls through nonlinear rubber-band resistance, arms at a threshold, commits to a bounded loading indicator, then snaps exactly back to rest. | UNKNOWN | none | 2 | 1a5a882217a0cdf2 | cdn.jsdelivr.net |
+| push-in | component | A centered headline gains focus through one slow, continuous camera push and a gentle fade out. | UNKNOWN | none | 2 | ed1a25a5ab8711f0 | cdn.jsdelivr.net |
+| rack-focus | block | A focus pull with real aperture bokeh: the focal plane travels from a near subject to a far one, so one resolves as the other blows into hard-edged polygon discs that clip to a cat's eye toward the corners. A focus pull only reads against content at two clearly separated depths, so this block carries its own depth-layered night exterior and puts both subject depths on variables. | UNKNOWN | none | 2 | 13bbba2b696dfb52 | cdn.jsdelivr.net |
+| radial-surround | component | Labeled hairline chips assemble around a centered subject on an elliptical ring, then optionally converge inward with a subtle edge dim. The center never moves: surrounded, not zoomed. | UNKNOWN | none | 2 | e15963497e7ca3cb | cdn.jsdelivr.net |
+| reddit-post | block | Animated Reddit post card overlay with upvotes and comments | UNKNOWN | none | 2 | 85e63fe246aa45ce | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| rgb-glitch-text | component | RGB-offset text copies jitter briefly for a controlled glitch window. | UNKNOWN | none | 2 | 967f22a4a3c34131 | none |
+| ridged-burn | block | Shader transition with ridged turbulence burn effect | UNKNOWN | none | 2 | 5da4a01ccc0c6365 | cdn.jsdelivr.net, fonts.googleapis.com |
+| ripple-waves | block | Shader transition with concentric ripple wave distortion | UNKNOWN | none | 2 | 1c196eaee94ee4b9 | cdn.jsdelivr.net, fonts.googleapis.com |
+| ripples | block | Concentric rings ripple outward from the centre, white on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 02b4381e6e2c98bf | github.com, www.apache.org, www.w3.org |
+| rubber-band-bumper | component | An outgoing panel pulls against increasing resistance, holds at tension, then snaps past an edge with overshoot as the incoming panel settles behind it. | UNKNOWN | none | 2 | 5fa9cdbebd76fe8f | cdn.jsdelivr.net |
+| scan-band | component | A diagonal distortion band sweeps once across a clean wordmark, revealing clipped red and cyan offsets only inside the moving band. | UNKNOWN | none | 2 | c3cee8516738eec9 | cdn.jsdelivr.net |
+| scramble-reveal | component | A deterministic hacker-style text reveal that cycles fixed glyph rows and locks the target string from left to right. | UNKNOWN | none | 2 | 96eae2097169a111 | cdn.jsdelivr.net |
+| screen-flow-carousel | component | Two to five app screens ride a horizontal rail: one primary at center, neighbors receded, advancing on cues with a velocity-matched throw and a smooth long-tail catch while a mono caption swaps with each advance. Screens are slots with token skeleton defaults. | UNKNOWN | none | 2 | f0fe3fb0d3fc97ff | cdn.jsdelivr.net |
+| scroll-camera-story | component | A compressed forced-scroll cinematic pass: a tall scene of slotted sections travels past the camera top to bottom, depth layers parallax at different rates, each section rises as the camera reaches it, and the pass decelerates into a held final section. | UNKNOWN | none | 2 | d5a5747b4120bf62 | cdn.jsdelivr.net |
+| scroll-feed | component | A loop-friendly column of varied skeleton post cards scrolls upward with subtle motion trails and an agitated pace. | UNKNOWN | none | 2 | a2f03e9a85ffa416 | cdn.jsdelivr.net |
+| sdf-iris | block | Shader transition with signed distance field iris reveal | UNKNOWN | none | 2 | d0e0361c6fc3e8d6 | cdn.jsdelivr.net, fonts.googleapis.com |
+| segmentation-flood | component | Machine-vision read of a slotted subject: translucent accent segmentation masks flood on in quantized scanline steps, each region gets a thin bracket and mono label chip, a deterministic 2-frame HUD flicker rides the pass, then the labeled read settles clean. | UNKNOWN | none | 2 | f3bc793dd8b20f52 | cdn.jsdelivr.net |
+| separator | component | A one-pixel structural separator with horizontal and vertical variants plus a seek-safe progress reveal | UNKNOWN | none | 2 | 515a4d8e906287a8 | none |
+| settings-toggle-flow | component | A composed settings flow with preference rows, toggle switches, and active-state feedback | UNKNOWN | none | 2 | ff1a5f9d655015ad | none |
+| share-sheet-carousel | block | A share sheet springs up from the bottom of the phone and cycles previews inside its card on a fast cut rhythm while the blurred ground swaps behind it, ending on an accept tap | UNKNOWN | none | 8 | d0023c660ee3c0cf | cdn.jsdelivr.net, www.w3.org |
+| shared-axis-y | component | Per-word vertical shared-axis transition for sharp editorial swaps. | UNKNOWN | none | 2 | 3ae63f7b115de05e | none |
+| shared-axis-z | component | Scale-based shared-axis transition for focus shifts and context depth. | UNKNOWN | none | 2 | 9326b01fcbfd7f44 | none |
+| sheet-spring-up | component | A bottom sheet rushes up from below the frame on a real spring sampled frame by frame from reference footage, overshooting its resting place and settling back without an approximated ease | UNKNOWN | none | 2 | b6a4132f764b3c40 | none |
+| shimmer-sweep | component | Animated light sweep across text or elements using a CSS gradient mask — ideal for AI accents and premium reveals | UNKNOWN | none | 2 | 795d93a77fc9ce49 | none |
+| shutter-slam | component | One word thrown through six single-property beats under integrated shutter blur — two translate slams, a scale punch, then a full turn about each axis — on the measured easing of the After Effects export the shutter model was fitted to | UNKNOWN | none | 2 | f5fb40e17abba820 | cdn.jsdelivr.net |
+| signup-flow | component | A composed signup flow with social action, email field, password field, and submit button | UNKNOWN | none | 2 | c217d2ffca01cb44 | none |
+| sine-wave | block | A glowing white sine wave travels across a black frame. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 1801ee7f78011f63 | github.com, www.apache.org, www.w3.org |
+| skeleton-reveal | component | A skeleton loader transition that pulses, then cross-fades into content | UNKNOWN | none | 2 | 0ffc011a58c340ef | none |
+| slack-notification-ad | block | A portrait lock screen fills with escalating Slack video requests before HeyGen delivers the payoff | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 9 | 12acfc5b60680d8c | cdn.jsdelivr.net, github.com, scripts.sil.org, www.w3.org |
+| slit-scan-reveal | component | The frame's rows sample an authored subject at offset times: a canvas painter draws row slices of one pure position function evaluated at t minus offset(row), smearing arrival through time until the offsets collapse to zero and the mark holds coherent. | UNKNOWN | none | 2 | 2c2736c7d2d140bf | cdn.jsdelivr.net |
+| slot-machine-roll | component | A vertical reel scrolls characters from one value to another. | UNKNOWN | none | 2 | 71161b73ec66d9f0 | none |
+| snow | block | Seek-safe falling-snow overlay: sparse or dense flakes drift down with size, speed and opacity correlated per flake for depth, radial-masked so the frame center stays clear | UNKNOWN | none | 2 | d75daad4143f45bb | cdn.jsdelivr.net |
+| social-proof-card | component | The app-store close as one mountable scene: wordmark, five stars, a proof line, three feature icons and a CTA capsule build in a quiet stagger and hold - measured from reference ad footage. For an animated star sweep use star-rating-fill; for a quote card use testimonial-proof-card; for a bare lockup use cta-lockup | UNKNOWN | none | 2 | 1b0b11624cadb36a | cdn.jsdelivr.net |
+| soft-blob-touch | component | A granular soft blob idles with slow internal drift; a scripted touch dot decel-arrives, the blob deforms toward it with an attraction bulge, then recovers with a velocity-preserving spring. No hard edges anywhere. | UNKNOWN | none | 2 | 8676a1f5919ce403 | cdn.jsdelivr.net |
+| soft-blur-in | component | A soft opacity, blur, and lift reveal for headlines, captions, and product UI callouts | UNKNOWN | none | 2 | 4dc5c999145ed706 | none |
+| spain-map | block | Animated Spain choropleth by autonomous community with staggered reveals and gradient legend — D3 conic conformal projection | UNKNOWN | none | 2 | 48300873c2fb689b | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| spiral | block | A bold black and white spiral turns in the frame. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | b8961479cb523d50 | github.com, www.apache.org, www.w3.org |
+| spiral-galaxy | block | A spiral galaxy seen from outside, turning with real differential rotation: inner stars orbit faster than outer ones, so the arms wind up over the shot instead of spinning rigidly. 20,000 additive GPU sprites, seeded once and solved directly from time, so any frame can be rendered on its own. | UNKNOWN | none | 2 | f6f041bbf1df7a02 | cdn.jsdelivr.net |
+| split-flap-board | block | Solari-style departure board: every cell walks its drum forward through the intervening characters of a fixed alphabet until it lands on its target, so the text resolves as a mechanical cascade instead of a fade. | NOTICE-FOUND | apache license | 2 | 3eeba8f45caacd64 | cdn.jsdelivr.net |
+| split-tilt-cards | component | Two equal-weight cards arrive from opposite wings with mirrored rotateY book-open tilts under one shared perspective, pill badges spring-pop at each inner edge, and the pair holds with a barely-there phase-opposed idle float. Card bodies are content slots with token skeleton defaults. | UNKNOWN | none | 2 | f68fea3dba6b6148 | cdn.jsdelivr.net |
+| spotify-card | block | Animated Spotify now-playing card with album art and progress bar | UNKNOWN | none | 2 | 4485e5d39cbacf64 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| spotlight-card | component | A card with a scripted cursor spotlight and lit border. | UNKNOWN | none | 2 | 5c20151975d00b7e | none |
+| spring-pop | component | A badge pops in from a visible near-rest scale, overshoots full size once, and settles cleanly. | UNKNOWN | none | 2 | 19968b8fdce9b229 | cdn.jsdelivr.net |
+| spring-stack-shuffle | component | A stack of 3 to 5 slotted cards reshuffles on cues: the back card throws over the top and lands at the front with real mass, the rest compress and resettle; cues that land mid-flight redirect the moving cards with velocity preserved. | UNKNOWN | none | 2 | 71cc03c537fce840 | cdn.jsdelivr.net |
+| stagger-cascade | component | A responsive grid of tile cards that fades and travels into place with an evenly spaced per-item GSAP stagger. The ordered cascade is the only visual mechanic. | UNKNOWN | none | 2 | 1daaeec4a88ab5f6 | cdn.jsdelivr.net |
+| stagger-lattice | component | A staggered grid reveal inspired by Anime.js v4 stagger utilities, implemented with GSAP for HyperFrames. | UNKNOWN | none | 2 | d7419c8ee35a5754 | none |
+| staggered-fade-up | component | Words fade in and slide up one after another with configurable delay. | UNKNOWN | none | 2 | 3f9ac5eeafd3eeaa | none |
+| star-rating-fill | component | A token-driven star row whose colored layer sweeps to a rating, preserves the fractional final star, and can count the value in sync. | UNKNOWN | none | 2 | 878261fe30a8c034 | cdn.jsdelivr.net |
+| starfield | block | Seek-safe night-sky overlay: sparse or dense stars in three size tiers that twinkle and drift in two parallax layers, radial-masked to keep the frame center clear | UNKNOWN | none | 2 | 1b1ab18ad0322cff | cdn.jsdelivr.net |
+| state-chip-rail | component | A rail of mono status chips advances a seek-safe data-state snap machine on a cue schedule: active chip ink on surface, done chips dim, pending chips hollow, optional badges pop beside one state. | UNKNOWN | none | 2 | 58466be8485539da | cdn.jsdelivr.net |
+| sticky-mock-swap | component | A pinned product mock cross-fades through accent-tinted feature states while matching captions rise, hold, and exit beside it. | UNKNOWN | none | 2 | 70e8533a6ab27dd3 | cdn.jsdelivr.net |
+| stitched-text-draw | component | Text drawn as thread stitches: a single-stroke display alphabet draws via attribute-driven dashoffset with stitch-tuned dash patterns, seeded angle jitter, needle-hole dots, a leading needle, and a thread-tail overshoot per letter. | UNKNOWN | none | 2 | 3209406f802f0a9e | cdn.jsdelivr.net, www.w3.org |
+| stop-motion-cadence | component | The stepped-time law as a demo primitive: one driver quantizes timeline time to floor(t * fps) / fps and feeds ALL motion; four token paper-cut shapes throw-and-land with squash on hits, 2-frame boil jitter seeded per step, and sparkle accents living exactly 2 to 3 frames. | UNKNOWN | none | 2 | 3cd747ed4e781e6f | cdn.jsdelivr.net |
+| store-badge-lockup | component | Settles a short headline above equal-size App Store and Google Play badges as a token-driven mobile end-card call to action. | UNKNOWN | none | 2 | 9dedcbe68c1a1a9e | cdn.jsdelivr.net |
+| strands | block | Thin ribbons of pink and blue light weave across a black field. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | ae966179f0909a6c | github.com, www.apache.org, www.w3.org |
+| streaming-text | component | Words arrive the way an AI answer streams - in uneven bursts on a measured token rhythm, each word landing grey and inking to full colour - rather than the even tick of a typewriter | UNKNOWN | none | 2 | 2c30d506cd084def | none |
+| strikethrough-replace | component | Draw a strike line across old text, then reveal the replacement. | UNKNOWN | none | 2 | 1f0d0803a3722f34 | none |
+| stripes | block | Bold black and white diagonal stripes slide across the frame. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 3f86b1e3c9f49142 | github.com, www.apache.org, www.w3.org |
+| success-check | component | A success check primitive with ring pop, path draw, and subtle rotate blur | UNKNOWN | none | 2 | 1d227687294af615 | none |
+| sun-burst | block | Cream and black rays fan out from the centre and slowly turn. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | ddf121de0107d5d5 | github.com, www.apache.org, www.w3.org |
+| svg-line-draw-loader | component | An Anime.js-style path drawing loader implemented as a seekable GSAP stroke timeline. | UNKNOWN | none | 2 | 21d21a6d206c9956 | none |
+| svg-mask-reveal | component | A soft token-colored sweep reveals media only through an editable SVG wordmark mask. | UNKNOWN | none | 2 | 106d011f3fd2613b | cdn.jsdelivr.net |
+| svg-stroke-trace | component | An authored SVG path draws from its measured length, holds with subtle drift, and optionally fills when the path is closed. | UNKNOWN | none | 2 | 860a6446bc02c38f | cdn.jsdelivr.net |
+| swipe-rail | component | A contact circle leads a horizontal card rail through a fast drag, momentum carry, and settled snap to the next card. | UNKNOWN | none | 2 | c020cde875ac9aed | cdn.jsdelivr.net |
+| swirl | block | Orange and blue color fields swirl and flow into each other across the whole frame. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | ee917690c2ed9f76 | github.com, www.apache.org, www.w3.org |
+| swirl-vortex | block | Shader transition with swirling vortex distortion | UNKNOWN | none | 2 | 78e78e3627b7c9ff | cdn.jsdelivr.net, fonts.googleapis.com |
+| tabs-slide-indicator | component | A pill indicator transition that slides between active tabs | UNKNOWN | none | 2 | d7bed4ffdc4ab6c4 | none |
+| telemetry-hud | component | Quiet mono debug-HUD readouts frame a slotted subject: corner brackets draw on, label:value lines tick their values on cues, one readout emphasized in accent. The subject never moves; the HUD breathes zero. | UNKNOWN | none | 2 | 8a94abbf747032d3 | cdn.jsdelivr.net |
+| terminal-simulator | component | A terminal window types commands and streams log output. | UNKNOWN | none | 2 | 41d75c073bcb0340 | none |
+| testimonial-card | component | Reveals a customer quote at reading pace, then settles its avatar, author name, and handle beneath as a clean proof beat. | UNKNOWN | none | 2 | 626d02fb5fc40c90 | cdn.jsdelivr.net |
+| testimonial-proof-card | component | A quote card whose testimonial reveals per-line through a soft mask, with an avatar disc (initials default, image slot), mono name and role, an optional company text mark, and one emphasis substring underlined in accent ink after the quote lands. | UNKNOWN | none | 2 | 6a9e6dbf80fbe71b | cdn.jsdelivr.net, www.w3.org |
+| text-match-cut | component | One line of text becomes another mid-move: both ride a single 85 % easy-ease curve and hard-swap at the speed peak, as scale, tracking, or a same-direction slide. | UNKNOWN | none | 2 | 651721fcbfc38bed | cdn.jsdelivr.net |
+| text-shimmer | component | A static headline receives one clean specular gradient sweep through its glyphs, then returns to its ordinary text color. | UNKNOWN | none | 2 | 2c0524a1bff14387 | cdn.jsdelivr.net |
+| text-stagger | component | A transitions.dev-inspired text stagger primitive with enter, shimmer, and exit-ready words | UNKNOWN | none | 2 | afef21e2792e2d30 | none |
+| text-state-swap | component | A text state swap primitive with outgoing blur and incoming lift | UNKNOWN | none | 2 | 98263bab35a22fb6 | none |
+| texture-mask-text | component | CSS luminance masks that cut holes through letterforms - 66 pre-built texture masks from ambientCG PBR color maps | UNKNOWN | none | 68 | 446d1beea3be5187 | none |
+| thermal-distortion | block | Shader transition with heat haze thermal distortion | UNKNOWN | none | 2 | 73c134ff0c64a1c2 | cdn.jsdelivr.net, fonts.googleapis.com |
+| thin-film | block | An orb's rim shimmers with soap-bubble iridescence on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 16e94f90cd45ef98 | github.com, www.apache.org, www.w3.org |
+| thread-message-stack | block | A source-owned editable conversation stack with arbitrary incoming and outgoing messages | UNKNOWN | none | 2 | 14cffd7873eee47e | cdn.jsdelivr.net |
+| three-orbiting-cards | component | A Three.js-powered orbit scene driven by a paused GSAP timeline for deterministic renders. | UNKNOWN | none | 2 | 02c642688a0d0fb3 | cdn.jsdelivr.net |
+| ticker-takeover | component | A mono ticker rolls through options, locks on a final word with an accent flash, and promotes it into a full-frame headline. | UNKNOWN | none | 2 | fe99013a894bcc42 | cdn.jsdelivr.net |
+| tiktok-follow | block | Animated TikTok follow overlay with profile card and follow button | UNKNOWN | none | 3 | b1913274655e3419 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| tilt-card | component | A transitions.dev-inspired tilt card primitive with depth layers and hover-style parallax | UNKNOWN | none | 2 | 3edbcbff199467c6 | none |
+| titlecard-calm | component | A restrained title card where a mono kicker and generous grotesque headline fade upward, drift almost imperceptibly, and exit cleanly. | UNKNOWN | none | 2 | 7c4ebb996b858365 | cdn.jsdelivr.net |
+| titlecard-lockup | component | The calm breather titlecard: an optional mono kicker fades up, the wordmark settles dead-center with one restrained move, a hairline rule draws left to right, a mono label fades beneath, and the lockup holds truly still. | UNKNOWN | none | 2 | dad7d1add880c441 | cdn.jsdelivr.net, www.w3.org |
+| toggle-flip | component | An oversized UI toggle switch that flips with real physicality: thumb overshoot, track color crossfade, and a soft press-compress before release. The reference prop of the ui-props family. | UNKNOWN | none | 2 | 58ec84d0ca8ecf11 | cdn.jsdelivr.net |
+| top-down-letters | component | Letters descend from above in a pronounced staircase with zero blur. | UNKNOWN | none | 2 | 16ba3c0e2e8ebf5d | none |
+| torn-paper-rip | component | A fibrous paper tear runs across the frame: the torn sheet shows its white paper core along the edge and lifts away on a soft shadow, leaving the next scene standing. | UNKNOWN | none | 2 | f2e88a5ac4db0e4c | cdn.jsdelivr.net |
+| touch-indicator | component | A translucent contact-circle gesture actor for mobile UI scenes: it touches the glass on the frame the host target responds, then lifts. Tap or swipe, picked by variable. | UNKNOWN | none | 2 | 19b9db14cd081dca | none |
+| tracing-beam | component | A glowing dash follows one SVG path through three UI elements, lifting and brightening each element in sequence. | UNKNOWN | none | 2 | e8ab86238b3b056b | cdn.jsdelivr.net |
+| tracking-in | component | A precise letter-spacing reveal for premium headings and interface labels | UNKNOWN | none | 2 | d2a33c3451224b05 | none |
+| transitions-3d | block | Showcase of 3D perspective flip and rotate transitions | UNKNOWN | none | 2 | dfb1495729532e0d | cdn.jsdelivr.net |
+| transitions-blur | block | Showcase of blur-based transitions between scenes | UNKNOWN | none | 2 | adbb0b2b6b4ba6ab | cdn.jsdelivr.net |
+| transitions-cover | block | Showcase of cover/uncover slide transitions | UNKNOWN | none | 2 | 41c80ba4dec63d91 | cdn.jsdelivr.net |
+| transitions-destruction | block | Showcase of destructive break-apart transitions | UNKNOWN | none | 2 | 7f3793693d6cefaf | cdn.jsdelivr.net |
+| transitions-dissolve | block | Showcase of dissolve and fade transitions | UNKNOWN | none | 2 | 24d1ee27f86f72b7 | cdn.jsdelivr.net |
+| transitions-distortion | block | Showcase of warp and distortion transitions | UNKNOWN | none | 2 | f634332784dca2c4 | cdn.jsdelivr.net |
+| transitions-grid | block | Showcase of grid-based tile transitions | UNKNOWN | none | 2 | 5446b9b4e2e10fc5 | cdn.jsdelivr.net |
+| transitions-light | block | Showcase of light-based glow and flash transitions | UNKNOWN | none | 2 | 731e5aeb08517069 | cdn.jsdelivr.net |
+| transitions-mechanical | block | Showcase of mechanical shutter and iris transitions | UNKNOWN | none | 2 | 233131375073bd9f | cdn.jsdelivr.net |
+| transitions-other | block | Showcase of miscellaneous creative transitions | UNKNOWN | none | 2 | 818d40e0c461a7b3 | cdn.jsdelivr.net |
+| transitions-push | block | Showcase of push and slide transitions | UNKNOWN | none | 2 | 5ccbd1797b9cb442 | cdn.jsdelivr.net |
+| transitions-radial | block | Showcase of radial wipe and reveal transitions | UNKNOWN | none | 2 | 7f1e2265168c7bc7 | cdn.jsdelivr.net |
+| transitions-scale | block | Showcase of scale and zoom transitions | UNKNOWN | none | 2 | fa042e7403b2f50c | cdn.jsdelivr.net |
+| trust-strip | component | A monochrome trust row of wide-tracked mono wordmarks that fade in with an opacity-only left-to-right stagger, then hold dead still. | UNKNOWN | none | 2 | c77fa026887ab2bc | cdn.jsdelivr.net |
+| type-match-cut | component | A headline splits vertically around an incoming panel, which grows from the negative space and takes the frame as the words exit through opposite edges. | UNKNOWN | none | 2 | da740323b52815b6 | cdn.jsdelivr.net |
+| typed-prompt | component | A prompt line types itself in chunked human cadence behind a deterministic blinking caret, with optional backspace-and-retype correction of the final word. | UNKNOWN | none | 2 | 7ff8bee343b4d90e | cdn.jsdelivr.net |
+| typewriter | component | Character-by-character text reveal with a deterministic blinking cursor. | UNKNOWN | none | 2 | 85062a3b25d0645f | none |
+| typing-indicator | component | The three-dot chat bubble that says someone is writing: it pops in at the thread's edge exactly as messaging apps do, holds while the reply is coming, and vanishes when the message lands | UNKNOWN | none | 2 | 5928a3158057e244 | none |
+| ui-3d-reveal | block | Perspective 3D reveal animation for UI elements | UNKNOWN | none | 2 | 15cdbfe5b3096372 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| ui-focus-zoom | component | A full app surface establishes with one settle, then the camera zooms and pans to an anchored region on its cue and holds the zoomed state, with an optional soft focus halo at the anchor. The surface is a slot with a token-styled skeleton default. | UNKNOWN | none | 2 | 5de93121f2fdc34f | cdn.jsdelivr.net |
+| us-map | block | Animated US choropleth map with staggered state reveals, value labels, and gradient legend — pure inline SVG with GSAP | UNKNOWN | none | 2 | 5883d6aac820bbee | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| us-map-bubble | block | Animated US bubble map with proportional city markers, value callouts, and connection lines — composable with us-map | UNKNOWN | none | 2 | a60fedd756d79514 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| us-map-flow | block | Animated connection arcs between US cities over a base map — composable origin-destination flow visualization | UNKNOWN | none | 2 | d529ef80ac185bd1 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| us-map-hex | block | Animated hexagonal tile grid map — each state as an equal-weight hex with data fill and abbreviation label | UNKNOWN | none | 2 | 0be853c2bee8c53c | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com, www.w3.org |
+| variable-axis-type | component | A locked one-line headline whose weight or width axis morphs into a decisive emphasis beat. | UNKNOWN | none | 2 | f7cb36341a46289f | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| variable-font-flex | component | A word lands while its variable-font weight and width axes flex from hairline-condensed to black-wide with per-character stagger; font-size eases inversely so the letterforms gain mass while the box holds. | UNKNOWN | none | 2 | c6cbc6f86c2f3dc0 | cdn.jsdelivr.net |
+| vector-editor-rig | component | A dark design-tool app chrome with a live vector pen path, sequential anchor points, bezier handles, a selection frame, and theme-driven blue accents. | UNKNOWN | none | 2 | 5dcff3658578c627 | cdn.jsdelivr.net |
+| velocity-throw-snap | component | A five-shot rail whips past on a fast decaying curve, then overshoots and snaps the selected hero shot exactly to center. | UNKNOWN | none | 2 | 38f0eb3616af25c9 | cdn.jsdelivr.net |
+| vfx-anamorphic-flare | block | A drifting field of bright points, each one throwing the long horizontal blue-violet streak a real anamorphic cinema lens produces. Built from the measured filter constants: a 0.3 high-pass, 80 horizontal taps at quarter resolution, a samples/3 gain and a 0x7a8aff tint. | UNKNOWN | none | 2 | b3da9022f26909fd | cdn.jsdelivr.net |
+| vfx-iphone-device | block | Real GLTF iPhone 15 Pro Max and MacBook Pro models with live HTML-in-Canvas screen content, morphing glass lens, product review camera choreography, and 360° turntable. | UNKNOWN | none | 6 | 4a27f6317afc467a | cdn.jsdelivr.net, www.gstatic.com |
+| vfx-liquid-background | block | Organic liquid simulation with vertex displacement on a subdivided plane. HTML content floats above rippling fluid surface with real-time wave dynamics. | UNKNOWN | none | 2 | d09fed09aec8e49b | cdn.jsdelivr.net, fonts.googleapis.com, www.w3.org |
+| vfx-liquid-glass | block | VFX composition block | UNKNOWN | none | 2 | bde1b2ccaf7428c7 | cdn.jsdelivr.net, fonts.googleapis.com |
+| vfx-magnetic | block | VFX composition block | UNKNOWN | none | 2 | b01ffc55ff01b712 | cdn.jsdelivr.net |
+| vfx-portal | block | VFX composition block | UNKNOWN | none | 2 | d4277f412eaf9167 | cdn.jsdelivr.net, fonts.googleapis.com |
+| vfx-shatter | block | VFX composition block | UNKNOWN | none | 2 | d673d1e2eab9bcb4 | cdn.jsdelivr.net, fonts.googleapis.com |
+| vfx-text-cursor | block | Dramatic text reveal with cursor glow, chromatic shadow rays, and directional lighting on a black stage. Canvas-based shader post-processing with spectral color edges. | UNKNOWN | none | 2 | db0c5c933215074d | cdn.jsdelivr.net, fonts.googleapis.com, www.w3.org |
+| vignette | component | Cinematic radial vignette overlay using a pure-CSS gradient — darkens the edges to pull focus toward the center | UNKNOWN | none | 2 | fa0949814f14b976 | none |
+| voronoi | block | Magenta cells with glowing blue centres shift and reshape across the frame. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | d98160f06c45b322 | github.com, www.apache.org, www.w3.org |
+| vox-annotate | component | The Vox-style annotate gesture: a keyword in a held sentence gets a hand-drawn marker while a thin connector draws up to a mono callout label, all as one choreographed beat on the cue. | UNKNOWN | none | 2 | 428e9e6c9d61063a | cdn.jsdelivr.net, www.w3.org |
+| vpn-youtube-spot | block | Snappy Apple-style YouTube insert showing a phone finding and installing a friendly VPN app with sound effects. | UNKNOWN | none | 3 | 0e394df92407e492 | cdn.jsdelivr.net |
+| water | block | A sphere of wind-rippled water reflecting a blue sky, on black. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 5d904cd02309b6e8 | github.com, www.apache.org, www.w3.org |
+| waveform | block | Equalizer bars in a blue to pink gradient pulse across the middle of the frame, like an audio visualizer. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 82fed3551df73185 | github.com, www.apache.org, www.w3.org |
+| week-in-merges | block | Each author's avatar bounces across their row at a speed set by how many pull requests they merged | UNKNOWN | none | 2 | b371c5c574cb70c4 | cdn.jsdelivr.net |
+| weight-wave | block | A crest of thickness travels along a headline: each character swells from light to black and leans forward as the wave passes, driven by the wght and slnt variable-font axes rather than by transforms. | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 4 | 048e7c97d0ae5fcc | cdn.jsdelivr.net, github.com, scripts.sil.org |
+| whip-pan | block | Shader transition simulating a fast camera whip pan | UNKNOWN | none | 2 | 94ce51dbe3282c1f | cdn.jsdelivr.net, fonts.googleapis.com |
+| whip-pan-cut | component | A full-frame whip pan: scene A whips off laterally with capped directional motion blur while scene B enters in the same direction at matched velocity, on a speed-ramp profile with a decelerating catch. Both scenes ride one strip, so seam velocity is exact by construction. Callers fill the named before/after slot panels; token-styled defaults render when a slot is left empty. | UNKNOWN | none | 2 | f94ace387dfea5b8 | cdn.jsdelivr.net |
+| whiteboard-ink | component | A whiteboard sketch draws one measured stroke at a time while a pen nib follows the active tip. Preset sketches (bulb, flow, rocket) or your own multi-stroke SVG paths via the strokes slot; a path marked data-ink=accent rides the accent token. | UNKNOWN | none | 2 | 5c330bcbc5ef2cc0 | cdn.jsdelivr.net |
+| wireframe-portal-title | block | A wireframe portal bursts open, the title comes through, then its letters swap into a second phrase. | NOTICE-FOUND | copyright, mit license, ofl, sil open font | 7 | 2058bcaef29e4b78 | cdn.jsdelivr.net, scripts.sil.org |
+| wordmark-tiles | component | A wordmark resolves from deterministic color noise into correctly cropped glyph tiles through a spatially modulated GSAP wave. | UNKNOWN | none | 2 | c6e33948fee7ed8e | cdn.jsdelivr.net |
+| world-map | block | Animated world choropleth with country-by-country reveal, tooltip labels, and rotating globe inset — D3 Natural Earth projection | UNKNOWN | none | 2 | 933ede85a7097155 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| worley-noise | block | A field of drifting cells, light at their centres and dark at their edges. A WebGPU shader from the Shaders library (shaders.com, MIT). | NOTICE-FOUND | apache license, copyright, mit license | 4 | 4a0bf9b6e1212ffa | github.com, www.apache.org, www.w3.org |
+| x-follow-card | component | A social follow card with avatar, handle, and follower motion. | UNKNOWN | none | 2 | 39cb0fde1c9df518 | none |
+| x-post | block | Animated X/Twitter post card overlay with engagement metrics | UNKNOWN | none | 2 | c09af7918070c27a | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| yt-camera-move | component | Dynamic zoom, slide, and 3D tilt-pan helpers for any wrapper (video, include, card) with cubic-easing defaults and an edge-defocus pulse overlay | UNKNOWN | none | 2 | 95674dafe403f607 | cdn.jsdelivr.net |
+| yt-circle-pointer | component | Draw-on annotation ellipse around a target plus a countdown chip that pulses each tick | UNKNOWN | none | 2 | 520dd747c7e15845 | cdn.jsdelivr.net |
+| yt-comment-card | block | Social comments typing on over footage: avatar pop, username and time, per-character typewriter, likes row; image avatars or initials chips | UNKNOWN | none | 2 | 43738496abf99abb | cdn.jsdelivr.net |
+| yt-feather-highlight | component | Dims the frame except a feathered ellipse; the hole's position and size are CSS variables, so helpers glide the spotlight between targets | UNKNOWN | none | 2 | 79ece3290b109a8d | cdn.jsdelivr.net |
+| yt-lcd-background | block | Textured paper board: scanlines with slow drift, optional pixel grid, static grain, and display text with a blur-focus entrance and chromatic-fringe title | UNKNOWN | none | 2 | dde776ed817e3e25 | cdn.jsdelivr.net, www.w3.org |
+| yt-logo-intro | block | Logo stamp pops on a lined board, a kicker line gives way to the title with an accent arrow chip; seeded line distortion | UNKNOWN | none | 2 | 404643fc7296c41d | cdn.jsdelivr.net |
+| yt-lower-third | block | Animated YouTube subscribe lower third with avatar and channel info | UNKNOWN | none | 3 | c60e68bcb32e89f8 | cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com |
+| yt-prism-title | block | Display title on a transparent root: blur-focus entrance, red/blue fringe that settles then breathes, perspective bow, slow scale drift | UNKNOWN | none | 2 | 347b125ceea5f797 | cdn.jsdelivr.net |
+| yt-screen-warp | component | Grid, scanline, vignette, and sheen overlay plus a 3D-warp wrapper class that makes footage read as if playing on a physical display | UNKNOWN | none | 2 | a7ead33b73d8123a | cdn.jsdelivr.net |
+| yt-vertical-fill | block | Portrait media filling a widescreen frame via blurred-scale, mirror, or copy side fills; grid texture and foreground contrast lift (images inside the block; keep live footage in the host) | UNKNOWN | none | 2 | 3631045db58b817c | cdn.jsdelivr.net |
+| zoom-through-transition | component | A transition that zooms through a focal card into the next scene. | UNKNOWN | none | 2 | 07a3163bc81e378f | cdn.jsdelivr.net |
