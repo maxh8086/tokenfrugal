@@ -20,6 +20,9 @@ models/image_generation/*/
 models/image_enhancement/*/
 models/talking_head/*/
 models/lipsync/*/
+# weight files anywhere in the repo (ComfyUI models are host-mounted, never baked into an image)
+*.safetensors
+*.gguf
 
 # virtualenvs
 .venv/
@@ -81,3 +84,7 @@ Benchmark/results/comfy_reference/
 
 # session scratch output (logs, renders, downloads), not source
 scratchpad/
+tools/llama.cpp/bin/
+
+# ComfyUI API-format workflows that reference local weights (mounted into the comfy container)
+models/workflows/

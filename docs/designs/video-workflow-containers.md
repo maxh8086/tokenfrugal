@@ -19,7 +19,7 @@ Model downloads are proposals. None of the replacement models in section 5 is ap
 | Image | Used for | Pin and source |
 | --- | --- | --- |
 | `maxh8086/media-generator:1` | HyperFrames render, ffmpeg and ffprobe, loudnorm, numpy and soundfile for the music bed and mix | Built from `docker/media-generator/Dockerfile`. Adds soundfile 0.14.0 and brand fonts (`fonts.txt`) in commit `fa8dc34` (2026-11-04). HyperFrames 0.8.223. |
-| `maxh8086/voice:1` | Kokoro narration, voice `am_michael` | Digest in `docker/voice/voice.pin` (`sha256:86fa8c5b...`, `follows=latest`). |
+| `maxh8086/dhvani:1` | Kokoro narration (CPU), voice `am_michael` | Digest in `docker/dhvani/dhvani.pin` (`follows=latest`). Digest not yet re-resolved: the image is built locally and not pushed. |
 | `tokenfrugal/comfyui:1` | Mage-Flow stills and LTX-Video I2V (Halo) | Compose service in `docker-compose.gpu.yml`, project `tokenfrugal-gpu`. ComfyUI v0.43.2 and the ComfyUI-LTXVideo and ComfyUI-GGUF nodes (`docker/pins.yaml`). |
 
 ## 3. story-film pipeline
