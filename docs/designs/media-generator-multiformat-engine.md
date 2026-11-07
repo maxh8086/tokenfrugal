@@ -16,10 +16,10 @@ This is the production pipeline. Each step ends at a gate. The next step may not
 2. **Gate G1 (story review):** human reviews the story and narration. Approval moves on; changes go back to step 1.
 3. **Gate G2 (format):** human chooses one format from the list in D27: presentation; video; YouTube video; YouTube Short; Instagram post; Instagram Reel; Facebook post; Facebook Reel; LinkedIn post. The chosen template fixes the maximum length, size and resolution. Presentation and video stay open on length (D29). The gate is placed directly after story review. The user asked for "step 2" of the gated pipeline; in this numbered list it is step 3 because step 1 is the writing step. Gates are numbered G1 to G7 in order.
 4. **Gate G3 (narration voice):** human chooses a narration voice, which is a dhvani Kokoro voice name or a consented voice profile (D55; O15).
-5. The agent generates a 1-minute voice sample. **Gate G4:** human approves or asks for changes.
+5. The agent generates the voice sample from the first 60 seconds of narration (D59). **Gate G4:** human approves or asks for changes.
 6. On approval, the full voice track is generated.
-7. The agent generates the still images from the voice-timed scenes. **Gate G5:** human reviews and approves the stills.
-8. On approval, a 30-second to 1-minute preview of the video is rendered (length depends on the full length). **Gate G6:** human reviews and approves.
+7. The agent generates one still per scene, taken at the scene's start time (D59). **Gate G5:** human reviews and approves the stills.
+8. On approval, a preview of the video is rendered from the same first 60 seconds of narration as the voice sample (D59). **Gate G6:** human reviews and approves.
 9. On approval, the full-length video is rendered with voice, background music and voice effects. **Gate G7:** human approves publish.
 
 Remaining conflicts with the rest of the brief (open, not resolved here):
@@ -214,6 +214,9 @@ Status says who recorded the item. "Recorded from user" means the user answered 
 | D56 | Presets (O17). Loudness: integrated -16 LUFS, true peak -1.5 dBTP, loudness range 11 LU, using the existing LOUDNESS_FILTER (loudnorm=I=-16:TP=-1.5:LRA=11) already in story_film.py; measured earlier at -16.4 LUFS. Frame rate: 30 fps for presentation, Facebook, Instagram, LinkedIn and YouTube formats; Full HD video at 30 fps by default and 60 fps only when D54's budget allows. Safe area (provisional): keep text 5% inside each edge; for 1080x1920 formats also keep text out of the bottom 20%. Mark these values provisional | Recorded from user: accepted recommendation (2026-11-06) | Closes O17. Values provisional |
 | D57 | Stage placement (O22, O23, O25). Narration (via dhvani), the voice sample, stills and preview are all in stage 1; no conflict. Output path: an environment variable MEDIA_OUTPUT_DIR set in .env, with a default under the workspace; the actual .env value is still to be confirmed by the user (do not read .env) | Recorded from user: accepted recommendation (2026-11-06) | Closes O22 and O25. O23 stays open for the .env value only |
 | D58 | Platform specs (O18): kept as provisional values, as the user chose. Official-page verification remains a sub-item and is not a blocker for stage 1; it must be done before the publish stage | Recorded from user: accepted recommendation (2026-11-06) | Verify sub-item stays open; not a stage 1 blocker |
+| D59 | Voice sample, stills and preview (gates G4 to G6). Voice sample (G4): generated from the first 60 seconds of narration. Stills (G5): one still per scene, taken at the scene's start time. Preview (G6): covers the same first 60 seconds as the voice sample, and includes the scenes that start inside that window. Preview length: the window itself (up to 60 seconds; the 30-second floor applies only when the full film is at least 30 seconds long) | Recorded from user (2026-11-07) | No open question closed by this row. The preview length floor is the agent's reading of "30 seconds to 1 minute" and should be confirmed at G6 |
+| D60 | YouTube Short: a separate vertical composition at 1080x1920, not a size-driven variant of the landscape composition | Recorded from user (2026-11-07) | Shorts stays refused in job-gate.js until that composition exists |
+| D61 | G3 narration voice (O15 follow-up): the chosen voice is sent to dhvani as the Kokoro voice for narration, not only validated. Applies to PR #94 (feat/g3-voice-choice) | Recorded from user (2026-11-07) | PR #94 stays unmerged until this change is on its branch and tested |
 | R1 | render-engine is the only render target; pipeline.py overlap retired | Recommended | Fewer pipelines |
 | R2 | Scene length driven by measured audio when narration exists | Recommended | Replaces author-set length and `-shortest` (not yet in code) |
 | R3 | Seed all randomness, store seed in job.json | Recommended | Two renders must match. Consumer of the seed undefined (O14) |
@@ -257,9 +260,9 @@ Owner is the person who starts the workflow (D23) for every row.
 | 2 (partly built, PR #60) | Template conformance and one studio template. Conformance test per (template, preset) and a `TEMPLATE_SMOKE=1` smoke render for `plain-scene` are in. `/render` reads the registry only when a request names a `template` (opt-in). Each template in the registry gets a manifest with its parameter schema and version (D34) | Each template passes its conformance test against every preset (O10). The registry rejects a manifest with a bad parameter schema | Sonnet (executor); the person who starts the workflow |
 | 4 (not started) | dhvani service wiring: compose service, voice field, Piper removed (follows speech-service-consolidation.md steps 1 to 8). Narration itself already runs in stage 1 (D20) | Narration WAV length measured; duration check passes | Sonnet client; Haiku renames; the person who starts the workflow |
 | 5 (not started) | Flashes, loop end card, effects library, loudness | Flash check passes; end card frames match; effects list passes review | Sonnet (executor); the person who starts the workflow |
-| Voice sample (gate G4; not started) | 1-minute narration preview | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
-| Stills (gate G5; not started) | Still images from voice-timed scenes. Needs measured audio timing (R2) | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
-| Preview (gate G6; not started) | 30-second to 1-minute render, length set by the full length | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
+| Voice sample (gate G4; not started) | Voice sample from the first 60 seconds of narration (D59) | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
+| Stills (gate G5; not started) | One still per scene at its start time (D59). Needs measured audio timing (R2) | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
+| Preview (gate G6; not started) | Preview over the first 60 seconds of narration (D59) | To be written | Stage 1 (D57). Owner: the person who starts the workflow |
 | Deferred (not scheduled) | Cloned voices; extra destinations beyond the picked set | Needs the user's answers in section 12 | User |
 
 ### Stage 1 verification (2026-11-07)
