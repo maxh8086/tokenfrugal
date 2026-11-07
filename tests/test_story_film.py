@@ -333,6 +333,49 @@ class TestContainerPlumbing(unittest.TestCase):
         self.assertIn(story_film.MEDIA_IMAGE, cmd)
         self.assertEqual(cmd[-2:], ["ffmpeg", "-version"])
 
+    def test_narrate_posts_to_dhvani_from_media_image_on_compose_network(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(story_film, "IN_CONTAINER", False), \
+                mock.patch.object(story_film, "DHVANI_NETWORK", "tokenfrugal_default"), \
+                mock.patch.object(story_film, "DHVANI_SPEAK_URL", "http://dhvani:8080/api/kokoro/speak"), \
+                mock.patch.object(story_film.subprocess, "run",
+                                  return_value=mock.Mock(returncode=0, stdout=b"RIFFfake", stderr=b"")) as run:
+            out_wav = os.path.join(tmp, "s0.wav")
+            story_film.narrate("Hello there.", out_wav, voice="am_michael", speed=1.0)
+            with open(out_wav, "rb") as fh:
+                self.assertEqual(fh.read(), b"RIFFfake")
+        cmd = run.call_args[0][0]
+        self.assertEqual(cmd[:2], ["docker", "run"])
+        self.assertNotIn("maxh8086/voice:1", cmd)
+        self.assertEqual(cmd[cmd.index("--network") + 1], "tokenfrugal_default")
+        image_index = cmd.index(story_film.MEDIA_IMAGE)
+        self.assertEqual(cmd[image_index + 1], "curl")
+        self.assertIn("http://dhvani:8080/api/kokoro/speak", cmd)
+        body = json.loads(run.call_args[1]["input"].decode("utf-8"))
+        self.assertEqual(body, {"text": "Hello there.", "voice": "am_michael", "speed": 1.0})
+
+    def test_narrate_honours_network_and_url_overrides(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(story_film, "IN_CONTAINER", False), \
+                mock.patch.object(story_film, "DHVANI_NETWORK", "other_net"), \
+                mock.patch.object(story_film, "DHVANI_SPEAK_URL", "http://127.0.0.1:9999/api/kokoro/speak"), \
+                mock.patch.object(story_film.subprocess, "run",
+                                  return_value=mock.Mock(returncode=0, stdout=b"RIFF", stderr=b"")) as run:
+            story_film.narrate("Hi.", os.path.join(tmp, "s.wav"))
+        cmd = run.call_args[0][0]
+        self.assertEqual(cmd[cmd.index("--network") + 1], "other_net")
+        self.assertIn("http://127.0.0.1:9999/api/kokoro/speak", cmd)
+
+    def test_narrate_raises_last_stderr_line_on_failure(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(story_film, "IN_CONTAINER", False), \
+                mock.patch.object(story_film.subprocess, "run",
+                                  return_value=mock.Mock(returncode=22, stdout=b"",
+                                                         stderr=b"curl: (22) HTTP 500\nunknown voice")):
+            with self.assertRaises(RuntimeError) as ctx:
+                story_film.narrate("Hi.", os.path.join(tmp, "s.wav"))
+        self.assertEqual(str(ctx.exception), "unknown voice")
+
     def test_run_cli_writes_plan_and_assembles_in_container_without_numpy(self):
         import sys
 

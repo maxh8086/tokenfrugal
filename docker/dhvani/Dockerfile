@@ -48,4 +48,5 @@ RUN groupadd --gid 10001 mgen \
 USER mgen
 WORKDIR /work
 EXPOSE 8080
-CMD ["bash"]
+# The default now starts the voice server; the old bash default exited at once.
+CMD ["python3", "/opt/voice-ui/server.py"]
