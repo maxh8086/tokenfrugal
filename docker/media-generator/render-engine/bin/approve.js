@@ -2,6 +2,8 @@
 // Records a human approval for a render gate.
 //
 // Usage: node bin/approve.js <approvalsPath> <gate> <artifactPath> [approvedBy] [--seed <n>]
+//   approvalsPath is a folder (the default, D52): the approval is written to <folder>/<gate>.json, replacing
+//   the previous approval for that gate. A path ending in .json uses the older single file.
 //   --seed <n> is optional: a non-negative integer (the job seed from job.json), recorded only, never consumed.
 //   gate: G1..G7. artifactPath is resolved to an absolute path and stored that way; the server compares
 //   absolute paths. When ARTIFACT_DIR is set, the artifact must sit inside it, because the server reads

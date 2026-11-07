@@ -42,7 +42,7 @@ const require = createRequire(import.meta.url);
 const PORT = Number(process.env.PORT || 3000);
 const OUTPUT_DIR = process.env.OUTPUT_DIR || '/output';
 const ARTIFACT_DIR = process.env.ARTIFACT_DIR || '';     // root for gate artifacts named by a job.json
-const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals file written by bin/approve.js
+const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals folder (one G<n>.json per gate) written by bin/approve.js; a .json path is the legacy single file
 const WORK_DIR = process.env.WORK_DIR || path.join(os.tmpdir(), 'hf-jobs');
 const TEMPLATE_DIR = path.join(here, 'composition');
 const GATES_ENFORCE = process.env.GATES_ENFORCE === '1';
