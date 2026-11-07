@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { splitForKokoro, synthesizeScene } from '../lib/dhvani.js';
+import { splitForKokoro, synthesizeChunk, synthesizeScene } from '../lib/dhvani.js';
 
 const WAV_BYTES = new Uint8Array([82, 73, 70, 70]);
 
@@ -100,4 +100,25 @@ test('synthesizeScene throws when the content-type is not audio/wav', async () =
     synthesizeScene('A line.', { baseUrl: 'http://dhvani:8080', voice: 'af_heart', fetchImpl }),
     /audio\/wav/,
   );
+});
+
+test('synthesizeChunk returns one WAV buffer and sends the speed it is given', async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push(JSON.parse(init.body));
+    return wavResponse();
+  };
+  const buf = await synthesizeChunk('One chunk.', {
+    baseUrl: 'http://dhvani:8080',
+    voice: 'af_heart',
+    speed: 0.9,
+    fetchImpl,
+  });
+  assert.ok(Buffer.isBuffer(buf));
+  assert.deepEqual([...buf], [82, 73, 70, 70]);
+  assert.deepEqual(calls, [{ text: 'One chunk.', voice: 'af_heart', speed: 0.9 }]);
+});
+
+test('synthesizeChunk refuses a missing baseUrl', async () => {
+  await assert.rejects(synthesizeChunk('x', { voice: 'af_heart' }), /baseUrl is required/);
 });

@@ -154,11 +154,13 @@ export async function recordApproval(approvalsPath, { gate, artifact, sha256, ap
     // D52: one file per gate. The newest approval for a gate replaces the older one.
     const gateEntry = { ...entry, human: true };
     await mkdir(approvalsPath, { recursive: true });
+    // Plan the stale marks first: a malformed stale file throws here, before the approval is written.
     const previous = await readGateEntry(approvalsPath, gate);
+    const stalePlan = previous && previous.sha256 !== sha256
+      ? await planStale(approvalsPath, { gate, previousSha256: previous.sha256, currentSha256: sha256 })
+      : null;
     await writeAtomic(path.join(approvalsPath, `${gate}.json`), `${JSON.stringify(gateEntry, null, 2)}\n`);
-    if (previous && previous.sha256 !== sha256) {
-      await markStale(approvalsPath, { gate, previousSha256: previous.sha256, currentSha256: sha256 });
-    }
+    await writeStale(stalePlan);
     return gateEntry;
   }
 
@@ -210,35 +212,39 @@ async function readStale(staleFile) {
 
 // D52: when an upstream gate is re-approved with a new hash, every later approval was made against the old
 // upstream artefact and is marked stale in <project>/cache/stale.json. Stale entries are kept, never deleted,
-// and an identical entry is not added twice. Returns the entries added.
-async function markStale(approvalsDir, { gate, previousSha256, currentSha256 }) {
-  if (previousSha256 === currentSha256) return [];
+// and an identical entry is not added twice. planStale reads and validates the file and builds the new
+// content without writing; writeStale saves it. Callers write the approval between the two.
+async function planStale(approvalsDir, { gate, previousSha256, currentSha256 }) {
+  if (previousSha256 === currentSha256) return null;
   const upstream = GATES.indexOf(gate);
   const later = (await readGateDir(approvalsDir)).approvals.filter((e) => GATES.indexOf(e.gate) > upstream);
-  if (later.length === 0) return [];
+  if (later.length === 0) return null;
   const staleFile = path.join(path.dirname(approvalsDir), 'cache', STALE_FILE);
   const stale = await readStale(staleFile);
   const markedAt = new Date().toISOString();
-  const added = [];
+  let added = 0;
   for (const e of later) {
     const same = (x) =>
       x.gate === e.gate && x.sha256 === e.sha256 && x.staleBecause === gate && x.becauseSha256 === currentSha256;
     if (stale.entries.some(same)) continue;
-    const item = {
+    stale.entries.push({
       gate: e.gate,
       artifact: e.artifact,
       sha256: e.sha256,
       staleBecause: gate,
       becauseSha256: currentSha256,
       markedAt,
-    };
-    stale.entries.push(item);
-    added.push(item);
+    });
+    added += 1;
   }
-  if (added.length === 0) return [];
-  await mkdir(path.dirname(staleFile), { recursive: true });
-  await writeAtomic(staleFile, `${JSON.stringify(stale, null, 2)}\n`);
-  return added;
+  if (added === 0) return null;
+  return { staleFile, stale };
+}
+
+async function writeStale(plan) {
+  if (!plan) return;
+  await mkdir(path.dirname(plan.staleFile), { recursive: true });
+  await writeAtomic(plan.staleFile, `${JSON.stringify(plan.stale, null, 2)}\n`);
 }
 
 // Writes text to a temp file in the same folder, then renames it over the target. Removes the temp file on failure.

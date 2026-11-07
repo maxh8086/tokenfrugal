@@ -145,7 +145,7 @@ test('the same change repeated does not duplicate a stale entry', async () => {
   assert.deepEqual(stale.entries.map((e) => e.becauseSha256), [B, C]);
 });
 
-test('a malformed stale file is refused, and the approval is still recorded', async () => {
+test('a malformed stale file is refused before the new approval is written', async () => {
   const store = path.join(dir, 'approvals');
   await recordApproval(store, { gate: 'G2', artifact: '/a/g2.md', sha256: SHA, approvedBy: 'vaibhav' });
   await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
@@ -155,5 +155,5 @@ test('a malformed stale file is refused, and the approval is still recorded', as
     recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: 'b'.repeat(64), approvedBy: 'vaibhav' }),
     /stale\.json must be/,
   );
-  assert.equal((await readApprovals(store)).approvals.find((e) => e.gate === 'G1').sha256, 'b'.repeat(64));
+  assert.equal((await readApprovals(store)).approvals.find((e) => e.gate === 'G1').sha256, SHA, 'old approval kept');
 });
