@@ -103,3 +103,57 @@ test('migration refuses a folder source and a .json target', async () => {
   await assert.rejects(migrateLegacyApprovals(path.join(dir, 'x'), path.join(dir, 'y')), /legacy .json/);
   await assert.rejects(migrateLegacyApprovals(path.join(dir, 'x.json'), path.join(dir, 'y.json')), /folder/);
 });
+
+test('re-approving an earlier gate with a new hash marks later approvals stale and keeps them', async () => {
+  const store = path.join(dir, 'approvals');
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G2', artifact: '/a/g2.md', sha256: SHA, approvedBy: 'vaibhav' });
+  const newHash = 'b'.repeat(64);
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: newHash, approvedBy: 'vaibhav' });
+  const stale = JSON.parse(await readFile(path.join(dir, 'cache', 'stale.json'), 'utf8'));
+  assert.equal(stale.version, 1);
+  assert.deepEqual(stale.entries.map((e) => [e.gate, e.staleBecause, e.becauseSha256]), [['G2', 'G1', newHash]]);
+  const g2 = (await readApprovals(store)).approvals.find((e) => e.gate === 'G2');
+  assert.equal(g2.sha256, SHA, 'the G2 approval itself is kept, not deleted');
+});
+
+test('the first approval of a gate and a same-hash re-record mark nothing', async () => {
+  const store = path.join(dir, 'approvals');
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G2', artifact: '/a/g2.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await assert.rejects(readFile(path.join(dir, 'cache', 'stale.json'), 'utf8'), { code: 'ENOENT' });
+});
+
+test('a changed hash with no later approvals creates no stale file', async () => {
+  const store = path.join(dir, 'approvals');
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: 'b'.repeat(64), approvedBy: 'vaibhav' });
+  await assert.rejects(readFile(path.join(dir, 'cache', 'stale.json'), 'utf8'), { code: 'ENOENT' });
+});
+
+test('the same change repeated does not duplicate a stale entry', async () => {
+  const store = path.join(dir, 'approvals');
+  const B = 'b'.repeat(64);
+  const C = 'c'.repeat(64);
+  await recordApproval(store, { gate: 'G2', artifact: '/a/g2.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: B, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: C, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: B, approvedBy: 'vaibhav' });
+  const stale = JSON.parse(await readFile(path.join(dir, 'cache', 'stale.json'), 'utf8'));
+  assert.deepEqual(stale.entries.map((e) => e.becauseSha256), [B, C]);
+});
+
+test('a malformed stale file is refused, and the approval is still recorded', async () => {
+  const store = path.join(dir, 'approvals');
+  await recordApproval(store, { gate: 'G2', artifact: '/a/g2.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: SHA, approvedBy: 'vaibhav' });
+  await mkdir(path.join(dir, 'cache'));
+  await writeFile(path.join(dir, 'cache', 'stale.json'), '{"version": 2}');
+  await assert.rejects(
+    recordApproval(store, { gate: 'G1', artifact: '/a/g1.md', sha256: 'b'.repeat(64), approvedBy: 'vaibhav' }),
+    /stale\.json must be/,
+  );
+  assert.equal((await readApprovals(store)).approvals.find((e) => e.gate === 'G1').sha256, 'b'.repeat(64));
+});
