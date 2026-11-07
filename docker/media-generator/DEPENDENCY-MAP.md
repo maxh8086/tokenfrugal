@@ -28,12 +28,14 @@ One row per `ARG` in the Dockerfile. Changing a value here means changing the Do
 | D3_DELAUNAY_VERSION | 6.0.4 | Dockerfile line 16 |
 | CLIPPER_LIB_VERSION | 6.4.2 | Dockerfile line 17 |
 | FONTSOURCE_INTER_VERSION | 5.3.0 | Dockerfile line 18 |
-| REELFORGE_COMMIT | 740bf70dc1f068734e054e922c0a602e50f69ebd | Dockerfile line 89 |
-| MOTION_LIBRARY_COMMIT | 98c40ca18f23d7dc021a5d84308ab10599482cff | Dockerfile line 90 |
-| STUDENT_KIT_COMMIT | 10511e5af86fc47756ea89803b397422e2d89284 | Dockerfile line 91 |
-| PRODUCT_LAUNCH_COMMIT | edbfb105382f21507bad895d8b5f6e0faa67487c | Dockerfile line 92 |
-| DIAGRAMS_COMMIT | 3de812d90c94baa4f9761684f36c3c322f1fb38c | Dockerfile line 93 |
-| DESIGN_ENG_COMMIT | dbbe43b5e17c7525409ad4905b3857852cd5174d | Dockerfile line 94 |
+| SHADERS_VERSION | 4.0.0 | Dockerfile line 20 |
+| ESBUILD_VERSION | 0.25.9 | Dockerfile line 21 |
+| REELFORGE_COMMIT | 740bf70dc1f068734e054e922c0a602e50f69ebd | Dockerfile line 92 |
+| MOTION_LIBRARY_COMMIT | 98c40ca18f23d7dc021a5d84308ab10599482cff | Dockerfile line 93 |
+| STUDENT_KIT_COMMIT | 10511e5af86fc47756ea89803b397422e2d89284 | Dockerfile line 94 |
+| PRODUCT_LAUNCH_COMMIT | edbfb105382f21507bad895d8b5f6e0faa67487c | Dockerfile line 95 |
+| DIAGRAMS_COMMIT | 3de812d90c94baa4f9761684f36c3c322f1fb38c | Dockerfile line 96 |
+| DESIGN_ENG_COMMIT | dbbe43b5e17c7525409ad4905b3857852cd5174d | Dockerfile line 97 |
 
 ## Global npm (Dockerfile)
 
@@ -88,6 +90,7 @@ The catalogue `RUN` in the Dockerfile installs each package at the version in it
 | clipper-lib | clipper-lib@6.4.2 | CLIPPER_LIB_VERSION | BSL-1.0 (see LICENSE-clipper-lib.txt) | 1 |
 | d3-delaunay | d3-delaunay@6.0.4 | D3_DELAUNAY_VERSION | ISC (see LICENSE-d3-delaunay.txt) | 1 |
 | gsap | gsap@3.14.2 | GSAP_VERSION | GSAP standard no-charge licence (see LICENSE-gsap.txt in each item) | 13 |
+| shaders | shaders@4.0.0 | SHADERS_VERSION | MIT (see shaders.THIRD-PARTY-LICENSES.txt in each item) | 36 |
 | three-r181 | three@0.181.2 | THREE_R181_VERSION | MIT | 16 |
 | three-r184 | three@0.184.0 | THREE_R184_VERSION | MIT | 4 |
 
@@ -115,24 +118,24 @@ Debian bookworm main. The version of each package is whatever the build resolves
 
 | Package | Where |
 |---|---|
-| ffmpeg | Dockerfile line 20 |
-| python3 | Dockerfile line 20 |
-| python3-pip | Dockerfile line 20 |
-| git | Dockerfile line 20 |
-| curl | Dockerfile line 20 |
-| ca-certificates | Dockerfile line 20 |
-| build-essential | Dockerfile line 20 |
-| cmake | Dockerfile line 20 |
-| chromium | Dockerfile line 20 |
-| fonts-dejavu-core | Dockerfile line 20 |
-| python3-dev | Dockerfile line 45 |
-| python3-venv | Dockerfile line 45 |
-| pkg-config | Dockerfile line 45 |
-| libcairo2-dev | Dockerfile line 45 |
-| libpango1.0-dev | Dockerfile line 45 |
-| libglib2.0-dev | Dockerfile line 45 |
-| tesseract-ocr | Dockerfile line 57 |
-| tesseract-ocr-eng | Dockerfile line 57 |
+| ffmpeg | Dockerfile line 23 |
+| python3 | Dockerfile line 23 |
+| python3-pip | Dockerfile line 23 |
+| git | Dockerfile line 23 |
+| curl | Dockerfile line 23 |
+| ca-certificates | Dockerfile line 23 |
+| build-essential | Dockerfile line 23 |
+| cmake | Dockerfile line 23 |
+| chromium | Dockerfile line 23 |
+| fonts-dejavu-core | Dockerfile line 23 |
+| python3-dev | Dockerfile line 48 |
+| python3-venv | Dockerfile line 48 |
+| pkg-config | Dockerfile line 48 |
+| libcairo2-dev | Dockerfile line 48 |
+| libpango1.0-dev | Dockerfile line 48 |
+| libglib2.0-dev | Dockerfile line 48 |
+| tesseract-ocr | Dockerfile line 60 |
+| tesseract-ocr-eng | Dockerfile line 60 |
 
 ## Fonts (fonts.txt)
 
@@ -204,8 +207,8 @@ Debian bookworm main. The version of each package is whatever the build resolves
 
 | Package | Where |
 |---|---|
-| tesseract-ocr | Dockerfile line 57 |
-| tesseract-ocr-eng | Dockerfile line 57 |
+| tesseract-ocr | Dockerfile line 60 |
+| tesseract-ocr-eng | Dockerfile line 60 |
 | tesseract-ocr-osd | Debian dependency of tesseract-ocr (not listed in Dockerfile) |
 
 ## Vendored HyperFrames catalogue subset (catalogue/)
@@ -214,50 +217,50 @@ Only the NOTICE-FOUND items from docs/designs/hyperframes-catalog-licences.md. E
 
 | Item | Files | Notice file | Loaded external URLs |
 |---|---|---|---|
-| aurora | 5 | aurora/NOTICE.md | 0 |
-| blob | 5 | blob/NOTICE.md | 0 |
+| aurora | 4 | aurora/NOTICE.md | 0 |
+| blob | 4 | blob/NOTICE.md | 0 |
 | caret-swap | 6 | caret-swap/NOTICE.md | 0 |
 | chatgpt-exchange | 6 | chatgpt-exchange/NOTICE.md | 0 |
-| chrome-orb | 5 | chrome-orb/NOTICE.md | 0 |
+| chrome-orb | 4 | chrome-orb/NOTICE.md | 0 |
 | claude-exchange | 9 | claude-exchange/NOTICE.md | 0 |
-| color-wheel | 5 | color-wheel/NOTICE.md | 0 |
+| color-wheel | 4 | color-wheel/NOTICE.md | 0 |
 | extruded-logo | 7 | extruded-logo/NOTICE.md | 0 |
-| falling-lines | 5 | falling-lines/NOTICE.md | 0 |
-| flowing-gradient | 5 | flowing-gradient/NOTICE.md | 0 |
-| fractal-noise | 5 | fractal-noise/NOTICE.md | 0 |
-| frost | 5 | frost/NOTICE.md | 0 |
-| gabor-noise | 5 | gabor-noise/NOTICE.md | 0 |
+| falling-lines | 4 | falling-lines/NOTICE.md | 0 |
+| flowing-gradient | 4 | flowing-gradient/NOTICE.md | 0 |
+| fractal-noise | 4 | fractal-noise/NOTICE.md | 0 |
+| frost | 4 | frost/NOTICE.md | 0 |
+| gabor-noise | 4 | gabor-noise/NOTICE.md | 0 |
 | glass-shard-title | 16 | glass-shard-title/NOTICE.md | 0 |
-| godrays | 5 | godrays/NOTICE.md | 0 |
-| goo | 5 | goo/NOTICE.md | 0 |
-| heatmap | 5 | heatmap/NOTICE.md | 0 |
-| hologram | 5 | hologram/NOTICE.md | 0 |
-| holographic | 5 | holographic/NOTICE.md | 0 |
+| godrays | 4 | godrays/NOTICE.md | 0 |
+| goo | 4 | goo/NOTICE.md | 0 |
+| heatmap | 4 | heatmap/NOTICE.md | 0 |
+| hologram | 4 | hologram/NOTICE.md | 0 |
+| holographic | 4 | holographic/NOTICE.md | 0 |
 | kinetic-center-build | 10 | kinetic-center-build/NOTICE.md | 0 |
-| lens-flare | 5 | lens-flare/NOTICE.md | 0 |
-| light-edge | 5 | light-edge/NOTICE.md | 0 |
-| liquid-metal | 5 | liquid-metal/NOTICE.md | 0 |
-| marble | 5 | marble/NOTICE.md | 0 |
+| lens-flare | 4 | lens-flare/NOTICE.md | 0 |
+| light-edge | 4 | light-edge/NOTICE.md | 0 |
+| liquid-metal | 4 | liquid-metal/NOTICE.md | 0 |
+| marble | 4 | marble/NOTICE.md | 0 |
 | marker-checklist-card | 6 | marker-checklist-card/NOTICE.md | 0 |
-| mesh-gradient | 5 | mesh-gradient/NOTICE.md | 0 |
-| nebula | 5 | nebula/NOTICE.md | 0 |
-| obsidian | 5 | obsidian/NOTICE.md | 0 |
-| plasma | 5 | plasma/NOTICE.md | 0 |
-| plastic | 5 | plastic/NOTICE.md | 0 |
-| prism | 5 | prism/NOTICE.md | 0 |
-| ripples | 5 | ripples/NOTICE.md | 0 |
-| sine-wave | 5 | sine-wave/NOTICE.md | 0 |
+| mesh-gradient | 4 | mesh-gradient/NOTICE.md | 0 |
+| nebula | 4 | nebula/NOTICE.md | 0 |
+| obsidian | 4 | obsidian/NOTICE.md | 0 |
+| plasma | 4 | plasma/NOTICE.md | 0 |
+| plastic | 4 | plastic/NOTICE.md | 0 |
+| prism | 4 | prism/NOTICE.md | 0 |
+| ripples | 4 | ripples/NOTICE.md | 0 |
+| sine-wave | 4 | sine-wave/NOTICE.md | 0 |
 | slack-notification-ad | 8 | slack-notification-ad/NOTICE.md | 0 |
-| spiral | 5 | spiral/NOTICE.md | 0 |
+| spiral | 4 | spiral/NOTICE.md | 0 |
 | split-flap-board | 4 | split-flap-board/NOTICE.md | 0 |
-| strands | 5 | strands/NOTICE.md | 0 |
-| stripes | 5 | stripes/NOTICE.md | 0 |
-| sun-burst | 5 | sun-burst/NOTICE.md | 0 |
-| swirl | 5 | swirl/NOTICE.md | 0 |
-| thin-film | 5 | thin-film/NOTICE.md | 0 |
-| voronoi | 5 | voronoi/NOTICE.md | 0 |
-| water | 5 | water/NOTICE.md | 0 |
-| waveform | 5 | waveform/NOTICE.md | 0 |
+| strands | 4 | strands/NOTICE.md | 0 |
+| stripes | 4 | stripes/NOTICE.md | 0 |
+| sun-burst | 4 | sun-burst/NOTICE.md | 0 |
+| swirl | 4 | swirl/NOTICE.md | 0 |
+| thin-film | 4 | thin-film/NOTICE.md | 0 |
+| voronoi | 4 | voronoi/NOTICE.md | 0 |
+| water | 4 | water/NOTICE.md | 0 |
+| waveform | 4 | waveform/NOTICE.md | 0 |
 | weight-wave | 6 | weight-wave/NOTICE.md | 0 |
 | wireframe-portal-title | 11 | wireframe-portal-title/NOTICE.md | 0 |
-| worley-noise | 5 | worley-noise/NOTICE.md | 0 |
+| worley-noise | 4 | worley-noise/NOTICE.md | 0 |

@@ -49,10 +49,13 @@ def sha256(path):
 
 
 def discover_items():
+    # The shader bundle is not in the repo any more: catalogue/LIBS.json lists where each item's copy comes from.
+    with open(os.path.join(CATALOGUE, 'LIBS.json'), encoding='utf-8') as fh:
+        dests = [f['dest'] for f in json.load(fh)['files'] if f['package'] == 'shaders']
     items = []
-    for name in sorted(os.listdir(CATALOGUE)):
-        comp = os.path.join(CATALOGUE, name, 'compositions')
-        if os.path.isfile(os.path.join(comp, 'lib', 'shaders.iife.js')) and os.path.isfile(os.path.join(comp, name + '.html')):
+    for dest in sorted(dests):
+        name = dest.split('/')[0]
+        if dest == name + '/compositions/lib/shaders.iife.js' and os.path.isfile(os.path.join(CATALOGUE, name, 'compositions', name + '.html')):
             items.append(name)
     return items
 
@@ -284,10 +287,14 @@ def main(argv):
     c = sub.add_parser('check')
     c.add_argument('--golden', required=True)
     c.add_argument('--candidate', required=True)
+    c.add_argument('--catalogue', help='catalogue folder to render from (default: the repo catalogue)')
     d = sub.add_parser('diff')
     d.add_argument('a')
     d.add_argument('b')
     args = ap.parse_args(argv)
+    if getattr(args, 'catalogue', None):
+        global CATALOGUE
+        CATALOGUE = os.path.abspath(args.catalogue)
     return {'record': cmd_record, 'check': cmd_check, 'diff': cmd_diff}[args.mode](args)
 
 

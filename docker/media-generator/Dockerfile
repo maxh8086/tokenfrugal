@@ -16,6 +16,9 @@ ARG THREE_R184_VERSION=0.184.0
 ARG D3_DELAUNAY_VERSION=6.0.4
 ARG CLIPPER_LIB_VERSION=6.4.2
 ARG FONTSOURCE_INTER_VERSION=5.3.0
+# Shader bundle: shaders-npm/package-lock.json pins shaders and esbuild; the build checks both versions below.
+ARG SHADERS_VERSION=4.0.0
+ARG ESBUILD_VERSION=0.25.9
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ffmpeg python3 python3-pip git curl ca-certificates build-essential cmake chromium fonts-dejavu-core \
@@ -122,7 +125,11 @@ COPY DEPENDENCY-MAP.md /opt/DEPENDENCY-MAP.md
 # from the repo; the library files listed in catalogue/LIBS.json are installed here at their pinned npm versions
 # and copied into place by install-libs.py, which fails the build on a missing file, a sha256 mismatch or a
 # destination that already exists. Audit with catalogue/audit-external-urls.py.
+# The shader bundle (36 shader items) is built here from shaders-npm/ (shaders@4.0.0 renderer, esbuild IIFE, minified).
+# The lock file pins both packages; the version checks make the ARGs and the lock agree. install-libs.py checks the
+# bundle's sha256 against catalogue/LIBS.json.
 COPY catalogue /opt/catalogue
+COPY shaders-npm /opt/shaders-npm
 RUN mkdir -p /opt/catalogue-libs && cd /opt/catalogue-libs \
     && npm install --no-audit --no-fund \
          "gsap@${GSAP_VERSION}" \
@@ -131,8 +138,15 @@ RUN mkdir -p /opt/catalogue-libs && cd /opt/catalogue-libs \
          "d3-delaunay@${D3_DELAUNAY_VERSION}" \
          "clipper-lib@${CLIPPER_LIB_VERSION}" \
          "@fontsource/inter@${FONTSOURCE_INTER_VERSION}" \
+    && cd /opt/shaders-npm && npm ci --no-audit --no-fund \
+    && test "$(node -p 'JSON.parse(require("fs").readFileSync("node_modules/shaders/package.json","utf8")).version')" = "${SHADERS_VERSION}" \
+    && test "$(node -p 'JSON.parse(require("fs").readFileSync("node_modules/esbuild/package.json","utf8")).version')" = "${ESBUILD_VERSION}" \
+    && mkdir -p /opt/catalogue-libs/built \
+    && ./node_modules/esbuild/bin/esbuild entry.js --bundle --format=iife --platform=browser --minify \
+         --outfile=/opt/catalogue-libs/built/shaders.iife.js \
+    && cd /opt/catalogue-libs \
     && python3 /opt/catalogue/install-libs.py /opt/catalogue /opt/catalogue-libs \
-    && rm -rf /opt/catalogue-libs /root/.npm
+    && rm -rf /opt/catalogue-libs /opt/shaders-npm /root/.npm
 
 # Needs the named context "scripts" (compose sets it to ./kalamanch). A plain `docker build` needs --build-context scripts=./kalamanch.
 COPY --from=scripts pipeline/make_score.py pipeline/compose_intro.py common/_publish.py common/_paths.py /opt/pipeline/

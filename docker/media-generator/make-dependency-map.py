@@ -39,6 +39,7 @@ LIB_ARGS = {
     "d3-delaunay": "D3_DELAUNAY_VERSION",
     "clipper-lib": "CLIPPER_LIB_VERSION",
     "@fontsource/inter": "FONTSOURCE_INTER_VERSION",
+    "shaders": "SHADERS_VERSION",
 }
 
 # Licence text for global npm packages that are not in a lockfile in this repo.

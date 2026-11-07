@@ -7,7 +7,8 @@ Run by the media-generator Dockerfile after `npm install` has put the pinned pac
 
 <libs_root> is the directory that contains node_modules/ (the npm install directory). For each entry in
 LIBS.json the source is <libs_root>/node_modules/<package>/<source> and the destination is
-<catalogue_dir>/<dest>. The script exits 1 when:
+<catalogue_dir>/<dest>. An entry with "location": "built" is a file the Dockerfile builds itself (the shader
+bundle); its source is <libs_root>/built/<source>. The script exits 1 when:
 
 * a source file is missing, or its sha256 differs from LIBS.json (a different version was installed);
 * a destination already exists (a vendored copy was left in the catalogue, or the step ran twice).
@@ -50,10 +51,16 @@ def main(argv):
     problems = []
     for entry in libs["files"]:
         pkg = entry["package"]
-        if pkg not in ALIAS_DIRS or pkg not in libs["packages"]:
+        if pkg not in libs["packages"]:
             problems.append("unknown package %s for %s" % (pkg, entry["dest"]))
             continue
-        src = os.path.join(libs_root, "node_modules", ALIAS_DIRS[pkg], entry["source"].replace("/", os.sep))
+        if entry.get("location") == "built":
+            src = os.path.join(libs_root, "built", entry["source"].replace("/", os.sep))
+        elif pkg in ALIAS_DIRS:
+            src = os.path.join(libs_root, "node_modules", ALIAS_DIRS[pkg], entry["source"].replace("/", os.sep))
+        else:
+            problems.append("unknown package %s for %s" % (pkg, entry["dest"]))
+            continue
         dst = os.path.join(catalogue, entry["dest"].replace("/", os.sep))
         if not os.path.isfile(src):
             problems.append("missing source %s" % src)
