@@ -13,6 +13,7 @@ import { validateJob } from './job-schema.js';
 import { totalSeconds } from './job-parts.js';
 import { checkVoiceChoice } from './voice-choice.js';
 import { PreviewRefused } from './preview.js';
+import { validateProps } from './props.js';
 
 export const STILLS_GATES = ['G1', 'G2', 'G3', 'G4'];
 
@@ -69,9 +70,6 @@ export async function checkStillsApproval(job, { artifactRoot, approvalsPath }) 
 // Everything that can be checked without snapshotting: the job schema, format, voice and the props mapping.
 // Returns {ok: true, props, scenes} or {ok: false, status, payload}. `scenes` are the mapped scenes with their
 // seconds, which give the snapshot times. The props carry the whole job's duration.
-// The props validation a render runs (validateProps) is not applied here on purpose: it limits each scene to
-// 0.83 to 8 s and the film to 60 s, and a still only needs the scene starts. A job the render would refuse can
-// therefore still get stills; the render stays the place where those limits hold.
 async function mapStillsJob(job) {
   const checked = await validateJob(job);
   if (!checked.valid) return { ok: false, status: 400, payload: { error: 'invalid job', findings: checked.errors } };
@@ -82,6 +80,9 @@ async function mapStillsJob(job) {
   const mapped = jobToPropsBody(job);
   if (!mapped.ok) return { ok: false, status: 400, payload: { error: mapped.error } };
   const props = { ...mapped.body, duration: totalSeconds(mapped.body.scenes) };
+  // Stills apply the same props limits as a render (scene length 0.83 to 8 s, 60 s total).
+  const checkedProps = validateProps(mapped.body);
+  if (!checkedProps.ok) return { ok: false, status: 400, payload: { error: checkedProps.error } };
   return { ok: true, props, scenes: mapped.body.scenes };
 }
 

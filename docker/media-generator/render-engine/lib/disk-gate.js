@@ -4,8 +4,8 @@
 import { statfs } from 'node:fs/promises';
 import path from 'node:path';
 
-// The floor from D47, kept as its own constant until the hardware module is wired.
-export const DISK_FLOOR_GB = 40;
+// The user set the disk floor to 10 GB on 2026-11-07 (design doc D47); the old 40 was left in this file.
+export const DISK_FLOOR_GB = 10;
 
 const GIB = 2 ** 30;
 

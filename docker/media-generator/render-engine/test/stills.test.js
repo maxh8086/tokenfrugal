@@ -38,11 +38,11 @@ function job(scenes, overrides = {}) {
   };
 }
 
-// Three 25 s scenes: the stills cover the whole job (75 s), not a 60 s window.
+// Three 8 s scenes (the longest a scene may be): the stills cover every scene in the job, not just the first.
 const SCENES = [
-  { title: 'One', body: 'First scene', seconds: 25 },
-  { title: 'Two', body: 'Second scene', seconds: 25 },
-  { title: 'Three', body: 'Third scene', seconds: 25 },
+  { title: 'One', body: 'First scene', seconds: 8 },
+  { title: 'Two', body: 'Second scene', seconds: 8 },
+  { title: 'Three', body: 'Third scene', seconds: 8 },
 ];
 
 // Fake snapshot: writes one PNG-named file per time into a folder under dir, in time order.
@@ -178,14 +178,14 @@ test('buildStills: snapshots at each scene start over all scenes and names the s
   assert.equal(seen.length, 1);
   assert.deepEqual(seen[0], theJob);
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0].times, [0, 25, 50]);
+  assert.deepEqual(calls[0].times, [0, 8, 16]);
   assert.equal(calls[0].props.fps, 30);
   assert.equal(calls[0].props.scenes.length, 3);
 });
 
-test('buildStills: a job shorter than 60 seconds is not refused (no preview window)', async () => {
+test('buildStills: a one-scene job is not refused (no preview window)', async () => {
   const { snapshot, calls } = fakeSnapshot();
-  const result = await buildStills(job([{ title: 'Short', body: 'A short job', seconds: 20 }]), {
+  const result = await buildStills(job([{ title: 'Short', body: 'A short job', seconds: 7 }]), {
     outDir,
     checkApproval: async () => ({ ok: true }),
     snapshot,
@@ -194,8 +194,39 @@ test('buildStills: a job shorter than 60 seconds is not refused (no preview wind
   assert.deepEqual(calls[0].times, [0]);
 });
 
+test('buildStills: a scene longer than 8 seconds is refused with 400 before snapshot', async () => {
+  const { snapshot, calls } = fakeSnapshot();
+  await assert.rejects(
+    buildStills(job([{ title: 'Long', body: 'Too long', seconds: 9 }]), {
+      outDir,
+      checkApproval: async () => ({ ok: true }),
+      snapshot,
+    }),
+    (err) => err instanceof PreviewRefused && err.status === 400,
+  );
+  assert.equal(calls.length, 0);
+});
+
+test('buildStills: a job whose scenes total over 60 seconds is refused with 400 before snapshot', async () => {
+  const { snapshot, calls } = fakeSnapshot();
+  // Eight scenes of 7.7 s plus one of 1 s: each scene is within limits, the total is over 60 s.
+  const scenes = [
+    ...Array.from({ length: 8 }, (_, i) => ({ title: `T${i + 1}`, body: 'Body', seconds: 7.7 })),
+    { title: 'Last', body: 'Body', seconds: 1 },
+  ];
+  await assert.rejects(
+    buildStills(job(scenes), {
+      outDir,
+      checkApproval: async () => ({ ok: true }),
+      snapshot,
+    }),
+    (err) => err instanceof PreviewRefused && err.status === 400,
+  );
+  assert.equal(calls.length, 0);
+});
+
 test('buildStills: uses two-digit names past nine scenes', async () => {
-  const scenes = Array.from({ length: 10 }, (_, i) => ({ title: `S${i + 1}`, body: 'Body', seconds: 10 }));
+  const scenes = Array.from({ length: 10 }, (_, i) => ({ title: `S${i + 1}`, body: 'Body', seconds: 6 }));
   const { snapshot, calls } = fakeSnapshot();
   const result = await buildStills(job(scenes), {
     outDir,
