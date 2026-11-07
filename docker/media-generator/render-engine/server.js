@@ -5,7 +5,7 @@ import express from 'express';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
-import { cp, mkdir, readFile, rename, rm, writeFile, stat } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rename, rm, writeFile, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +25,7 @@ import {
 } from './lib/render-options.js';
 import { gateJob } from './lib/job-gate.js';
 import { buildPreview, checkG4Approval, PreviewRefused } from './lib/preview.js';
+import { buildStills, buildSnapshotArgs, checkStillsApproval } from './lib/stills.js';
 import { planParts, totalSeconds, PART_MAX_SECONDS } from './lib/job-parts.js';
 import { jobOutputRel, jobOutputUrl, jobContactSheetRel, jobContactSheetUrl, JOB_PRESETS } from './lib/job-output.js';
 import { buildContactSheetArgs, contactSheetFps } from './lib/contact-sheet.js';
@@ -82,7 +83,7 @@ const JOB_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 // Per-job render budget (D54). A segmented job whose projected time exceeds this fails with stage "budget" and keeps its segments.
 const JOB_BUDGET_MS = Number(process.env.RENDER_JOB_BUDGET_MS || 1_800_000);
 
-const LOGGED_ROUTES = new Set(['GET /health', 'POST /render', 'POST /preview']);
+const LOGGED_ROUTES = new Set(['GET /health', 'POST /render', 'POST /preview', 'POST /stills']);
 
 const app = express();
 
@@ -357,6 +358,37 @@ async function flashCheckVideo(videoPath, fps, jobDir) {
   return checkFlashes(frames, fps);
 }
 
+// The composition folder for a gated destination (D60): shorts has its own vertical template. Used by POST /render and POST /stills.
+function templateDirFor(destination) {
+  return destination === 'shorts' ? SHORTS_TEMPLATE_DIR : TEMPLATE_DIR;
+}
+
+// Prepares a job's work folder: the preflight gates, the template copy, and the per-job files (the duration and
+// motion blur in index.html, props.js, template-params.js, gsap.min.js). renderJob and the stills snapshot both
+// call it, so a still is taken from the same folder a film renders from.
+async function prepareJobDir(props, jobDir, { templateDir, compositionFile = 'index.html', blurSamples = 32, templateParams = null }) {
+  await runPreflight(props);
+  await cp(templateDir, jobDir, { recursive: true });
+  // HyperFrames renders index.html; a template may name its composition file in its manifest (D50).
+  if (compositionFile !== 'index.html') {
+    await cp(path.join(jobDir, compositionFile), path.join(jobDir, 'index.html'));
+  }
+  // HyperFrames reads the length from the static HTML, so write it there per job.
+  const htmlPath = path.join(jobDir, 'index.html');
+  const html = await readFile(htmlPath, 'utf8');
+  let page = html.replace(/data-duration="[0-9.]+"/, `data-duration="${props.duration}"`);
+  // Motion blur is on in the template at 32 samples; 0 switches it off and any other value sets the sample count.
+  if (blurSamples === 0) page = page.replace('data-motion-blur="on"', 'data-motion-blur="off"');
+  else page = page.replace('data-motion-blur-samples="32"', `data-motion-blur-samples="${blurSamples}"`);
+  await writeFile(htmlPath, page);
+  await writeFile(path.join(jobDir, 'props.js'), propsToJs(props));
+  // Template parameters (D50): the composition reads window.__templateParams from this file.
+  if (templateParams) {
+    await writeFile(path.join(jobDir, 'template-params.js'), `window.__templateParams = ${JSON.stringify(templateParams)};\n`);
+  }
+  await cp(GSAP_FILE, path.join(jobDir, 'gsap.min.js'));
+}
+
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null, compositionFile = 'index.html', audioFile = null } = opts;
@@ -367,26 +399,7 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   let ok = false;
   await mkdir(jobDir, { recursive: true });
   try {
-    await runPreflight(props);
-    await cp(templateDir, jobDir, { recursive: true });
-    // HyperFrames renders index.html; a template may name its composition file in its manifest (D50).
-    if (compositionFile !== 'index.html') {
-      await cp(path.join(jobDir, compositionFile), path.join(jobDir, 'index.html'));
-    }
-    // HyperFrames reads the length from the static HTML, so write it there per job.
-    const htmlPath = path.join(jobDir, 'index.html');
-    const html = await readFile(htmlPath, 'utf8');
-    let page = html.replace(/data-duration="[0-9.]+"/, `data-duration="${props.duration}"`);
-    // Motion blur is on in the template at 32 samples; 0 switches it off and any other value sets the sample count.
-    if (blurSamples === 0) page = page.replace('data-motion-blur="on"', 'data-motion-blur="off"');
-    else page = page.replace('data-motion-blur-samples="32"', `data-motion-blur-samples="${blurSamples}"`);
-    await writeFile(htmlPath, page);
-    await writeFile(path.join(jobDir, 'props.js'), propsToJs(props));
-    // Template parameters (D50): the composition reads window.__templateParams from this file.
-    if (templateParams) {
-      await writeFile(path.join(jobDir, 'template-params.js'), `window.__templateParams = ${JSON.stringify(templateParams)};\n`);
-    }
-    await cp(GSAP_FILE, path.join(jobDir, 'gsap.min.js'));
+    await prepareJobDir(props, jobDir, { templateDir, compositionFile, blurSamples, templateParams });
 
     // Audio is built before the render, so a narration that is too long fails without starting Chromium.
     // A preview (audioFile) muxes the given G4 voice sample instead of narrating the scenes again.
@@ -565,6 +578,41 @@ async function renderParts(scenes, fps, log, jobId, opts) {
   };
 }
 
+// Runs hyperframes snapshot in jobDir. Failures are render stage errors carrying the output tail.
+function snapshotHyperframes(jobDir, args) {
+  return execFileAsync(
+    process.execPath,
+    [HF_BIN, ...args],
+    { cwd: jobDir, timeout: RENDER_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024 },
+  ).catch((err) => {
+    const tail = `${err.stdout || ''}${err.stderr || ''}`.trim().slice(-600);
+    throw stageError(500, 'render', `hyperframes snapshot failed: ${tail}`, {
+      stderrTail: tailLines(err.stderr, LOG_TAIL_LINES),
+    });
+  });
+}
+
+// Stills for a job (G5): prepares the work folder as a render does, then takes one frame per time into outDir.
+// Returns {files} with the PNG paths in time order. The work folder is removed afterwards.
+async function snapshotStills(props, { times, outDir, jobId, templateDir }) {
+  const jobDir = path.join(WORK_DIR, `${jobId}-stills`);
+  await mkdir(jobDir, { recursive: true });
+  try {
+    await prepareJobDir(props, jobDir, { templateDir, blurSamples: parseMotionBlurSamples(undefined).value });
+    // Frames left by an earlier request for this job would be counted as stills, so the folder starts empty.
+    await rm(outDir, { recursive: true, force: true });
+    await mkdir(outDir, { recursive: true });
+    await atStage('render', () => snapshotHyperframes(jobDir, buildSnapshotArgs({ projectDir: jobDir, outDir, times })));
+    // The frames are named by hyperframes; numeric sort keeps them in time order.
+    const names = (await readdir(outDir))
+      .filter((n) => /\.png$/i.test(n))
+      .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+    return { files: names.map((n) => path.join(outDir, n)) };
+  } finally {
+    await rm(jobDir, { recursive: true, force: true });
+  }
+}
+
 app.post('/render', async (req, res) => {
   const log = req.renderLog;
   // job_id is not a render prop: it is removed from the body before validation and echo.
@@ -681,7 +729,7 @@ app.post('/render', async (req, res) => {
       blurSamples: blur.value,
       resolution: res1080.value,
       preset: gatedJob ? gatedDestination : null,
-      templateDir: tpl.entry ? tpl.entry.dir : (gatedDestination === 'shorts' ? SHORTS_TEMPLATE_DIR : TEMPLATE_DIR),
+      templateDir: tpl.entry ? tpl.entry.dir : templateDirFor(gatedDestination),
       templateParams: tpl.entry ? tpl.parameters : null,
       compositionFile: tpl.entry ? tpl.entry.manifest.composition : 'index.html',
     }));
@@ -758,6 +806,66 @@ app.post('/preview', async (req, res) => {
       job_id: jobId,
       seconds: result.seconds,
       url: `/output/${jobId}/preview/${path.basename(result.file)}`,
+    });
+  } catch (err) {
+    if (err instanceof PreviewRefused) {
+      log.stage = 'gate';
+      log.error = err.payload.error;
+      return res.status(err.status).json(err.payload);
+    }
+    log.stage = err.stage || null;
+    log.error = err.message;
+    log.stderr_tail = err.stderrTail || null;
+    const out = { error: err.message };
+    if (err.findings) {
+      out.stage = err.stage;
+      out.findings = err.findings;
+    }
+    res.status(err.status || 500).json(out);
+  }
+});
+
+// G5 stills (D59, D64). One PNG per scene, taken at each scene start across the whole job. The body and the
+// approvals are the film's (G1 to G4 must be approved); nothing is rendered. Files go to OUTPUT_DIR/<job_id>/stills.
+app.post('/stills', async (req, res) => {
+  const log = req.renderLog;
+  let body = req.body;
+  let jobId;
+  if (body && typeof body === 'object' && 'job_id' in body) {
+    ({ job_id: jobId, ...body } = body);
+  }
+  if (typeof jobId !== 'string' || !JOB_ID_RE.test(jobId)) {
+    log.stage = 'validate';
+    log.error = 'bad job_id';
+    return res.status(400).json({ error: 'bad job_id' });
+  }
+  if (!body || typeof body !== 'object' || !('schema_version' in body)) {
+    log.stage = 'validate';
+    log.error = 'stills need a job.json body';
+    return res.status(400).json({ error: 'stills need a job.json body (schema_version)' });
+  }
+  if (!ARTIFACT_DIR || !APPROVALS_PATH) {
+    log.stage = 'gate';
+    log.error = 'stills need ARTIFACT_DIR and APPROVALS_PATH set';
+    return res.status(503).json({ error: log.error });
+  }
+  // The template follows the job's destination, as a gated render does. The destination is read here and checked by buildStills.
+  const destination = Array.isArray(body.destinations) ? body.destinations[0] : null;
+  try {
+    const result = await enqueue(() => buildStills(body, {
+      outDir: path.join(OUTPUT_DIR, jobId, 'stills'),
+      checkApproval: (job) => checkStillsApproval(job, { artifactRoot: ARTIFACT_DIR, approvalsPath: APPROVALS_PATH }),
+      snapshot: ({ times, outDir, props }) => snapshotStills(props, {
+        times,
+        outDir,
+        jobId,
+        templateDir: templateDirFor(destination),
+      }),
+    }));
+    res.status(201).json({
+      job_id: jobId,
+      count: result.count,
+      urls: result.files.map((f) => `/output/${jobId}/stills/${path.basename(f)}`),
     });
   } catch (err) {
     if (err instanceof PreviewRefused) {
