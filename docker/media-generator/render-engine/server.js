@@ -24,6 +24,7 @@ import {
   parseMotionBlurSamples, parseResolution, framesFor, segmentTimeoutMs, fitsBudget, settingsKey,
 } from './lib/render-options.js';
 import { gateJob } from './lib/job-gate.js';
+import { buildPreview, checkG4Approval, PreviewRefused } from './lib/preview.js';
 import { planParts, totalSeconds, PART_MAX_SECONDS } from './lib/job-parts.js';
 import { jobOutputRel, jobOutputUrl, jobContactSheetRel, jobContactSheetUrl, JOB_PRESETS } from './lib/job-output.js';
 import { buildContactSheetArgs, contactSheetFps } from './lib/contact-sheet.js';
@@ -81,7 +82,7 @@ const JOB_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 // Per-job render budget (D54). A segmented job whose projected time exceeds this fails with stage "budget" and keeps its segments.
 const JOB_BUDGET_MS = Number(process.env.RENDER_JOB_BUDGET_MS || 1_800_000);
 
-const LOGGED_ROUTES = new Set(['GET /health', 'POST /render']);
+const LOGGED_ROUTES = new Set(['GET /health', 'POST /render', 'POST /preview']);
 
 const app = express();
 
@@ -358,7 +359,7 @@ async function flashCheckVideo(videoPath, fps, jobDir) {
 
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
-  const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null, compositionFile = 'index.html' } = opts;
+  const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null, compositionFile = 'index.html', audioFile = null } = opts;
   const id = jobId ?? randomUUID();
   log.id = id;
   const jobDir = path.join(WORK_DIR, id);
@@ -388,7 +389,10 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
     await cp(GSAP_FILE, path.join(jobDir, 'gsap.min.js'));
 
     // Audio is built before the render, so a narration that is too long fails without starting Chromium.
-    const audio = await atStage('audio', () => buildAudio(props, audioScenes, jobDir));
+    // A preview (audioFile) muxes the given G4 voice sample instead of narrating the scenes again.
+    const audio = audioFile
+      ? { mode: 'narration', narration: audioFile }
+      : await atStage('audio', () => buildAudio(props, audioScenes, jobDir));
 
     let video = path.join(jobDir, 'video.mp4');
     let segmentsReused = 0;
@@ -698,6 +702,78 @@ app.post('/render', async (req, res) => {
       body.findings = err.findings;
     }
     res.status(err.status || 500).json(body);
+  }
+});
+
+// G6 preview (D59, D64). Renders the first 60 s of a job.json body through renderJob with the G4 voice sample as
+// its audio. The approval check runs after the sample is built and before any render: G1 to G3 and G4 must be
+// approved, and G4 against the SHA-256 of the sample. The render writes to OUTPUT_DIR/<job_id>/preview/preview.mp4.
+async function renderPreviewFilm(props, { audioFile, jobId, log }) {
+  const checked = validateProps(props);
+  if (!checked.ok) throw stageError(400, 'validate', checked.error);
+  const timed = toTimeline(checked.props.scenes);
+  const craft = checkScenes(timed);
+  const policy = applyCraftPolicy(checked.hasScenes, craft.findings);
+  if (policy.reject) throw stageError(400, 'craft', 'craft check failed', { findings: craft.findings });
+  const audioScenes = timed.map((s) => ({ id: s.id, start: s.start, seconds: s.duration }));
+  // Runs inside the queue slot the preview route already holds (POST /preview), so it is not enqueued again.
+  const result = await renderJob(checked.props, audioScenes, log, `${jobId}-preview`, {
+    blurSamples: parseMotionBlurSamples(undefined).value,
+    resolution: parseResolution(undefined).value,
+    audioFile,
+  });
+  return { file: path.join(OUTPUT_DIR, result.file) };
+}
+
+app.post('/preview', async (req, res) => {
+  const log = req.renderLog;
+  let body = req.body;
+  let jobId;
+  if (body && typeof body === 'object' && 'job_id' in body) {
+    ({ job_id: jobId, ...body } = body);
+  }
+  if (typeof jobId !== 'string' || !JOB_ID_RE.test(jobId)) {
+    log.stage = 'validate';
+    log.error = 'bad job_id';
+    return res.status(400).json({ error: 'bad job_id' });
+  }
+  if (!body || typeof body !== 'object' || !('schema_version' in body)) {
+    log.stage = 'validate';
+    log.error = 'a preview needs a job.json body';
+    return res.status(400).json({ error: 'a preview needs a job.json body (schema_version)' });
+  }
+  if (!ARTIFACT_DIR || !APPROVALS_PATH) {
+    log.stage = 'gate';
+    log.error = 'previews need ARTIFACT_DIR and APPROVALS_PATH set';
+    return res.status(503).json({ error: log.error });
+  }
+  try {
+    const result = await enqueue(() => buildPreview(body, {
+      baseUrl: DHVANI_URL,
+      outDir: path.join(OUTPUT_DIR, jobId, 'preview'),
+      checkApproval: (sample) => checkG4Approval(body, { artifactRoot: ARTIFACT_DIR, approvalsPath: APPROVALS_PATH, sample }),
+      render: (props, opts) => renderPreviewFilm(props, { ...opts, jobId, log }),
+    }));
+    res.status(201).json({
+      job_id: jobId,
+      seconds: result.seconds,
+      url: `/output/${jobId}/preview/${path.basename(result.file)}`,
+    });
+  } catch (err) {
+    if (err instanceof PreviewRefused) {
+      log.stage = 'gate';
+      log.error = err.payload.error;
+      return res.status(err.status).json(err.payload);
+    }
+    log.stage = err.stage || null;
+    log.error = err.message;
+    log.stderr_tail = err.stderrTail || null;
+    const out = { error: err.message };
+    if (err.findings) {
+      out.stage = err.stage;
+      out.findings = err.findings;
+    }
+    res.status(err.status || 500).json(out);
   }
 });
 
