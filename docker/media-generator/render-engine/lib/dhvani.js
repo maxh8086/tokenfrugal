@@ -51,39 +51,45 @@ function hardSplit(sentence, max) {
   return pieces.filter(Boolean);
 }
 
-// Synthesizes one scene. Returns one WAV Buffer per chunk, in order.
-export async function synthesizeScene(text, {
+// Synthesizes one chunk (at most MAX_CHUNK characters). Returns its WAV Buffer.
+export async function synthesizeChunk(chunk, {
   baseUrl,
   voice,
   speed = 1,
   fetchImpl = fetch,
   timeoutMs = 120000,
 } = {}) {
-  if (!baseUrl) throw new Error('synthesizeScene: baseUrl is required');
+  if (!baseUrl) throw new Error('synthesizeChunk: baseUrl is required');
   const endpoint = `${String(baseUrl).replace(/\/$/, '')}/api/kokoro/speak`;
+  const res = await fetchImpl(endpoint, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text: chunk, voice, speed }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      if (body && body.error) detail = `: ${body.error}`;
+    } catch {
+      // The body is not JSON; the status alone is reported.
+    }
+    throw new Error(`dhvani returned HTTP ${res.status}${detail}`);
+  }
+  const type = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  if (type !== 'audio/wav' && type !== 'audio/x-wav') {
+    throw new Error(`dhvani returned content-type "${type || 'none'}", expected audio/wav`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+// Synthesizes one scene. Returns one WAV Buffer per chunk, in order.
+export async function synthesizeScene(text, opts = {}) {
+  if (!opts.baseUrl) throw new Error('synthesizeScene: baseUrl is required');
   const buffers = [];
   for (const chunk of splitForKokoro(text)) {
-    const res = await fetchImpl(endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text: chunk, voice, speed }),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    if (!res.ok) {
-      let detail = '';
-      try {
-        const body = await res.json();
-        if (body && body.error) detail = `: ${body.error}`;
-      } catch {
-        // The body is not JSON; the status alone is reported.
-      }
-      throw new Error(`dhvani returned HTTP ${res.status}${detail}`);
-    }
-    const type = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-    if (type !== 'audio/wav' && type !== 'audio/x-wav') {
-      throw new Error(`dhvani returned content-type "${type || 'none'}", expected audio/wav`);
-    }
-    buffers.push(Buffer.from(await res.arrayBuffer()));
+    buffers.push(await synthesizeChunk(chunk, opts));
   }
   return buffers;
 }

@@ -15,7 +15,10 @@ import { checkScenes, toTimeline, applyCraftPolicy, CRAFT_RULES } from './lib/cr
 import { planNarration, narrationArgs, musicArgs, muxArgs, audioMode } from './lib/audio-plan.js';
 import { colourArgs } from './lib/colour.js';
 import { writeLog, tailLines } from './lib/log.js';
-import { synthesizeScene } from './lib/dhvani.js';
+import { synthesizeChunk, splitForKokoro } from './lib/dhvani.js';
+import {
+  sha256Hex, stepKey, readCacheEntry, writeCacheEntry, writeNarrationClip, writeNarrationScript,
+} from './lib/project-store.js';
 import { planSegments, concatListText, segmentIsValid, coversDuration } from './lib/segments.js';
 import {
   parseMotionBlurSamples, parseResolution, framesFor, segmentTimeoutMs, fitsBudget, settingsKey,
@@ -62,6 +65,11 @@ const HF_BIN = path.join(path.dirname(require.resolve('hyperframes/package.json'
 const RENDER_TIMEOUT_MS = Number(process.env.RENDER_TIMEOUT_MS || 600_000);
 const DHVANI_URL = process.env.DHVANI_URL || 'http://dhvani:8080';
 const DHVANI_VOICE = process.env.DHVANI_VOICE || 'af_heart';
+// Project folder (D52): the narration record and the narrate step cache live here. Empty means off.
+const PROJECT_DIR = process.env.PROJECT_DIR || '';
+const NARRATE_STEP = 'narrate';
+const NARRATE_STEP_VERSION = 1;
+const NARRATE_SPEED = 1;
 const FFMPEG_BIN = process.env.FFMPEG_BIN || 'ffmpeg';
 const FFPROBE_BIN = process.env.FFPROBE_BIN || 'ffprobe';
 const LOG_TAIL_LINES = 40;
@@ -174,19 +182,65 @@ async function probeSeconds(file) {
 
 // Synthesizes one scene through dhvani into jobDir/s{i}.wav. Kokoro takes at most 1000 characters per request,
 // so a long scene comes back in several chunks, which are joined with ffmpeg. Returns the file path.
-async function narrateScene(text, jobDir, i) {
-  let buffers;
+// One chunk through dhvani. With PROJECT_DIR set, a chunk already in cache/narrate/<key>/ is reused, and a new
+// one is stored there. The key covers the chunk text, voice and speed, so the same text is never synthesized twice.
+async function synthesizeChunkCached(chunk) {
+  const opts = { baseUrl: DHVANI_URL, voice: DHVANI_VOICE, speed: NARRATE_SPEED };
+  if (!PROJECT_DIR) return { wav: await callDhvani(chunk, opts), key: null, cached: false };
+  const key = stepKey({
+    inputs: [sha256Hex(chunk)],
+    stepVersion: NARRATE_STEP_VERSION,
+    parameters: { voice: DHVANI_VOICE, speed: NARRATE_SPEED },
+  });
+  const hit = await readCacheEntry(PROJECT_DIR, NARRATE_STEP, key);
+  if (hit) return { wav: await readFile(path.join(hit.dir, 'chunk.wav')), key, cached: true };
+  const wav = await callDhvani(chunk, opts);
+  await writeCacheEntry(PROJECT_DIR, NARRATE_STEP, key, { 'chunk.wav': wav }, {
+    step: NARRATE_STEP,
+    stepVersion: NARRATE_STEP_VERSION,
+    key,
+    voice: DHVANI_VOICE,
+    speed: NARRATE_SPEED,
+    chars: chunk.length,
+    createdAt: new Date().toISOString(),
+  });
+  return { wav, key, cached: false };
+}
+
+// Only the dhvani request is mapped to a 502 'audio' error; cache or disk failures keep their own stage.
+async function callDhvani(chunk, opts) {
   try {
-    buffers = await synthesizeScene(text, { baseUrl: DHVANI_URL, voice: DHVANI_VOICE });
+    return await synthesizeChunk(chunk, opts);
   } catch (err) {
     throw stageError(502, 'audio', 'dhvani narration failed', { detail: err.message });
   }
+}
+
+async function narrateScene(text, jobDir, i) {
+  const jobId = path.basename(jobDir);
+  const chunks = splitForKokoro(text);
+  const results = [];
+  for (const chunk of chunks) results.push(await synthesizeChunkCached(chunk));
   const wav = path.join(jobDir, `s${i}.wav`);
   const parts = [];
-  for (let k = 0; k < buffers.length; k++) {
+  for (let k = 0; k < results.length; k++) {
     const part = path.join(jobDir, `s${i}_${k}.wav`);
-    await writeFile(part, buffers[k]);
+    await writeFile(part, results[k].wav);
     parts.push(part);
+    if (PROJECT_DIR) {
+      await writeNarrationClip(PROJECT_DIR, `${jobId}_s${i}_${k}`, results[k].wav, {
+        jobId,
+        scene: i,
+        chunk: k,
+        text: chunks[k],
+        voice: DHVANI_VOICE,
+        speed: NARRATE_SPEED,
+        stepKey: results[k].key,
+        cacheHit: results[k].cached,
+        bytes: results[k].wav.length,
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
   if (parts.length === 1) {
     await rename(parts[0], wav);
@@ -209,6 +263,12 @@ async function buildAudio(props, audioScenes, jobDir) {
   if (mode === 'none') return audio;
 
   if (props.narration) {
+    if (PROJECT_DIR) {
+      const script = props.scenes
+        .map((scene, i) => `## Scene ${i}\n\n${scene.text}. ${scene.sub || ''}`)
+        .join('\n\n');
+      await writeNarrationScript(PROJECT_DIR, path.basename(jobDir), script);
+    }
     const clips = [];
     for (let i = 0; i < audioScenes.length; i++) {
       const scene = props.scenes[i];
