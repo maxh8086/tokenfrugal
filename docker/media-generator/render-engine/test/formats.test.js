@@ -35,6 +35,16 @@ test('a format refuses a job longer than its maximum length', () => {
   assert.match(r.error, /at most 180 seconds; the job runs 200 seconds/);
 });
 
+test('a 1080x1920 format renders when the job names the shorts destination', () => {
+  assert.deepEqual(checkFormat({ ...job({ format: 'youtube-short' }, 10), destinations: ['shorts'] }), { ok: true, total: 10 });
+});
+
+test('a 1080x1920 format is refused when the job names a different destination', () => {
+  const r = checkFormat(job({ format: 'youtube-short' }, 10));
+  assert.equal(r.ok, false);
+  assert.match(r.error, /renders as shorts; name shorts as the job destination/);
+});
+
 test('a format whose size is not built is refused even when the length fits', () => {
   const r = checkFormat(job({ format: 'instagram-post' }, 10));
   assert.equal(r.ok, false);
