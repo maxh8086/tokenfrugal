@@ -4,7 +4,7 @@ import { preflightFailure } from '../lib/gate-preflight.js';
 import { HARDWARE_FLOOR_MESSAGE } from '../lib/hardware-floor.js';
 
 const GIB = 2 ** 30;
-const okHardware = { cpuCores: 2, ramGB: 4, freeDiskGB: 5 };
+const okHardware = { cpuCores: 2, ramGB: 6, freeDiskGB: 10 };
 
 test('enforce false returns null even with failing inputs', () => {
   const result = preflightFailure({
@@ -29,7 +29,7 @@ test('enforce true with hardware at the floor and ample disk returns null', () =
 test('hardware shortfall returns status 503 with stage hardware', () => {
   const result = preflightFailure({
     enforce: true,
-    hardware: { cpuCores: 1, ramGB: 4, freeDiskGB: 5 },
+    hardware: { cpuCores: 1, ramGB: 6, freeDiskGB: 10 },
     freeBytes: 100 * GIB,
     frames: 150,
   });

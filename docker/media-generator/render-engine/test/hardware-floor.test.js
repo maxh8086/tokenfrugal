@@ -43,14 +43,14 @@ test('cpuCores under the floor fails with that field', () => {
 test('ramGB under the floor fails with that field', () => {
   const r = checkHardware({ ...PASSING, ramGB: 2 });
   assert.equal(r.ok, false);
-  assert.deepEqual(r.failures, [{ field: 'ramGB', required: 4, measured: 2 }]);
+  assert.deepEqual(r.failures, [{ field: 'ramGB', required: 6, measured: 2 }]);
   assert.equal(r.message, MESSAGE);
 });
 
 test('freeDiskGB under the floor fails with that field', () => {
   const r = checkHardware({ ...PASSING, freeDiskGB: 3 });
   assert.equal(r.ok, false);
-  assert.deepEqual(r.failures, [{ field: 'freeDiskGB', required: 5, measured: 3 }]);
+  assert.deepEqual(r.failures, [{ field: 'freeDiskGB', required: 10, measured: 3 }]);
   assert.equal(r.message, MESSAGE);
 });
 
@@ -64,13 +64,13 @@ test('exactly at the floor passes (>=)', () => {
 test('a missing field fails with measured null', () => {
   const r = checkHardware({ cpuCores: 16, ramGB: 32 });
   assert.equal(r.ok, false);
-  assert.deepEqual(r.failures, [{ field: 'freeDiskGB', required: 5, measured: null }]);
+  assert.deepEqual(r.failures, [{ field: 'freeDiskGB', required: 10, measured: null }]);
 });
 
 test('NaN fails with measured null', () => {
   const r = checkHardware({ ...PASSING, ramGB: NaN });
   assert.equal(r.ok, false);
-  assert.deepEqual(r.failures, [{ field: 'ramGB', required: 4, measured: null }]);
+  assert.deepEqual(r.failures, [{ field: 'ramGB', required: 6, measured: null }]);
 });
 
 test('a string value fails with measured null', () => {
