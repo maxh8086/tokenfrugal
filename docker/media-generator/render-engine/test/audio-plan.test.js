@@ -9,7 +9,10 @@ import {
   audioMode,
   NARRATION_RULE,
 } from '../lib/audio-plan.js';
+// Namespace import so a missing LOUDNESS_FILTER export fails one assertion, not the whole file at link time.
+import * as audioPlan from '../lib/audio-plan.js';
 
+const LOUDNESS = 'loudnorm=I=-16:TP=-1.5:LRA=11';
 const scenes = [
   { id: 'scene-1', start: 0, seconds: 3 },
   { id: 'scene-2', start: 3, seconds: 4 },
@@ -124,4 +127,47 @@ test('muxArgs rejects a missing or non-positive totalSeconds', () => {
 
 test('muxArgs rejects an unknown mode', () => {
   assert.throws(() => muxArgs({ videoFile: 'v', mode: 'none', out: 'o', totalSeconds: 10 }), TypeError);
+});
+
+test('LOUDNESS_FILTER is the loudnorm target of -16 LUFS, -1.5 dBTP and LRA 11', () => {
+  assert.equal(audioPlan.LOUDNESS_FILTER, LOUDNESS);
+});
+
+test('muxArgs applies the loudness filter in narration, music and both modes', () => {
+  const base = { videoFile: '/job/video.mp4', narrationFile: '/job/n.wav', musicFile: '/job/m.wav', out: '/job/m.mp4', totalSeconds: 42.5 };
+  for (const mode of ['narration', 'music', 'both']) {
+    const args = muxArgs({ ...base, mode });
+    assert.ok(args.some((a) => a.includes(LOUDNESS)), `${mode} carries ${LOUDNESS}`);
+  }
+});
+
+test('muxArgs narration mode puts -af with the loudness filter before the codec args', () => {
+  const args = muxArgs({ videoFile: '/job/video.mp4', narrationFile: '/job/n.wav', mode: 'narration', out: '/job/m.mp4', totalSeconds: 42.5 });
+  const afAt = args.indexOf('-af');
+  assert.ok(afAt !== -1, '-af is present');
+  assert.equal(args[afAt + 1], LOUDNESS);
+  assert.ok(afAt < args.indexOf('-c:a'), '-af comes before -c:a');
+});
+
+test('muxArgs music mode puts -af with the loudness filter before the codec args', () => {
+  const args = muxArgs({ videoFile: '/job/video.mp4', musicFile: '/job/m.wav', mode: 'music', out: '/job/m.mp4', totalSeconds: 42.5 });
+  const afAt = args.indexOf('-af');
+  assert.ok(afAt !== -1, '-af is present');
+  assert.equal(args[afAt + 1], LOUDNESS);
+  assert.ok(afAt < args.indexOf('-c:a'), '-af comes before -c:a');
+});
+
+test('muxArgs both mode filter_complex ends in the loudness filter on [aout]', () => {
+  const args = muxArgs({
+    videoFile: '/job/video.mp4',
+    narrationFile: '/job/n.wav',
+    musicFile: '/job/m.wav',
+    mode: 'both',
+    out: '/job/m.mp4',
+    totalSeconds: 42.5,
+  });
+  assert.equal(
+    args[args.indexOf('-filter_complex') + 1],
+    '[1:a][2:a]amix=inputs=2:normalize=0:dropout_transition=0,loudnorm=I=-16:TP=-1.5:LRA=11[aout]',
+  );
 });
