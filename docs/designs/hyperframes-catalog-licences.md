@@ -473,3 +473,16 @@ Columns: Files = file count; Digest = first 16 hex of sha256 over the item's sor
 | yt-screen-warp | component | Grid, scanline, vignette, and sheen overlay plus a 3D-warp wrapper class that makes footage read as if playing on a physical display | UNKNOWN | none | 2 | a7ead33b73d8123a | cdn.jsdelivr.net |
 | yt-vertical-fill | block | Portrait media filling a widescreen frame via blurred-scale, mirror, or copy side fills; grid texture and foreground contrast lift (images inside the block; keep live footage in the host) | UNKNOWN | none | 2 | 3631045db58b817c | cdn.jsdelivr.net |
 | zoom-through-transition | component | A transition that zooms through a focal card into the next scene. | UNKNOWN | none | 2 | 07a3163bc81e378f | cdn.jsdelivr.net |
+
+## Final status for the media-generator image (2026-11-07)
+
+- Scan version: the table above was produced with `hyperframes@0.9.20`. The catalogue build fetched the 47 NOTICE-FOUND items again with `hyperframes@0.8.223` (the Dockerfile `HYPERFRAMES_VERSION` pin). File counts for all 47 items match the table. The digest column was not reproduced: a recomputation over the 0.8.223 files gave different values for all 47, and the method used for the table's digests is not recorded here (the per-file extract was in the scratchpad). Treat the digest column as unverified.
+- Copied into the image: the 47 NOTICE-FOUND items only, under `docker/media-generator/catalogue/`, each with `NOTICE.md` and the upstream licence/notice files. The 396 UNKNOWN items and the 5 BLOCKED-REVIEW items are not copied.
+- Vendored so the items render offline: gsap 3.14.2, d3-delaunay 6.0.4, clipper-lib 6.4.2, three.js 0.181.2 and 0.184.0 (closure builds), Inter latin-500 (fontsource), Geist (Google Fonts CSS and woff2). Each vendored file's licence text sits beside it.
+- Pinned: the HyperFrames CLI is `0.8.223` in the fetch and in the Dockerfile.
+- Open licence items for a human decision before redistribution:
+  - gsap 3.14.2 ships under the GSAP "Standard 'no charge' license" (its `package.json`), which is not an OSI licence. The item status above came from item files, not from gsap. The gsap copies are included, so this must be decided before the image is shared.
+  - clipper-lib 6.4.2 is BSL/Boost-1.0 according to its README. The npm package ships no LICENSE file; `LICENSE-clipper-lib.txt` was written from the README.
+  - Inter comes from fontsource `@latest` (unpinned upstream). The sha256 is recorded in `catalogue/MANIFEST.json`.
+  - Geist is unpinned upstream (Google Fonts). Five unique woff2 URLs were found in the CSS.
+- Audit: `docker/media-generator/catalogue/audit-external-urls.py` reports `LOADED external URLs: 0`, no unresolved vendored imports, and no manifest mismatches. Inert URLs (comments, licence text, SKILL.md documentation, SVG namespaces, anchor links) remain in the item files and are listed by host by the audit. Without vendoring, the same scanner finds 22 loaded URLs in the fetched output.
