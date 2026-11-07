@@ -4,7 +4,7 @@
 
 import path from 'node:path';
 
-export const JOB_PRESETS = ['youtube'];
+export const JOB_PRESETS = ['youtube', 'shorts'];
 const JOB_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 // Returns the path of a job's preset file, relative to OUTPUT_DIR, e.g. "abc/youtube.mp4".

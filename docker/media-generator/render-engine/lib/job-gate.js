@@ -10,28 +10,41 @@ import { GATES, canOpen, hashArtifact, isApproved, readApprovals } from './appro
 import { presets, validateJob } from './job-schema.js';
 import { checkFormat } from './formats.js';
 import { checkVoiceChoice } from './voice-choice.js';
+import { PART_MAX_SECONDS, totalSeconds } from './job-parts.js';
 
 // A full render may open only once G1 to G6 are approved; G7 is the publish approval after the render.
 export const RENDER_GATE = 'G7';
-const RENDERED_DESTINATION = 'youtube'; // the engine renders 1920x1080 only; shorts (1080x1920) is not built yet
+
+// One destination per job for now: a job that names both would need two renders with two compositions.
+// shorts uses its own vertical composition (D60) and is limited to one render part (PART_MAX_SECONDS).
+const DESTINATION_PRESETS = Object.freeze({ youtube: presets.youtube, shorts: presets.shorts });
 
 function gatesBeforeRender() {
   return GATES.slice(0, GATES.indexOf(RENDER_GATE));
 }
 
-// Maps a validated job to a props body for validateProps. Pure.
+// Maps a validated job to a props body for validateProps, plus the destination (a preset name) that picks
+// the output file and the composition. Pure.
 export function jobToPropsBody(job) {
-  const unsupported = job.destinations.filter((d) => d !== RENDERED_DESTINATION);
-  if (unsupported.length > 0) {
+  if (job.destinations.length !== 1) {
+    return { ok: false, error: 'a job renders one destination at a time; name either youtube or shorts' };
+  }
+  const destination = job.destinations[0];
+  const preset = DESTINATION_PRESETS[destination];
+  if (!preset) {
+    return { ok: false, error: `destination ${destination} is not rendered yet` };
+  }
+  if (destination === 'shorts' && totalSeconds(job.scenes) > PART_MAX_SECONDS) {
     return {
       ok: false,
-      error: `destination ${unsupported.join(', ')} is not rendered yet; only ${RENDERED_DESTINATION} (1920x1080) is supported`,
+      error: `shorts renders up to ${PART_MAX_SECONDS} seconds for now; the job runs ${totalSeconds(job.scenes)} seconds`,
     };
   }
   return {
     ok: true,
+    destination,
     body: {
-      fps: presets.youtube.fps,
+      fps: preset.fps,
       // Narration is stage 1 (D20): G1 reviews the narrated script, so a gated render always carries it.
       narration: true,
       narration_voice: checkVoiceChoice(job).voice,
@@ -131,5 +144,5 @@ export async function gateJob(job, { artifactRoot, approvalsPath }) {
       },
     };
   }
-  return { ok: true, body: mapped.body };
+  return { ok: true, body: mapped.body, destination: mapped.destination };
 }

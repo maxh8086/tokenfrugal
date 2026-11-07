@@ -69,15 +69,27 @@ test('jobToPropsBody passes the chosen narration voice through as narration_voic
   assert.equal(result.body.narration_voice, 'bm_george');
 });
 
-test('jobToPropsBody refuses shorts because the engine renders landscape only', () => {
+test('jobToPropsBody maps a shorts job to the shorts destination at 30 fps', () => {
   const result = jobToPropsBody(validJob({ destinations: ['shorts'] }));
-  assert.equal(result.ok, false);
-  assert.match(result.error, /shorts/);
+  assert.equal(result.ok, true);
+  assert.equal(result.destination, 'shorts');
+  assert.equal(result.body.fps, 30);
+});
+
+test('jobToPropsBody returns the youtube destination for a youtube job', () => {
+  assert.equal(jobToPropsBody(validJob()).destination, 'youtube');
 });
 
 test('jobToPropsBody refuses a job that names youtube and shorts together', () => {
   const result = jobToPropsBody(validJob({ destinations: ['youtube', 'shorts'] }));
   assert.equal(result.ok, false);
+  assert.match(result.error, /one destination/);
+});
+
+test('jobToPropsBody refuses a shorts job longer than one render part', () => {
+  const result = jobToPropsBody(validJob({ destinations: ['shorts'], scenes: [{ title: 'A', body: 'B', seconds: 61 }] }));
+  assert.equal(result.ok, false);
+  assert.match(result.error, /up to 60 seconds/);
 });
 
 test('the job schema accepts gate_artifacts and rejects unknown gates and unsafe paths', async () => {

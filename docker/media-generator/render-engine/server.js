@@ -35,7 +35,7 @@ import { freeBytesAt } from './lib/disk-gate.js';
 import { checkFlashes } from './lib/flash-check.js';
 import { flashFailure } from './lib/flash-preflight.js';
 
-// Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). Only youtube is rendered.
+// Gated job renders land in OUTPUT_DIR/<job_id>/<preset>.mp4 (lib/job-output.js). The preset is the job's destination.
 const JOB_PRESET = JOB_PRESETS[0];
 
 const execFileAsync = promisify(execFile);
@@ -48,6 +48,8 @@ const ARTIFACT_DIR = process.env.ARTIFACT_DIR || '';     // root for gate artifa
 const APPROVALS_PATH = process.env.APPROVALS_PATH || ''; // approvals folder (one G<n>.json per gate) written by bin/approve.js; a .json path is the legacy single file
 const WORK_DIR = process.env.WORK_DIR || path.join(os.tmpdir(), 'hf-jobs');
 const TEMPLATE_DIR = path.join(here, 'composition');
+// The shorts destination (D60) renders its own 1080x1920 composition, not a resized copy of the landscape one.
+const SHORTS_TEMPLATE_DIR = path.join(here, 'templates', 'scene-vertical');
 const GATES_ENFORCE = process.env.GATES_ENFORCE === '1';
 // Template registry (templates/index.json), loaded once on the first render that names a template.
 let templateRegistryPromise = null;
@@ -356,7 +358,7 @@ async function flashCheckVideo(videoPath, fps, jobDir) {
 
 // With a jobId the work folder is WORK_DIR/<jobId> and survives a failed render, so a retry reuses its segments.
 async function renderJob(props, audioScenes, log, jobId, opts = {}) {
-  const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null } = opts;
+  const { blurSamples = 32, resolution = '1080p', preset = null, templateDir = TEMPLATE_DIR, templateParams = null, compositionFile = 'index.html' } = opts;
   const id = jobId ?? randomUUID();
   log.id = id;
   const jobDir = path.join(WORK_DIR, id);
@@ -366,6 +368,10 @@ async function renderJob(props, audioScenes, log, jobId, opts = {}) {
   try {
     await runPreflight(props);
     await cp(templateDir, jobDir, { recursive: true });
+    // HyperFrames renders index.html; a template may name its composition file in its manifest (D50).
+    if (compositionFile !== 'index.html') {
+      await cp(path.join(jobDir, compositionFile), path.join(jobDir, 'index.html'));
+    }
     // HyperFrames reads the length from the static HTML, so write it there per job.
     const htmlPath = path.join(jobDir, 'index.html');
     const html = await readFile(htmlPath, 'utf8');
@@ -608,6 +614,7 @@ app.post('/render', async (req, res) => {
   // A job.json body (schema_version present) takes the gated path: it is validated, every gate before the
   // full render must be approved against its artifact, then it becomes a props body (D9, D39).
   let gatedJob = false;
+  let gatedDestination = null;
   if (body && typeof body === 'object' && 'schema_version' in body) {
     if (templateRaw !== undefined) {
       log.stage = 'validate';
@@ -622,6 +629,7 @@ app.post('/render', async (req, res) => {
     }
     body = gated.body;
     gatedJob = true;
+    gatedDestination = gated.destination;
   }
   if (gatedJob && totalSeconds(body.scenes) > PART_MAX_SECONDS) {
     try {
@@ -668,9 +676,10 @@ app.post('/render', async (req, res) => {
     const result = await enqueue(() => renderJob(checked.props, audioScenes, log, jobId ?? undefined, {
       blurSamples: blur.value,
       resolution: res1080.value,
-      preset: gatedJob ? JOB_PRESET : null,
-      templateDir: tpl.entry ? tpl.entry.dir : TEMPLATE_DIR,
+      preset: gatedJob ? gatedDestination : null,
+      templateDir: tpl.entry ? tpl.entry.dir : (gatedDestination === 'shorts' ? SHORTS_TEMPLATE_DIR : TEMPLATE_DIR),
       templateParams: tpl.entry ? tpl.parameters : null,
+      compositionFile: tpl.entry ? tpl.entry.manifest.composition : 'index.html',
     }));
     res.status(201).json({
       ...result,
