@@ -54,10 +54,11 @@
   "item_count": 47,
   "notice_status": "NOTICE-FOUND",
   "inter": {
-    "source": "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.woff2",
-    "note": "fontsource upstream URL is @latest (unpinned); sha256 recorded here",
-    "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
-    "fetched": "2026-11-07"
+    "installed_at_build": true,
+    "package": "@fontsource/inter",
+    "version": "5.3.0",
+    "see": "LIBS.json",
+    "note": "Replaces the former unpinned jsdelivr fontsource @latest download. The three weights used are byte-identical to the former copies."
   },
   "geist": {
     "source": "https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800",
@@ -65,10 +66,19 @@
     "fetched": "2026-11-07"
   },
   "three": {
-    "0.181.2": "closure of build/three.module.js + examples/jsm needed by wireframe-portal-title",
-    "0.184.0": "closure of build/three.module.js + FontLoader/TextGeometry for extruded-logo"
+    "installed_at_build": true,
+    "versions": [
+      "0.181.2",
+      "0.184.0"
+    ],
+    "see": "LIBS.json"
   },
   "files": [
+    {
+      "path": "LIBS.json",
+      "sha256": "1281e7c5fcbdeb0129a9baeaa44d8efa30bc2f0f1c995e5a7a51a5674c68cf12",
+      "bytes": 13237
+    },
     {
       "path": "aurora/NOTICE.md",
       "sha256": "0c307f50a77de78af6bcf1ef2e8fae97d92d8f8da141e61073bcb241120bc80c",
@@ -121,8 +131,8 @@
     },
     {
       "path": "caret-swap/NOTICE.md",
-      "sha256": "92f44c534d8a03ec52c39c19c85f94b72d16ae54379578ff5fae6569b33e44b5",
-      "bytes": 909
+      "sha256": "a7bf2ef819f6a204b69a738f9b38919c181fa2632ce671751a33842a1594a179",
+      "bytes": 1292
     },
     {
       "path": "caret-swap/compositions/components/caret-swap/Geist-Latin.woff2",
@@ -140,19 +150,9 @@
       "bytes": 13821
     },
     {
-      "path": "caret-swap/compositions/components/caret-swap/vendor/CustomEase.min.js",
-      "sha256": "2dae8ef6daba66ce7b527b1f46a5695ba325b21ad5b4d73e4a843753c65415f6",
-      "bytes": 7143
-    },
-    {
       "path": "caret-swap/compositions/components/caret-swap/vendor/LICENSE-gsap.txt",
       "sha256": "16583f0aeeb2d9d8ab9e2e314841aeebdf405fd65c595a68a9a80231abd15967",
       "bytes": 294
-    },
-    {
-      "path": "caret-swap/compositions/components/caret-swap/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
     },
     {
       "path": "caret-swap/hyperframes.lock.json",
@@ -161,8 +161,8 @@
     },
     {
       "path": "chatgpt-exchange/NOTICE.md",
-      "sha256": "5b5c7d10b64d208b67ea9b18661c21475c3dc9af513758180a3fd7cc2ea32f0d",
-      "bytes": 779
+      "sha256": "a7688d7a533d352e89651d8bb9be8f1304b2d3e9eaf93bf86709b69e102bbdba",
+      "bytes": 1237
     },
     {
       "path": "chatgpt-exchange/TEMPLATE.md",
@@ -175,21 +175,6 @@
       "bytes": 4477
     },
     {
-      "path": "chatgpt-exchange/assets/fonts/inter-latin-400-normal.woff2",
-      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
-      "bytes": 23664
-    },
-    {
-      "path": "chatgpt-exchange/assets/fonts/inter-latin-500-normal.woff2",
-      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
-      "bytes": 24272
-    },
-    {
-      "path": "chatgpt-exchange/assets/fonts/inter-latin-600-normal.woff2",
-      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
-      "bytes": 24452
-    },
-    {
       "path": "chatgpt-exchange/compositions/chatgpt-exchange.html",
       "sha256": "79c1201114a537089df8ddc9ba280dcd79e5d7fe18aaa6e57e9faab0d49f193f",
       "bytes": 54893
@@ -200,14 +185,9 @@
       "bytes": 294
     },
     {
-      "path": "chatgpt-exchange/compositions/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
-    },
-    {
       "path": "chatgpt-exchange/hyperframes.lock.json",
-      "sha256": "20f5b4ef7394d2cb4cb273434a85c5c2630ad0433fe8833f0cce12d9d1d24dad",
-      "bytes": 645
+      "sha256": "769cde1f9ba3ffe36168cc2873f636ebe5ace9e20becb0e115172560127870f8",
+      "bytes": 300
     },
     {
       "path": "chrome-orb/NOTICE.md",
@@ -236,8 +216,8 @@
     },
     {
       "path": "claude-exchange/NOTICE.md",
-      "sha256": "c0c42c197d5a3d7fb13818b60483858141cff77a99d0f3a13ddd48da44321ca6",
-      "bytes": 836
+      "sha256": "c0a77b2e6d6a0df7ced550ad66db68fda2bb430a614fc556ebae41dc2e2eccd3",
+      "bytes": 1294
     },
     {
       "path": "claude-exchange/TEMPLATE.md",
@@ -265,21 +245,6 @@
       "bytes": 4477
     },
     {
-      "path": "claude-exchange/assets/fonts/inter-latin-400-normal.woff2",
-      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
-      "bytes": 23664
-    },
-    {
-      "path": "claude-exchange/assets/fonts/inter-latin-500-normal.woff2",
-      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
-      "bytes": 24272
-    },
-    {
-      "path": "claude-exchange/assets/fonts/inter-latin-600-normal.woff2",
-      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
-      "bytes": 24452
-    },
-    {
       "path": "claude-exchange/compositions/claude-exchange.html",
       "sha256": "026623aa7d5569f53082046f97fa272edbd051c0506052eefb6ea3a96fd0b5c3",
       "bytes": 61835
@@ -290,14 +255,9 @@
       "bytes": 294
     },
     {
-      "path": "claude-exchange/compositions/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
-    },
-    {
       "path": "claude-exchange/hyperframes.lock.json",
-      "sha256": "1e611583c3e10c31f3dff46d06d7acf167362db04ffe76f9624d8c481841a417",
-      "bytes": 996
+      "sha256": "4c0037133ee3e6f09a972c12186c182f4b2b8b4d079153cd0c384d04f7dc0bd8",
+      "bytes": 651
     },
     {
       "path": "color-wheel/NOTICE.md",
@@ -326,8 +286,8 @@
     },
     {
       "path": "extruded-logo/NOTICE.md",
-      "sha256": "37a241fcc817b9e4655e8a448a944056de5bc7dbc28954c000201e212bda86c5",
-      "bytes": 1022
+      "sha256": "bfe760fd909b78700195c5cb367238f9afb2fee6a54cce1b8e81ac116b554f2d",
+      "bytes": 1504
     },
     {
       "path": "extruded-logo/compositions/assets/fonts/Geist-Bold.typeface.json",
@@ -350,39 +310,9 @@
       "bytes": 294
     },
     {
-      "path": "extruded-logo/compositions/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
-    },
-    {
-      "path": "extruded-logo/compositions/vendor/inter-latin-500-normal.woff2",
-      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
-      "bytes": 24272
-    },
-    {
       "path": "extruded-logo/compositions/vendor/three/LICENSE",
       "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
       "bytes": 1081
-    },
-    {
-      "path": "extruded-logo/compositions/vendor/three/build/three.core.js",
-      "sha256": "368dc78835287709a48939e8eb9a7a61d0732098bdf916e56840d458aae9ccf3",
-      "bytes": 1427497
-    },
-    {
-      "path": "extruded-logo/compositions/vendor/three/build/three.module.js",
-      "sha256": "61134198639a10885daf893fb29669ca26386e2a4cde76e8399f51e329f741f2",
-      "bytes": 648961
-    },
-    {
-      "path": "extruded-logo/compositions/vendor/three/examples/jsm/geometries/TextGeometry.js",
-      "sha256": "edf69c1cd6087c84d020156d1adbb29b40b098e4cbe8da4c0c36bbadc58dceac",
-      "bytes": 3312
-    },
-    {
-      "path": "extruded-logo/compositions/vendor/three/examples/jsm/loaders/FontLoader.js",
-      "sha256": "a8d78ab85e596ef6c274023ee165520000f010011553dbfafe5c966387aca3d8",
-      "bytes": 5292
     },
     {
       "path": "extruded-logo/hyperframes.lock.json",
@@ -516,8 +446,8 @@
     },
     {
       "path": "glass-shard-title/NOTICE.md",
-      "sha256": "85c4e3fa0533b1b4a14df4b6cf84c581247e375ef24e75d93dab904ae051c994",
-      "bytes": 1310
+      "sha256": "fad46242c09b779f9d68843b5bc40d17166e425bc24fe1a8405f1be3b5eb7f9e",
+      "bytes": 1751
     },
     {
       "path": "glass-shard-title/compositions/glass-shard-title/SKILL.md",
@@ -588,16 +518,6 @@
       "path": "glass-shard-title/compositions/glass-shard-title/vendor/LICENSE-gsap.txt",
       "sha256": "16583f0aeeb2d9d8ab9e2e314841aeebdf405fd65c595a68a9a80231abd15967",
       "bytes": 294
-    },
-    {
-      "path": "glass-shard-title/compositions/glass-shard-title/vendor/d3-delaunay.min.js",
-      "sha256": "efc726aa8aea0897f6dda19874709d09fd791781208ed5847ef1fd36f9886b18",
-      "bytes": 19071
-    },
-    {
-      "path": "glass-shard-title/compositions/glass-shard-title/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
     },
     {
       "path": "glass-shard-title/hyperframes.lock.json",
@@ -731,18 +651,13 @@
     },
     {
       "path": "kinetic-center-build/NOTICE.md",
-      "sha256": "e8208444bca6126bd3636e44c7736c6fe6df10a177521ab7f8814446899f33b6",
-      "bytes": 1193
+      "sha256": "cefecd88f97e86314598909a0ded1fbba533d2a360b08df0b52ff709bd191abb",
+      "bytes": 1576
     },
     {
       "path": "kinetic-center-build/compositions/components/kinetic-center-build.html",
       "sha256": "d6f868cb60e651fa830d4b5155aa4a7d3041c721c77e6b3ef7627171671b4efb",
       "bytes": 10937
-    },
-    {
-      "path": "kinetic-center-build/compositions/components/vendor/CustomEase.min.js",
-      "sha256": "2dae8ef6daba66ce7b527b1f46a5695ba325b21ad5b4d73e4a843753c65415f6",
-      "bytes": 7143
     },
     {
       "path": "kinetic-center-build/compositions/components/vendor/LICENSE-gsap.txt",
@@ -778,11 +693,6 @@
       "path": "kinetic-center-build/compositions/components/vendor/geist.css",
       "sha256": "14c704be0b298331444b3ebd78c2e0e5393b05fb2c4d136d006927cf8208d369",
       "bytes": 6196
-    },
-    {
-      "path": "kinetic-center-build/compositions/components/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
     },
     {
       "path": "kinetic-center-build/hyperframes.lock.json",
@@ -891,8 +801,8 @@
     },
     {
       "path": "marker-checklist-card/NOTICE.md",
-      "sha256": "e21cf6ccb0d03cc8d53f339205e95b55deb2f9e1eb0de9e0422925d84f7dd0c1",
-      "bytes": 773
+      "sha256": "fe739945f0451b19270b375202ce94ced05404c07c21d4b2cf20bfc4e1f9a7e1",
+      "bytes": 1156
     },
     {
       "path": "marker-checklist-card/assets/fonts/courier-prime-700.woff2",
@@ -913,11 +823,6 @@
       "path": "marker-checklist-card/compositions/components/vendor/LICENSE-gsap.txt",
       "sha256": "16583f0aeeb2d9d8ab9e2e314841aeebdf405fd65c595a68a9a80231abd15967",
       "bytes": 294
-    },
-    {
-      "path": "marker-checklist-card/compositions/components/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
     },
     {
       "path": "marker-checklist-card/hyperframes.lock.json",
@@ -1126,8 +1031,8 @@
     },
     {
       "path": "slack-notification-ad/NOTICE.md",
-      "sha256": "eefc073861d1bca3c9ec879a6a77f1b6e7a2c4ebd397a61b85bef97501110db9",
-      "bytes": 794
+      "sha256": "32a6dfd17f2f5ab4fa4c7895719707884c967a4bd4a5902eebaa8e4f75d66607",
+      "bytes": 1252
     },
     {
       "path": "slack-notification-ad/TEMPLATE.md",
@@ -1138,21 +1043,6 @@
       "path": "slack-notification-ad/assets/fonts/inter-LICENSE.txt",
       "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345",
       "bytes": 4477
-    },
-    {
-      "path": "slack-notification-ad/assets/fonts/inter-latin-400-normal.woff2",
-      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
-      "bytes": 23664
-    },
-    {
-      "path": "slack-notification-ad/assets/fonts/inter-latin-500-normal.woff2",
-      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
-      "bytes": 24272
-    },
-    {
-      "path": "slack-notification-ad/assets/fonts/inter-latin-600-normal.woff2",
-      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
-      "bytes": 24452
     },
     {
       "path": "slack-notification-ad/assets/img/heygen-mark.svg",
@@ -1175,14 +1065,9 @@
       "bytes": 294
     },
     {
-      "path": "slack-notification-ad/compositions/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
-    },
-    {
       "path": "slack-notification-ad/hyperframes.lock.json",
-      "sha256": "098e43bebdf6f3c4ec3fb4aea58e4502610864047bd02acf47bc2f6bead05977",
-      "bytes": 849
+      "sha256": "868eaa3ef494d2016708010bdfcb0232a5596a4f03d9c0d727dfa990b1faadcf",
+      "bytes": 504
     },
     {
       "path": "spiral/NOTICE.md",
@@ -1211,8 +1096,8 @@
     },
     {
       "path": "split-flap-board/NOTICE.md",
-      "sha256": "3c562a53f40776f34a52b1edbe5c89232aff960182c4713fbe709c00f7841b63",
-      "bytes": 725
+      "sha256": "0471b4bf80cd261cd567461c1773dcd7e93060a8c231bf1dac6851611d800cc4",
+      "bytes": 1108
     },
     {
       "path": "split-flap-board/compositions/split-flap-board.html",
@@ -1223,11 +1108,6 @@
       "path": "split-flap-board/compositions/vendor/LICENSE-gsap.txt",
       "sha256": "16583f0aeeb2d9d8ab9e2e314841aeebdf405fd65c595a68a9a80231abd15967",
       "bytes": 294
-    },
-    {
-      "path": "split-flap-board/compositions/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
     },
     {
       "path": "split-flap-board/hyperframes.lock.json",
@@ -1436,8 +1316,8 @@
     },
     {
       "path": "weight-wave/NOTICE.md",
-      "sha256": "8990f1a9943ae4001ecc7955811a7037a09179a5266edd7407e10d6e3f535623",
-      "bytes": 767
+      "sha256": "99d6393cc9378629d102718b20e652098fa69776b39916c6cb87289d7035dc2f",
+      "bytes": 1150
     },
     {
       "path": "weight-wave/compositions/assets/fonts/OFL.txt",
@@ -1455,11 +1335,6 @@
       "bytes": 294
     },
     {
-      "path": "weight-wave/compositions/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
-    },
-    {
       "path": "weight-wave/compositions/weight-wave.html",
       "sha256": "83b66695e52edd0f209ba9d810209f0252ed27067de02c5835f97101cd568f7e",
       "bytes": 12481
@@ -1471,8 +1346,8 @@
     },
     {
       "path": "wireframe-portal-title/NOTICE.md",
-      "sha256": "dbe185f824ba7403a86ea9e33c31c693d21cb8a932133b7e553fada73242f6d4",
-      "bytes": 1335
+      "sha256": "f03df7a5d7609284fba80ae341149438bf52cb06cf3e5b6d3cd846268bb8f66a",
+      "bytes": 1804
     },
     {
       "path": "wireframe-portal-title/compositions/wireframe-portal-title/SKILL.md",
@@ -1510,99 +1385,9 @@
       "bytes": 294
     },
     {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/clipper.js",
-      "sha256": "a650c6946682edc1a64016f6553eeb5c32ce45eb7ca0ad5d8221961af011d97c",
-      "bytes": 203786
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/gsap.min.js",
-      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
-      "bytes": 72779
-    },
-    {
       "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/LICENSE",
       "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
       "bytes": 1081
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/build/three.core.js",
-      "sha256": "03fb6e9fa08628385a9096948593251ae473239c7039496d7c280cba73d84631",
-      "bytes": 1405971
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/build/three.module.js",
-      "sha256": "1bb0b770bac5da2b59b21aa5fff4c547eeb864d4e408e4c36fbc6ced1dce0e9e",
-      "bytes": 626071
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/libs/opentype.module.js",
-      "sha256": "6897287898532ec3b9e33e1db73bdd9fd3c6131101ea0c0f62da000a0584b2fb",
-      "bytes": 467478
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/lines/LineMaterial.js",
-      "sha256": "8450d827153d2509e43513cd123df786d7c8c7cdbfd4c7eea4c9e1621f2a7fb5",
-      "bytes": 13228
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/lines/LineSegments2.js",
-      "sha256": "5d707b4e6056945b3b34cd8291b6afe16c913f6b1e8eac7b6d6892f41c45c26d",
-      "bytes": 11277
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/lines/LineSegmentsGeometry.js",
-      "sha256": "471f0a954a0c9c59d3d151392f424142a9164a722802f63b371971378a84a1b1",
-      "bytes": 6893
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/loaders/FontLoader.js",
-      "sha256": "a8d78ab85e596ef6c274023ee165520000f010011553dbfafe5c966387aca3d8",
-      "bytes": 5292
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/loaders/TTFLoader.js",
-      "sha256": "1dcf427b59394d48c20f85d88e744b0f7d2c81f37614e8a81ae82cbfca91849a",
-      "bytes": 5553
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/EffectComposer.js",
-      "sha256": "4b8c855f28eed2570bed898adc0ab89c585a8a281ecb6d905c09d00697f9f50a",
-      "bytes": 8477
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/MaskPass.js",
-      "sha256": "7cd08eee9d5d6f5578beaddbdcbe9c384f6873810af27f22ab7db3ceeb127aa3",
-      "bytes": 4694
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/OutputPass.js",
-      "sha256": "f5b81c96e76b6b28b4b3ba8c41c4aeb982b1e03f3d82883242d951b2ab082fa2",
-      "bytes": 4029
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/Pass.js",
-      "sha256": "444b409c235ead986893c472e720da1b779a56985c7d10b279c7944b52bd61c5",
-      "bytes": 4218
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/RenderPass.js",
-      "sha256": "fd91229aacc5830e3984b0f2bdefcf566163ea028f4c1f1ab233fa6665a133ac",
-      "bytes": 4112
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/ShaderPass.js",
-      "sha256": "e2500a5913b26bbf5148ceaae644c6edcff06a18b01494ee37bf856353d2ab9d",
-      "bytes": 3228
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/shaders/CopyShader.js",
-      "sha256": "a33057d5ac91c43304c186ac0e8816e62bb2ed471d3a00ff3018dfd5c0389718",
-      "bytes": 729
-    },
-    {
-      "path": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/shaders/OutputShader.js",
-      "sha256": "353479f77a8d7e2629d49ccac9fc2f5dbfdda5442e0adf867b00377a2fcb0cb2",
-      "bytes": 1876
     },
     {
       "path": "wireframe-portal-title/compositions/wireframe-portal-title/wireframe-portal-title.html",

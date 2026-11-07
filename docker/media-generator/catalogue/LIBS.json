@@ -1,0 +1,301 @@
+{
+  "description": "Libraries the media-generator image installs at build time instead of vendoring them. The Dockerfile installs each npm package at the version pinned by its ARG, then catalogue/install-libs.py copies each file below to its dest and fails the build unless the file's sha256 matches. Dests are relative to the catalogue root.",
+  "packages": {
+    "gsap": {
+      "npm": "gsap@3.14.2",
+      "licence": "GSAP standard no-charge licence (see LICENSE-gsap.txt in each item)"
+    },
+    "three-r181": {
+      "npm": "three@0.181.2",
+      "licence": "MIT"
+    },
+    "three-r184": {
+      "npm": "three@0.184.0",
+      "licence": "MIT"
+    },
+    "d3-delaunay": {
+      "npm": "d3-delaunay@6.0.4",
+      "licence": "ISC (see LICENSE-d3-delaunay.txt)"
+    },
+    "clipper-lib": {
+      "npm": "clipper-lib@6.4.2",
+      "licence": "BSL-1.0 (see LICENSE-clipper-lib.txt)"
+    },
+    "@fontsource/inter": {
+      "npm": "@fontsource/inter@5.3.0",
+      "licence": "OFL-1.1 (see inter-LICENSE.txt in each item)"
+    }
+  },
+  "files": [
+    {
+      "package": "gsap",
+      "source": "dist/CustomEase.min.js",
+      "dest": "caret-swap/compositions/components/caret-swap/vendor/CustomEase.min.js",
+      "sha256": "2dae8ef6daba66ce7b527b1f46a5695ba325b21ad5b4d73e4a843753c65415f6"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "caret-swap/compositions/components/caret-swap/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-400-normal.woff2",
+      "dest": "chatgpt-exchange/assets/fonts/inter-latin-400-normal.woff2",
+      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-500-normal.woff2",
+      "dest": "chatgpt-exchange/assets/fonts/inter-latin-500-normal.woff2",
+      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-600-normal.woff2",
+      "dest": "chatgpt-exchange/assets/fonts/inter-latin-600-normal.woff2",
+      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "chatgpt-exchange/compositions/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-400-normal.woff2",
+      "dest": "claude-exchange/assets/fonts/inter-latin-400-normal.woff2",
+      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-500-normal.woff2",
+      "dest": "claude-exchange/assets/fonts/inter-latin-500-normal.woff2",
+      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-600-normal.woff2",
+      "dest": "claude-exchange/assets/fonts/inter-latin-600-normal.woff2",
+      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "claude-exchange/compositions/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "extruded-logo/compositions/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-500-normal.woff2",
+      "dest": "extruded-logo/compositions/vendor/inter-latin-500-normal.woff2",
+      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+    },
+    {
+      "package": "three-r184",
+      "source": "build/three.core.js",
+      "dest": "extruded-logo/compositions/vendor/three/build/three.core.js",
+      "sha256": "368dc78835287709a48939e8eb9a7a61d0732098bdf916e56840d458aae9ccf3"
+    },
+    {
+      "package": "three-r184",
+      "source": "build/three.module.js",
+      "dest": "extruded-logo/compositions/vendor/three/build/three.module.js",
+      "sha256": "61134198639a10885daf893fb29669ca26386e2a4cde76e8399f51e329f741f2"
+    },
+    {
+      "package": "three-r184",
+      "source": "examples/jsm/geometries/TextGeometry.js",
+      "dest": "extruded-logo/compositions/vendor/three/examples/jsm/geometries/TextGeometry.js",
+      "sha256": "edf69c1cd6087c84d020156d1adbb29b40b098e4cbe8da4c0c36bbadc58dceac"
+    },
+    {
+      "package": "three-r184",
+      "source": "examples/jsm/loaders/FontLoader.js",
+      "dest": "extruded-logo/compositions/vendor/three/examples/jsm/loaders/FontLoader.js",
+      "sha256": "a8d78ab85e596ef6c274023ee165520000f010011553dbfafe5c966387aca3d8"
+    },
+    {
+      "package": "d3-delaunay",
+      "source": "dist/d3-delaunay.min.js",
+      "dest": "glass-shard-title/compositions/glass-shard-title/vendor/d3-delaunay.min.js",
+      "sha256": "efc726aa8aea0897f6dda19874709d09fd791781208ed5847ef1fd36f9886b18"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "glass-shard-title/compositions/glass-shard-title/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/CustomEase.min.js",
+      "dest": "kinetic-center-build/compositions/components/vendor/CustomEase.min.js",
+      "sha256": "2dae8ef6daba66ce7b527b1f46a5695ba325b21ad5b4d73e4a843753c65415f6"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "kinetic-center-build/compositions/components/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "marker-checklist-card/compositions/components/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-400-normal.woff2",
+      "dest": "slack-notification-ad/assets/fonts/inter-latin-400-normal.woff2",
+      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-500-normal.woff2",
+      "dest": "slack-notification-ad/assets/fonts/inter-latin-500-normal.woff2",
+      "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+    },
+    {
+      "package": "@fontsource/inter",
+      "source": "files/inter-latin-600-normal.woff2",
+      "dest": "slack-notification-ad/assets/fonts/inter-latin-600-normal.woff2",
+      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "slack-notification-ad/compositions/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "split-flap-board/compositions/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "weight-wave/compositions/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "clipper-lib",
+      "source": "clipper.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/clipper.js",
+      "sha256": "a650c6946682edc1a64016f6553eeb5c32ce45eb7ca0ad5d8221961af011d97c"
+    },
+    {
+      "package": "gsap",
+      "source": "dist/gsap.min.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    },
+    {
+      "package": "three-r181",
+      "source": "build/three.core.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/build/three.core.js",
+      "sha256": "03fb6e9fa08628385a9096948593251ae473239c7039496d7c280cba73d84631"
+    },
+    {
+      "package": "three-r181",
+      "source": "build/three.module.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/build/three.module.js",
+      "sha256": "1bb0b770bac5da2b59b21aa5fff4c547eeb864d4e408e4c36fbc6ced1dce0e9e"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/libs/opentype.module.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/libs/opentype.module.js",
+      "sha256": "6897287898532ec3b9e33e1db73bdd9fd3c6131101ea0c0f62da000a0584b2fb"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/lines/LineMaterial.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/lines/LineMaterial.js",
+      "sha256": "8450d827153d2509e43513cd123df786d7c8c7cdbfd4c7eea4c9e1621f2a7fb5"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/lines/LineSegments2.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/lines/LineSegments2.js",
+      "sha256": "5d707b4e6056945b3b34cd8291b6afe16c913f6b1e8eac7b6d6892f41c45c26d"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/lines/LineSegmentsGeometry.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/lines/LineSegmentsGeometry.js",
+      "sha256": "471f0a954a0c9c59d3d151392f424142a9164a722802f63b371971378a84a1b1"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/loaders/FontLoader.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/loaders/FontLoader.js",
+      "sha256": "a8d78ab85e596ef6c274023ee165520000f010011553dbfafe5c966387aca3d8"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/loaders/TTFLoader.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/loaders/TTFLoader.js",
+      "sha256": "1dcf427b59394d48c20f85d88e744b0f7d2c81f37614e8a81ae82cbfca91849a"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/postprocessing/EffectComposer.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/EffectComposer.js",
+      "sha256": "4b8c855f28eed2570bed898adc0ab89c585a8a281ecb6d905c09d00697f9f50a"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/postprocessing/MaskPass.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/MaskPass.js",
+      "sha256": "7cd08eee9d5d6f5578beaddbdcbe9c384f6873810af27f22ab7db3ceeb127aa3"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/postprocessing/OutputPass.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/OutputPass.js",
+      "sha256": "f5b81c96e76b6b28b4b3ba8c41c4aeb982b1e03f3d82883242d951b2ab082fa2"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/postprocessing/Pass.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/Pass.js",
+      "sha256": "444b409c235ead986893c472e720da1b779a56985c7d10b279c7944b52bd61c5"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/postprocessing/RenderPass.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/RenderPass.js",
+      "sha256": "fd91229aacc5830e3984b0f2bdefcf566163ea028f4c1f1ab233fa6665a133ac"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/postprocessing/ShaderPass.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/postprocessing/ShaderPass.js",
+      "sha256": "e2500a5913b26bbf5148ceaae644c6edcff06a18b01494ee37bf856353d2ab9d"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/shaders/CopyShader.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/shaders/CopyShader.js",
+      "sha256": "a33057d5ac91c43304c186ac0e8816e62bb2ed471d3a00ff3018dfd5c0389718"
+    },
+    {
+      "package": "three-r181",
+      "source": "examples/jsm/shaders/OutputShader.js",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/vendor/three/examples/jsm/shaders/OutputShader.js",
+      "sha256": "353479f77a8d7e2629d49ccac9fc2f5dbfdda5442e0adf867b00377a2fcb0cb2"
+    }
+  ]
+}

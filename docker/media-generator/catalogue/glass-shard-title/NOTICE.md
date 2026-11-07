@@ -17,3 +17,11 @@ Vendored (loaded at render time, previously fetched from a CDN):
 - `compositions/glass-shard-title/vendor/gsap.min.js`
 
 Vendored packages: gsap 3.14.2 (npm gsap@3.14.2; licence is GSAP's "Standard no charge" licence, not OSI, flagged for review; see `vendor/LICENSE-gsap.txt`); d3-delaunay 6.0.4 (ISC, see `vendor/LICENSE-d3-delaunay.txt`).
+
+## Libraries installed at build time
+
+The vendored copies of the following files were removed from this folder. The image installs them at build time from npm (or the fontsource package), pinned in `docker/media-generator/Dockerfile` and listed in `docker/media-generator/catalogue/LIBS.json`:
+
+- `d3-delaunay@6.0.4` (ISC (see LICENSE-d3-delaunay.txt))
+- `gsap@3.14.2` (GSAP standard no-charge licence (see LICENSE-gsap.txt in each item))
+

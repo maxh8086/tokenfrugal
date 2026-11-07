@@ -88,8 +88,17 @@ def scan_js(text, rel, loaded):
         loaded.append((rel, 'script call', u))
 
 
+def build_time_dests(root):
+    # Library files listed in LIBS.json are installed by the image at build time, so they are absent from the repo.
+    path = os.path.join(root, 'LIBS.json')
+    if not os.path.isfile(path):
+        return set()
+    return {f['dest'] for f in json.load(open(path, encoding='utf-8'))['files']}
+
+
 def check_imports(root, files):
     problems = []
+    build_time = build_time_dests(root)
     for rel in files:
         if os.path.splitext(rel)[1].lower() not in ('.js', '.mjs'):
             continue
@@ -102,7 +111,8 @@ def check_imports(root, files):
         for spec in JS_FROM_RE.findall(text) + JS_BARE_IMPORT_RE.findall(text):
             if spec.startswith('.') or spec.startswith('/'):
                 target = os.path.normpath(os.path.join(base, spec.split('?')[0]))
-                if not os.path.isfile(target):
+                target_rel = os.path.relpath(target, root).replace(os.sep, '/')
+                if not os.path.isfile(target) and target_rel not in build_time:
                     problems.append((rel, spec, 'relative target missing'))
             elif spec not in ('three',) and not spec.startswith('three/addons/'):
                 problems.append((rel, spec, 'bare specifier not in the vendored set'))

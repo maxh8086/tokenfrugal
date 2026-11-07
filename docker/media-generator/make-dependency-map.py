@@ -31,6 +31,16 @@ REF_LICENCES = {
     "design-engineering": "MIT",
 }
 
+# Catalogue libraries installed at build time: LIBS.json alias -> the Dockerfile ARG that pins its version.
+LIB_ARGS = {
+    "gsap": "GSAP_VERSION",
+    "three-r181": "THREE_R181_VERSION",
+    "three-r184": "THREE_R184_VERSION",
+    "d3-delaunay": "D3_DELAUNAY_VERSION",
+    "clipper-lib": "CLIPPER_LIB_VERSION",
+    "@fontsource/inter": "FONTSOURCE_INTER_VERSION",
+}
+
 # Licence text for global npm packages that are not in a lockfile in this repo.
 GLOBAL_NPM_LICENCES = {
     "remotion": "Remotion licence (not recorded in repo; check before commercial use)",
@@ -185,6 +195,25 @@ def main():
             catalogue.append({"item": name, "files": len(files),
                               "notice": name + "/NOTICE.md", "loaded_urls": len(loaded)})
 
+    # --- catalogue libraries (LIBS.json; installed by the Dockerfile catalogue RUN) ----------
+    lib_rows = []
+    libs_path = os.path.join(HERE, "catalogue", "LIBS.json")
+    if os.path.exists(libs_path):
+        libs = json.loads(read("catalogue/LIBS.json"))
+        for alias, info in sorted(libs["packages"].items()):
+            version = info["npm"].rsplit("@", 1)[1]
+            argname = LIB_ARGS.get(alias)
+            if argname is None:
+                errors.append("catalogue library %s has no ARG in LIB_ARGS (make-dependency-map.py)" % alias)
+                continue
+            if argname not in args:
+                errors.append("catalogue library %s needs ARG %s in the Dockerfile" % (alias, argname))
+                continue
+            if args[argname][0] != version:
+                errors.append("ARG %s is %s but catalogue/LIBS.json pins %s" % (argname, args[argname][0], version))
+            file_count = sum(1 for f in libs["files"] if f["package"] == alias)
+            lib_rows.append((alias, info["npm"], argname, info["licence"], file_count))
+
     # ==== render ===========================================================================
     out = []
     out.append("# Dependency map: media-generator image")
@@ -255,6 +284,16 @@ def main():
     out.append("Manim is installed in its own venv (`/opt/manim-venv`). Tex and MathTeX need LaTeX, which is not in the image.")
     out.append("")
 
+    if lib_rows:
+        out.append("## Catalogue libraries (npm, installed at build time)")
+        out.append("")
+        out.append("The catalogue `RUN` in the Dockerfile installs each package at the version in its `ARG`. "
+                   "`catalogue/install-libs.py` then copies each file listed in `catalogue/LIBS.json` into the catalogue and checks its sha256. "
+                   "The build fails on a mismatch.")
+        out.append("")
+        out.append(table(["Package (alias)", "npm spec", "ARG", "Licence", "Files copied"], lib_rows))
+        out.append("")
+
     out.append("## Browsers")
     out.append("")
     out.append(table(["Component", "Pin", "Source"], [
@@ -300,7 +339,8 @@ def main():
     if catalogue:
         out.append("## Vendored HyperFrames catalogue subset (catalogue/)")
         out.append("")
-        out.append("Only the NOTICE-FOUND items from docs/designs/hyperframes-catalog-licences.md. Each item's notices sit next to its files.")
+        out.append("Only the NOTICE-FOUND items from docs/designs/hyperframes-catalog-licences.md. Each item's notices sit next to its files. "
+                   "Library files are not vendored: see the catalogue libraries section above.")
         out.append("")
         out.append(table(["Item", "Files", "Notice file", "Loaded external URLs"],
                          [(c["item"], c["files"], c["notice"], c["loaded_urls"]) for c in catalogue]))
