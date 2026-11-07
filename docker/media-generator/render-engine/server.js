@@ -65,8 +65,9 @@ const HF_BIN = path.join(path.dirname(require.resolve('hyperframes/package.json'
 const RENDER_TIMEOUT_MS = Number(process.env.RENDER_TIMEOUT_MS || 600_000);
 const DHVANI_URL = process.env.DHVANI_URL || 'http://dhvani:8080';
 const DHVANI_VOICE = process.env.DHVANI_VOICE || 'af_heart';
-// Project folder (D52): the narration record and the narrate step cache live here. Empty means off.
-const PROJECT_DIR = process.env.PROJECT_DIR || '';
+// Project folder (D52): the narration record and the narrate step cache live here. Defaults to .project under
+// OUTPUT_DIR (the MEDIA_OUTPUT_DIR mount). Dot-folders are not served by express.static. Set PROJECT_DIR= (empty) to turn it off.
+const PROJECT_DIR = process.env.PROJECT_DIR ?? path.join(OUTPUT_DIR, '.project');
 const NARRATE_STEP = 'narrate';
 const NARRATE_STEP_VERSION = 1;
 const NARRATE_SPEED = 1;
