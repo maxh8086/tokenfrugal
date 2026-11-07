@@ -154,7 +154,11 @@ export async function recordApproval(approvalsPath, { gate, artifact, sha256, ap
     // D52: one file per gate. The newest approval for a gate replaces the older one.
     const gateEntry = { ...entry, human: true };
     await mkdir(approvalsPath, { recursive: true });
+    const previous = await readGateEntry(approvalsPath, gate);
     await writeAtomic(path.join(approvalsPath, `${gate}.json`), `${JSON.stringify(gateEntry, null, 2)}\n`);
+    if (previous && previous.sha256 !== sha256) {
+      await markStale(approvalsPath, { gate, previousSha256: previous.sha256, currentSha256: sha256 });
+    }
     return gateEntry;
   }
 
@@ -162,6 +166,79 @@ export async function recordApproval(approvalsPath, { gate, artifact, sha256, ap
   const next = { version: 1, approvals: [...current.approvals, entry] };
   await writeAtomic(approvalsPath, `${JSON.stringify(next, null, 2)}\n`);
   return entry;
+}
+
+// Returns the saved record for one gate in the folder store, or null when there is none.
+async function readGateEntry(dirPath, gate) {
+  const full = path.join(dirPath, `${gate}.json`);
+  let text;
+  try {
+    text = await readFile(full, 'utf8');
+  } catch (err) {
+    if (err && err.code === 'ENOENT') return null;
+    throw err;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`approval file ${full} is not valid JSON: ${err.message}`);
+  }
+}
+
+const STALE_FILE = 'stale.json';
+
+// Reads <project>/cache/stale.json. A missing file is an empty list. Throws on a malformed file.
+async function readStale(staleFile) {
+  let text;
+  try {
+    text = await readFile(staleFile, 'utf8');
+  } catch (err) {
+    if (err && err.code === 'ENOENT') return { version: 1, entries: [] };
+    throw err;
+  }
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    throw new Error(`stale file ${staleFile} is not valid JSON: ${err.message}`);
+  }
+  if (!data || data.version !== 1 || !Array.isArray(data.entries)) {
+    throw new Error(`stale file ${staleFile} must be {"version": 1, "entries": [...]}`);
+  }
+  return data;
+}
+
+// D52: when an upstream gate is re-approved with a new hash, every later approval was made against the old
+// upstream artefact and is marked stale in <project>/cache/stale.json. Stale entries are kept, never deleted,
+// and an identical entry is not added twice. Returns the entries added.
+async function markStale(approvalsDir, { gate, previousSha256, currentSha256 }) {
+  if (previousSha256 === currentSha256) return [];
+  const upstream = GATES.indexOf(gate);
+  const later = (await readGateDir(approvalsDir)).approvals.filter((e) => GATES.indexOf(e.gate) > upstream);
+  if (later.length === 0) return [];
+  const staleFile = path.join(path.dirname(approvalsDir), 'cache', STALE_FILE);
+  const stale = await readStale(staleFile);
+  const markedAt = new Date().toISOString();
+  const added = [];
+  for (const e of later) {
+    const same = (x) =>
+      x.gate === e.gate && x.sha256 === e.sha256 && x.staleBecause === gate && x.becauseSha256 === currentSha256;
+    if (stale.entries.some(same)) continue;
+    const item = {
+      gate: e.gate,
+      artifact: e.artifact,
+      sha256: e.sha256,
+      staleBecause: gate,
+      becauseSha256: currentSha256,
+      markedAt,
+    };
+    stale.entries.push(item);
+    added.push(item);
+  }
+  if (added.length === 0) return [];
+  await mkdir(path.dirname(staleFile), { recursive: true });
+  await writeAtomic(staleFile, `${JSON.stringify(stale, null, 2)}\n`);
+  return added;
 }
 
 // Writes text to a temp file in the same folder, then renames it over the target. Removes the temp file on failure.
