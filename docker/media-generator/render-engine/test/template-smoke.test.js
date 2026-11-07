@@ -80,7 +80,8 @@ for (const [id, entry] of registry.templates) {
           assert.ok(r > 230 && g < 25 && b < 25, `corner pixel rgb(${r},${g},${b}), expected red background`);
         }
       } finally {
-        await rm(dir, { recursive: true, force: true });
+        // Windows can hold a file for a moment after the render child exits; retry instead of failing the test.
+        await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });
       }
     });
   }
