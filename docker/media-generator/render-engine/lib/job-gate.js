@@ -39,12 +39,13 @@ export function jobToPropsBody(job) {
 }
 
 // Resolves and hashes the artifact for each gate before the render. Returns {ok, artifacts} where
-// artifacts[gate] = {artifact: absolute path, sha256}, or {ok: false, error}.
-export async function resolveGateArtifacts(job, artifactRoot) {
+// artifacts[gate] = {artifact: absolute path, sha256}, or {ok: false, error}. `gates` defaults to every gate
+// before the render (G1 to G6); a caller that needs only some of them (the G6 preview needs G1 to G3) names them.
+export async function resolveGateArtifacts(job, artifactRoot, gates = gatesBeforeRender()) {
   const root = path.resolve(artifactRoot);
   const declared = job.gate_artifacts || {};
   const artifacts = {};
-  for (const gate of gatesBeforeRender()) {
+  for (const gate of gates) {
     const rel = declared[gate];
     if (rel === undefined) {
       return { ok: false, error: `gate_artifacts is missing ${gate}` };
