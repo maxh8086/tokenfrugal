@@ -11,6 +11,9 @@ export const MUSIC = {
   peakGain: 0.0794,
 };
 
+// D56: integrated loudness -16 LUFS, true peak -1.5 dBTP, loudness range 11.
+export const LOUDNESS_FILTER = 'loudnorm=I=-16:TP=-1.5:LRA=11';
+
 const round2 = (n) => Math.round(n * 100) / 100;
 
 // scenes: [{id, start, seconds}]; durations: narration length in seconds per scene, same order.
@@ -110,7 +113,7 @@ export function muxArgs({ videoFile, narrationFile, musicFile, mode, out, totalS
   if (mode === 'both') {
     args.push('-i', narrationFile, '-i', musicFile);
     args.push(
-      '-filter_complex', '[1:a][2:a]amix=inputs=2:normalize=0:dropout_transition=0[aout]',
+      '-filter_complex', `[1:a][2:a]amix=inputs=2:normalize=0:dropout_transition=0,${LOUDNESS_FILTER}[aout]`,
     );
     audioMap = '[aout]';
   } else if (mode === 'narration') {
@@ -125,6 +128,7 @@ export function muxArgs({ videoFile, narrationFile, musicFile, mode, out, totalS
   args.push(
     '-map', '0:v:0',
     '-map', audioMap,
+    ...(mode === 'both' ? [] : ['-af', LOUDNESS_FILTER]),
     '-c:v', 'copy',
     '-c:a', 'aac',
     '-b:a', '192k',
