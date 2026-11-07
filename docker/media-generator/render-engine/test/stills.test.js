@@ -278,12 +278,12 @@ test('buildStills: an invalid job is refused before the approval check or snapsh
 test('buildStills: a format that is not rendered yet is refused at its own size', async () => {
   const { snapshot, calls } = fakeSnapshot();
   await assert.rejects(
-    buildStills(job(SCENES, { format: 'youtube-short' }), {
+    buildStills(job(SCENES, { format: 'instagram-post' }), {
       outDir,
       checkApproval: async () => ({ ok: true }),
       snapshot,
     }),
-    (err) => err instanceof PreviewRefused && err.status === 400 && /YouTube Short \(1080x1920/.test(err.payload.error),
+    (err) => err instanceof PreviewRefused && err.status === 400 && /Instagram post \(1080x1350/.test(err.payload.error),
   );
   assert.equal(calls.length, 0);
 });

@@ -54,6 +54,36 @@ Update 2026-11-06: item 1 and the long-job part are built on branch `media-gate-
 2. **GPU image / ComfyUI container with GPU lease.** Built and CPU-tested; the 8 GB spike waits for the user's GPU go-ahead. See the section "ComfyUI GPU lease: status and the 8 GB spike" below.
 3. **Studio tab for content review and content writer roles.** Plan the design with the `ui-ux-pro-max` skill before any code (see the Studio item in the PRIORITY section below).
 4. **Split content-analyst into six roles.** Roles and held sources are in the PRIORITY section (item 1) and section 11.
+5. **Fix the builder role's timeout and file access (RCA below, NOT started).** Builder dispatches failed on 2026-11-07 with `step_timeout` and a `write_file` access denial.
+
+---
+## RCA: builder dispatches fail with step_timeout (2026-11-07, not yet fixed)
+
+**Symptom.** Three `dispatch_task` calls to `engineering-minimal-change-engineer` (role `builder`, model `hf.co/unsloth/Qwen3.5-4B-GGUF:Q6_K`) failed with `LoopError: task timed out after 130s`, `error_kind=step_timeout`, after 2 tool calls. Task ids `220af5329e`, `918f3091bd`, `f1c4cd7dde`. The same wording appeared in the earlier task `addab80554`, about three days before these (task timestamps in `tasks.db`).
+
+**Evidence from `router/tasks.db`, trail of `f1c4cd7dde`:**
+- Step 1 took 76.6 s for 841 output tokens (about 11 tokens per second). Most of that output was the model's reasoning text before its first tool call.
+- The first tool call was `write_file` to `C:/Users/vaibh/AppData/Local/Temp/claude/.../scratchpad/fetch-one.mjs`. It was denied: `Access denied - path outside allowed directories: /app/C:/Users/vaibh/AppData/Local/Temp/...`. The builder's file tools only reach the router's workspace, not the session scratchpad.
+- Step 2 ran for 47 s with no answer, and the 130 s cap ended the task.
+- Comparison: task `d04986921a` (succeeded, 31 s, 9 tool calls) had steps of 1 to 10 s, with short outputs and edits inside the workspace.
+
+**Causes, in order of confidence:**
+1. **Write tasks are denied outside the workspace.** Scratchpad paths are not in the builder's allowed directories, so every file-creation task fails. This is the cause for any task that writes outside the repo.
+2. **The 130 s cap is too short for a long first step.** `router/tf-roles.yaml` sets `builder: timeout_s: 130`. The global default is 540 (`TASK_TIMEOUT`). A single step that writes a whole file can take more than 76 s at this speed.
+3. **Thinking adds output tokens.** `TOKENFRUGAL_THINK` defaults to `medium` (`router/config.py:52`), so the model writes reasoning before each tool call, and that output counts against the step.
+
+**Not the cause (ruled out):**
+- Cold load: `ollama ps` shows the model loaded at 100% GPU, context 65536, expiring in 22 minutes.
+- GPU lease: the failure is `step_timeout`, not `gpu_busy`.
+- Tool timeout: `TOOL_TIMEOUT` is 60 s, and no tool call took that long.
+
+**Proposed fix (not applied; needs a review before any change):**
+- Add the needed scratchpad or output path to the builder's allowed directories, or have the caller write files inside the workspace and copy them out.
+- Raise `builder` `timeout_s` (for example to 300), or keep it and split write tasks into smaller steps.
+- Set `TOKENFRUGAL_THINK=off` for builder dispatches, or test whether it cuts step time without hurting output.
+- Confirm with one small dispatch that writes inside the workspace before using it for the catalogue work.
+
+**Process notes.** The first two dispatches used role names (`builder`, `code-l2`) instead of agency slugs, and were refused as unknown agents. Dispatch needs a slug from `router/tf-roles.yaml`, for example `engineering-minimal-change-engineer`.
 
 ---
 ## ComfyUI GPU lease: status and the 8 GB spike (set 2026-11-01, WAITING for the user's GPU go-ahead)

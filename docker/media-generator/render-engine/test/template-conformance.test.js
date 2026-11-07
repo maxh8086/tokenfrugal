@@ -12,9 +12,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRegistry, GLOBAL_LIMITS, KNOWN_PRESETS } from '../lib/template-registry.js';
 import { JOB_PRESETS } from '../lib/job-output.js';
+import { LIMITS, SCENE_LIMITS } from '../lib/props.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const registry = await loadRegistry(root);
+
+// The limits the render engine enforces on every job (lib/props.js). A manifest may declare tighter limits, never looser.
+const ENGINE_LIMITS = {
+  titleMax: LIMITS.titleMax,
+  bodyMax: SCENE_LIMITS.subMax,
+  sceneCountMax: SCENE_LIMITS.countMax,
+  sceneSecondsMax: SCENE_LIMITS.secondsMax,
+};
 
 test('at least one registered template can render each preset the engine renders', () => {
   for (const preset of JOB_PRESETS) {
@@ -34,6 +43,7 @@ for (const [id, entry] of registry.templates) {
 
       for (const [key, value] of Object.entries(entry.manifest.limits)) {
         assert.ok(value <= GLOBAL_LIMITS[key], `${key}=${value} is looser than the global limit`);
+        assert.ok(value <= ENGINE_LIMITS[key], `${key}=${value} is looser than the engine limit ${ENGINE_LIMITS[key]}`);
       }
 
       const html = await readFile(path.join(entry.dir, entry.manifest.composition), 'utf8');

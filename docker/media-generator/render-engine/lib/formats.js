@@ -1,3 +1,5 @@
+import { presets } from './job-schema.js';
+
 // G2 format list (D27). Each format fixes its pixel size, frame rate and maximum length (D45, D56).
 // maxSeconds null means the length is not fixed by the design yet (D29, Facebook Reel in O18).
 // Only formats whose size and frame rate match a built preset can render today (see renderable below).
@@ -16,8 +18,10 @@ export const FORMATS = Object.freeze({
 
 export const FORMAT_IDS = Object.freeze(Object.keys(FORMATS));
 
-// The engine renders one size today: the youtube preset (1920x1080 at 30 fps, job-schema.js).
-export const RENDERABLE = Object.freeze({ width: 1920, height: 1080, fps: 30 });
+// The engine renders one size per destination preset (job-schema.js): youtube 1920x1080 and shorts 1080x1920, both at 30 fps.
+export const RENDERABLE = Object.freeze(
+  Object.entries(presets).map(([destination, p]) => Object.freeze({ destination, width: p.width, height: p.height, fps: p.fps })),
+);
 
 // Pure. Returns {ok: true, total} or {ok: false, error}. A job without a format keeps today's behaviour.
 export function checkFormat(job) {
@@ -31,10 +35,18 @@ export function checkFormat(job) {
       error: `format ${format.label} allows at most ${format.maxSeconds} seconds; the job runs ${total} seconds`,
     };
   }
-  if (format.width !== RENDERABLE.width || format.height !== RENDERABLE.height || format.fps !== RENDERABLE.fps) {
+  const rendered = RENDERABLE.find((r) => r.width === format.width && r.height === format.height && r.fps === format.fps);
+  if (!rendered) {
+    const sizes = RENDERABLE.map((r) => `${r.width}x${r.height} at ${r.fps} fps (${r.destination})`).join(', ');
     return {
       ok: false,
-      error: `format ${format.label} (${format.width}x${format.height} at ${format.fps} fps) is not rendered yet; only ${RENDERABLE.width}x${RENDERABLE.height} at ${RENDERABLE.fps} fps is supported`,
+      error: `format ${format.label} (${format.width}x${format.height} at ${format.fps} fps) is not rendered yet; rendered sizes are ${sizes}`,
+    };
+  }
+  if (job.destinations?.[0] !== rendered.destination) {
+    return {
+      ok: false,
+      error: `format ${format.label} renders as ${rendered.destination}; name ${rendered.destination} as the job destination`,
     };
   }
   return { ok: true, total };

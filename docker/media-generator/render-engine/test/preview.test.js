@@ -159,10 +159,10 @@ test('validatePreviewJob: refuses an invalid job before any synthesis', async ()
 });
 
 test('validatePreviewJob: refuses a format that is not rendered yet, at its own size', async () => {
-  const result = await validatePreviewJob(job(LONG_SCENES, { format: 'youtube-short' }));
+  const result = await validatePreviewJob(job(LONG_SCENES, { format: 'instagram-post' }));
   assert.equal(result.ok, false);
   assert.equal(result.status, 400);
-  assert.match(result.payload.error, /YouTube Short \(1080x1920/);
+  assert.match(result.payload.error, /Instagram post \(1080x1350/);
 });
 
 test('validatePreviewJob: refuses a job shorter than 60 seconds', async () => {
