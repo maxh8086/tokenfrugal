@@ -2,7 +2,7 @@
 // job folder) and to the SHA-256 of that artifact's bytes. If the artifact changes, its hash changes and the
 // approval no longer matches, so the gate must be approved again.
 import { createHash, randomBytes } from 'node:crypto';
-import { readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export const GATES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'];
@@ -27,8 +27,50 @@ export async function hashArtifact(filePath) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-// Returns {version: 1, approvals: []} when the file does not exist. Throws on a malformed file.
+// D52 store: a directory holding one file per gate, approvals/G<n>.json, each with the gate, the artifact
+// path, the SHA-256, the approver, the time and human: true. A path ending in .json is the older single
+// file, still read and written unchanged so existing records keep working; migrateLegacyApprovals moves them.
+export function isLegacyFile(approvalsPath) {
+  return approvalsPath.toLowerCase().endsWith('.json');
+}
+
+const GATE_FILE_RE = /^(G[1-7])\.json$/;
+
+// Reads the per-gate store. A missing folder is an empty list. Each file must name the gate it is called after.
+async function readGateDir(dirPath) {
+  let names;
+  try {
+    names = await readdir(dirPath);
+  } catch (err) {
+    if (err && err.code === 'ENOENT') return { version: 1, approvals: [] };
+    throw err;
+  }
+  const approvals = [];
+  for (const name of names.filter((n) => GATE_FILE_RE.test(n)).sort()) {
+    const gate = name.match(GATE_FILE_RE)[1];
+    const full = path.join(dirPath, name);
+    let entry;
+    try {
+      entry = JSON.parse(await readFile(full, 'utf8'));
+    } catch (err) {
+      throw new Error(`approval file ${full} is not valid JSON: ${err.message}`);
+    }
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error(`approval file ${full} must be a JSON object`);
+    }
+    if (entry.gate !== gate) {
+      throw new Error(`approval file ${full} names gate ${JSON.stringify(entry.gate)}; expected ${gate}`);
+    }
+    // Only a record a human wrote counts (D39, D52). Any other file is ignored, so the gate stays closed.
+    if (entry.human !== true) continue;
+    approvals.push(entry);
+  }
+  return { version: 1, approvals };
+}
+
+// Returns {version: 1, approvals: []} when the file or folder does not exist. Throws on a malformed record.
 export async function readApprovals(approvalsPath) {
+  if (!isLegacyFile(approvalsPath)) return readGateDir(approvalsPath);
   let text;
   try {
     text = await readFile(approvalsPath, 'utf8');
@@ -108,19 +150,50 @@ export async function recordApproval(approvalsPath, { gate, artifact, sha256, ap
     approvedAt: approvedAt ?? new Date().toISOString(),
     ...(seed !== undefined ? { seed } : {}),
   };
+  if (!isLegacyFile(approvalsPath)) {
+    // D52: one file per gate. The newest approval for a gate replaces the older one.
+    const gateEntry = { ...entry, human: true };
+    await mkdir(approvalsPath, { recursive: true });
+    await writeAtomic(path.join(approvalsPath, `${gate}.json`), `${JSON.stringify(gateEntry, null, 2)}\n`);
+    return gateEntry;
+  }
+
   const current = await readApprovals(approvalsPath);
   const next = { version: 1, approvals: [...current.approvals, entry] };
+  await writeAtomic(approvalsPath, `${JSON.stringify(next, null, 2)}\n`);
+  return entry;
+}
 
+// Writes text to a temp file in the same folder, then renames it over the target. Removes the temp file on failure.
+async function writeAtomic(target, text) {
   const tmpPath = path.join(
-    path.dirname(approvalsPath),
-    `.${path.basename(approvalsPath)}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`,
+    path.dirname(target),
+    `.${path.basename(target)}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`,
   );
   try {
-    await writeFile(tmpPath, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
-    await rename(tmpPath, approvalsPath);
+    await writeFile(tmpPath, text, 'utf8');
+    await rename(tmpPath, target);
   } catch (err) {
     await rm(tmpPath, { force: true }).catch(() => {});
     throw err;
   }
-  return entry;
+}
+
+// Copies the newest approval per gate from a legacy single file into the per-gate folder (D52).
+// Returns the gates written. The legacy file is left in place.
+export async function migrateLegacyApprovals(legacyFile, dirPath) {
+  if (!isLegacyFile(legacyFile)) throw new Error('migration source must be the legacy .json file');
+  if (isLegacyFile(dirPath)) throw new Error('migration target must be a folder, not a .json file');
+  const legacy = await readApprovals(legacyFile);
+  const newest = new Map();
+  for (const entry of legacy.approvals) newest.set(entry.gate, entry);
+  await mkdir(dirPath, { recursive: true });
+  const written = [];
+  for (const gate of GATES) {
+    const entry = newest.get(gate);
+    if (!entry) continue;
+    await writeAtomic(path.join(dirPath, `${gate}.json`), `${JSON.stringify({ ...entry, human: true }, null, 2)}\n`);
+    written.push(gate);
+  }
+  return written;
 }
