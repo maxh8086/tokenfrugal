@@ -56,7 +56,13 @@ async function approve(job, gates) {
 test('jobToPropsBody maps scenes to props scenes and uses the youtube fps', () => {
   const result = jobToPropsBody(validJob({ scenes: [{ title: 'A', body: 'B', seconds: 4 }] }));
   assert.equal(result.ok, true);
-  assert.deepEqual(result.body, { fps: 30, scenes: [{ text: 'A', sub: 'B', seconds: 4 }] });
+  assert.deepEqual(result.body, { fps: 30, narration_voice: null, scenes: [{ text: 'A', sub: 'B', seconds: 4 }] });
+});
+
+test('jobToPropsBody passes the chosen narration voice through as narration_voice', () => {
+  const result = jobToPropsBody(validJob({ voice_profile: 'bm_george' }));
+  assert.equal(result.ok, true);
+  assert.equal(result.body.narration_voice, 'bm_george');
 });
 
 test('jobToPropsBody refuses shorts because the engine renders landscape only', () => {

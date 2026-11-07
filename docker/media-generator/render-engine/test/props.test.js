@@ -175,3 +175,24 @@ test('narration and music default to false and must be booleans', () => {
   assert.equal(validateProps({ narration: 'yes' }).ok, false);
   assert.equal(validateProps({ music: 1 }).ok, false);
 });
+
+test('narration_voice accepts a Kokoro voice name and is copied into props', () => {
+  const r = validateProps({ narration_voice: 'bm_george' });
+  assert.equal(r.ok, true);
+  assert.equal(r.props.narration_voice, 'bm_george');
+});
+
+test('narration_voice accepts null, which means the service default voice', () => {
+  const r = validateProps({ narration_voice: null });
+  assert.equal(r.ok, true);
+  assert.equal(r.props.narration_voice, null);
+  assert.equal(validateProps({}).props.narration_voice, null);
+});
+
+test('narration_voice refuses a value that is not a voice name, and names the field', () => {
+  for (const bad of ['Bad Voice!', '../x', 42, '', true]) {
+    const r = validateProps({ narration_voice: bad });
+    assert.equal(r.ok, false, JSON.stringify(bad));
+    assert.match(r.error, /narration_voice/, JSON.stringify(bad));
+  }
+});

@@ -2,7 +2,7 @@
 // errors. A job may name one Kokoro voice (for example af_heart or bm_george) through voice_profile.
 // Absent or null means the service default voice. Pure: no I/O.
 
-const VOICE_PATTERN = /^[a-z]{2}_[a-z0-9]+$/;
+export const VOICE_PATTERN = /^[a-z]{2}_[a-z0-9]+$/;
 
 // Returns {ok: true, voice} with voice null for the service default, or {ok: false, error}.
 export function checkVoiceChoice(job) {

@@ -1,6 +1,8 @@
 // Validation and defaults for the /render request body.
 // Kept free of I/O so it can be unit tested with `node --test`.
 
+import { VOICE_PATTERN } from './voice-choice.js';
+
 export const LIMITS = {
   titleMax: 80,
   subtitleMax: 120,
@@ -31,6 +33,7 @@ export const DEFAULTS = {
   fps: 60,
   narration: false,
   music: false,
+  narration_voice: null,
   scenes: [{ text: 'Hello from HyperFrames', sub: '', seconds: 3 }],
 };
 
@@ -178,6 +181,14 @@ export function validateProps(body) {
       }
       props[key] = body[key];
     }
+  }
+
+  if (body.narration_voice !== undefined) {
+    const v = body.narration_voice;
+    if (v !== null && (typeof v !== 'string' || !VOICE_PATTERN.test(v))) {
+      return { ok: false, error: 'narration_voice must be a Kokoro voice name such as af_heart, or null for the default' };
+    }
+    props.narration_voice = v;
   }
 
   if (hasScenes) {

@@ -32,6 +32,7 @@ export function jobToPropsBody(job) {
     ok: true,
     body: {
       fps: presets.youtube.fps,
+      narration_voice: checkVoiceChoice(job).voice,
       scenes: job.scenes.map((s) => ({ text: s.title, sub: s.body, seconds: s.seconds })),
     },
   };
