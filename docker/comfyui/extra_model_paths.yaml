@@ -3,8 +3,12 @@
 tokenfrugal:
   base_path: /models
   checkpoints: ltx-video-2b-distilled/
-  text_encoders: ltx-video-2b-distilled/
+  text_encoders: |
+    ltx-video-2b-distilled/
+    ltx-2b-gguf/
   clip: ltx-video-2b-distilled/
+  diffusion_models: ltx-2b-gguf/
+  vae: ltx-2b-gguf/
 
 # Image models (Mage-Flow). /image_models is the read-only mount of models/image_generation/comfy-t2i on the host.
 mage_flow:

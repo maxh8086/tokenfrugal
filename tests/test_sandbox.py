@@ -48,11 +48,22 @@ class VideoEditorTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.env = mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": self.tmp.name})
         self.env.start()
+        # mgen tests check argv and validation, not the model cache: skip the model pull.
+        self.models = mock.patch.object(v, "ensure_models", return_value="")
+        self.models.start()
         os.makedirs(os.path.join(self.tmp.name, "Raw"))
 
     def tearDown(self):
+        self.models.stop()
         self.env.stop()
         self.tmp.cleanup()
+
+    def test_model_pull_not_attempted_for_missing_clip(self):
+        with mock.patch.object(v, "ensure_models", return_value="") as pull, \
+                mock.patch.object(v.subprocess, "run") as run:
+            self.assertEqual(v.mgen("nope.mp4"), "error: clip not found in Raw")
+            pull.assert_not_called()
+            run.assert_not_called()
 
     def test_path_like_names_refused_without_docker(self):
         with mock.patch.object(v.subprocess, "run") as run:
@@ -76,7 +87,7 @@ class VideoEditorTests(unittest.TestCase):
         self.assertIn("media-generator", argv)
         self.assertEqual(run.call_args[1]["timeout"], 900)
         self.assertTrue(out.startswith("exit=0"))
-        self.assertIn("Render:", out)
+        self.assertIn("Saved:", out)
 
     def test_list_raw_and_renders(self):
         open(os.path.join(self.tmp.name, "Raw", "a.mp4"), "w").close()

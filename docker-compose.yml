@@ -20,11 +20,8 @@ secrets:
 
 services:
   media-generator:
-    build:
-      context: ./docker/media-generator
-      additional_contexts:
-        scripts: ./kalamanch
-    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}   # built locally; "docker compose build media-generator" rebuilds from docker/media-generator
+    # Pulled from Docker Hub, no local build. MEDIA_GENERATOR_IMAGE overrides the tag.
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}
     profiles: [video]
     shm_size: 256m   # Hyperframes renders in Chromium and needs more than Docker's 64 MB default /dev/shm
     working_dir: /work
@@ -51,11 +48,8 @@ services:
       start_period: 30s
 
   render-engine:
-    build:
-      context: ./docker/media-generator
-      additional_contexts:
-        scripts: ./kalamanch
-    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}   # same tag as media-generator: one image, two services
+    # Same Docker Hub image as media-generator: one image, two services. No local build.
+    image: ${MEDIA_GENERATOR_IMAGE:-maxh8086/media-generator:latest}
     command: ["node", "/opt/render-engine/server.js"]
     profiles: [video]
     depends_on: [dhvani]
