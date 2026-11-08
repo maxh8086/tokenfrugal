@@ -60,22 +60,6 @@
           "link": null
         },
         {
-          "name": "clip_name1",
-          "type": "COMBO",
-          "widget": {
-            "name": "clip_name1"
-          },
-          "link": null
-        },
-        {
-          "name": "clip_name2",
-          "type": "COMBO",
-          "widget": {
-            "name": "clip_name2"
-          },
-          "link": null
-        },
-        {
           "name": "vae_name",
           "type": "COMBO",
           "widget": {
@@ -113,14 +97,6 @@
           [
             "38",
             "unet_name"
-          ],
-          [
-            "40",
-            "clip_name1"
-          ],
-          [
-            "40",
-            "clip_name2"
           ],
           [
             "39",
@@ -239,30 +215,6 @@
             ]
           },
           {
-            "id": "4fca3f43-c05f-4337-bf84-2afe67e43739",
-            "name": "clip_name1",
-            "type": "COMBO",
-            "linkIds": [
-              386
-            ],
-            "pos": [
-              -990,
-              531
-            ]
-          },
-          {
-            "id": "357a679f-1370-4cd5-9269-0d5ae1986b49",
-            "name": "clip_name2",
-            "type": "COMBO",
-            "linkIds": [
-              387
-            ],
-            "pos": [
-              -990,
-              551
-            ]
-          },
-          {
             "id": "924ffec5-81f8-4585-8761-5a80d5d775bc",
             "name": "vae_name",
             "type": "COMBO",
@@ -337,14 +289,14 @@
               "Node name for S&R": "VAELoader",
               "models": [
                 {
-                  "name": "ae.safetensors",
+                  "name": "flux2-vae.safetensors",
                   "url": "https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/split_files/vae/ae.safetensors",
                   "directory": "vae"
                 }
               ]
             },
             "widgets_values": [
-              "ae.safetensors"
+              "flux2-vae.safetensors"
             ]
           },
           {
@@ -401,20 +353,20 @@
               "Node name for S&R": "UNETLoader",
               "models": [
                 {
-                  "name": "flux1-dev.safetensors",
+                  "name": "flux-2-klein-4b-fp8.safetensors",
                   "url": "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev.safetensors",
                   "directory": "diffusion_models"
                 }
               ]
             },
             "widgets_values": [
-              "flux1-dev.safetensors",
+              "flux-2-klein-4b-fp8.safetensors",
               "default"
             ]
           },
           {
             "id": 40,
-            "type": "DualCLIPLoader",
+            "type": "CLIPLoaderGGUF",
             "pos": [
               -800,
               380
@@ -428,22 +380,13 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "clip_name1",
-                "name": "clip_name1",
+                "localized_name": "clip_name",
+                "name": "clip_name",
                 "type": "COMBO",
                 "widget": {
-                  "name": "clip_name1"
+                  "name": "clip_name"
                 },
-                "link": 386
-              },
-              {
-                "localized_name": "clip_name2",
-                "name": "clip_name2",
-                "type": "COMBO",
-                "widget": {
-                  "name": "clip_name2"
-                },
-                "link": 387
+                "link": null
               },
               {
                 "localized_name": "type",
@@ -451,16 +394,6 @@
                 "type": "COMBO",
                 "widget": {
                   "name": "type"
-                },
-                "link": null
-              },
-              {
-                "localized_name": "device",
-                "name": "device",
-                "shape": 7,
-                "type": "COMBO",
-                "widget": {
-                  "name": "device"
                 },
                 "link": null
               }
@@ -482,25 +415,18 @@
               },
               "cnr_id": "comfy-core",
               "ver": "0.3.40",
-              "Node name for S&R": "DualCLIPLoader",
+              "Node name for S&R": "CLIPLoaderGGUF",
               "models": [
                 {
-                  "name": "clip_l.safetensors",
-                  "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
-                  "directory": "text_encoders"
-                },
-                {
-                  "name": "t5xxl_fp16.safetensors",
-                  "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors",
+                  "name": "qwen3-4b-Q4_K_S.gguf",
+                  "url": "https://huggingface.co/maxh8086/tokenfrugal-qwen3-4b-q4ks/resolve/main/qwen3-4b-Q4_K_S.gguf",
                   "directory": "text_encoders"
                 }
               ]
             },
             "widgets_values": [
-              "clip_l.safetensors",
-              "t5xxl_fp16.safetensors",
-              "flux",
-              "default"
+              "qwen3-4b-Q4_K_S.gguf",
+              "flux2"
             ]
           },
           {
@@ -999,22 +925,6 @@
             "origin_slot": 4,
             "target_id": 38,
             "target_slot": 0,
-            "type": "COMBO"
-          },
-          {
-            "id": 386,
-            "origin_id": -10,
-            "origin_slot": 5,
-            "target_id": 40,
-            "target_slot": 0,
-            "type": "COMBO"
-          },
-          {
-            "id": 387,
-            "origin_id": -10,
-            "origin_slot": 6,
-            "target_id": 40,
-            "target_slot": 1,
             "type": "COMBO"
           },
           {

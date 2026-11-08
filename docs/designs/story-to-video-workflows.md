@@ -136,7 +136,8 @@ Purpose: prove the chain runs end to end on one story, with no batch.
 
 * **Input:** `youtube-shorts`, `ministral-3-8b`, `topic-4`, `minutes=1` (word budget 162), `format` = the first `FORMAT-CHOICE.md` entry that passes the five-of-eight difference rule against the previous film (none yet, so the first entry).
 * **Steps:** measure narration with the voice image and the word budget, build the HTML scenes, run `guard.mjs` and `hyperframes lint`, render at 1080x1920, run the duration check, write `job.json`.
-* **Pass:** the output MP4 exists, the duration is within 5% of the target, `guard.mjs` reports no banned terms, and `job.json` lists the seed, format and GPU use.
+* **Length rule (changed 2026-11-04):** each film narrates the whole story, capped at 60 s of narration (162 words). The duration target is the film's own narration length, not 60 s. A story shorter than 60 s of narration runs as it is. The gate is that the MP4 length is within 5% of the narration length, and the film stays under 90 s (rubric pacing gate). The first smoke run used a 60 s target and came out at 22.3 s because the story has only 52 spoken words; under this rule it passes.
+* **Pass:** the output MP4 exists, the duration is within 5% of the narration length and under 90 s, `guard.mjs` reports no banned terms (not run until a guard config exists), and `job.json` lists the seed, format and GPU use.
 * **Fail:** stop, write `RUN_FAILED-video.md`, and do not run the other four destinations.
 * **Output path:** `Benchmark/video-test/youtube-shorts/ministral-3-8b/topic-4/`.
 
