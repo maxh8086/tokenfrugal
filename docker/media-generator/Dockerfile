@@ -122,9 +122,12 @@ COPY render-engine/schemas /opt/render-engine/schemas
 COPY DEPENDENCY-MAP.md /opt/DEPENDENCY-MAP.md
 
 # HyperFrames catalogue subset (47 NOTICE-FOUND items). The composition trees and fonts are not in the repo:
-# fetch-catalogue.py writes them from the pins in catalogue/FETCH.json (HyperFrames registry at hyperframes@0.8.223,
-# @fontsource/geist 5.3.0 from npm, and the authored Geist override). It checks every sha256 before writing and
-# refuses an existing destination. Notices, licence texts and catalogue/MANIFEST.json are copied from the repo.
+# fetch-catalogue.py writes them from the pins in catalogue/FETCH.json (HyperFrames registry files downloaded directly
+# from the v0.8.223 release tag of the registry, with the CLI's header line added before hashing; @fontsource/geist 5.3.0
+# from npm; and the authored Geist override).
+# Downloads retry with backoff and have no whole-file time limit, so slow links do not fail the build. It checks every
+# sha256 before writing and refuses an existing destination. Notices, licence texts and catalogue/MANIFEST.json are
+# copied from the repo.
 # The library files listed in catalogue/LIBS.json are installed at their pinned npm versions and copied into place by
 # install-libs.py, which fails the build on a missing file, a sha256 mismatch or a destination that already exists.
 # Audit with catalogue/audit-external-urls.py (add --tree <fetched tree> to scan the fetched files too).
