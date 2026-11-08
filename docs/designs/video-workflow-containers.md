@@ -19,7 +19,7 @@ Model downloads are proposals. None of the replacement models in section 5 is ap
 | Image | Used for | Pin and source |
 | --- | --- | --- |
 | `maxh8086/media-generator:1` | HyperFrames render, ffmpeg and ffprobe, loudnorm, numpy and soundfile for the music bed and mix | Built from `docker/media-generator/Dockerfile`. Adds soundfile 0.14.0 and brand fonts (`fonts.txt`) in commit `fa8dc34` (2026-11-04). HyperFrames 0.8.223. |
-| `maxh8086/voice:1` | Kokoro narration, voice `am_michael` | Digest in `docker/voice/voice.pin` (`sha256:86fa8c5b...`, `follows=latest`). |
+| `maxh8086/dhvani:latest` | Kokoro narration over HTTP (`POST /api/kokoro/speak`, port 8080, compose network only), voice `am_michael` | Digest in `docker/dhvani/dhvani.pin` (`follows=latest`). The compose service builds `tokenfrugal/dhvani:local` from `docker/dhvani`. |
 | `tokenfrugal/comfyui:1` | Mage-Flow stills and LTX-Video I2V (Halo) | Compose service in `docker-compose.gpu.yml`, project `tokenfrugal-gpu`. ComfyUI v0.43.2 and the ComfyUI-LTXVideo and ComfyUI-GGUF nodes (`docker/pins.yaml`). |
 
 ## 3. story-film pipeline
@@ -30,7 +30,7 @@ Stages (`scripts/story_film.py`):
 
 1. **Parse (host, text only):** `parse_story()`.
 2. **Select (host):** `_select_sentences()` keeps sentences in order until the word count reaches `162 x minutes`. The last sentence can take the count past the target.
-3. **Narrate (voice image, one `docker run` per sentence):** `narrate()` sends the text as JSON to `kokoro_speak.py` and writes the returned bytes to `tmp/s<i>.wav`.
+3. **Narrate (one `docker run` per sentence, media image on the compose network):** `narrate()` POSTs the text as JSON to dhvani at `DHVANI_SPEAK_URL` (default `http://dhvani:8080/api/kokoro/speak`) with `curl`, and writes the returned WAV bytes to `tmp/s<i>.wav`. The network is `DHVANI_NETWORK` (default `tokenfrugal_default`).
 4. **Plan (host):** writes `tmp/plan.json` with the chosen sentences, format, destination, story path, word count and wav list.
 5. **Assemble (media image, one `docker run`):** `python3 /app/scripts/story_film.py assemble /work/tmp/plan.json`, with `STORY_FILM_IN_CONTAINER=1`. The repo is mounted read-only at `/app`. Inside the container it:
    - joins the narration wavs with 0.25 s gaps (`GAP_S`) into `tmp/narration.wav`;
