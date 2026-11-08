@@ -134,7 +134,7 @@ COPY DEPENDENCY-MAP.md /opt/DEPENDENCY-MAP.md
 # The shader bundle (36 shader items) is built here from shaders-npm/ (shaders@4.0.0 renderer, esbuild IIFE, minified).
 # The lock file pins both packages; the version checks make the ARGs and the lock agree. install-libs.py checks the
 # bundle's sha256 against catalogue/LIBS.json.
-COPY catalogue/fetch-catalogue.py catalogue/FETCH.json /opt/fetch/
+COPY catalogue/fetch-catalogue.py catalogue/FETCH.json catalogue/LIBS.json /opt/fetch/
 COPY catalogue/overrides /opt/fetch/overrides
 RUN python3 /opt/fetch/fetch-catalogue.py --hyperframes-version "${HYPERFRAMES_VERSION}" /opt/fetch /opt/catalogue-fetched \
     && rm -rf /opt/fetch /root/.npm

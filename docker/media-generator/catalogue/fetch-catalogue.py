@@ -3,7 +3,8 @@
 
     python3 fetch-catalogue.py [--hyperframes-version X.Y.Z] <manifest_dir> <out_dir>
 
-<manifest_dir> is the directory that holds FETCH.json and overrides/ (the catalogue directory in the repo).
+<manifest_dir> is the directory that holds FETCH.json, LIBS.json and overrides/ (the catalogue directory in the repo, or
+the same three files staged together, as the Dockerfile does).
 <out_dir> must not exist or must be empty. Every fetched file is written below <out_dir> at its
 catalogue-relative path (for example kinetic-center-build/compositions/components/vendor/geist.css).
 
