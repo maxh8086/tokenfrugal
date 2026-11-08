@@ -280,6 +280,7 @@ def item_frames_all(root):
 
 
 def main(argv):
+    global CATALOGUE, IMAGE
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest='mode', required=True)
     r = sub.add_parser('record')
@@ -288,13 +289,15 @@ def main(argv):
     c.add_argument('--golden', required=True)
     c.add_argument('--candidate', required=True)
     c.add_argument('--catalogue', help='catalogue folder to render from (default: the repo catalogue)')
+    c.add_argument('--image', help='image to render in (default: %s)' % IMAGE)
     d = sub.add_parser('diff')
     d.add_argument('a')
     d.add_argument('b')
     args = ap.parse_args(argv)
     if getattr(args, 'catalogue', None):
-        global CATALOGUE
         CATALOGUE = os.path.abspath(args.catalogue)
+    if getattr(args, 'image', None):
+        IMAGE = args.image
     return {'record': cmd_record, 'check': cmd_check, 'diff': cmd_diff}[args.mode](args)
 
 
