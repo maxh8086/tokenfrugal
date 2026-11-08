@@ -236,7 +236,7 @@ Only the NOTICE-FOUND items from docs/designs/hyperframes-catalog-licences.md. E
 | heatmap | 4 | heatmap/NOTICE.md | 0 |
 | hologram | 4 | hologram/NOTICE.md | 0 |
 | holographic | 4 | holographic/NOTICE.md | 0 |
-| kinetic-center-build | 10 | kinetic-center-build/NOTICE.md | 0 |
+| kinetic-center-build | 17 | kinetic-center-build/NOTICE.md | 0 |
 | lens-flare | 4 | lens-flare/NOTICE.md | 0 |
 | light-edge | 4 | light-edge/NOTICE.md | 0 |
 | liquid-metal | 4 | liquid-metal/NOTICE.md | 0 |

@@ -180,21 +180,13 @@ def main():
     catalogue = []
     manifest_path = os.path.join(HERE, "catalogue", "MANIFEST.json")
     if os.path.exists(manifest_path):
+        # Per-item file and loaded-URL counts are recorded in MANIFEST.json by
+        # `audit-external-urls.py --tree <dir> --record`, which scans the fetched files. This script does not
+        # need the fetched bytes on disk, so it reads the recorded counts.
         manifest = json.loads(read("catalogue/MANIFEST.json"))
-        cat_root = os.path.join(HERE, "catalogue")
-        # Loaded external URLs per item, counted with the same scanner the audit uses (no network).
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("audit_external_urls", os.path.join(cat_root, "audit-external-urls.py"))
-        audit = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(audit)
-        for name in manifest["items"]:
-            files = [e["path"] for e in manifest["files"] if e["path"].startswith(name + "/")]
-            loaded, navigation = [], []
-            for rel in files:
-                if os.path.splitext(rel)[1].lower() in audit.TEXT_EXT:
-                    audit.scan_file(os.path.join(cat_root, rel), rel, loaded, navigation)
-            catalogue.append({"item": name, "files": len(files),
-                              "notice": name + "/NOTICE.md", "loaded_urls": len(loaded)})
+        for item in manifest["items"]:
+            catalogue.append({"item": item["name"], "files": item["files"],
+                              "notice": item["name"] + "/NOTICE.md", "loaded_urls": item["loaded_urls"]})
 
     # --- catalogue libraries (LIBS.json; installed by the Dockerfile catalogue RUN) ----------
     lib_rows = []

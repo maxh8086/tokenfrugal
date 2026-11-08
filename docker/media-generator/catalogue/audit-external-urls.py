@@ -1,7 +1,23 @@
 #!/usr/bin/env python3
-"""Audit the vendored HyperFrames catalogue for external resources, without network access.
+"""Audit the HyperFrames catalogue for external resources, without network access.
 
-It separates two kinds of URL found in the catalogue's files:
+The catalogue is split in two. Committed files (licences, notices, LIBS.json, scripts) live in this folder. The
+composition trees and fonts are not committed: fetch-catalogue.py writes them from the pins in FETCH.json. MANIFEST.json
+lists every file of the full catalogue with its sha256 and origin ("committed" or "fetched").
+
+Default run (repo only): scans the committed text files. Fetched files are not on disk, so they are not scanned and
+the report says how many were skipped.
+
+    python audit-external-urls.py [catalogue_dir]
+
+Full run: `--tree DIR` scans a complete post-fetch catalogue (committed files plus fetched files, at catalogue-relative
+paths) and checks every file's sha256 against MANIFEST.json and, for fetched files, against FETCH.json. The check
+of per-item counts (files and loaded URLs in MANIFEST.json "items") is part of this run. `--record` writes the counts
+from the tree into MANIFEST.json instead of checking them.
+
+    python audit-external-urls.py --tree <fetched_tree> [--record] [catalogue_dir]
+
+The audit separates two kinds of URL found in the catalogue's files:
 
 * LOADED: a URL the page or its scripts fetch when rendered (src/href of non-link elements, link[href],
   CSS url() and @import, ES import/export specifiers, dynamic import(), importmap values, and fetch/Worker/
@@ -9,13 +25,13 @@ It separates two kinds of URL found in the catalogue's files:
 * INERT: anything else (comments, licence text, SKILL.md documentation, SVG namespaces, <a href> links).
   Reported by host so the reader can see what is left and why it does not load.
 
-It also checks that every relative import in the vendored JavaScript resolves on disk, that each
-bare specifier has an importmap entry in the page that loads it, and that MANIFEST.json matches the files.
+It also checks that every relative import in the vendored JavaScript resolves on disk, that each bare specifier has
+an importmap entry in the page that loads it, and that MANIFEST.json matches the files.
 
-Usage:  python audit-external-urls.py [catalogue_dir]
-Exit 0 when there are no loaded external URLs, no unresolved imports and no manifest mismatches; otherwise 1.
+Exit 0 when there are no loaded external URLs, no unresolved imports and no manifest problems; otherwise 1.
 Standard library only.
 """
+import argparse
 import collections
 import hashlib
 import json
@@ -23,7 +39,6 @@ import os
 import re
 import sys
 
-ROOT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__)))
 TEXT_EXT = {'.html', '.htm', '.css', '.js', '.mjs', '.md', '.svg', '.json', '.txt'}
 URL_RE = re.compile(r'(?:https?:)?//[^\s"\'`)<>,;\\]+')
 LOADING_URL = r'((?:https?:)?//[^"\'`)\s]+)'
@@ -38,6 +53,7 @@ JS_CALL_RE = re.compile(r'(?:fetch|importScripts|Worker|Image|WebSocket|XMLHttpR
 JS_SRC_ASSIGN_RE = re.compile(r'\.src\s*=\s*["\'`]((?:https?:)?//[^"\'`]+)')
 IMPORTMAP_RE = re.compile(r'<script[^>]*type\s*=\s*["\']importmap["\'][^>]*>(.*?)</script>', re.S | re.I)
 LOADING_ATTRS = {'src', 'poster', 'data', 'srcset', 'action', 'xlink:href'}
+SELF = 'audit-external-urls.py'
 
 
 def is_external(u):
@@ -96,9 +112,28 @@ def build_time_dests(root):
     return {f['dest'] for f in json.load(open(path, encoding='utf-8'))['files']}
 
 
-def check_imports(root, files):
+def fetched_pins(root):
+    """Map each fetched catalogue path to the sha256 that FETCH.json pins for it."""
+    path = os.path.join(root, 'FETCH.json')
+    if not os.path.isfile(path):
+        return {}
+    fetch = json.load(open(path, encoding='utf-8'))
+    pins = {}
+    for item, files in fetch.get('registry', {}).items():
+        for rel, v in files.items():
+            pins[item + '/' + rel] = v['sha256']
+    for p in fetch.get('patches', []):  # a patch replaces the registry bytes, so its sha wins
+        pins[p['dest']] = p['sha256']
+    for pkg in fetch.get('npm', []):
+        for f in pkg['files']:
+            pins[f['dest']] = f['sha256']
+    for o in fetch.get('overrides', []):
+        pins[o['dest']] = o['sha256']
+    return pins
+
+
+def check_imports(root, files, build_time):
     problems = []
-    build_time = build_time_dests(root)
     for rel in files:
         if os.path.splitext(rel)[1].lower() not in ('.js', '.mjs'):
             continue
@@ -133,55 +168,123 @@ def check_bare_has_importmap(root, files):
     return problems
 
 
-def check_manifest(root, files):
+def sha256_file(path):
+    with open(path, 'rb') as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+def list_files(root):
+    out = []
+    for dp, dn, fn in os.walk(root):
+        dn[:] = [d for d in dn if d != '__pycache__']
+        for f in fn:
+            out.append(os.path.relpath(os.path.join(dp, f), root).replace(os.sep, '/'))
+    return sorted(out)
+
+
+def check_manifest(root, committed, pins, tree):
+    """Return (problems, manifest) for MANIFEST.json against the repo, FETCH.json and (if given) the full tree."""
     path = os.path.join(root, 'MANIFEST.json')
     if not os.path.isfile(path):
-        return ['MANIFEST.json missing']
+        return ['MANIFEST.json missing'], None
     manifest = json.load(open(path, encoding='utf-8'))
     problems = []
-    listed = {e['path']: e['sha256'] for e in manifest.get('files', [])}
-    for p, digest in listed.items():
-        full = os.path.join(root, p)
-        if not os.path.isfile(full):
-            problems.append(f'manifest lists missing file {p}')
-        elif hashlib.sha256(open(full, 'rb').read()).hexdigest() != digest:
-            problems.append(f'sha256 changed {p}')
-    for rel in files:
-        if rel != 'MANIFEST.json' and rel not in listed:
-            problems.append(f'file not in manifest {rel}')
-    return problems
+    listed = {}
+    for e in manifest.get('files', []):
+        listed[e['path']] = e
+    for p, e in sorted(listed.items()):
+        origin = e.get('origin')
+        if origin == 'committed':
+            full = os.path.join(root, p)
+            if not os.path.isfile(full):
+                problems.append(f'manifest lists missing committed file {p}')
+            elif sha256_file(full) != e['sha256']:
+                problems.append(f'sha256 changed {p}')
+        elif origin == 'fetched':
+            if pins.get(p) != e['sha256']:
+                problems.append(f'manifest sha differs from FETCH.json for {p}')
+            if os.path.isfile(os.path.join(root, p)):
+                problems.append(f'fetched file is also committed {p}')
+        else:
+            problems.append(f'bad origin {origin!r} for {p}')
+    for p in sorted(pins):
+        if p not in listed or listed[p].get('origin') != 'fetched':
+            problems.append(f'FETCH.json entry not listed as fetched in manifest {p}')
+    for rel in committed:
+        if rel != 'MANIFEST.json' and (rel not in listed or listed[rel].get('origin') != 'committed'):
+            problems.append(f'committed file not in manifest {rel}')
+    if tree is not None:
+        tree_files = set(list_files(tree)) - {'MANIFEST.json'}
+        for p in sorted(set(listed) - tree_files):
+            problems.append(f'manifest lists file missing from tree {p}')
+        for p in sorted(tree_files - set(listed)):
+            problems.append(f'tree file not in manifest {p}')
+        for p, e in sorted(listed.items()):
+            full = os.path.join(tree, p)
+            if p in tree_files and sha256_file(full) != e['sha256']:
+                problems.append(f'tree sha256 differs from manifest {p}')
+    return problems, manifest
 
 
-def main():
-    files = []
-    for dp, dn, fn in os.walk(ROOT):
-        for f in fn:
-            if os.path.splitext(f)[1].lower() in TEXT_EXT or f == 'MANIFEST.json':
-                files.append(os.path.relpath(os.path.join(dp, f), ROOT).replace(os.sep, '/'))
-    files.sort()
+def main(argv):
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('catalogue', nargs='?', default=os.path.dirname(os.path.abspath(__file__)))
+    ap.add_argument('--tree', help='complete post-fetch catalogue to scan (committed plus fetched files)')
+    ap.add_argument('--record', action='store_true', help='with --tree: write per-item counts into MANIFEST.json')
+    args = ap.parse_args(argv[1:])
+    root = os.path.abspath(args.catalogue)
+    tree = os.path.abspath(args.tree) if args.tree else None
+    if args.record and tree is None:
+        ap.error('--record needs --tree')
+
+    committed = [f for f in list_files(root) if f != 'MANIFEST.json']
+    pins = fetched_pins(root)
+    scan_root = tree or root
+    scan_files = [f for f in (list_files(scan_root) if tree else committed)
+                  if os.path.splitext(f)[1].lower() in TEXT_EXT and f != SELF and f != 'MANIFEST.json']
 
     loaded, navigation = [], []
-    for rel in files:
-        if rel == 'audit-external-urls.py':
-            continue
-        scan_file(os.path.join(ROOT, rel), rel, loaded, navigation)
+    for rel in scan_files:
+        scan_file(os.path.join(scan_root, rel), rel, loaded, navigation)
 
     inert = collections.Counter()
     loaded_set = {u for _, _, u in loaded}
-    for rel in files:
-        if os.path.splitext(rel)[1].lower() not in TEXT_EXT or rel == 'audit-external-urls.py':
-            continue
-        text = open(os.path.join(ROOT, rel), encoding='utf-8', errors='replace').read()
+    for rel in scan_files:
+        text = open(os.path.join(scan_root, rel), encoding='utf-8', errors='replace').read()
         for u in URL_RE.findall(text):
             host = host_of(u)
             if u not in loaded_set and re.fullmatch(r'[a-z0-9.-]+\.[a-z]{2,}', host):
                 inert[host] += 1
 
-    import_problems = check_imports(ROOT, files)
-    bare_problems = check_bare_has_importmap(ROOT, files)
-    manifest_problems = check_manifest(ROOT, files)
+    import_problems = check_imports(scan_root, scan_files, build_time_dests(root))
+    bare_problems = check_bare_has_importmap(scan_root, scan_files)
+    manifest_problems, manifest = check_manifest(root, committed, pins, tree)
 
-    print(f'files scanned: {len(files)}')
+    # Per-item counts: files and loaded URLs, recorded in MANIFEST.json "items" and checked against the tree.
+    item_problems = []
+    item_counts = {}
+    if manifest is not None and tree is not None:
+        all_paths = sorted(e['path'] for e in manifest['files'])
+        for item in manifest.get('items', []):
+            name = item['name']
+            n_files = sum(1 for p in all_paths if p.startswith(name + '/'))
+            n_loaded = sum(1 for rel, _, _ in loaded if rel.startswith(name + '/'))
+            item_counts[name] = (n_files, n_loaded)
+            if not args.record and (item.get('files'), item.get('loaded_urls')) != (n_files, n_loaded):
+                item_problems.append(f'{name}: MANIFEST records files={item.get("files")} '
+                                     f'loaded_urls={item.get("loaded_urls")}, tree has {n_files}/{n_loaded}')
+        if args.record:
+            for item in manifest.get('items', []):
+                item['files'], item['loaded_urls'] = item_counts[item['name']]
+            with open(os.path.join(root, 'MANIFEST.json'), 'w', encoding='utf-8', newline='\n') as fh:
+                json.dump(manifest, fh, indent=2, sort_keys=True)
+                fh.write('\n')
+            item_problems = []
+            print('MANIFEST.json item counts recorded from the tree')
+
+    print(f'files scanned: {len(scan_files)} ({"tree " + tree if tree else "committed files only"})')
+    if tree is None:
+        print(f'fetched files not scanned (run with --tree to scan them): {len(pins)}')
     print(f'LOADED external URLs: {len(loaded)}')
     for rel, kind, u in loaded:
         print(f'  {rel} [{kind}] {u}')
@@ -200,11 +303,14 @@ def main():
     print(f'manifest problems: {len(manifest_problems)}')
     for p in manifest_problems:
         print(f'  {p}')
+    print(f'item count problems: {len(item_problems)}')
+    for p in item_problems:
+        print(f'  {p}')
 
-    ok = not loaded and not import_problems and not bare_problems and not manifest_problems
+    ok = not loaded and not import_problems and not bare_problems and not manifest_problems and not item_problems
     print('RESULT: ' + ('PASS' if ok else 'FAIL'))
     return 0 if ok else 1
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv))

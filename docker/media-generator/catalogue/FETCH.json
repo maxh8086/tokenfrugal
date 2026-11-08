@@ -1,0 +1,865 @@
+{
+  "description": "Pinned sources for the HyperFrames catalogue files that are not committed. fetch-catalogue.py reads this file and writes every entry into a fresh output tree, checking each sha256 before it is written. Registry items come from `hyperframes@<hyperframes_cli> add <item> --json --no-clipboard`; patches replace exact text in the registry bytes so the result equals the committed bytes this file replaced; Geist comes from the @fontsource/geist npm tarball.",
+  "hyperframes_cli": "0.8.223",
+  "npm": [
+    {
+      "files": [
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-cyrillic-500-normal.woff2",
+          "sha256": "2f6cfec71f9f8ec8efc18fd3d8e9cfc2b4c8dd073ef0189758ef8d0df9d44a91",
+          "source": "files/geist-cyrillic-500-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-ext-500-normal.woff2",
+          "sha256": "b35a1f6ecc3923cc5edfcc45b4394e5905168fe10bf6f507c1d752962f69cbc2",
+          "source": "files/geist-latin-ext-500-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-500-normal.woff2",
+          "sha256": "6145bf6706dbc1b6686f04f871489cf724951f00b752745896ccdcac07639a53",
+          "source": "files/geist-latin-500-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-cyrillic-600-normal.woff2",
+          "sha256": "05f146c56f1659e43557865a3dabc2237b855135f45cb9ec974f777afa653d58",
+          "source": "files/geist-cyrillic-600-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-ext-600-normal.woff2",
+          "sha256": "bc1a2cbd3a79ed5b1209c2b8d3c7abe5458675f6ed6f80ddb3a16fa82d3ad5d3",
+          "source": "files/geist-latin-ext-600-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-600-normal.woff2",
+          "sha256": "edde7cc4e2719898f981a6d970a756030fff75a8ed36dd6a457a60181b889ebf",
+          "source": "files/geist-latin-600-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-cyrillic-700-normal.woff2",
+          "sha256": "2cf7f3fffdc984b62ca8c824f88ae8d09d2d0435188a7b96af4642469d06baec",
+          "source": "files/geist-cyrillic-700-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-ext-700-normal.woff2",
+          "sha256": "f942cf9480a5dc6ef1bfd4d6e2983049452b404850afdbb179ee72df438044f7",
+          "source": "files/geist-latin-ext-700-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-700-normal.woff2",
+          "sha256": "728e76ff0b76212419e83011f5202c2fd1144da9d7915a4fa787561f5a3f334d",
+          "source": "files/geist-latin-700-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-cyrillic-800-normal.woff2",
+          "sha256": "77f10e39c4a7fc12cbf11a5b98befcef8c144979af9c061b5314ea724ad823f6",
+          "source": "files/geist-cyrillic-800-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-ext-800-normal.woff2",
+          "sha256": "09fe85f7d06e6413c3a8e8e08138d165d848d8adc26419454a57a02d3a644907",
+          "source": "files/geist-latin-ext-800-normal.woff2"
+        },
+        {
+          "dest": "kinetic-center-build/compositions/components/vendor/geist-latin-800-normal.woff2",
+          "sha256": "4def20882cb74bf7e9cf2994058ed8d1236f6a53045cda277472bbc553714995",
+          "source": "files/geist-latin-800-normal.woff2"
+        }
+      ],
+      "package": "@fontsource/geist",
+      "tarball_sha256": "62a48c4d780c68d8f8b1b7385ee508ea0e554afb921453537faa5b05e96e2663",
+      "version": "5.3.0"
+    }
+  ],
+  "overrides": [
+    {
+      "dest": "kinetic-center-build/compositions/components/vendor/geist.css",
+      "sha256": "5208d7a32fc77830df9c5567e9892e2c28a0b98b6b2217d18e344f829578a579",
+      "source": "overrides/kinetic-center-build-geist.css"
+    }
+  ],
+  "patches": [
+    {
+      "base": "registry",
+      "dest": "caret-swap/compositions/components/caret-swap/caret-swap.html",
+      "replace": [
+        {
+          "new": "        <script src=\"vendor/gsap.min.js\"></script>\n        <script src=\"vendor/CustomEase.min.js\"></script>\n",
+          "old": "        <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n        <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/CustomEase.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "38685ab7450c6df5dba8603ec607800689298a8439d9d153d1b8901343b1d393"
+    },
+    {
+      "base": "registry",
+      "dest": "chatgpt-exchange/compositions/chatgpt-exchange.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "79c1201114a537089df8ddc9ba280dcd79e5d7fe18aaa6e57e9faab0d49f193f"
+    },
+    {
+      "base": "registry",
+      "dest": "chatgpt-exchange/hyperframes.lock.json",
+      "replace": [
+        {
+          "new": "",
+          "old": "  \"assets/fonts/inter-latin-400-normal.woff2\": \"8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc\",\n  \"assets/fonts/inter-latin-500-normal.woff2\": \"f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f\",\n  \"assets/fonts/inter-latin-600-normal.woff2\": \"f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a\",\n"
+        }
+      ],
+      "sha256": "769cde1f9ba3ffe36168cc2873f636ebe5ace9e20becb0e115172560127870f8"
+    },
+    {
+      "base": "registry",
+      "dest": "claude-exchange/compositions/claude-exchange.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "026623aa7d5569f53082046f97fa272edbd051c0506052eefb6ea3a96fd0b5c3"
+    },
+    {
+      "base": "registry",
+      "dest": "claude-exchange/hyperframes.lock.json",
+      "replace": [
+        {
+          "new": "",
+          "old": "  \"assets/fonts/inter-latin-400-normal.woff2\": \"8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc\",\n  \"assets/fonts/inter-latin-500-normal.woff2\": \"f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f\",\n  \"assets/fonts/inter-latin-600-normal.woff2\": \"f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a\",\n"
+        }
+      ],
+      "sha256": "4c0037133ee3e6f09a972c12186c182f4b2b8b4d079153cd0c384d04f7dc0bd8"
+    },
+    {
+      "base": "registry",
+      "dest": "extruded-logo/compositions/extruded-logo.html",
+      "replace": [
+        {
+          "new": "    <script type=\"importmap\">{\"imports\":{\"three\":\"./vendor/three/build/three.module.js\",\"three/addons/\":\"./vendor/three/examples/jsm/\"}}</script>\n    <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        },
+        {
+          "new": "        src: url(vendor/inter-latin-500-normal.woff2)\n",
+          "old": "        src: url(https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.woff2)\n"
+        },
+        {
+          "new": "      import * as THREE from \"three\";\n      import { FontLoader } from \"three/addons/loaders/FontLoader.js\";\n      import { TextGeometry } from \"three/addons/geometries/TextGeometry.js\";\n",
+          "old": "      import * as THREE from \"https://cdn.jsdelivr.net/npm/three@0.184.0/+esm\";\n      import { FontLoader } from \"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/loaders/FontLoader.js/+esm\";\n      import { TextGeometry } from \"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/geometries/TextGeometry.js/+esm\";\n"
+        }
+      ],
+      "sha256": "1950ec6e1fee93e457ccb2b1f26429a61f6886d31d5b28318ae9b5a434b81650"
+    },
+    {
+      "base": "registry",
+      "dest": "glass-shard-title/compositions/glass-shard-title/SKILL.md",
+      "replace": [
+        {
+          "new": "- External runtime dependencies: `vendor/gsap.min.js`, `vendor/d3-delaunay.min.js`.\n",
+          "old": "- External runtime dependencies: `https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js`, `https://cdn.jsdelivr.net/npm/d3-delaunay@6.0.4/dist/d3-delaunay.min.js`.\n"
+        }
+      ],
+      "sha256": "ac6f1b1c6f10ac99b1795b2bb66fec778b9d5f435898685386095ddd49d48b24"
+    },
+    {
+      "base": "registry",
+      "dest": "glass-shard-title/compositions/glass-shard-title/glass-shard-title.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n    <script src=\"vendor/d3-delaunay.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n    <script src=\"https://cdn.jsdelivr.net/npm/d3-delaunay@6.0.4/dist/d3-delaunay.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "3916ff505ea7252f1d0788213b98144bca9d916e22f48746d3ed6ca75331bbc3"
+    },
+    {
+      "base": "registry",
+      "dest": "kinetic-center-build/compositions/components/kinetic-center-build.html",
+      "replace": [
+        {
+          "new": "        href=\"vendor/geist.css\"\n",
+          "old": "        href=\"https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&amp;display=block\"\n"
+        },
+        {
+          "new": "        <script src=\"vendor/gsap.min.js\"></script>\n        <script src=\"vendor/CustomEase.min.js\"></script>\n",
+          "old": "        <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n        <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/CustomEase.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "d6f868cb60e651fa830d4b5155aa4a7d3041c721c77e6b3ef7627171671b4efb"
+    },
+    {
+      "base": "registry",
+      "dest": "marker-checklist-card/compositions/components/marker-checklist-card.html",
+      "replace": [
+        {
+          "new": "        <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "        <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "19c72f833c469d0f94a7bf0eb1b3099ad900e65dab258576ba1d434e0e59949d"
+    },
+    {
+      "base": "registry",
+      "dest": "slack-notification-ad/compositions/slack-notification-ad.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "a1685cb7ad4029d512993dd5063e97f5547bbeb847e3ec87f3cbf300762f7f6b"
+    },
+    {
+      "base": "registry",
+      "dest": "slack-notification-ad/hyperframes.lock.json",
+      "replace": [
+        {
+          "new": "",
+          "old": "  \"assets/fonts/inter-latin-400-normal.woff2\": \"8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc\",\n  \"assets/fonts/inter-latin-500-normal.woff2\": \"f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f\",\n  \"assets/fonts/inter-latin-600-normal.woff2\": \"f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a\",\n"
+        }
+      ],
+      "sha256": "868eaa3ef494d2016708010bdfcb0232a5596a4f03d9c0d727dfa990b1faadcf"
+    },
+    {
+      "base": "registry",
+      "dest": "split-flap-board/compositions/split-flap-board.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "51fa1faaa150a079a691484d3bf30a2620fd697e48867ad5abe1ce1f015a25c9"
+    },
+    {
+      "base": "registry",
+      "dest": "weight-wave/compositions/weight-wave.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n"
+        }
+      ],
+      "sha256": "83b66695e52edd0f209ba9d810209f0252ed27067de02c5835f97101cd568f7e"
+    },
+    {
+      "base": "registry",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/SKILL.md",
+      "replace": [
+        {
+          "new": "- External runtime dependencies: `vendor/gsap.min.js`, `vendor/clipper.js`, `vendor/three/build/three.module.js`, `vendor/three/examples/jsm/`.\n",
+          "old": "- External runtime dependencies: `https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js`, `https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js`, `https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js`, `https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/`.\n"
+        }
+      ],
+      "sha256": "428be2297840fa31f770fb8addf1516e5143e3c3a1bf4c8baac7a5c21d266011"
+    },
+    {
+      "base": "registry",
+      "dest": "wireframe-portal-title/compositions/wireframe-portal-title/wireframe-portal-title.html",
+      "replace": [
+        {
+          "new": "    <script src=\"vendor/gsap.min.js\"></script>\n    <script src=\"vendor/clipper.js\"></script>\n",
+          "old": "    <script src=\"https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js\"></script>\n    <script src=\"https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js\"></script>\n"
+        },
+        {
+          "new": "          \"three\": \"vendor/three/build/three.module.js\",\n          \"three/addons/\": \"vendor/three/examples/jsm/\"\n",
+          "old": "          \"three\": \"https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js\",\n          \"three/addons/\": \"https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/\"\n"
+        }
+      ],
+      "sha256": "eb6fbf34ec8206d1cae6e3220a4814ba7fcf273a0e7ea8c81df2d8fd850fdc70"
+    }
+  ],
+  "registry": {
+    "aurora": {
+      "compositions/aurora.html": {
+        "sha256": "04fbcf551ace90f847a67b9918c5c07cb58ecb96f3349a6229f5401b103cdb07"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "0ea9084b1fa65b619f6c59892aae11c57f10b6489eba8c9306a7204751a1ec80"
+      }
+    },
+    "blob": {
+      "compositions/blob.html": {
+        "sha256": "11e5c02fde9a96aa689948e336efe49ea70066d829232977e638023439196f1b"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "fbdd2bebb690b0bb8a3b5ea9aec38af83cc21300ed5ecda7b5d414f5a7850b34"
+      }
+    },
+    "caret-swap": {
+      "compositions/components/caret-swap/Geist-Latin.woff2": {
+        "sha256": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1"
+      },
+      "compositions/components/caret-swap/Geist-OFL.txt": {
+        "sha256": "1781d2806a07d91c4edf4740b88449fab7d0eadad53f7c351b94cd4d4eb8c00f"
+      },
+      "compositions/components/caret-swap/caret-swap.html": {
+        "sha256": "984f2d648d676f408be3ead124555d7700b147d349e376b3dec6fbcb0640ba3c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "5f5ab954be2ace1e54e2125ff2743611c20dbd18b30d000a0923ad0ac3d8f367"
+      }
+    },
+    "chatgpt-exchange": {
+      "TEMPLATE.md": {
+        "sha256": "84e966762dc2a80e271f656373d9e940bc49958e40c8ce4c58bbfdda9df7d0f5"
+      },
+      "assets/fonts/inter-LICENSE.txt": {
+        "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+      },
+      "compositions/chatgpt-exchange.html": {
+        "sha256": "9cf40ed8586152a049ec7515eaa6e3961f0110ce744e52a529c3b68b0fd4ff63"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "20f5b4ef7394d2cb4cb273434a85c5c2630ad0433fe8833f0cce12d9d1d24dad"
+      }
+    },
+    "chrome-orb": {
+      "compositions/chrome-orb.html": {
+        "sha256": "4e7cc22e260ff74ffe048c04dcfb0c59127075407ad286d7fed18c8a8d9817e1"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "3b5e83bfd5662070bde69965b24691c12a343e6d738ce4a60c659bb871ff3f66"
+      }
+    },
+    "claude-exchange": {
+      "TEMPLATE.md": {
+        "sha256": "1767ceb9d2a35b0b7c061244d5ee036405594a75e34d33a1456259293cf828ba"
+      },
+      "assets/fonts/eb-garamond-LICENSE.txt": {
+        "sha256": "f03c8eda63076cd52317dcd40aa04db8472d4cb592dfaafa385129dfdafc7f9c"
+      },
+      "assets/fonts/eb-garamond-latin-400-normal.woff2": {
+        "sha256": "b63448e2680a0dbde70ebb2f3de78f6c515122835491f938e8a8595b46f29210"
+      },
+      "assets/fonts/eb-garamond-latin-700-normal.woff2": {
+        "sha256": "5d0f8a497a48fd2a3611d07acc844f65c9fbb35419eafa4e1295f5f0f95f86e4"
+      },
+      "assets/fonts/inter-LICENSE.txt": {
+        "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+      },
+      "compositions/claude-exchange.html": {
+        "sha256": "81b000a0a6bfafef99158af900b474848f701dc8138a2a39c340c63004df5162"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "1e611583c3e10c31f3dff46d06d7acf167362db04ffe76f9624d8c481841a417"
+      }
+    },
+    "color-wheel": {
+      "compositions/color-wheel.html": {
+        "sha256": "abaff4f5f792de506aa4ac8dc2778ea28aac0b902d6a5f1c930d8eaab9e53e3d"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "56c5be8308ffc57f885c7bf8fcdbf81a732b33e919768117e01acd4b8b410a42"
+      }
+    },
+    "extruded-logo": {
+      "compositions/assets/fonts/Geist-Bold.typeface.json": {
+        "sha256": "0413a22e5ea454b0dfcc7283d86e651305d4e47f53abe55f78fe3f858213fc63"
+      },
+      "compositions/assets/fonts/Geist-OFL.txt": {
+        "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+      },
+      "compositions/extruded-logo.html": {
+        "sha256": "e3f0cd23004cc651500707fb79c496df90493ec9fb4df42775e516421af52392"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "913017eb8d5f223687b6d56514c794c0297b0fd39d738101c2086659d8f08fa7"
+      }
+    },
+    "falling-lines": {
+      "compositions/falling-lines.html": {
+        "sha256": "bb1d440f5668f81729a5aa2a79fdb4f600d3581de1212d5fa67e6103b6c4e722"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "5ec550e82af70d20a8502466ed2577c100d5a0c1084bfbc2af75f1669a50923b"
+      }
+    },
+    "flowing-gradient": {
+      "compositions/flowing-gradient.html": {
+        "sha256": "2b4747f704da0688637052b5e722a8abba5a9c86d941ee29292c2cad1879835c"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "feda286858f339f5704c701b9e3d59bd35bdfa8d455ce0ac7afde15fa0820a36"
+      }
+    },
+    "fractal-noise": {
+      "compositions/fractal-noise.html": {
+        "sha256": "e7b80a5dcbfee5152fe705251387219df265d4f2fefb705fac68f0fe9cbbe40f"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "a686f0e454688d566f5fbad6f8541cb6f02beee3bcb4095be791a7f7957d4b4b"
+      }
+    },
+    "frost": {
+      "compositions/frost.html": {
+        "sha256": "0b0ee2f78b9a9ea09d5240ef1f0dec51d9fb1df948decbbbacd2f7bc426f83b8"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "afeec64d2e552ff12bbad70b534bdebc5c387203786385c9a47cbc42db367036"
+      }
+    },
+    "gabor-noise": {
+      "compositions/gabor-noise.html": {
+        "sha256": "3db64aaebe3d6f7c0f75f245d6aa0caf3ed8dab85d5fa5856d9e84d9ae2b5fd6"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "3daf5fc331cf97af61d155f8d22ded549cc080d980ce4bf8e4d7a3cda891ae23"
+      }
+    },
+    "glass-shard-title": {
+      "compositions/glass-shard-title/SKILL.md": {
+        "sha256": "7c4c3c98a4f9cd5a4c50af3752c972aa1e46bfaf4c271c9181539ba305b8d365"
+      },
+      "compositions/glass-shard-title/assets/Three-LICENSE.txt": {
+        "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+      },
+      "compositions/glass-shard-title/assets/ferndale_studio_01_1k.hdr": {
+        "sha256": "e76abcf0e02675ec3ec49a608e94742f1e9cb47069f99a31cc95233d29ca2745"
+      },
+      "compositions/glass-shard-title/assets/fonts/CormorantGaramond-OFL.txt": {
+        "sha256": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956"
+      },
+      "compositions/glass-shard-title/assets/fonts/Geist-Bold.ttf": {
+        "sha256": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03"
+      },
+      "compositions/glass-shard-title/assets/fonts/Geist-OFL.txt": {
+        "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+      },
+      "compositions/glass-shard-title/assets/fonts/Geist-Regular.ttf": {
+        "sha256": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901"
+      },
+      "compositions/glass-shard-title/assets/fonts/Geist-SemiBold.ttf": {
+        "sha256": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906"
+      },
+      "compositions/glass-shard-title/assets/fonts/cormorant-garamond.woff2": {
+        "sha256": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235"
+      },
+      "compositions/glass-shard-title/assets/glass-main.js": {
+        "sha256": "6d411a955eaee6a0fd26a77e84411e1dcb2a01c7b87bbcb3e87354d652f09a52"
+      },
+      "compositions/glass-shard-title/assets/matcap-1.png": {
+        "sha256": "8a4ba0deaf2bafb4ffe60d5685850b6b9174e58ce6cfd29bf026e060812961a0"
+      },
+      "compositions/glass-shard-title/glass-shard-title.html": {
+        "sha256": "31277b2eac6d80f5f430ad6dcf6f3430fe3223a6db6bfb38494e66d6c599c49d"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "90ee310f93b32467b1fb417d7f46c0c179aa4cb65c6dcb54ec70af766b26dd91"
+      }
+    },
+    "godrays": {
+      "compositions/godrays.html": {
+        "sha256": "3609b0d1641c216e89a3c81bd9d8fe0f7e67358502d6ab403c679443cc171aac"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "48bfb96ef942d2922e543c2a248596699dbdce9365862136e3a1ec6f37f7b8ab"
+      }
+    },
+    "goo": {
+      "compositions/goo.html": {
+        "sha256": "1280e95733c613f2649daf36d72664b09eeebc81af3c847cce9e02a08424caea"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "692010f3ded7f0482cd8cc8f8d7bf0355b6441b91fbd842ccd34314eba77d9b9"
+      }
+    },
+    "heatmap": {
+      "compositions/heatmap.html": {
+        "sha256": "e136f0abe1b9f0035fbdd220eb31b2030e4f1ebdba3a7e1fa4f313c578bd9f5a"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "5d2790732fc00e8cb507b66fd5f53b7cfe31a93b739845c06527c9ea8bb73b3f"
+      }
+    },
+    "hologram": {
+      "compositions/hologram.html": {
+        "sha256": "e3e5b318219f9a603932cd912f703ec1e9b0d756c85aa46dc090fdd784b16719"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "a3be13ebadb8b08345cef879364ea4c53e53229d4fbb9fb3b3c6aa016c2d9b53"
+      }
+    },
+    "holographic": {
+      "compositions/holographic.html": {
+        "sha256": "58c8e3cfc0eeaf9ba006329f0c6cee263b10650bef692a79aaa22856980852d7"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "3c796e1743f398f4a3a907ac20f487f3b43e0ab9b61bbeed2d7932fb2083e4ea"
+      }
+    },
+    "kinetic-center-build": {
+      "compositions/components/kinetic-center-build.html": {
+        "sha256": "774f75b80d82fbc0c6226b85743804fb7a2229fb038eb0d38fa2e9503072c2e0"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "8381a5bc96d6882babd219e8099e468726c3a25365d1f0de6b31c0180b263d71"
+      }
+    },
+    "lens-flare": {
+      "compositions/lens-flare.html": {
+        "sha256": "ae9b707f3275452e87ce6991a9fd223a0757417c44081c46b95c37035d07b604"
+      },
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "3a4b9e29d62f9dadb2b8ebf31f666197bfca1324de861566b08fbf6bfd683e54"
+      }
+    },
+    "light-edge": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/light-edge.html": {
+        "sha256": "7d26707eff29b60405f5a28e782a3fddad913ef63940b38f786855b20763fe0f"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "ea256bf73f7b01c65303a72110e1cc0a494ab848d91d1e9548076ba774a012c8"
+      }
+    },
+    "liquid-metal": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/liquid-metal.html": {
+        "sha256": "7b05d9d68f20a6198ff666cbe3ecda71ca98fe5d569972447c02b9bb155d50de"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "cb9147bed1cb4a41531fda6536a504f7a1443f6d3e3f424a3686d3e629b2a4f0"
+      }
+    },
+    "marble": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/marble.html": {
+        "sha256": "080da5534eaa596e75ebe1eb86cc03cfc17b3dc32ecb171830b4257113f44825"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "1126a214379a73bd604d8e4c29a6937799eae3cff4cc504f8ca658d92832a55a"
+      }
+    },
+    "marker-checklist-card": {
+      "assets/fonts/courier-prime-700.woff2": {
+        "sha256": "654a1d16c0b027ead89781bd3a4360d7f0af17a3ddf78c287d0e1843c6bca8d7"
+      },
+      "assets/fonts/permanent-marker-400.woff2": {
+        "sha256": "8963f64fa28dc4aea162405d784baa23ff6499df554d9b4cdee898e28d19cca4"
+      },
+      "compositions/components/marker-checklist-card.html": {
+        "sha256": "c99d951e0f361447109f50b5301cbbd8bcfed621cd7a66d92d9c5a65ec1614f0"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "9ba5558748f6889f6c4c2ef5f7da9b3e35630775640af7c7dbd4696e63c56d27"
+      }
+    },
+    "mesh-gradient": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/mesh-gradient.html": {
+        "sha256": "da0dee21b885a921cde44792a26539635fe15042f35e09ef0556c04532bee7b3"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "56874a1e1caf31ff6b2c82ead178d2fb6c34e5c62cd185e2c20139d99b7fce06"
+      }
+    },
+    "nebula": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/nebula.html": {
+        "sha256": "d8803f2b5b0e9e776c63aeec752a8faa29d3e9787c45cdb288a9fe3a5c3aa0ed"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "d7135cf309afa221ca8ce3eb93222690196c49671f262a370d7da11d93288fa1"
+      }
+    },
+    "obsidian": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/obsidian.html": {
+        "sha256": "fffc8819c729b92b4127ba1ab66644c7398217f5c4d102129fd62867b2260321"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "9a074d445a2bc7b7c4d27560d8b4ae6628803b172862dc6913e0adb2ae32bd0d"
+      }
+    },
+    "plasma": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/plasma.html": {
+        "sha256": "082373d185b9c418be7b2438902aa25de59afb4f69d73019e6a0b4cd7e59477e"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "2dbeb1cfd19b479f299421a7e507cc88eb43f6edb555a72499615cf8371dd32a"
+      }
+    },
+    "plastic": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/plastic.html": {
+        "sha256": "a9beb8e7f2239366fa82d09cc36aee5722712dad4a4b0993ec6fc7c92f637dcd"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "33d6a81b7e65c4e2049257b265a3f0725ff6d47b70668155f21d5f3b5ed3a9cf"
+      }
+    },
+    "prism": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/prism.html": {
+        "sha256": "5835cd17d7c93b9cd4bc2dd7950399210d1d117282f7eaaf5ee3c4bb068120d7"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "ae89117560d41076ecf88d3376a6772ae463eb9d60ae1c78e3c57df8138518ef"
+      }
+    },
+    "ripples": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/ripples.html": {
+        "sha256": "8e52c21759a1b5de6979a709da4fdfbc44d8e6018700989a1bc5db1d31de498e"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "d4cd1d6296020e34e8ca07c44d069b3415bfb98767c14bd224023e5a6f3cfc1a"
+      }
+    },
+    "sine-wave": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/sine-wave.html": {
+        "sha256": "b9c7530dc8e4a8ffb3d89966b9500b3abc0ae9aed3df348a992184197c0e76aa"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "abb1f887d22422fa6c694ba6a83710165d2f9c4b5b66bc076fed0e8492a0ec51"
+      }
+    },
+    "slack-notification-ad": {
+      "TEMPLATE.md": {
+        "sha256": "d306203328cd20a24c2a18d266bc1be8134e26fb6ba3c5c5f2987e6a80ed04cd"
+      },
+      "assets/fonts/inter-LICENSE.txt": {
+        "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+      },
+      "assets/img/heygen-mark.svg": {
+        "sha256": "34391f3497738d29d8c174f29b07121dee56c0ceb3aca658b3066802126dc91f"
+      },
+      "assets/img/slack-mark.svg": {
+        "sha256": "17160477a475166ad0556e0028e3b0bd0634d70c02e7b920c04a4429ea184ab3"
+      },
+      "compositions/slack-notification-ad.html": {
+        "sha256": "f19d0aeea063a22b507e95a6cbcff2b2e8c8e648aecce12f3d657527da63a5a5"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "098e43bebdf6f3c4ec3fb4aea58e4502610864047bd02acf47bc2f6bead05977"
+      }
+    },
+    "spiral": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/spiral.html": {
+        "sha256": "56be865cd9b8a061a5e0fe379d0e306f05829ed8ccb49d7a11cab36216dcc9f1"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "97e93940a27d992350a3d9c94fb0efbad039b7a38937f7ffcb33242ab8541d6a"
+      }
+    },
+    "split-flap-board": {
+      "compositions/split-flap-board.html": {
+        "sha256": "7b00d233bb300451dd3d68026d3f342883596e3613ce2acd1cbf49746549d3cb"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "b7f5d025fe1bed615ddff13ba3fd9d01064bd8bbb769e48f887455427572f65a"
+      }
+    },
+    "strands": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/strands.html": {
+        "sha256": "1bade224818f2b0851046e7b9b9119857559fa93b6b90a1fee97b451581edbd6"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "5603dac2553710c3e6906b5b63b8df504e446f11b3c880fc7d453467025a90e0"
+      }
+    },
+    "stripes": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/stripes.html": {
+        "sha256": "9abbcef795cad8d70b6656337fe9ea489d6f40bb6da1cae0c6cf755ef44bab72"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "3bf0db7bcab0faa43a330f337be239837cf7ab5984ae9e5b7f760575b169c3c8"
+      }
+    },
+    "sun-burst": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/sun-burst.html": {
+        "sha256": "ceb87baf3d4adfa017c964f3aa13f7a3ac0030058fee6e73f30a881f10dc0aaa"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "e829eac565ada2a6df72f567f201ae604cc205e502c7b976d8b520b72704f875"
+      }
+    },
+    "swirl": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/swirl.html": {
+        "sha256": "7fe6f43ba1d661856e4ffe23e69ec200fd5695db9279ae956a69caf26c7eb044"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "6685d1f228b02289e633e2b5e0fdda11dd2121543f28b5db403acd9661e9792c"
+      }
+    },
+    "thin-film": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/thin-film.html": {
+        "sha256": "3986b77426d11ff8ad687625b57090633562cb9f6a66e40ab597f7296cdb62d7"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "a1c3ad3ff932dc5d7bb88e404c5c2d7addccbc9c213a5ba40e7350d577e30daa"
+      }
+    },
+    "voronoi": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/voronoi.html": {
+        "sha256": "926811b7c74d3ada7a0199ef1ae97518d4dd22299566a32f9320996bcf9a2f2c"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "6d4b30fd9dacf7b4cae197b7d361976d72678f902d90268d841acb3a89b0c0c1"
+      }
+    },
+    "water": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/water.html": {
+        "sha256": "b7c5cc5eb325454e0aac57aacf03ab47b7ac668dabd6470a05ce778f032fc1b1"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "721ccddef79548b7aac69e860c5ca5d0bb6aaf2d58e97e299c827a8f725c471a"
+      }
+    },
+    "waveform": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/waveform.html": {
+        "sha256": "3be081653fa43d86d278fe39e3dd0fc668da187195232e116ee065d21e0a8365"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "c1a826730d2c6e1cdb7e291f658ede13cefb32a99f2dcc61862534d9d4f24fea"
+      }
+    },
+    "weight-wave": {
+      "compositions/assets/fonts/OFL.txt": {
+        "sha256": "f9f539cf7549bd417159dbdb9c400943a5b60a7366c2c6fbde9f095173d82479"
+      },
+      "compositions/assets/fonts/Recursive-wght-slnt-latin.woff2": {
+        "sha256": "7623ffd5a2a68b96227e9d7453f20b18e4d0a609b441dc5504a8235af7387450"
+      },
+      "compositions/weight-wave.html": {
+        "sha256": "96cdb4d09f8e5c7105b32d1cd1fe85b949efdb8cbe342776b94285c7f7e25725"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "3754078a7baf2d2730da5b30a57c5bee08efcf7e8c79d1ee515d4a61811fa100"
+      }
+    },
+    "wireframe-portal-title": {
+      "compositions/wireframe-portal-title/SKILL.md": {
+        "sha256": "553d548c2316b24994e47cd2edbf61cccf2a206b5620017fc3df81cad260afa5"
+      },
+      "compositions/wireframe-portal-title/assets/fonts/Geist-Bold.ttf": {
+        "sha256": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03"
+      },
+      "compositions/wireframe-portal-title/assets/fonts/Geist-OFL.txt": {
+        "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+      },
+      "compositions/wireframe-portal-title/assets/fonts/Geist-Regular.ttf": {
+        "sha256": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901"
+      },
+      "compositions/wireframe-portal-title/assets/fonts/Geist-SemiBold.ttf": {
+        "sha256": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906"
+      },
+      "compositions/wireframe-portal-title/wireframe-portal-title.html": {
+        "sha256": "d4b697a693049b7a6a90639d511d6926d9363f7bb31070288b69f7cd822dae25"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "393f83b301464034c515466bf0c9e7e341f71edb569ce268e8b275fe3cdaf9c7"
+      }
+    },
+    "worley-noise": {
+      "compositions/lib/shaders.THIRD-PARTY-LICENSES.txt": {
+        "sha256": "ace6fbd142afaa20894b285ab6d4e20f164f6ec8557978d23db36197f1bc067c"
+      },
+      "compositions/worley-noise.html": {
+        "sha256": "94fd1afc3be99afa5c762c1e5cc99006931d04e45b1edc21861886f8ffb98df0"
+      },
+      "hyperframes.lock.json": {
+        "sha256": "4a7cf5aa3df929ce06e3e8875bf63cc608510be9abecb096e15c7acda97386ed"
+      }
+    }
+  }
+}
