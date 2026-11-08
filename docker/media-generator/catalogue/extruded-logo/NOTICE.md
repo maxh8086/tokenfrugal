@@ -14,3 +14,12 @@ Vendored (loaded at render time, previously fetched from a CDN):
 - `compositions/vendor/inter-latin-500-normal.woff2`
 
 Vendored packages: gsap 3.14.2 (npm gsap@3.14.2; licence is GSAP's "Standard no charge" licence, not OSI, flagged for review; see `vendor/LICENSE-gsap.txt`); three.js 0.184.0 (MIT, see `vendor/three/LICENSE`); Inter (SIL OFL 1.1, fontsource; upstream URL unpinned, sha256 in MANIFEST.json).
+
+## Libraries installed at build time
+
+The vendored copies of the following files were removed from this folder. The image installs them at build time from npm (or the fontsource package), pinned in `docker/media-generator/Dockerfile` and listed in `docker/media-generator/catalogue/LIBS.json`:
+
+- `gsap@3.14.2` (GSAP standard no-charge licence (see LICENSE-gsap.txt in each item))
+- `@fontsource/inter@5.3.0` (OFL-1.1 (see inter-LICENSE.txt in each item))
+- `three@0.184.0` (MIT)
+

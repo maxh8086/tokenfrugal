@@ -13,3 +13,10 @@ Vendored (loaded at render time, previously fetched from a CDN):
 - `compositions/components/caret-swap/vendor/gsap.min.js`
 
 Vendored packages: gsap 3.14.2 (npm gsap@3.14.2; licence is GSAP's "Standard no charge" licence, not OSI, flagged for review; see `vendor/LICENSE-gsap.txt`).
+
+## Libraries installed at build time
+
+The vendored copies of the following files were removed from this folder. The image installs them at build time from npm (or the fontsource package), pinned in `docker/media-generator/Dockerfile` and listed in `docker/media-generator/catalogue/LIBS.json`:
+
+- `gsap@3.14.2` (GSAP standard no-charge licence (see LICENSE-gsap.txt in each item))
+
