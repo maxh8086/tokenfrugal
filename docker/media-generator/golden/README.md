@@ -5,15 +5,14 @@ sha256 of every frame, and `check_golden.py check` verifies them before it rende
 
 | What | Value |
 | --- | --- |
-| Folder on disk | `C:/Users/vaibh/AppData/Local/Temp/claude/43037374726ec520/e50405df-3f99-49fb-b256-458bbad4d64f/scratchpad/golden-set` |
+| Folder on disk | `C:/Users/vaibh/Downloads/Projects/golden-frames` |
 | Layout | `frames/<item>/frame-00-at-0.5s.png`, `frame-01-at-1s.png` (72 PNG files, 36 items × 2 frames) |
 | Size | 31,085,373 bytes of PNG (about 31 MB); the folder with its render logs is 32.4 MB |
 | Verified | All 72 files match the sha256 values in `manifest.json` (checked on 2026-11-08) |
-| Backup | No independent backup. `scratchpad/golden/run1` is a byte-identical copy of the same 72 frames, but it sits in the same temp folder, so it does not protect against losing that folder |
+| Backup | The copy outside the repo is the only copy. The repo folder `docker/media-generator/golden-frames` was removed |
 
-The folder is under the session scratchpad, which is temporary. Before relying on it, copy the folder to a
-durable location outside the repo (for example a personal drive or a backup share) and update the path above.
-The frames must stay out of git.
+The folder is outside the repo, and it is the only copy of the frames. Before relying on it, copy the folder
+to a second location (for example a personal drive or a backup share). The frames must stay out of git.
 
 ## Re-rendering
 
