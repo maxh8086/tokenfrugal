@@ -38,7 +38,7 @@ network. No generative video model is used.
 ### 2.2 Environment facts (corrected by the codebase review)
 
 - numpy and soundfile are already in the media image (`docker/media-generator/Dockerfile` lines 64-67).
-- Kokoro is not in the media image. It lives in the voice image `maxh8086/voice:1` (`docker/voice/Dockerfile` lines 31-48, weights baked at build). The build needs network; running does not.
+- Kokoro is not in the media image. It lives in the voice image `maxh8086/dhvani:latest` (`docker/voice/Dockerfile` lines 31-48, weights baked at build). The build needs network; running does not.
 - Fonts: `fonts.lock` lists 59 open-source packages. Brand-licensed fonts are absent.
 - `FORMAT-CHOICE.md` does not exist anywhere in the repo. It is a per-project artifact and has no schema yet.
 - Word rate: `WORDS_PER_MINUTE = 162` in `story_film.py` (line 946), which is 2.70 words per second. `tf-roles.yaml` line 563 still says "about 3 words per second". Fix the text.
@@ -76,7 +76,7 @@ Each question has one canonical home here. Other sections point back to it.
 ### Q2. Where TTS, measurement, music and render live
 
 **Recommendation:** split by runtime, with the host orchestrating.
-- TTS: the voice image `maxh8086/voice:1`, one-shot job, run from the host. It writes WAV files to a shared volume.
+- TTS: the voice image `maxh8086/dhvani:latest`, one-shot job, run from the host. It writes WAV files to a shared volume.
 - Measurement, music, mix, scene render, mux, checks: inside `maxh8086/media-generator`, which is already where `assemble_plan` runs.
 - Orchestration: host (`story_film.py run`, or the MCP tool later).
 
