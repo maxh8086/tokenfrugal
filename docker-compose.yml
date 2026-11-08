@@ -36,8 +36,8 @@ services:
     restart: "no"
 
   dhvani:
-    build: ./docker/dhvani   # Kokoro narration over HTTP (POST /api/kokoro/speak on port 8080). Built locally; no registry push.
-    image: ${DHVANI_IMAGE:-tokenfrugal/dhvani:local}
+    # Kokoro narration over HTTP (POST /api/kokoro/speak on port 8080). Pulled from Docker Hub, no local build; DHVANI_IMAGE overrides it.
+    image: ${DHVANI_IMAGE:-maxh8086/dhvani:latest}
     profiles: [video]
     command: ["python", "/opt/voice-ui/server.py"]   # the image's default CMD is bash, which exits at once
     expose: ["8080"]   # reachable from render-engine on the default network only; not published to the host

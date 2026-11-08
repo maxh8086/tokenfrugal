@@ -35,16 +35,28 @@ def parse_story(path):
     return [s.strip() for s in sentences if s.strip()]
 
 
+# Narration is served by the dhvani service (docker/dhvani/ui/server.py). It listens only on the compose
+# network, so the request runs from the media image joined to that network.
+DHVANI_NETWORK = os.environ.get("DHVANI_NETWORK", "tokenfrugal_default")
+DHVANI_SPEAK_URL = os.environ.get("DHVANI_SPEAK_URL", "http://dhvani:8080/api/kokoro/speak")
+
+
 def narrate(text, out_wav, voice="am_michael", speed=1.0):
-    """Narrate text using the voice service."""
-    result = subprocess.run(
-        ["docker", "run", "--rm", "-i", "maxh8086/voice:1", "/opt/venv-kokoro/bin/python", "/opt/voice-ui/kokoro_speak.py", "speak"],
-        input=json.dumps({"text": text, "voice": voice, "speed": speed}).encode("utf-8"),
-        capture_output=True,
-        check=False
-    )
+    """Narrate text using dhvani. The WAV bytes are written to out_wav."""
+    body = json.dumps({"text": text, "voice": voice, "speed": speed}).encode("utf-8")
+    if IN_CONTAINER:
+        # Already inside the media image: the request goes out from here directly.
+        cmd = ["curl", "-sS", "--fail", "-X", "POST", "-H", "Content-Type: application/json",
+               "--data-binary", "@-", DHVANI_SPEAK_URL]
+        result = subprocess.run(cmd, input=body, capture_output=True, check=False)
+    else:
+        cmd = ["docker", "run", "--rm", "-i", "--network", DHVANI_NETWORK, MEDIA_IMAGE,
+               "curl", "-sS", "--fail", "-X", "POST", "-H", "Content-Type: application/json",
+               "--data-binary", "@-", DHVANI_SPEAK_URL]
+        result = subprocess.run(cmd, input=body, capture_output=True, check=False)
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.decode("utf-8").splitlines()[-1])
+        detail = result.stderr.decode("utf-8", "replace").strip().splitlines()
+        raise RuntimeError(detail[-1] if detail else f"narration failed (exit {result.returncode})")
     with open(out_wav, "wb") as f:
         f.write(result.stdout)
 
