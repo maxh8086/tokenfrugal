@@ -259,4 +259,4 @@ The owner then asked for the 27 Nits to be fixed. The fixes are plan edits, spot
 | IR2-56 | Table headers are "File \| Action \| Specification" (15 tables); the surface check is stated once and linked from the Verification Plan; the fallback-log fields are named; "the full offline suite" is used; `test_honest_finish.py` is renamed `test_verified_completion.py`. **Kept:** the smoke commands stay `python scripts/smoke.py` and `python -m scripts.smoke_plan`, because those are the forms the project CLAUDE.md documents. |
 | IR2-57 | Step 6+7 lists `tests/studio_support.py:37` as an unchanged caller. |
 
-**Still open:** none. All 7 Blockers, 23 Majors and 27 Nits are fixed, apart from the kept part of IR2-56. The fixes were not re-reviewed by Goldfish reviewers.
+**Still open:** none. All 7 Blockers, 23 Majors and 27 Nits are fixed, apart from the kept part of IR2-56. The fixes were not re-reviewed by Goldfish reviewers. A later review by Astra (`gpt-6.2-astra`) found 27 more findings; they and their fixes are in `astra_plan_review.md`.
