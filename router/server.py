@@ -15,6 +15,7 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import checker, compose, events, gpu_lease, kalamanch_cleanup, ollama_launcher, plan, reconnect, store, studio, ui_launcher
+from .outcomes import Stop, stop_from_legacy
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
 from .mcp_client import ensure_backend
 from .model_sync import ensure_models
@@ -28,12 +29,13 @@ STALE_REASON = "router stopped while task was running (no heartbeat)"
 HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
 RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # other reasons: re-scope instead
 RESCOPE = "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure."
+_CLIENT_NAME: str | None = None
 _models_ready = False  # set once ensure_models() has succeeded in this process (mediahouse tasks)
 
 
 def kind_hint(kind: str, started: int, required_tool: str = "") -> str:
     """Short next-step hint for an error_kind; empty for 'error', which keeps the reason-based hint."""
-    if kind in ("step_timeout", "request_timeout"):
+    if kind == "out_of_time":
         if started:
             return f"Timed out after {started} tool calls. Call resume_task once, or split the task."
         return "Timed out before any tool call. Split the task into smaller tasks. Do not resume_task."
@@ -47,6 +49,10 @@ def kind_hint(kind: str, started: int, required_tool: str = "") -> str:
         return "The backend containers did not start. Do not resume_task; check Docker, then dispatch again."
     if kind == "bad_answer":
         return "The answer was empty or placeholder text. Re-scope the task smaller and dispatch again."
+    if kind == "env_missing":
+        return "A program or module the task needs is missing. Install it or fix the accept command, then dispatch again. Do not resume_task."
+    if kind == "workspace_busy":
+        return "Another edit task is running in this workspace. Wait for it to finish, then dispatch again."
     return ""
 
 
@@ -118,9 +124,11 @@ class _ClientSeen(Middleware):
     """Reports which MCP client (Claude, Codex, ...) opened this router process, for the dashboard."""
 
     async def on_initialize(self, context, call_next):
+        global _CLIENT_NAME
         # pydantic exposes the MCP field as snake_case `client_info`, not `clientInfo`
         info = getattr(getattr(context.message, "params", None), "client_info", None)
         if info is not None:
+            _CLIENT_NAME = info.name
             events.emit("client", name=info.name)
         return await call_next(context)
 
@@ -160,6 +168,10 @@ async def _sweep_loop() -> None:
 
 class CheckFailed(Exception):
     """The checker still failed after its one correction; the message is the failed checks."""
+
+    def __init__(self, message, stop=Stop.CHECKER):
+        super().__init__(message)
+        self.stop = stop
 
 
 def accept_cmd(text: str) -> list[str] | None:
@@ -226,9 +238,10 @@ def _report(verdict: dict | None, role: dict) -> str:
 async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: int, name: str, t0: float) -> str:
     """B3: a native server's containers were not running or healthy, so the task fails before any model run."""
     err = f"infra: backend containers for {name} are not running or healthy"
-    store.update(tid, status="failed", error=err, error_kind="infra")
-    events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason="infra", error_kind="infra",
-                saved=0, task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
+    usage = take_usage(tid)
+    store.update(tid, status="failed", error=err, error_kind=Stop.INFRA, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+    events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason="infra", error_kind=Stop.INFRA,
+                saved=0, task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
     if plan_id:
         await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
         await _plan(plan.set_status, plan_id, "blocked", "router", err)
@@ -261,12 +274,14 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             calls += take_started(tid)
             verdict = await asyncio.to_thread(_check, role, prompt, detail, t0, accept_override)
             if verdict and not verdict["passed"]:
-                raise CheckFailed(_failed_text(verdict))
+                failed_names = [item["name"] for item in verdict["items"] if not item["passed"]]
+                raise CheckFailed(_failed_text(verdict), Stop.ACCEPT_FAILED if failed_names[0] == "accept" else Stop.CHECKER)
         after = await asyncio.to_thread(_changed_set)
         summary = summarize(role["model"], detail, prompt) + _report(verdict, role)
+        usage = take_usage(tid)
+        store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
         events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
-                    task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
-        store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None)
+                    task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, **usage)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "done", summary)
             ok, msg = await _plan(plan.done, plan_id, tid, "router run", "router")
@@ -277,7 +292,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                 + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
         if isinstance(e, CheckFailed):
-            full, reason, kind = str(e), "checker", "checker"
+            full, reason, kind = str(e), "checker", e.stop
         else:
             e = leaf(e)
             full = f"{type(e).__name__}: {e}"
@@ -287,11 +302,13 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         gpu = isinstance(e, gpu_lease.GpuBusy)  # its message is short and carries the holder: not trimmed
         if gpu:
             reason = "gpu-busy"
-        err = full if gpu else hard_trim(full, 300 if kind == "checker" else 120)
-        store.update(tid, status="failed", error=err, error_kind=kind)
+        kind = stop_from_legacy(reason, kind)
+        usage = take_usage(tid)
+        err = full if gpu else hard_trim(full, 300 if isinstance(e, CheckFailed) else 120)
+        store.update(tid, status="failed", error=err, error_kind=kind, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind,
                     saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
-                    task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **take_usage(tid))
+                    task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
             await _plan(plan.set_status, plan_id, "blocked", "router", err)
@@ -341,7 +358,7 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
             return f"plan task {plan_id} not started: {msg}"
     kalamanch_cleanup.maybe_run()  # at most once a day, in a background thread; never blocks or fails the dispatch
     prompt = store.with_templates(role["role"], task, task_type.strip())  # approved templates go before the task text; the row keeps the task
-    return await _execute(store.create(agent, role["role"], task), agent, role, prompt, plan_id=plan_id,
+    return await _execute(store.create(agent, role["role"], task, client=_CLIENT_NAME), agent, role, prompt, plan_id=plan_id,
                           accept_override=accept_argv)
 
 
