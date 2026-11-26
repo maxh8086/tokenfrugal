@@ -1,6 +1,87 @@
 # Implementation kickoff prompt
 
-Paste the block below into a new Claude Code session (Sonnet) in this repo to start the implementation of [`subagent-runtime-design.md`](../subagent-runtime-design.md).
+This document starts and runs the implementation of [`subagent-runtime-design.md`](../subagent-runtime-design.md). You open one Sonnet session and paste the prompt below. Sonnet then runs a loop with a tick every 15 minutes until the goal is met. On each tick it checks progress, verifies finished work, and assigns the next step to GPT-6 Luna (Codex) or Haiku. Each step is merged to main through its own PR before the next one starts. Opus is consulted when a step fails.
+
+## How to run it
+
+### 1. Check the machine first
+
+Run these in the repo folder. Each one should succeed before you start.
+
+```powershell
+git switch main; git pull --ff-only tokenfrugal main
+```
+
+```powershell
+.venv\Scripts\python.exe scripts\doctor.py
+```
+
+```powershell
+$env:PYTHONPATH = "."; .venv\Scripts\python.exe -m unittest discover -s tests -t . -q
+```
+
+```powershell
+gh auth status
+```
+
+```powershell
+codex login status
+```
+
+```powershell
+codex mcp list
+```
+
+`codex mcp list` must show `synaptree` as `enabled`. Steps 8h and 9 (the replay benchmark) also need Docker and Ollama running, with the two local models in `router/tf-roles.yaml` pulled. Sonnet pauses and asks you if they are missing.
+
+### 2. Open the session
+
+1. In the Claude desktop app (Code tab), start a new session in `C:\Users\vaibh\Downloads\Projects\tokenfrugal`.
+2. Pick **Sonnet 5.5** in the model picker.
+3. Pick a permission mode in which git, gh, codex and Python commands run without a prompt each time, such as auto mode. Otherwise every tick stops at a permission prompt until you answer it. The prompt's own stop rules (installs, pulls, files outside the repo, secrets) still apply in any mode.
+4. Keep the computer awake and the app open for the whole run: turn on keep-awake in the Code tab settings. The loop runs only while the session is running.
+
+### 3. Paste the prompt
+
+Copy everything inside the `text` block under [The prompt](#the-prompt) and send it as the first message. Sonnet then:
+
+1. creates the plan_add tasks and `progress.md`;
+2. re-indexes synaptree from the main checkout and checks that Codex can call it;
+3. does Step 0 itself, on branch `impl/step-0`, and merges it through its PR;
+4. starts the 15-minute loop.
+
+If Sonnet does not start the loop on its own, type this in the same session:
+
+```text
+/loop 15m Run one tick of the LOOP section of docs/designs/subagent-runtime/implementation-kickoff-prompt.md, following every rule in that prompt.
+```
+
+### 4. What you see while it runs
+
+- **Every 15 minutes:** a three-line status in the session (done, running, next).
+- **`docs/designs/subagent-runtime/progress.md`:** one row per step: executor, state, attempts, Opus consults, PR link, merge sha, test results, next action.
+- **`docs/designs/fallback-execution-log.md`:** every execution and every Opus consult.
+- **GitHub:** one merged PR per step, titled by step.
+
+### 5. When it stops for you
+
+The loop pauses and asks in the session when it needs:
+
+- an install, a model pull, or a change to a file outside the repo (such as `~/.codex/config.toml`);
+- a secret;
+- your decision after a step failed on both executors and after an Opus re-scope;
+- a design change, because S3 also failed the gate;
+- your help because the synaptree check for Codex failed.
+
+Answer in the session. Then say "continue the loop", or start it again with the `/loop` line above.
+
+### 6. Stop, restart, finish
+
+- **Stop:** say "stop the loop" in the session. Sonnet deletes the scheduled job. Any work in progress stays on its step branch.
+- **Restart** (after an app restart, or after a pause): open the same session and send the `/loop` line above. Sonnet reads `progress.md` and continues from the first step that is not merged.
+- **Finish:** when all five GOAL items are true, Sonnet writes the final report, deletes the loop job, and stops on its own.
+
+## The prompt
 
 ```text
 Implement docs/designs/subagent-runtime-design.md from Step 0 to the end, one step at a time. Each step gets its own branch from the latest main, `impl/step-<id>` (for example `impl/step-6-7`), and is merged back through its own PR before the next step starts. Read "## Detailed Implementation Plan" first, in particular "How the work is executed". The review closure tables are in docs/designs/subagent-runtime/opus_plan_review.md and astra_plan_review.md. This prompt replaces the plan's executor and owner rules with the ones below; every other rule in the plan stays.
@@ -63,7 +144,7 @@ VERIFY (Sonnet, after each executor report)
 - Record every execution in docs/designs/fallback-execution-log.md: executor, attempts, tool calls, elapsed time, result, and any Opus consult. Add one line per dispatch_task or resume_task call to docs/designs/fallback-attempts.jsonl.
 
 LOOP (every 15 minutes)
-Start it with `/loop 15m` on the tick below. Each tick:
+Start it with `/loop 15m` on the tick below. Each tick first reads docs/designs/subagent-runtime/progress.md, so a restarted loop continues from the first step that is not merged. Each tick:
 1. Check the running executor: has it finished, is it still working, or has it stalled (no new file change or output for two ticks)? Stop a stalled job and treat it as a failure.
 2. Verify a finished step as above, and decide its outcome.
 3. Assign the next step whose order rule allows it:
