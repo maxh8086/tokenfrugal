@@ -220,3 +220,9 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 0 | GPT-6 Luna (Codex) | build follow-up (remove byte order mark) | 2 | not recorded | not recorded | `done` | none / none |
 | 0 | Haiku subagent | test | 1 | 5 | 93 s (69,407 tokens) | all plan rows present, acceptance exit 0, suite 994 tests OK (skipped=3), no files changed. Noted that rule 9 is a narrower definition of "duplicate" than the plan row states. | none / none |
 | 0 | Sonnet | suite run | 1 | 1 | about 75 s | 994 tests OK (skipped=3) | none / none |
+| 0 | Haiku subagent | close | 1 | 4 | 42 s (70,693 tokens) | commit `395bb68`, PR 108 merged as `a552857`, branch deleted | none / none |
+| 1 | Opus subagent | consult (plan and code conflict) | 1 | 12 | 95 s (97,659 tokens) | current main accepted as the baseline; six design-document edits go to Luna | none / consult 1 |
+| 1 | GPT-6 Luna (Codex) | build | 1 | not recorded | about 5 min or less | `done`, acceptance 68 tests OK; Sonnet review found departures: `failure_message` recomputes the kind, `kind_hint` converts its argument, wrong trim condition, missing test cases, byte order mark. 32 sandbox-only suite errors (no git identity, no access to the secrets folder) | fix 1 / none |
+| 1 | GPT-6 Luna (Codex) | fix 1 | 2 | not recorded | about 5 min or less | `done`, acceptance 70 tests OK; review found no remaining departure. Codex left the Feedback status line blank | fix 1 / none |
+| 1 | Haiku subagent | test | 1 | about 16 | 172 s (102,083 tokens) | added missing cases in three test files and pinned the trim length; acceptance 71 OK, suite 1003 OK (skipped=3) | none / none |
+| 1 | Sonnet | suite run | 1 | 1 | about 79 s | 1003 tests OK (skipped=3) | none / none |

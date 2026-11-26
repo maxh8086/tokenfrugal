@@ -111,12 +111,29 @@ class StageTest(unittest.TestCase):
 
         tid, reply = self._run(fake, f"Accept: {self.exe} check.py\nadd the fix")
         self.assertEqual(len(calls), 2)
-        self.assertIn("FAILED (builder/m) reason=checker error_kind=checker", reply)
+        self.assertIn("FAILED (builder/m) reason=checker error_kind=accept_failed", reply)
         self.assertIn("accept:", reply)
         self.assertIn("Re-scope", reply)
         row = store.get(tid)
         self.assertEqual(row["status"], "failed")
-        self.assertEqual(row["error_kind"], "checker")
+        self.assertEqual(row["error_kind"], "accept_failed")
+
+    def test_long_accept_error_uses_300_token_trim(self):
+        async def fake(agent, role, prompt, messages=None, tid=None):
+            return "still wrong", list(messages or [])
+
+        failed_verdict = {"passed": False, "items": [
+            {"name": "accept", "passed": False, "detail": "x" * 1600},
+        ]}
+        tid = store.create("builder-agent", "builder", "long accept failure")
+        with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=failed_verdict):
+            asyncio.run(server._execute(tid, "builder-agent", self.role, "long accept failure"))
+        error = store.get(tid)["error"]
+        self.assertGreater(len(error), 480)
+        # 300-token class: the cut keeps 300 * 4 - 12 = 1188 characters, then " [trimmed]" (not the 120-class cut of 468)
+        self.assertEqual(len(error), 300 * 4 - 12 + len(" [trimmed]"))
+        self.assertTrue(error.endswith("x [trimmed]"), error[-40:])
+        self.assertIn("[trimmed]", error)
 
 
 if __name__ == "__main__":

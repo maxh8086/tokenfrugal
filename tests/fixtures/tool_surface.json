@@ -1,0 +1,230 @@
+[
+  {
+    "description": "Ask the same agent a follow-up about a finished task; context is preserved.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "question"
+      ],
+      "type": "object"
+    },
+    "name": "ask_followup"
+  },
+  {
+    "description": "Run a task on a local tf-role (agency-agents slug, e.g. 'engineering-code-reviewer').\n`role` is an alias for `agent`; when both are given, `agent` wins.\n`task_type` is required: the kind of task (e.g. 'add test', 'fix bug', 'explain code'). It picks which approved templates apply.\n`accept`, when given, is a command (e.g. 'python -m unittest') that replaces the task's Accept: line; it runs without a shell.\nOptional plan_id links it to a plan task (claimed first, marked done/blocked after).\nReturns a summary of up to 5000 tokens and a task_id.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "accept": {
+          "default": "",
+          "type": "string"
+        },
+        "agent": {
+          "default": "",
+          "type": "string"
+        },
+        "plan_id": {
+          "default": 0,
+          "type": "integer"
+        },
+        "role": {
+          "default": "",
+          "type": "string"
+        },
+        "task": {
+          "default": "",
+          "type": "string"
+        },
+        "task_type": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "dispatch_task"
+  },
+  {
+    "description": "Fetch the full stored output of a task (use sparingly; costs Claude tokens).",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "max_chars": {
+          "default": 4000,
+          "type": "integer"
+        },
+        "task_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "type": "object"
+    },
+    "name": "get_detail"
+  },
+  {
+    "description": "List roles with model, docker profile, compose backends and tool allowlist, then teams with their lead and orchestrator.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {},
+      "type": "object"
+    },
+    "name": "list_roles"
+  },
+  {
+    "description": "Add a task to the plan graph. depends = ids of existing tasks it needs first.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "default": "",
+          "type": "string"
+        },
+        "priority": {
+          "default": 0,
+          "type": "integer"
+        },
+        "tag": {
+          "default": "",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "type": "object"
+    },
+    "name": "plan_add"
+  },
+  {
+    "description": "Compact plan state: counts per status and every unfinished task.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "tag": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "plan_overview"
+  },
+  {
+    "description": "Undo status changes: one task's latest change (task_id), or all changes after an ISO time (since).",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "since": {
+          "default": "",
+          "type": "string"
+        },
+        "task_id": {
+          "default": 0,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "name": "plan_revert"
+  },
+  {
+    "description": "Re-open task task_id and every task depending on it, after that task changed approach. Call this (not plan_overview) when a plan task changed and must be redone.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "task_id": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "type": "object"
+    },
+    "name": "plan_update_from"
+  },
+  {
+    "description": "Retry a failed task by its task_id (e.g. abc123), from its saved conversation. Call this whenever a task failed and the user asks to retry it.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "task_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "type": "object"
+    },
+    "name": "resume_task"
+  },
+  {
+    "description": "Studio run backend. action: 'collect' (sources: comma list of reddit-hn, rss, youtube; default all three),\n'pipeline' (slug + topic: the seven content stages), 'save_feed' (feed_url: adds an RSS feed to the saved list, no run),\n'store' (writes today's collector files to Neo4j once each), 'cancel' (stops the active run at its next stage boundary). One run at a time: a start is refused while one is active.\nReturns a one-line message; use studio_status for state.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "default": "",
+          "type": "string"
+        },
+        "feed_url": {
+          "default": "",
+          "type": "string"
+        },
+        "slug": {
+          "default": "",
+          "type": "string"
+        },
+        "sources": {
+          "default": "",
+          "type": "string"
+        },
+        "topic": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "name": "studio_run"
+  },
+  {
+    "description": "State of the Studio run backend: active run and stage, recent runs with their end state, waiting requests,\nestimated YouTube quota used today (Pacific date), and any missing secret names (never values).",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {},
+      "type": "object"
+    },
+    "name": "studio_status"
+  }
+]

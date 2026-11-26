@@ -32,7 +32,7 @@ def _db():
     c.execute("""CREATE TABLE IF NOT EXISTS quota(
         day TEXT NOT NULL, tool TEXT NOT NULL, calls INTEGER DEFAULT 0, units INTEGER DEFAULT 0,
         PRIMARY KEY(day, tool))""")
-    for column in ("trail TEXT", "heartbeat REAL", "error_kind TEXT", "run_id TEXT"):  # databases created before these columns existed
+    for column in ("trail TEXT", "heartbeat REAL", "error_kind TEXT", "run_id TEXT", "client TEXT", "model_tag TEXT", "peak_ctx INTEGER", "outcome TEXT"):  # databases created before these columns existed
         try:
             c.execute(f"ALTER TABLE tasks ADD COLUMN {column}")
         except sqlite3.OperationalError:
@@ -40,11 +40,11 @@ def _db():
     return c
 
 
-def create(agent, role, prompt, run_id: str | None = None) -> str:
+def create(agent, role, prompt, run_id: str | None = None, client=None) -> str:
     tid = uuid.uuid4().hex[:10]
     with _db() as c:
-        c.execute("INSERT INTO tasks(id,agent,role,prompt,status,heartbeat,run_id) VALUES(?,?,?,?,'running',?,?)",
-                  (tid, agent, role, prompt, time.time(), run_id))
+        c.execute("INSERT INTO tasks(id,agent,role,prompt,status,heartbeat,run_id,client) VALUES(?,?,?,?,'running',?,?,?)",
+                  (tid, agent, role, prompt, time.time(), run_id, client))
     return tid
 
 

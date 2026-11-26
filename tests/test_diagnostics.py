@@ -64,8 +64,15 @@ class FailureMessage(unittest.TestCase):
             "out-of-steps": "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure.",
             "unknown": "Call resume_task('t1') once, then re-scope.",
         }
+        self.assertTrue(failure_message("t1", role, "x", "unknown", "env_missing").endswith(
+            "A program or module the task needs is missing. Install it or fix the accept command, then dispatch again. Do not resume_task."))
+        self.assertTrue(failure_message("t1", role, "x", "unknown", "workspace_busy").endswith(
+            "Another edit task is running in this workspace. Wait for it to finish, then dispatch again."))
+        # the kind is printed as given; failure_message does not map legacy names through stop_from_legacy
+        self.assertIn("reason=no-tools error_kind=no_tools:", failure_message("t1", role, "x", "no-tools", "no_tools"))
         for reason, hint in cases.items():
             msg = failure_message("t1", role, "ValueError: x", reason)
+            self.assertIn("error_kind=error", msg)
             self.assertIn(f"reason={reason}", msg)
             self.assertIn("FAILED (analyze/qwen2.5-coder-yarn:3b) reason=", msg)
             self.assertIn("ValueError: x", msg)

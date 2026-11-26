@@ -8,8 +8,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 
 | Step | Task | Stage | Executor | Attempts | Fix plans | Opus | PR | Merge sha | Branch deleted | Acceptance | Suite | Next action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | 64 | 6 close | Haiku | 2 | 0 | 0 | - | - | - | exit 0 | 994 OK, 3 skipped | open PR, merge, delete branch |
-| 1 | 65 | pending | - | 0 | 0 | 0 | - | - | - | - | - | after step 0; consult Opus on code drift first |
+| 0 | 64 | done | Luna, Haiku | 2 | 0 | 0 | [#108](https://github.com/maxh8086/tokenfrugal/pull/108) | `a552857` (step commit `395bb68`) | yes, local and remote | exit 0 | 994 OK, 3 skipped | - |
+| 1 | 65 | 6 close | Haiku | 2 | 1 | 1 | - | - | - | 71 OK | 1003 OK, 3 skipped | open PR, merge, delete branch |
 | 2 | 66 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 3 | 67 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 4 | 68 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -46,8 +46,12 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 
 - **Rule 9 wording (accepted):** the plan says duplicates of FB tasks are skipped; the README defines a duplicate as the same behaviour in the same file. This is Sonnet's definition, made before any S2 result.
 
+- **Codex Python access (fixed 2026-11-27):** the user granted `CodexSandboxUsers` read and run access to the Python 3.11 folder. Probe in the sandbox: `.venv` runs 3.11.9; 40 tests OK.
+
+- **Opus consult 1 (Step 1, plan and code conflict: `router/` changed after `d675d75`):** verdict, Steps 1 to 11 can use current main as the baseline; `32699ce` changes no tool and no path a step changes, and runs only in `_lifespan`. Decision (Sonnet): accepted. The Step 1 assignment edits the design document (baseline wording, one line-number note instead of refreshing every cite, one cite for the base arm, and an Ollama endpoint check before each arm). Not adopted: renaming the Step 11 fixture, and counting stop `connection` as infra, which would change the gate.
+- **Step 1 order check:** `git merge-base --is-ancestor 395bb68 HEAD` exited 0.
+- Full-suite runs set `TOKENFRUGAL_OLLAMA_AUTOSTART=0` from Step 1 on.
+
 ## Open items
 
-- **Codex cannot run Python (needs the user, blocks Step 1):** its sandbox user (`CodexSandboxOffline`, group `CodexSandboxUsers`) gets "Access is denied" on the user-profile Python 3.11, so the `.venv` does not start. Step 0 attempt 1 ended `blocked` for this reason; the README was complete and the acceptance command exits 0. Proposed fix, to be run by the user: `icacls "$env:LOCALAPPDATA\Programs\Python\Python311" /grant "CodexSandboxUsers:(OI)(CI)RX"`.
-
-- **Code drift (conflict between plan and code):** `router/` changed after `d675d75` (`32699ce`: `router/ollama_launcher.py` added, `router/server.py` +5/-3). Step 1 and Step 9 assume `router/` at the Step 1 parent matches `d675d75`. Consult Opus before the Step 1 spec.
+None.

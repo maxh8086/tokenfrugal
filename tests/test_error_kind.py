@@ -174,6 +174,14 @@ class StoreMigration(unittest.TestCase):
         store._db()
         store.update("old1", error_kind="request_timeout")
         self.assertEqual(store.get("old1")["error_kind"], "request_timeout")
+        cols = {r[1] for r in store._db().execute("PRAGMA table_info(tasks)")}
+        self.assertTrue({"client", "model_tag", "peak_ctx", "outcome"}.issubset(cols))
+        for column in ("client", "model_tag", "peak_ctx", "outcome"):
+            self.assertIsNone(store.get("old1")[column])
+
+    def test_create_client_round_trips(self):
+        tid = store.create("a", "builder", "p", client="Codex")
+        self.assertEqual(store.get(tid)["client"], "Codex")
 
     def test_sweep_marks_stale_rows_as_error(self):
         tid = store.create("a", "builder", "p")
@@ -189,12 +197,12 @@ class Hints(unittest.TestCase):
         return server.failure_message("t1", self.role, "LoopError: x", reason, kind, started)
 
     def test_timeout_before_any_tool_call(self):
-        for kind in ("step_timeout", "request_timeout"):
+        for kind in ("out_of_time",):
             self.assertTrue(self.msg(kind, 0).endswith(
                 "Timed out before any tool call. Split the task into smaller tasks. Do not resume_task."), kind)
 
     def test_timeout_after_tool_calls(self):
-        for kind in ("step_timeout", "request_timeout"):
+        for kind in ("out_of_time",):
             self.assertTrue(self.msg(kind, 3).endswith(
                 "Timed out after 3 tool calls. Call resume_task once, or split the task."), kind)
 
@@ -205,6 +213,10 @@ class Hints(unittest.TestCase):
     def test_max_steps(self):
         self.assertTrue(self.msg("max_steps", 5, "out-of-steps").endswith(
             "Step budget used up. Narrow the scope of the task."))
+
+    def test_new_hints(self):
+        self.assertIn("program or module", server.kind_hint("env_missing", 0))
+        self.assertIn("Another edit task", server.kind_hint("workspace_busy", 0))
 
     def test_error_has_no_kind_hint(self):
         msg = self.msg("error", 0, "infra")
@@ -219,7 +231,7 @@ class Hints(unittest.TestCase):
         self.assertNotIn("Call resume_task", msg)
 
     def test_kind_is_in_reply(self):
-        self.assertIn("reason=timeout error_kind=request_timeout:", self.msg("request_timeout", 0))
+        self.assertIn("reason=timeout error_kind=out_of_time:", self.msg("out_of_time", 0))
 
 
 class ExecuteEndToEnd(unittest.TestCase):
@@ -248,16 +260,51 @@ class ExecuteEndToEnd(unittest.TestCase):
         finally:
             for p in reversed(patches):
                 p.stop()
-        self.assertIn("FAILED (builder/m) reason=timeout error_kind=request_timeout", reply)
+        self.assertIn("FAILED (builder/m) reason=timeout error_kind=out_of_time", reply)
         self.assertIn("Timed out after 1 tool calls. Call resume_task once, or split the task.", reply)
         self.assertRegex(reply.splitlines()[-1], r"^status=failed role=builder model=m calls=1 elapsed=\d+\.\d+s$")
         row = store.get(tid)
         self.assertEqual(row["status"], "failed")
-        self.assertEqual(row["error_kind"], "request_timeout")
+        self.assertEqual(row["error_kind"], "out_of_time")
         failed = [kw for kind, kw in emitted if kind == "task_failed"]
         self.assertEqual(len(failed), 1)
-        self.assertEqual(failed[0]["error_kind"], "request_timeout")
+        self.assertEqual(failed[0]["error_kind"], "out_of_time")
         self.assertEqual(loop.take_started(tid), 0)  # cleared by the router after the failure
+
+    def test_no_tools_and_malformed_call_store_and_emit_stop_values(self):
+        cases = (
+            ("BadRequestError: Error code: 400 - invalid_request_error: model does not support tools",
+             "no-tools", "model_unsupported"),
+            ("LoopError: model wrote a tool call that could not be run", "malformed-tool-call", "bad_tool_call"),
+        )
+        role = {"role": "builder", "model": "m", "tools": [], "skills": [], "max_steps": 4}
+
+        async def fails(*args, **kwargs):
+            raise RuntimeError(text)
+
+        for text, reason, stop in cases:
+            with self.subTest(stop=stop):
+                emitted = []
+                tid = store.create("builder-agent", "builder", "check")
+                with mock.patch.object(server, "run", fails), \
+                        mock.patch.object(events, "emit", lambda kind, **kw: emitted.append((kind, kw))):
+                    reply = asyncio.run(server._execute(tid, "builder-agent", role, "check"))
+                self.assertIn(f"FAILED (builder/m) reason={reason} error_kind={stop}", reply)
+                self.assertEqual(store.get(tid)["error_kind"], stop)
+                self.assertEqual([kw["error_kind"] for kind, kw in emitted if kind == "task_failed"], [stop])
+
+    def test_resumed_success_clears_error_kind_through_execute(self):
+        role = {"role": "builder", "model": "m", "tools": [], "skills": [], "max_steps": 4}
+        tid = store.create("builder-agent", "builder", "check")
+        store.update(tid, status="failed", error_kind="out_of_time")
+
+        async def succeeds(*args, **kwargs):
+            return "done", []
+
+        with mock.patch.object(server, "run", succeeds):
+            asyncio.run(server._execute(tid, "builder-agent", role, "check"))
+        self.assertEqual(store.get(tid)["status"], "done")
+        self.assertIsNone(store.get(tid)["error_kind"])
 
 
 if __name__ == "__main__":
