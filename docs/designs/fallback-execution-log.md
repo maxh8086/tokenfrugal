@@ -209,3 +209,14 @@ Entry rules:
 **Decision (user, after review):** keep all videos. No Shorts (≤60 s) filter. `discover.py` stays on `snippet,statistics`; no `contentDetails` is added.
 
 **Live run:** `discover.py --region US --max 50` wrote 50 unique videos, all with view counts, to the scratchpad (outside the repo, not committed).
+
+## Subagent-runtime implementation: executions
+
+Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`. These are planned executions, not fallbacks. No `dispatch_task` or `resume_task` call was made.
+
+| Step | Executor | Stage | Attempt | Tool calls | Elapsed | Result | Fix plan / Opus |
+|---|---|---|---|---|---|---|---|
+| 0 | GPT-6 Luna (Codex) | build | 1 | not recorded | not recorded | `blocked`: README written; sandbox user cannot run Python. Sonnet ran the acceptance command, exit 0. | none / none |
+| 0 | GPT-6 Luna (Codex) | build follow-up (remove byte order mark) | 2 | not recorded | not recorded | `done` | none / none |
+| 0 | Haiku subagent | test | 1 | 5 | 93 s (69,407 tokens) | all plan rows present, acceptance exit 0, suite 994 tests OK (skipped=3), no files changed. Noted that rule 9 is a narrower definition of "duplicate" than the plan row states. | none / none |
+| 0 | Sonnet | suite run | 1 | 1 | about 75 s | 994 tests OK (skipped=3) | none / none |
