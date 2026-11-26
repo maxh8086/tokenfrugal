@@ -14,7 +14,7 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import checker, compose, events, gpu_lease, kalamanch_cleanup, plan, reconnect, store, studio, ui_launcher
+from . import checker, compose, events, gpu_lease, kalamanch_cleanup, ollama_launcher, plan, reconnect, store, studio, ui_launcher
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
 from .mcp_client import ensure_backend
 from .model_sync import ensure_models
@@ -86,6 +86,8 @@ async def _lifespan(_server):
     events.write_roles(CFG)
     store.sweep_stale(STALE_REASON)
     sweeper = asyncio.create_task(_sweep_loop())
+    # background: a cold Ollama start can take ~30 s and must not delay the MCP handshake
+    ollama_start = asyncio.create_task(asyncio.to_thread(ollama_launcher.ensure))
     await asyncio.to_thread(ui_launcher.start)
     atexit.register(ui_launcher.stop)
     compose.register()
@@ -102,6 +104,7 @@ async def _lifespan(_server):
         yield
     finally:
         beat.cancel()
+        ollama_start.cancel()
         events.emit("health", status="down")
         warm.cancel()
         reconnector.cancel()
