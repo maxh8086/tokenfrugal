@@ -11,8 +11,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 0 | 64 | done | Luna, Haiku | 2 | 0 | 0 | [#108](https://github.com/maxh8086/tokenfrugal/pull/108) | `a552857` (step commit `395bb68`) | yes, local and remote | exit 0 | 994 OK, 3 skipped | - |
 | 1 | 65 | done | Luna, Haiku | 2 | 1 | 1 | [#109](https://github.com/maxh8086/tokenfrugal/pull/109) | `3990872` (step commit `b3ef9ea`) | yes, local and remote | 71 OK | 1003 OK, 3 skipped | - |
 | 2 | 66 | done | Luna, Haiku | 6 | 2 | 3 | [#110](https://github.com/maxh8086/tokenfrugal/pull/110) | `48054cc` (step commit `9acaaa6`) | yes, local and remote | 101 OK | 1044 OK, 3 skipped | - |
-| 3 | 67 | 6 close | Haiku | 3 | 1 | 0 | - | - | - | 10 OK | 1061 OK, 3 skipped | open PR, merge, delete branch |
-| 4 | 68 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 3 | 67 | done (post-commit checks pending) | Luna, Haiku | 3 | 1 | 0 | [#111](https://github.com/maxh8086/tokenfrugal/pull/111) | `64725ee` (step commit `06729e0`) | yes, local and remote | 10 OK | 1061 OK, 3 skipped | ask the user: install and live Codex check |
+| 4 | 68 | 6 Haiku close | Haiku | 2 | 1 | 0 | - | - | - | 112 OK, 1 skipped | 1104 OK, 4 skipped | open PR, wait for CI on three OSes, merge |
 | 5 | 69 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 6-7 | 70 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8a | 71 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -60,6 +60,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 
 - **Step 3 pins:** all 12 pins in Appendix A equal the versions installed in `.venv` (2026-11-27). No pin changed.
 - **Step 3 `.codex` files:** the untracked local copies were saved to the session scratchpad before replacement.
+
+- **Step 4 workflow file:** `.gitignore` ignores `.github/`, so the close stage adds `.github/workflows/tests.yml` with `git add -f`. `.gitignore` is not changed, because the plan does not list it.
 
 ## Open items
 

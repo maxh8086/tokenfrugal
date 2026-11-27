@@ -113,6 +113,13 @@ def main() -> int:
         from router import config
         from router.config import load_tf_roles
         cfg = load_tf_roles()
+        from router.workspace import load_workspace
+        current_ws = load_workspace(config.WORKSPACE)
+        print(f"host accept: {'on' if current_ws.host_accept else 'off'} for {config.WORKSPACE}")
+        if not current_ws.host_accept:
+            print(f"TOKENFRUGAL_HOST_ACCEPT_PATHS={config.WORKSPACE}")
+        if "site-packages" in str(config.ROOT):
+            print("note: ROOT is under site-packages; set host accept variables in the client's server env block")
         deadlines = []
         for name in ("code-l2", "builder"):
             role = cfg["roles"][name]

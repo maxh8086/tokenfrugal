@@ -164,11 +164,11 @@ def _sandbox_tests(body, scratch=None, expect=None):
     return run_sandbox(scratch)[0]
 
 
-_TRAILER = re.compile(r"\s*(status=|files_changed:)")  # router trailer lines the checks drop
+_TRAILER = re.compile(r"\s*(status=|files_changed:|checks:)")  # router trailer lines the checks drop
 
 
 def _reply(body):
-    """The reply text without the router trailer lines (status=, files_changed:). The migrated checks read this, so a
+    """The reply text without the router trailer lines (status=, files_changed:, checks:). The migrated checks read this, so a
     trailer word such as 'file' or a filename in files_changed cannot pass a check on its own."""
     return "\n".join(ln for ln in body.splitlines() if not _TRAILER.match(ln))
 

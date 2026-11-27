@@ -69,11 +69,14 @@ class Manifest(unittest.TestCase):
 
 
 class AcceptCommand(unittest.TestCase):
-    def test_accept_line_is_split_on_spaces(self):
-        self.assertEqual(server.accept_cmd("Accept: python -m unittest"), ["python", "-m", "unittest"])
+    def test_accept_line_is_parsed(self):
+        from router.workspace import load_workspace
+        self.assertEqual(server.checker.accept_from_task("Accept: python -m unittest", "", load_workspace(str(ROOT))).spec.argv,
+                         ("python", "-m", "unittest"))
 
     def test_no_accept_line_is_none(self):
-        self.assertIsNone(server.accept_cmd("no accept line"))
+        from router.workspace import load_workspace
+        self.assertIsNone(server.checker.accept_from_task("no accept line", "", load_workspace(str(ROOT))).spec)
 
 
 class KindHints(unittest.TestCase):
