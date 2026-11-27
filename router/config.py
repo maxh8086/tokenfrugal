@@ -365,6 +365,17 @@ def resolve_role(agent: str, cfg: dict) -> dict:
     return r
 
 
+def with_host_accept(role: dict, cfg: dict) -> dict:
+    """Adapt a resolved role for a workspace where the host runs acceptance checks."""
+    result = dict(role)
+    spec = cfg["roles"].get(role.get("role"), {})
+    if spec.get("accept_skills"):
+        own = spec.get("skills") or []
+        result["skills"] = [*spec["accept_skills"], *(s for s in role["skills"] if s not in own)]
+        result["tools"] = [t for t in role["tools"] if t != "run_tests"]
+    return result
+
+
 WORKSPACE_PATH = re.compile(r"/workspace/([^\s'\"`,;:)\]]+)")
 
 

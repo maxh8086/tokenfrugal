@@ -466,7 +466,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
         # 2B: read the paths the task names before the model starts, so a small model never has to find the first read itself
         if "read_file" in names and not used_tools and not text_mode and role["role"] != "browser" \
                 and os.environ.get("TOKENFRUGAL_NO_PREREAD") != "1":
-            for i, p in enumerate(named_paths(task_text), 1):
+            for i, p in enumerate(named_paths(task_text, limit=3), 1):
                 try:
                     STARTED[tid] = STARTED.get(tid, 0) + 1
                     res = await asyncio.wait_for(sess.call_tool("read_file", {"path": p}), TOOL_TIMEOUT or None)

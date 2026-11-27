@@ -285,3 +285,7 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8c | GPT-6 Luna (Codex) | build | 1 | limit 35 | about 7 min | `done`, 141 tests OK; Sonnet review: a resumed legacy task looks stale until its first beat | fix 1 / none |
 | 8c | Luna | fix 1 | 2 | not reported | not reported | done: running update sets heartbeat; Sonnet suite 1190 OK (4 skipped) | stale heartbeat on resumed legacy task |
 | 8c | Haiku | test | 1 | 5 | about 2 min | added 1 case; 9 OK three times; clean clone 1191 OK (4 skipped) | - |
+| 8c | Haiku | close | 1 | limit 15 | not reported | PR 117, CI pass on 3 OS, merged `5a2e88a`, branch deleted | - |
+| 8d | GPT-6 Luna (Codex) | build | 1 | limit 25 | about 3 min | stopped at its usage limit with partial work (config.py, two test files) | Haiku finishes the build |
+| 8d | Haiku | build (fallback) | 1 | 19 | about 1.5 min | done, acceptance 82 OK; Sonnet review passed | - |
+| 8d | Haiku | test | 1 | 5 | about 2 min | no case missing; 8 OK; clean clone 1197 OK (4 skipped) | - |

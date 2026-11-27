@@ -14,6 +14,10 @@ class LevelSkillTests(unittest.TestCase):
             self.assertTrue(path.exists(), path)
             self.assertLess(len(path.read_text(encoding="utf-8")), 1200)
 
+    def test_host_accept_skill_size(self):
+        path = Path("router/skills/code-l2-accept/SKILL.md")
+        self.assertLess(len(path.read_text(encoding="utf-8")), 1200)
+
 
 class RoleSkillTests(unittest.TestCase):
     ROLES = ["builder", "data-engineer", "db-postgres-dev", "db-postgres-admin", "db-mongo-dev-l1", "db-redis-admin-l1", "db-elastic-dev", "analyzer", "security", "reviewer", "debugger", "docs",
