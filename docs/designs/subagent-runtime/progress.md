@@ -20,8 +20,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 8c | 73 | done | Luna, Haiku | 2 | 1 | 0 | [#117](https://github.com/maxh8086/tokenfrugal/pull/117) | `5a2e88a` | yes | 9 OK, three runs | 1191 OK (4 skipped); CI pass | - |
 | 8d | 74 | done | Luna (stopped at limit), Haiku | 1 | 0 | 1 | [#118](https://github.com/maxh8086/tokenfrugal/pull/118) | `816bb34` | yes | 8 OK | 1197 OK (4 skipped); CI pass; code-l2 bench PASS 6/6 | slower sandbox task, see open items |
 | 8e | 75 | done | Luna (usage limit), Haiku | 4 | 2 | 1 | [#119](https://github.com/maxh8086/tokenfrugal/pull/119) | `6d45c5c` | yes | 76 OK | 1232 OK (4 skipped); CI pass | - |
-| 8f | 76 | 5 close (after CI fix) | Haiku | 3 | 1 | 0 | [#120](https://github.com/maxh8086/tokenfrugal/pull/120) | - | - | 60 OK | 1292 OK (4 skipped) with the test fix | push, CI, merge |
-| 8g | 77 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 8f | 76 | done | Luna (usage limit), Haiku | 3 | 1 | 0 | [#120](https://github.com/maxh8086/tokenfrugal/pull/120) | `a568f5a` | yes | 60 OK | 1292 OK (4 skipped); CI pass after a test-timing fix | - |
+| 8g | 77 | 5 close | Haiku | 2 | 0 | 0 | - | - | - | 86 OK, two runs | 1318 OK (4 skipped) | PR, CI, merge |
 | 8h | 78 | pending | - | 0 | 0 | 0 | - | - | - | - | - | corpus decisions before any S2 result |
 | 9 | 79 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 10 | 80 | pending | - | 0 | 0 | 0 | - | - | - | - | - | only if Step 9 says build |
@@ -74,8 +74,11 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 
 - Step 8e (Opus consult, 2026-11-27): rule 5 applies to legacy and packet tasks alike; the Step 6+7 build had made a no-write role's failed checks end `failed`, against the plan, so `tests/test_checker_stage.py` joins Step 8e's file list and acceptance command in the design doc. Rules 1-3 run before the failed-checks rule; earlier stops (`env_missing`, `out_of_time`) still win. Fix split in two: fix 1 outcome semantics, fix 2 reply manifest, result record, guarded `changes()` and missing tests.
 
+- Step 8g (Sonnet): the test stage noted that `replay_report` imports `scripts.bench` for `pct`, which loads `router/config.py` and so reads `.env` during its tests. Kept as the plan says (reuse `bench.pct`): the suite already loads that config in many other test files.
+
 ## Open items
 
+- Step 9: before each arm, check that no results file for that arm and date is left from an earlier try; the runner appends to it.
 - Step 9 must check before the first arm that the Docker file tools can read and write a replay worktree in the system temporary folder (the profiles mount the installed workspace; the runner sets `CC_WORKSPACE` to the worktree).
 - Step 8d made the `code-l2` sandbox task about 125 s slower (37 s to 164 s): under `code-l2-accept` the model searches `/workspace` for files it has yet to create, and `search_files` times out at 60 s. The pass criterion does not measure time. Relevant to the Step 9 timeout decision; the skill text is the design's literal text and is unchanged.
 - **Step 3 post-commit checks:** the user approved the install on 2026-11-27; `pip install -e .` ran in `.venv` and created `.venv/Scripts/tokenfrugal-router.exe`. The user then approved appending that folder to the end of the user `PATH` (done 2026-11-27); new processes resolve `tokenfrugal-router`. The Codex check in another project, with a `~/.codex/config.toml` entry (outside the repo), is still pending. The untracked `tokenfrugal.egg-info/` folder from the install is never committed.

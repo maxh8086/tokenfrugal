@@ -619,5 +619,38 @@ class CheckTimeoutTest(TempTest):
         self.assertEqual(len([x for x in worktrees if x.startswith("worktree ")]), 1)
 
 
+class RunDateTest(TempTest):
+    """One invocation writes every record to the file dated when the runner started, even past midnight."""
+
+    def test_every_record_of_one_invocation_uses_the_start_date(self):
+        corpus = self.tmp / "Benchmark" / "replay"
+        for name in ("fb-001", "fb-002"):
+            (corpus / name).mkdir(parents=True)
+            (corpus / name / "task.toml").write_text("repo = 'r'\n", encoding="utf-8")
+
+        def fake_task(folder):
+            return {"id": folder.name, "folder": folder, "meta": {"repo": "r", "base_commit": "x", "agent": "a"},
+                    "packet": {}}
+
+        def fake_run(task, arm, router, repo, venv, extra_env, run_no):
+            return {"id": task["id"], "arm": arm, "run": run_no, "result": "pass"}
+
+        days = iter([date(2026, 11, 27), date(2026, 11, 28), date(2026, 11, 28), date(2026, 11, 28)])
+        clock = mock.Mock()
+        clock.today.side_effect = lambda: next(days)
+        with mock.patch.object(replay, "ROOT", self.tmp), \
+                mock.patch.object(replay, "load_task", side_effect=fake_task), \
+                mock.patch.object(replay, "copy_settings"), \
+                mock.patch.object(replay, "run_once", side_effect=fake_run), \
+                mock.patch.object(replay, "date", clock), \
+                contextlib.redirect_stdout(io.StringIO()):
+            code = replay.main(["--arm", "s2", "--router", str(self.tmp / "router"), "--repo", f"r={self.tmp}"])
+        self.assertEqual(code, 0)
+        self.assertEqual(clock.today.call_count, 1)
+        results = corpus / "results"
+        self.assertEqual(sorted(p.name for p in results.iterdir()), ["s2-20261127.jsonl"])
+        self.assertEqual(len((results / "s2-20261127.jsonl").read_text(encoding="utf-8").splitlines()), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

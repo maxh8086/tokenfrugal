@@ -9,13 +9,84 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8g, Replay report
+- **Branch:** `impl/step-8g`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done (built by Haiku; one correction by Sonnet review: verify-record reads the S3 line directly after its GATE line, 87 tests OK)
+
+### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8g, lines 1229-1237; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `scripts/replay_report.py` | **Create** | <ul><li>Per-task pass: the single run, or 2 of 3 for tasks with three runs (after `--rerun-against`).</li><li>The gate: the pass count against `ceil(0.8 * N)` and zero false successes, where a false success is a `done` or `satisfied` run with `check_ok` or `scope_ok` false.</li><li>Reported only: the `base` score and a one-sided exact sign test on discordant tasks (binomial, standard library only), with a line saying when the improvement cannot be told apart from noise.</li><li>Per-arm 90th-percentile run seconds, `bench.pct(secs, 90)`. Step 9 takes the `code-l2` timeout from this number.</li><li>FB and rw halves, and `est_saved_tokens` per task, labelled *estimated tokens spared*.</li><li>The S3 trigger, `accept_failed_share`: among the candidate arm's non-infra runs with outcome `failed`, the share whose stop is `accept_failed`.</li></ul>It prints one record line, `GATE: <PASS\|FAIL> base=<arm> candidate=<arm> results=<candidate results file> passed=<k>/<N> false_successes=<n> accept_failed_share=<x.xx>`, then `S3 decision: <build\|skip>`, derived from that line by the Step 9 rule (build when the gate fails or `accept_failed_share` is above 0.50). It exits 0 either way.<br>`--verify-record RESULTS_MD --base A --candidate B` finds the `GATE:` line for that pair in the `RESULTS_MD` file, recomputes the report from the named results file, and exits 0 only when the recorded `GATE:` line and the `S3 decision:` line after it equal the recomputed ones. |
+| `tests/test_replay_report.py` | **Create** | The sign test against known values; the single-run and 2-of-3 rules; a false success fails the gate even at 20 of 20; a `done` run with `scope_ok` false is a false success; infra rows ignored; the `accept_failed` share and the `S3 decision:` line it gives; `--verify-record` passes on a matching record and fails on an edited one, on a record for another arm pair, and on a missing decision; all from a fixture `results/*.jsonl`. |
+
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_replay_report -q`
+
+**Notes from Sonnet**
+
+- Read the design sections `### Measurement plan (S2)` (Report bullets) and Step 9 (the S3 decision rule). The literal `GATE:` and `S3 decision:` lines are in the plan row; match them exactly.
+- Records are what `scripts/replay.py` (Step 8f) writes: read its `build_record`, `grade` and the rerun fields (`result` pass/fail/infra, `outcome`, `status`, `stop`, `check_ok`, `scope_ok`, `secs`, `run`, `attempt`, `est_saved_tokens`). `outcome` is null on the old `base` arm: use `status` then.
+- N is the number of task folders in the corpus (`Benchmark/replay/*/task.toml`), so a task with no candidate run counts as not passed; report such tasks by name. Take the corpus and results folders from a root that tests can replace with a temporary folder.
+- `--verify-record` recomputes from the results file named in the recorded line; a record that names a missing file fails with a clear message and non-zero exit.
+- Reuse `bench.pct` (and `bench.stats` if useful) from `scripts/bench.py`; import it inside the function that needs it, because importing it loads the router configuration.
+- Also fix one defect in `scripts/replay.py`: it takes `date.today()` for every record, so an arm that runs past midnight is split over two files. Take the date once when the runner starts and use it for every record of that invocation (and for `--rerun-against` writes); add a test in `tests/test_replay_runner.py`.
+- Tests use fixture results in temporary folders: no model, Docker, network or real `.env`, nothing written into the real repository; CI runs them on clean Windows, macOS and Linux. Use `.venv\Scripts\python.exe`, never plain `python`.
+
+**Files you may touch:** `scripts/replay_report.py`, `tests/test_replay_report.py`, `scripts/replay.py`, `tests/test_replay_runner.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/`, `scripts/bench.py`, `Benchmark/replay/README.md`, `Benchmark/replay/RESULTS.md`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_replay_report tests.test_replay_runner tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done (built by Haiku, Codex at its usage limit)
+- **Files changed:** `scripts/replay_report.py` (new), `tests/test_replay_report.py` (new), `scripts/replay.py` (one `date.today()` per invocation, passed to every `append_record`), `tests/test_replay_runner.py` (new class `RunDateTest` at the end). Nothing committed, pushed or installed.
+- **Tests written first:** `tests/test_replay_report.py` (sign test values, single-run and 2-of-3 rules, infra rows ignored, false success at 20 of 20, scope false, gate at 16 and 15 of 20, FB and rw halves, accept_failed share at 0.75 and 0.50, p90 and estimated tokens, `GATE:`/`S3 decision:` lines, `--verify-record` pass, edited line, other pair, missing decision, missing results file) and `RunDateTest` in `tests/test_replay_runner.py` (asserts one `date.today()` call and one results file across records). Before the code: the report module failed to import, and `RunDateTest` failed with `2 != 1`.
+- **Test result after the code:** `Ran 85 tests ... OK` (the three modules from the acceptance command; the `usage:` lines in the output come from existing argparse tests and are expected).
+- **Acceptance command result:** `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_replay_report tests.test_replay_runner tests.test_tool_surface -q` gave OK, 85 tests. No model, Docker or network was used.
+- **Departures from the plan:**
+  1. I did not use synaptree. I located `scripts/replay.py` and the tests with grep and direct reads, which the assignment allows when synaptree is not used. Nothing else in the repo was read beyond those files and the design sections.
+  2. `pass` for a run is recomputed from `outcome` (or `status` when outcome is null), `check_ok` and `scope_ok`, not from the stored `result` field. Infra is `result == "infra"` or a stop in `INFRA_KINDS`.
+  3. Task rule for run counts other than 1 or 3: at least 2 passing runs (so 2 runs need both). The gate fails when the corpus is empty.
+  4. Per-arm p90 uses all non-infra runs of the arm's newest results file. Estimated tokens spared are summed over non-infra runs per task.
+  5. The `results=` value in the `GATE:` line is the results path relative to the repo root with forward slashes. `--verify-record` takes the base file as the newest base-arm file, the same as the report does.
+  6. The report prints its detail lines first and the `GATE:` and `S3 decision:` lines last. Missing base or candidate results files exit 2 with a message.
+- **Problems or questions for Sonnet:** The Status line in the Current assignment section still says "assigned to Haiku"; I left it because the rules say to edit only the Feedback block. The design's gate uses `ceil(0.8 * N)` with N counted from the corpus folders; confirm that is the intended N when Step 8h changes the count. Nothing of mine is running.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8f part B2
+
 - **Step:** 8f, Replay runner, part B2 (rerun-against and corpus check)
 - **Branch:** `impl/step-8f`
 - **Kind:** build
 - **Assigned at:** 2026-11-27
 - **Status:** done (built by Haiku, Codex at its usage limit)
 
-### Task
+#### Task
 
 **Planning gate: already satisfied. Do not run an EGM brainstorm or review.** This finishes the approved Step 8f. Parts A and B1 are in the working tree (uncommitted): `scripts/replay.py`, `tests/test_replay_runner.py`; keep them. The specification is the section "Measurement plan (S2)" of `docs/designs/subagent-runtime-design.md` (Corpus layout, Runner, Runs, `--check-corpus`) and the Step 8f rows.
 
@@ -42,7 +113,7 @@ Tests start no model, Docker or network, read no real `.env`, and write nothing 
 
 **Tool-call limit:** 25. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `scripts/replay.py` (`--rerun-against`: `base_results_file` picks the newest `<BASE>-<YYYYMMDD>.jsonl`, `base_results` ignores infra lines, `rerun_ids` lists tasks whose arm result differs and that are in the base file, and `main` runs those tasks twice more after the arm's runs, with no base file an error before any run; `--check-corpus`: `corpus_check` and `task_problems` validate task.toml, packet.json (via `router/packet.py` loaded by file path, pydantic only), check.py, the accept round trip and the venv folders, printing each problem and `tasks: N`, exit 1 on any problem; `SetupFault`: `run_once` raises it when the child exits 3, so `main` stops with exit 1 and writes no record for that run; `run_check` gives check.py a 600 s limit, a timeout is a failed check; `_read_events` renamed `read_jsonl`). `tests/test_replay_runner.py` (20 new tests: `CorpusCheckTest`, `RerunHelpersTest`, `RerunAgainstTest`, `WrongRouterFatalTest`, `CheckTimeoutTest`). No other file was touched. Nothing was run against a model, Docker or the network, and `.env` was not read.
@@ -51,10 +122,6 @@ Tests start no model, Docker or network, read no real `.env`, and write nothing 
 - **Acceptance command result:** `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q` gave `Ran 59 tests`, `OK`. No real `Benchmark/replay/results` folder was created and no stray worktree was left. Nothing of mine is running.
 - **Departures from the plan:** (1) The rerun run numbers are `--runs + 1` and `--runs + 2`, which are 2 and 3 with the default `--runs 1`; with more runs the numbers continue after them, so no number repeats. (2) A task whose arm runs are all infra has no arm result, so it is not rerun. (3) The task list and the `--repo` check now run before the first run, so a missing `--repo` stops before any run starts. (4) `--check-corpus` treats every folder under `Benchmark/replay` except `results` as a task folder, so a folder without `task.toml` is reported rather than skipped. (5) The venv for a `--venv` name is that path; for a `--repo` name without one it is `<repo>/.venv`. (6) The header Status line above History was also set to done, as in earlier steps. (7) `_read_events` is renamed `read_jsonl`, used in four places in the same file.
 - **Problems or questions for Sonnet:** (a) Confirm the rerun numbers for `--runs` greater than 1 (departure 1). (b) Confirm that an arm with only infra runs for a task is skipped, not rerun (departure 2). (c) Confirm that `--check-corpus` should report a folder with no `task.toml` as a task problem (departure 4). I did not run `--check-corpus` on the real corpus: `Benchmark/replay` holds only `README.md` and `RESULTS.md` and no task folders yet, so it would report `tasks: 0`.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8f part B1
 
