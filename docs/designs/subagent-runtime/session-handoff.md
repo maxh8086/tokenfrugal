@@ -9,26 +9,26 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
-- **Step:** 10, close
-- **Branch:** `impl/step-10`
+- **Step:** 10, results record (end of run)
+- **Branch:** `impl/step-10-results`
 - **Kind:** close
 - **Assigned at:** 2026-11-27
 - **Status:** in progress
 
 ### Task
 
-Close Step 10. Sonnet already ran the full suite (1327 OK, 4 skipped); do not run tests.
+Record the end of the run. Sonnet already ran the full suite (1327 OK, 4 skipped) and the record verification; do not run tests.
 
 1. Set Status to "in progress".
-2. Stage exactly these ten files: `router/loop_policy.py`, `router/loop.py`, `router/server.py`, `router/checker.py`, `tests/test_loop_policy.py`, `tests/test_forced_answer.py`, `tests/test_checker_stage.py`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly ten files.
-3. Commit "Step 10: In-loop accept and repeat guard". Add one body line: "router/checker.py also changed (optional accept_result), outside the plan's file table." Human author only: no Co-Authored-By trailer, no "generated with" footer.
-4. `git push -u tokenfrugal impl/step-10`.
-5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-10`, same title; body: summary of the policy, acceptance `python -m unittest tests.test_loop_policy tests.test_forced_answer -q` 11 OK, full suite 1327 OK, 4 skipped. No footer.
+2. Stage exactly these four files: `Benchmark/replay/RESULTS.md`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly four files.
+3. Commit "Step 10: Record the s3 gate result (FAIL)". Human author only: no Co-Authored-By trailer, no "generated with" footer.
+4. `git push -u tokenfrugal impl/step-10-results`.
+5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-10-results`, same title; body: s3 GATE FAIL 4/20 with 3 false successes, recorded and verified; run ended by the owner, S3 stays on, Step 11 not built; docs only; full suite 1327 OK, 4 skipped. No footer.
 6. `gh pr checks <n> --repo maxh8086/tokenfrugal --watch --fail-fast` in the foreground.
-7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present.
-8. Then fill in Feedback (PR link, merge sha, CI per OS, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
+7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present. Then check `gh run list --repo maxh8086/tokenfrugal --branch main --limit 1`; if that run is still going, watch it to the end.
+8. Fill in Feedback (PR link, merge sha, CI per OS, main run result, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
 
-Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report the failing job and its error lines; do not work around it.
+Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report.
 
 **Tool-call limit:** 15.
 
@@ -45,6 +45,41 @@ Never force push, never push to main directly, never install anything, never rea
 ## History
 
 (Finished assignments with their feedback, newest first.)
+
+### Step 10 close
+
+- **Step:** 10, close
+- **Branch:** `impl/step-10`
+- **Kind:** close
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+Close Step 10. Sonnet already ran the full suite (1327 OK, 4 skipped); do not run tests.
+
+1. Set Status to "in progress".
+2. Stage exactly these ten files: `router/loop_policy.py`, `router/loop.py`, `router/server.py`, `router/checker.py`, `tests/test_loop_policy.py`, `tests/test_forced_answer.py`, `tests/test_checker_stage.py`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly ten files.
+3. Commit "Step 10: In-loop accept and repeat guard". Add one body line: "router/checker.py also changed (optional accept_result), outside the plan's file table." Human author only: no Co-Authored-By trailer, no "generated with" footer.
+4. `git push -u tokenfrugal impl/step-10`.
+5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-10`, same title; body: summary of the policy, acceptance `python -m unittest tests.test_loop_policy tests.test_forced_answer -q` 11 OK, full suite 1327 OK, 4 skipped. No footer.
+6. `gh pr checks <n> --repo maxh8086/tokenfrugal --watch --fail-fast` in the foreground.
+7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present.
+8. Then fill in Feedback (PR link, merge sha, CI per OS, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
+
+Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report the failing job and its error lines; do not work around it.
+
+**Tool-call limit:** 15.
+
+#### Feedback
+
+- **Status:** done. [PR #124](https://github.com/maxh8086/tokenfrugal/pull/124) merged as 609a87b51b11732673aa8e2636216d9f4c348d16. main fast-forwarded. impl/step-10 deleted locally and remotely.
+- **Files changed:** Exactly the ten assigned paths were committed in 4cc649b.
+- **Tests written first:** Close step only. No tests added.
+- **Test result after the code:** Sonnet reported full suite 1327 OK, 4 skipped. CI passed on Windows (3m18s), macOS (2m42s), and Ubuntu (1m31s).
+- **Acceptance command result:** Sonnet reported 11 OK for `python -m unittest tests.test_loop_policy tests.test_forced_answer -q`.
+- **Departures from the plan:** router/checker.py also changed (optional accept_result), outside the plan's file table.
+- **Problems or questions for Sonnet:** None.
 
 ### Step 10 test completion
 
