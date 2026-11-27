@@ -204,24 +204,29 @@ class TaskContractTest(unittest.TestCase):
     def test_cancelled_execution_persists_messages_attached_to_cancel(self):
         tid = store.create("builder", "builder", "task")
         failure_messages = [{"role": "assistant", "content": "cancelled response"}]
+        entered = []
 
         async def cancel_run(*args, **kwargs):
+            entered.append(True)
             try:
-                await asyncio.sleep(1)
+                await asyncio.sleep(30)
             except asyncio.CancelledError as exc:
                 exc.msgs = failure_messages
                 raise
 
         ws = SimpleNamespace(host_accept=True)
         role = {"role": "builder", "model": "test", "max_steps": 2, "tools": [], "skills": []}
+        baseline = checker.Baseline("hash", None, {}, False)
         with mock.patch.object(server.workspace, "load_workspace", return_value=ws), \
              mock.patch.object(server.workspace, "to_rel", side_effect=lambda p, *_: p), \
              mock.patch.object(server.workspace, "denied", return_value=False), \
              mock.patch.object(server, "role_timeout", return_value=1), \
-             mock.patch.object(server.config, "deadline", return_value=0.03), \
+             mock.patch.object(server.config, "deadline", return_value=1), \
+             mock.patch.object(server.checker, "baseline", return_value=baseline), \
              mock.patch.object(server.gpu_lease, "guard_ollama"), \
              mock.patch.object(server, "run", side_effect=cancel_run):
             asyncio.run(server._execute(tid, "builder", role, "task"))
+        self.assertEqual(entered, [True], "the patched run was never entered")
         self.assertEqual(store.get(tid)["messages"], failure_messages)
 
     def test_get_detail_handles_null_tool_call_content(self):

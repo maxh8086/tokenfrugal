@@ -306,3 +306,5 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8f | Haiku | build part B1 (resumed) | 2 | 13 after resume | about 2 min | done, 39 OK; Sonnet review passed; wrong-router abort and check.py time limit added to B2 | - |
 | 8f | Haiku | build part B2 (fallback) | 3 | - | - | done, 59 OK; Sonnet review passed | - |
 | 8f | Haiku | test | 1 | limit 20 | - | 2 cases added; 60 OK twice; clean clone 1292 OK (4 skipped); check-corpus prints tasks: 0 | - |
+| 8f | Haiku | close | 1 | 5 | about 4 min | PR 120: Windows CI failed `test_cancelled_execution_persists_messages_attached_to_cancel` (older test, 30 ms deadline); not merged | fix 1: test-only |
+| 8f | Haiku | CI fix 1 (test only) | 1 | 15 + 6 | about 10 min | deadline tests made independent of machine speed; one correction (a test took 90 s); suite 1292 OK | - |

@@ -20,7 +20,7 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 8c | 73 | done | Luna, Haiku | 2 | 1 | 0 | [#117](https://github.com/maxh8086/tokenfrugal/pull/117) | `5a2e88a` | yes | 9 OK, three runs | 1191 OK (4 skipped); CI pass | - |
 | 8d | 74 | done | Luna (stopped at limit), Haiku | 1 | 0 | 1 | [#118](https://github.com/maxh8086/tokenfrugal/pull/118) | `816bb34` | yes | 8 OK | 1197 OK (4 skipped); CI pass; code-l2 bench PASS 6/6 | slower sandbox task, see open items |
 | 8e | 75 | done | Luna (usage limit), Haiku | 4 | 2 | 1 | [#119](https://github.com/maxh8086/tokenfrugal/pull/119) | `6d45c5c` | yes | 76 OK | 1232 OK (4 skipped); CI pass | - |
-| 8f | 76 | 5 close | Haiku | 3 | 0 | 0 | - | - | - | 60 OK, two runs | 1292 OK (4 skipped) | PR, CI, merge |
+| 8f | 76 | 5 close (after CI fix) | Haiku | 3 | 1 | 0 | [#120](https://github.com/maxh8086/tokenfrugal/pull/120) | - | - | 60 OK | 1292 OK (4 skipped) with the test fix | push, CI, merge |
 | 8g | 77 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8h | 78 | pending | - | 0 | 0 | 0 | - | - | - | - | - | corpus decisions before any S2 result |
 | 9 | 79 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
