@@ -1,0 +1,135 @@
+{
+  "$defs": {
+    "FileRef": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "new": {
+          "default": false,
+          "title": "New",
+          "type": "boolean"
+        },
+        "lines": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lines"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "FileRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "v": {
+      "const": 1,
+      "title": "V",
+      "type": "integer"
+    },
+    "goal": {
+      "maxLength": 400,
+      "minLength": 1,
+      "title": "Goal",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "edit",
+        "analyze"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "requirements": {
+      "default": [],
+      "items": {
+        "maxLength": 200,
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Requirements",
+      "type": "array"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/FileRef"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Files",
+      "type": "array"
+    },
+    "accept": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Accept"
+    },
+    "env": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "title": "Env",
+      "type": "object"
+    },
+    "must_not_change": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Must Not Change",
+      "type": "array"
+    },
+    "context": {
+      "default": "",
+      "maxLength": 1500,
+      "title": "Context",
+      "type": "string"
+    }
+  },
+  "required": [
+    "v",
+    "goal",
+    "kind",
+    "files"
+  ],
+  "title": "Packet",
+  "type": "object"
+}

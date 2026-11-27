@@ -278,3 +278,6 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8a | GPT-6 Luna (Codex) | fix 2, part A | 5 | limit 35 | about 5 min | `done`, 147 tests OK; Sonnet full suite 1171 OK (skipped=4) | fix 2 / consult 9 |
 | 8a | GPT-6 Luna (Codex) | fix 2, part B | 6 | limit 35 | about 7 min | `done`, 150 tests OK; Sonnet full suite 1175 OK (skipped=4) | fix 2 / consult 9 |
 | 8a | Haiku subagent | test | 1 | limit 20 | about 3 min | one case added; 57 OK; clean-clone suite 1176 OK (skipped=4); Sonnet full suite 1176 OK (skipped=4) | none / none |
+| 8a | Haiku subagent | close | 1 | 10 | about 4 min | commit `99b3449`, PR 115 merged as `299ed5c`, CI green on 3 OSes, branch deleted | none / none |
+| 8b | GPT-6 Luna (Codex) | build | 1 | limit 25 | about 4 min | `done`, 6 tests OK; Sonnet review passed; full suite 1181 OK (skipped=4) | none / none |
+| 8b | Haiku subagent | test | 1 | limit 15 | about 2 min | one case added; 6 OK; clean-clone suite 1182 OK (skipped=4); Sonnet full suite 1182 OK (skipped=4) | none / none |
