@@ -289,3 +289,13 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8d | GPT-6 Luna (Codex) | build | 1 | limit 25 | about 3 min | stopped at its usage limit with partial work (config.py, two test files) | Haiku finishes the build |
 | 8d | Haiku | build (fallback) | 1 | 19 | about 1.5 min | done, acceptance 82 OK; Sonnet review passed | - |
 | 8d | Haiku | test | 1 | 5 | about 2 min | no case missing; 8 OK; clean clone 1197 OK (4 skipped) | - |
+| 8d | Haiku | close | 1 | limit 15 | about 7 min | PR 118, CI pass on 3 OS, merged `816bb34`, branch deleted | - |
+| 8d | Opus | consult | 1 | 9 | about 2 min | realworld runner retired: replace with paired code-l2 bench | plan change in design doc |
+| 8d | Sonnet | post-commit check | 1 | - | about 6 min | code-l2 bench 6/6 vs 6/6, PASS; sandbox task slower (search timeouts) | - |
+| 8e | GPT-6 Luna (Codex) | build part A | 1 | 0 | under 1 min | not started: usage limit | Haiku does part A |
+| 8e | Haiku | build part A (fallback) | 1 | 38 (limit 35) | about 4 min | done, 88 OK; Sonnet review passed, suite 1204 OK; no-accept packet fix moved to part B | - |
+| 8e | Haiku | build part B (fallback) | 1 | 54 (limit 35) | about 7 min | done, 130 OK; Sonnet review: rule 5 limited to packet tasks, failed checks ahead of rules 1-3 | Opus consult |
+| 8e | Opus | consult | 1 | - | - | confirmed both defects and found seven more; nine-item fix list | fix 1 (items 1-4), fix 2 (items 5-9) |
+| 8e | Haiku | fix 1 (fallback) | 2 | 23 | about 3 min | done, 136 OK; Sonnet review passed | items 1-4 |
+| 8e | Haiku | fix 2 (fallback) | 3 | 28 (limit 25) | about 3 min | done, 143 OK; Sonnet review passed, suite 1232 OK | items 5-9 |
+| 8e | Haiku | test | 1 | limit 20 | about 3 min | no case missing; temp-folder portability edits; clean clone 1232 OK (4 skipped) | - |

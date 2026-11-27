@@ -9,13 +9,246 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8e, reply and result record fix 2
+- **Branch:** `impl/step-8e`
+- **Kind:** fix 2
+- **Assigned at:** 2026-11-27
+- **Status:** done (built by Haiku, Codex at its usage limit)
+
+### Task
+
+**Planning gate: already satisfied. This is a fix to an approved task; do not run an EGM brainstorm or review.** Your uncommitted Step 8e work, with fix 1, stays.
+
+Write or change the tests first, show them failing, then change the code.
+
+1. **Manifest.** The success reply calls `checker.manifest_from(final_changes, packet=packet is not None)`, so a packet reply has the `outside_scope:` line and a legacy reply does not. Proof: a new test; `tests/test_checker_stage.py` keeps passing.
+2. **Note on failures.** A failed packet `edit` task with a partial baseline stores `contract_json["result"]["note"] == "scope unchecked"`, whatever the stop. Proof: extend the non-git and size-capped tests.
+3. **`changes()` in the error path.** Reuse `final_changes` when it is already set. Otherwise call `checker.changes` once, inside `try/except` (None on error), only when a baseline exists and the deadline has not passed (it must not run unbounded after the deadline). The row is written `failed` with a `result` and the plan is updated even when it raises. Add a code comment saying cancel and deadline exits store an empty file list because there is no time to diff. Proof: a test with `checker.changes` patched to raise in the error path (row ends `failed` with a `result`); a rule-failure test asserting exactly one `changes()` call after the model run. Also assert `result` exists after a deadline exit and after the backend-down exit (`_infra_failed`).
+4. **Plan recording tests.** Restore `test_packet_task_with_plan_records_run_and_marks_plan_done` to an `edit` packet that changes a task file, and add a `satisfied` case with `plan_id` (accept passes, no change) that records the run `done` and calls `plan.done`.
+5. **Refused resume.** Extend the refused packet resume test to assert that status, attempts, heartbeat, error_kind and messages are unchanged.
+
+**Files you may touch:** `router/server.py`, `tests/test_verified_completion.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_checker_stage tests.test_workspace_claim tests.test_packet tests.test_task_contract tests.test_deadline tests.test_error_kind tests.test_tool_surface -q
+```
+
+**Tool-call limit:** 25. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `router/server.py` (new `_scope_note(packet, base)`; `final_changes = None` at the top of `_execute_task`; the success reply uses `manifest_from(final_changes, packet=packet is not None)`; the failure path reuses `final_changes`, otherwise calls `checker.changes` once inside `try/except` and only before the deadline; `_result` gets the scope note on every failure exit; comment on cancel and deadline exits storing an empty file list). `tests/test_verified_completion.py` (`run_patches` takes `changes`/`verdict` and a complete baseline; plan test restored to an edit packet; new `test_packet_satisfied_with_plan_...`, outside-scope manifest, partial-baseline accept-failed note, changes-once, error-path changes raising, deadline exit, `_infra_failed` result; non-git and size-capped tests assert the note; refused resume asserts status, attempts, heartbeat, error_kind and messages unchanged). Done by Haiku, not Codex. No commit, push or install.
+- **Tests written first:** Before the code change, 5 failures and 1 error: non-git and size-capped note, partial-baseline accept-failed note, changes called twice (`2 != 1`), packet outside-scope manifest missing, and the error-path test (`RuntimeError: diff broke` escaped). The satisfied-plan, deadline, `_infra_failed` and refused-resume tests passed before the code change and are kept as guards.
+- **Test result after the code:** `Ran 143 tests in 15.847s`, `OK`.
+- **Acceptance command result:** `Ran 143 tests in 15.847s`, `OK`, run in bash with `timeout 600`.
+- **Departures from the plan:** (1) The failure note comes from the baseline's `partial` flag rather than the diff, so cancel and deadline exits with no diff still carry `scope unchecked` on a partial packet baseline. (2) `run_patches` now uses a complete baseline by default (it was partial), because the satisfied case needs one. (3) The infra-exit test calls `_infra_failed` directly instead of going through a backend. (4) The Status line in the Current assignment header was also set to done, since the rules named "its Status line"; please confirm.
+- **Problems or questions for Sonnet:** None. Nothing of mine is running.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8e fix 1
+
+- **Step:** 8e, outcome rules fix 1
+- **Branch:** `impl/step-8e`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. This is a fix to an approved task; do not run an EGM brainstorm or review.** Your uncommitted Step 8e work otherwise stays.
+
+Write or change the tests first, show them failing, then change the code.
+
+1. **No-write roles, legacy and packet alike.** A role with neither `write_file` nor `edit_file` whose accept or lint check fails gets no correction run and ends status `done`, outcome `done`, `error_kind` NULL, after one model run, with `checks: FAILED (...)` in the reply. Remove the `packet is None` special case that raises `CheckFailed`. Proof: rewrite `tests/test_checker_stage.py` `test_no_write_failed_accept_uses_accept_failed` and `test_no_write_failed_lint_uses_checker` to assert this (rename them to match), add a `done` status assertion to `test_no_write_role_gets_no_correction`, and add a legacy case beside `test_no_write_role_with_failing_checks_ends_done`.
+2. **Earlier stops win, no-write roles included.** `env_missing` and `out_of_time` (accept skipped as out of time) still end `failed` with that stop. Proof: `test_no_write_out_of_time_preserves_stop` unchanged and passing; a new no-write `env_missing` case.
+3. **Precedence.** After the model run and, for a write role, one correction: first the earlier stops (deadline, cancel, infra, loop errors, `env_missing` in either verdict, accept skipped as out of time, "no time for a correction run"); then `checker.changes` once; then rules 1 `scope`, 2 `satisfied` / `no_change`, 3 partial baseline `no_change`; then rule 4 `accept_failed` / `checker` for a write role; then rule 5 `done`. So the `CheckFailed` for checks still failing after the correction must come after `_outcome_rules`. Proof: new tests with a write role whose checks still fail after the correction: a must-not-change hit gives `scope`; unchanged files give `no_change`; a partial baseline gives `no_change` with `scope unchecked`.
+4. "No time for a correction run" together with a scope hit stays `out_of_time`. Proof: a new test.
+
+Also reword the comment on the correction `if` so it says what the code does.
+
+**Files you may touch:** `router/server.py`, `tests/test_verified_completion.py`, `tests/test_checker_stage.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_checker_stage tests.test_workspace_claim tests.test_packet tests.test_task_contract tests.test_deadline tests.test_error_kind tests.test_tool_surface -q
+```
+
+**Tool-call limit:** 25. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/server.py` (`_execute_task`: correction block, no `packet is None` special case, checks-still-failing raise moved after `_outcome_rules`, reworded comments); `tests/test_checker_stage.py`; `tests/test_verified_completion.py`. Done by Haiku, not Codex (Codex at its usage limit). No commit, push or install.
+- **Tests written first:** `test_checker_stage.py`: `test_no_write_failed_accept_ends_done_with_checks_failed` and `test_no_write_failed_lint_ends_done_with_checks_failed` (renamed, now assert done/done/NULL and `checks: FAILED`), `done` assertion in `test_no_write_role_gets_no_correction`, new `test_no_write_env_missing_keeps_its_stop`. `test_verified_completion.py`: new `test_legacy_no_write_role_with_failing_checks_ends_done`, `test_write_role_checks_still_failing_after_correction_scope_wins`, `..._with_no_change_is_no_change`, `..._with_partial_baseline_is_no_change`, `test_no_time_for_correction_with_scope_hit_stays_out_of_time`. Before the code change, 7 failed as expected (the scope/no-change/partial/no-write/legacy cases; the env_missing and out_of_time-with-scope cases already passed and are kept as guards).
+- **Test result after the code:** `Ran 136 tests in 15.955s` / `OK`. The intermediate run after the first code edit had 2 failures (`test_no_write_out_of_time_preserves_stop`, `test_failed_accept_after_correction_fails_for_packet_and_legacy`), both fixed as below.
+- **Acceptance command result:** `Ran 136 tests in 15.955s`, `OK` (the command in the task, with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`, run in bash with `timeout 600`).
+- **Departures from the plan:** (1) The pre-correction early stop also covers `out_of_time` for no-write roles only (`stop == out_of_time and not _can_write(role)`), because `test_no_write_out_of_time_preserves_stop` needs it; write roles still get their correction, as `test_out_of_time_verdict_still_gets_correction_attempt` requires. (2) `test_failed_accept_after_correction_fails_for_packet_and_legacy`: its packet half used an unchanged workspace, which item 3 now says gives `no_change`, so the test now uses a changed file (`Changes(("a.py",), ("a.py",), (), (), False)`) to keep the `accept_failed` proof. The legacy half is unchanged. (3) `test_no_time_for_correction_with_scope_hit_stays_out_of_time` and the env_missing no-write case passed before the code change; they are kept as regression guards.
+- **Problems or questions for Sonnet:** The `Status` line in the Current assignment section still says "assigned to Haiku"; I left it because the rules say to edit only the Feedback block, so please update it. Please confirm departure (2), since it changes an existing test's packet setup. Nothing of mine is running.
+
+### Step 8e part B
+
+- **Step:** 8e, Packet tasks inside _execute, part B
+- **Branch:** `impl/step-8e`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8e, lines 1199-1218; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/server.py` | Modify | <ul><li>`_execute` accepts an optional `packet: Packet` from Python callers, with no tool change.</li><li>With a packet, `_execute` differs from a legacy task in these ways: `kind` and the task files come from the packet; the accept spec comes from `packet.accept`; the task text (row `prompt`) is `render(packet)`; the write guard's `allowed` set is the packet's files; and the packet is stored under `contract_json["packet"]`.</li><li>The pre-row checks of `dispatch_task` (`server.py:321-338`: `task_error`, `resolve_role`, the held-role refusal, the mediahouse model pull and the plan claim; `kalamanch_cleanup.maybe_run()` at `:339` stays in `dispatch_task`) move into `async def _admit(agent: str, task_text: str, plan_id: int) -> tuple[dict \| None, str]`, which returns the role, or None and the refusal text. `dispatch_task` calls it, with no behaviour change.</li><li>New plain function (not a tool) `async def start_packet_task(agent: str, packet: Packet, task_type: str = "", plan_id: int = 0) -> tuple[str \| None, str]`. It calls `_admit(agent, render(packet), plan_id)`; a refusal returns `(None, <text>)` with no row. The prompt sent to the model (row `prompt_sent`) is `store.with_templates(role["role"], render(packet), task_type)`. An edit packet creates its row through `store.create_claimed`. When the claim is refused, it undoes the plan claim with `_plan(plan.revert, plan_id, "router")` (when `plan_id` is set), creates no row, and returns `(None, <busy reply>)`, the Appendix B text with the holder's id. An analyze packet uses `store.create`. It then returns `(tid, await _execute(tid, agent, role, prompt, plan_id=plan_id, packet=packet))`, so the plan recording in `_execute` (`server.py:267-269`, `:292-294`) works as it does for legacy tasks. S4's `dispatch_task(packet=)` calls the same function.</li><li>At every exit of a builder task (packet or legacy), `_execute` writes `contract_json["result"] = {"accept": "pass" \| "fail" \| "none" \| "off" \| "prose", "files": [...], "outside_scope": [...], "first_error": "...", "note": "..."}` from the final verdict and `changes()`. `accept` is `pass` or `fail` when accept ran; `off` when the parse note is `host accept off`; `prose` when it is `prose`; and `none` for `no accept`, a `refused: ...` task line, and an accept skipped as out of time.</li><li>The outcome rules listed after this table.</li><li>A packet resume finds `contract_json["packet"]`, rebuilds the `Packet`, and claims through `create_claimed(..., resume_of=task_id)`. If the claim is held by another live task, the resume is refused with `workspace_busy`. If another resume of the same task won, it is refused as running, as in Step 6+7.</li></ul> |
+| `tests/test_verified_completion.py` | Modify | Packet edit task outcomes: <ul><li>no change with accept passing gives outcome `satisfied`;</li><li>no change with no accept gives outcome `failed`, stop `no_change`;</li><li>a must-not-change hit gives outcome `failed`, stop `scope`;</li><li>a failed accept after the correction gives outcome `failed`, stop `accept_failed`, for both a packet and a legacy task (legacy stays `failed`, as at `d675d75`);</li><li>a packet resume reuses the stored packet and the first baseline;</li><li>`start_packet_task` on a busy workspace returns `(None, ...)` with `workspace_busy` and creates no row;</li><li>with `_plan` patched to a recorder: a held role returns `(None, ...)` with no row and no plan claim; a busy workspace with a `plan_id` reverts the plan claim; a packet task with a `plan_id` that succeeds records the run and marks the plan task done;</li><li>in a non-git workspace and in a size-capped one (cap patched small): unchanged task files with accept passing give outcome `failed`, stop `no_change`, and a changed task file with accept passing gives outcome `done`, both with the note `scope unchecked`;</li><li>a legacy edit task and a packet analyze task with unchanged files and accept passing give outcome `done`, never `satisfied`;</li><li>a no-write role whose checks fail ends `done` with `checks: FAILED (...)`;</li><li>a packet edit task that stopped with `env_missing` or `out_of_time` keeps that stop, and the outcome rules do not relabel it;</li><li>`contract_json["result"]` is written for packet and legacy builder tasks.</li></ul> |
+
+**Outcome rules (Step 8e).** `_execute` applies them after the checks and the correction, never inside `check_deterministic`. They run only when no earlier stop was set: a task that already stopped with `env_missing`, `out_of_time`, `infra` or `error` keeps that stop. The first rule that matches wins:
+
+1. A packet `edit` task with a must-not-change hit: outcome `failed`, stop `scope`.
+2. A packet `edit` task with a complete baseline and unchanged task files: outcome `satisfied`, with the note `accept passed with no change`, when accept ran and passed; else outcome `failed`, stop `no_change`.
+3. A packet `edit` task with a partial baseline (`Baseline.partial`: no git, or above the size cap) and unchanged task files: outcome `failed`, stop `no_change`, even when accept passed.
+4. Checks still failing after the correction, for a role with `write_file` or `edit_file`: outcome `failed`, stop `accept_failed` or `checker`, as in Step 1.
+5. Any other task: outcome `done`. This includes a role with neither write tool whose checks fail: it gets no correction and ends `done` with `checks: FAILED (...)`, as the **Failed checks** rule under [Outcome vocabulary](#outcome-vocabulary-routeroutcomespy) says.
+
+Legacy tasks and analyze tasks (packet or legacy) reach only rules 4 and 5, so they never get `satisfied`, `no_change` or `scope`. A packet `edit` task with a partial baseline also gets the note `scope unchecked`, whatever its outcome.
+
+*   **Schema:** none; the packet goes in `contract_json`.
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_verified_completion tests.test_workspace_claim tests.test_packet -q`
+
+**Notes from Sonnet**
+
+- **This assignment is part B, the rest of Step 8e.** Part A is already in the working tree (uncommitted, reviewed, full suite 1204 OK): `_execute(packet=)`, `_admit`, `start_packet_task`, `PacketStartTest`. Keep it.
+- Do: `contract_json["result"]` at every exit of a builder task (success, failed checks, timeout, cancel, error, and the early `_infra_failed` exit), keeping the keys already stored in `contract_json`; the outcome rules after the table; the packet resume bullet in `resume_task`/`_execute`; and every `tests/test_verified_completion.py` bullet not yet covered by `PacketStartTest`.
+- Fix from the part A review: a packet with no `accept` must run with no accept. Today `_execute`/`_check` get `accept=None` and parse an accept line from the rendered prompt, so text in `goal` or `context` could become a command. Pass an empty `checker.AcceptParse(None, "no accept")` for such a packet, also on resume, and test it with an `Accept:` line inside `context`.
+- Apply the outcome rules in `_execute_task` after the checks and the correction, never inside `check_deterministic`, and only when no earlier stop was set. One row write and one terminal event per exit; the events, the plan recording and the reply status line must agree with the stored outcome (read the Outcome vocabulary section for the status and next action of `satisfied`).
+- A packet resume claims through `store.create_claimed(row_fields, workspace, resume_of=task_id)`; check its return values. A refused resume must not change the row. A non-packet resume behaves as before.
+- Legacy tasks keep their behaviour except that `contract_json["result"]` is added.
+- CI runs the full suite on clean Windows, macOS and Linux runners: tests use no Docker, network, model or token, temporary database and workspace, bounded waits. Use `.venv\Scripts\python.exe`, never plain `python`.
+
+**Files you may touch:** `router/server.py`, `tests/test_verified_completion.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/checker.py`, `router/store.py`, `router/packet.py`, `router/config.py`, `the design documents`, `Benchmark/replay/RESULTS.md`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_workspace_claim tests.test_packet tests.test_task_contract tests.test_checker_stage tests.test_deadline tests.test_error_kind tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/server.py`, `tests/test_verified_completion.py`, and the Status and Feedback of this assignment in this file.
+- **Tests written first:** Added `OutcomeRulesTest` (15 tests) and two constants before the code. Run: 10 failures and 2 errors, all from the four missing pieces.
+- **Test result after the code:** The 130 tests in the acceptance set pass.
+- **Acceptance command result:** Ran 130 tests in 15.359s, OK (exit 0). Command: `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_verified_completion tests.test_workspace_claim tests.test_packet tests.test_task_contract tests.test_checker_stage tests.test_deadline tests.test_error_kind tests.test_tool_surface -q`.
+- **Departures from the plan:** (1) The outcome rule "no-write role ends done with checks FAILED" applies only to packet tasks. Legacy (no-packet) no-write roles keep the old `CheckFailed` path, because `tests.test_checker_stage` (in the acceptance set) expects `accept_failed`, `checker` and `out_of_time` for them. (2) `PacketStartTest.test_packet_task_with_plan_records_run_and_marks_plan_done` now uses `kind="analyze"`, because its edit packet made no change and no accept passed, so the new no-change rule correctly fails it. The test checks plan recording, which is unchanged. (3) Packet resume claims the row through `store.create_claimed(..., resume_of=task_id)` and refuses with `workspace_busy` or "already running".
+- **Problems or questions for Sonnet:** Rule 5 conflicts with `tests.test_checker_stage` for legacy no-write roles. Please decide whether the packet-only scope in departure 1 is right, or whether those four checker-stage tests should change. Piece 1 also skips the accept parse for packet tasks without an accept spec, which the new tests require.
+
+### Step 8e part A
+
+- **Step:** 8e, Packet tasks inside _execute, part A
+- **Branch:** `impl/step-8e`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8e, lines 1199-1218; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/server.py` | Modify | <ul><li>`_execute` accepts an optional `packet: Packet` from Python callers, with no tool change.</li><li>With a packet, `_execute` differs from a legacy task in these ways: `kind` and the task files come from the packet; the accept spec comes from `packet.accept`; the task text (row `prompt`) is `render(packet)`; the write guard's `allowed` set is the packet's files; and the packet is stored under `contract_json["packet"]`.</li><li>The pre-row checks of `dispatch_task` (`server.py:321-338`: `task_error`, `resolve_role`, the held-role refusal, the mediahouse model pull and the plan claim; `kalamanch_cleanup.maybe_run()` at `:339` stays in `dispatch_task`) move into `async def _admit(agent: str, task_text: str, plan_id: int) -> tuple[dict \| None, str]`, which returns the role, or None and the refusal text. `dispatch_task` calls it, with no behaviour change.</li><li>New plain function (not a tool) `async def start_packet_task(agent: str, packet: Packet, task_type: str = "", plan_id: int = 0) -> tuple[str \| None, str]`. It calls `_admit(agent, render(packet), plan_id)`; a refusal returns `(None, <text>)` with no row. The prompt sent to the model (row `prompt_sent`) is `store.with_templates(role["role"], render(packet), task_type)`. An edit packet creates its row through `store.create_claimed`. When the claim is refused, it undoes the plan claim with `_plan(plan.revert, plan_id, "router")` (when `plan_id` is set), creates no row, and returns `(None, <busy reply>)`, the Appendix B text with the holder's id. An analyze packet uses `store.create`. It then returns `(tid, await _execute(tid, agent, role, prompt, plan_id=plan_id, packet=packet))`, so the plan recording in `_execute` (`server.py:267-269`, `:292-294`) works as it does for legacy tasks. S4's `dispatch_task(packet=)` calls the same function.</li><li>At every exit of a builder task (packet or legacy), `_execute` writes `contract_json["result"] = {"accept": "pass" \| "fail" \| "none" \| "off" \| "prose", "files": [...], "outside_scope": [...], "first_error": "...", "note": "..."}` from the final verdict and `changes()`. `accept` is `pass` or `fail` when accept ran; `off` when the parse note is `host accept off`; `prose` when it is `prose`; and `none` for `no accept`, a `refused: ...` task line, and an accept skipped as out of time.</li><li>The outcome rules listed after this table.</li><li>A packet resume finds `contract_json["packet"]`, rebuilds the `Packet`, and claims through `create_claimed(..., resume_of=task_id)`. If the claim is held by another live task, the resume is refused with `workspace_busy`. If another resume of the same task won, it is refused as running, as in Step 6+7.</li></ul> |
+| `tests/test_verified_completion.py` | Modify | Packet edit task outcomes: <ul><li>no change with accept passing gives outcome `satisfied`;</li><li>no change with no accept gives outcome `failed`, stop `no_change`;</li><li>a must-not-change hit gives outcome `failed`, stop `scope`;</li><li>a failed accept after the correction gives outcome `failed`, stop `accept_failed`, for both a packet and a legacy task (legacy stays `failed`, as at `d675d75`);</li><li>a packet resume reuses the stored packet and the first baseline;</li><li>`start_packet_task` on a busy workspace returns `(None, ...)` with `workspace_busy` and creates no row;</li><li>with `_plan` patched to a recorder: a held role returns `(None, ...)` with no row and no plan claim; a busy workspace with a `plan_id` reverts the plan claim; a packet task with a `plan_id` that succeeds records the run and marks the plan task done;</li><li>in a non-git workspace and in a size-capped one (cap patched small): unchanged task files with accept passing give outcome `failed`, stop `no_change`, and a changed task file with accept passing gives outcome `done`, both with the note `scope unchecked`;</li><li>a legacy edit task and a packet analyze task with unchanged files and accept passing give outcome `done`, never `satisfied`;</li><li>a no-write role whose checks fail ends `done` with `checks: FAILED (...)`;</li><li>a packet edit task that stopped with `env_missing` or `out_of_time` keeps that stop, and the outcome rules do not relabel it;</li><li>`contract_json["result"]` is written for packet and legacy builder tasks.</li></ul> |
+
+**Outcome rules (Step 8e).** `_execute` applies them after the checks and the correction, never inside `check_deterministic`. They run only when no earlier stop was set: a task that already stopped with `env_missing`, `out_of_time`, `infra` or `error` keeps that stop. The first rule that matches wins:
+
+1. A packet `edit` task with a must-not-change hit: outcome `failed`, stop `scope`.
+2. A packet `edit` task with a complete baseline and unchanged task files: outcome `satisfied`, with the note `accept passed with no change`, when accept ran and passed; else outcome `failed`, stop `no_change`.
+3. A packet `edit` task with a partial baseline (`Baseline.partial`: no git, or above the size cap) and unchanged task files: outcome `failed`, stop `no_change`, even when accept passed.
+4. Checks still failing after the correction, for a role with `write_file` or `edit_file`: outcome `failed`, stop `accept_failed` or `checker`, as in Step 1.
+5. Any other task: outcome `done`. This includes a role with neither write tool whose checks fail: it gets no correction and ends `done` with `checks: FAILED (...)`, as the **Failed checks** rule under [Outcome vocabulary](#outcome-vocabulary-routeroutcomespy) says.
+
+Legacy tasks and analyze tasks (packet or legacy) reach only rules 4 and 5, so they never get `satisfied`, `no_change` or `scope`. A packet `edit` task with a partial baseline also gets the note `scope unchecked`, whatever its outcome.
+
+*   **Schema:** none; the packet goes in `contract_json`.
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_verified_completion tests.test_workspace_claim tests.test_packet -q`
+
+**Notes from Sonnet**
+
+- **This assignment is part A only.** Do, from the `router/server.py` row: the optional `packet` argument of `_execute` (kind, task files, accept spec, `render(packet)` as the row prompt, the write guard's allowed set, `contract_json["packet"]`), the `_admit` refactor of `dispatch_task` with no behaviour change, and the new `start_packet_task` (refusals, prompt_sent, `store.create_claimed` for edit packets, plan claim revert on a busy workspace, `store.create` for analyze packets, plan recording).
+- **Not in this assignment (part B, assigned later):** `contract_json["result"]`, the outcome rules after the table, and the packet resume bullet. Do not write their tests now.
+- Test rows for part A, in `tests/test_verified_completion.py`: `start_packet_task` on a busy workspace returns `(None, ...)` with `workspace_busy` and creates no row; with `_plan` patched to a recorder, a held role returns `(None, ...)` with no row and no plan claim, a busy workspace with a `plan_id` reverts the plan claim, and a packet task with a `plan_id` that succeeds records the run and marks the plan task done; the stored row of a packet task has the rendered prompt, `contract_json["packet"]`, and the packet's kind; the write guard allows only the packet's files.
+- `_execute` is now a heartbeat wrapper around `_execute_task` (Step 8c), and the wrapper applies `with_host_accept` (Step 8d). Pass the packet through the wrapper. Line numbers in the plan are old; locate symbols with synaptree.
+- `start_packet_task` is a plain function, not an MCP tool; `dispatch_task`'s signature and docstring do not change.
+- An edit packet's row is claimed before `_execute` runs; make sure `_execute` does not create a second row or lose the claim.
+- CI runs the full suite on clean Windows, macOS and Linux runners: tests use no Docker, network, model or token, temporary database and workspace, bounded waits. Use `.venv\Scripts\python.exe`, never plain `python`.
+
+**Files you may touch:** `router/server.py`, `tests/test_verified_completion.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/checker.py`, `router/store.py`, `router/packet.py`, `router/config.py`, `the design documents`, `Benchmark/replay/RESULTS.md`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_workspace_claim tests.test_packet tests.test_task_contract tests.test_checker_stage tests.test_deadline tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/server.py` (imports `shlex` and `Packet`/`render`/`task_files` from `router/packet.py`; `_execute` takes `packet: Packet | None = None` and passes it to `_execute_task` and `_check`; `_execute_task` and `_check` use the packet's files for the baseline, `changes()`, lint and the write guard's `allowed` set; new `_admit` holds the pre-row checks moved out of `dispatch_task` (task_error, resolve_role, held refusal, mediahouse pull, plan claim); `dispatch_task` calls `_admit` with no behaviour change; new plain `start_packet_task` (accept parse, `_admit`, `store.with_templates` prompt, `store.create_claimed` for edit packets with plan revert and the Appendix B busy text, `store.create` with kind `analyze` for analyze packets, then `_execute`)). `tests/test_verified_completion.py` (new class `PacketStartTest`, 8 tests; imports `plan`, `packet`, `workspace`).
+- **Tests written first:** Added `PacketStartTest` before the code. Run: 7 errors, all `AttributeError: module 'router.server' has no attribute 'start_packet_task'`. The first run also hit a missing-table error in the test's own row counter, which was fixed in the test helper (it now opens the store through `store._db()`), not in product code.
+- **Test result after the code:** `tests.test_verified_completion` passed in the acceptance run, including the 8 new tests.
+- **Acceptance command result:** Ran 88 tests in 12.530s, OK (exit 0), on the final files. Command: `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_verified_completion tests.test_workspace_claim tests.test_packet tests.test_task_contract tests.test_checker_stage tests.test_deadline tests.test_tool_surface -q`.
+- **Departures from the plan:** `start_packet_task` parses the packet's accept line before the pre-row checks, so an accept refusal returns with no plan claim and no row. The plan did not specify this order. The `contract_json["result"]` write, the outcome rules, and the packet resume bullet were not built, as the notes ask (part B). The contract's `accept` field is the parsed spec, and the packet's accept spec is passed to `_execute` as the parsed object.
+- **Problems or questions for Sonnet:** `_check` (`router/server.py:194`) also took its task files from the task text; it now takes `packet=` (default None, so legacy calls are unchanged) and uses the packet's files for `changes()` and lint. This is beyond the literal part A list but follows "the task files come from the packet". Please confirm in review. The header Status line above History was also set to done, in addition to the Feedback Status.
+
+### Step 8d build
+
 - **Step:** 8d, Tool list and accept skill, preread of 3
 - **Branch:** `impl/step-8d`
 - **Kind:** build
 - **Assigned at:** 2026-11-27
 - **Status:** done (built by Haiku after Codex stopped at its usage limit)
 
-### Task
+#### Task
 
 **Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
 
@@ -67,7 +300,7 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
 - Tool-call limit: 25.
 - Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `router/config.py` (`with_host_accept` reads the role name with `.get`, so a fixture without a `role` key is returned unchanged), `router/server.py` (imports `with_host_accept`; `_execute` applies it when `workspace.load_workspace(WORKSPACE).host_accept` is true, before the heartbeat, so the resume path is covered too), `router/loop.py` (preread call passes `limit=3`), `router/preflight.py` (`role_errors` checks `accept_skills` files), `router/skills/code-l2-accept/SKILL.md` (created, copied from Appendix B), `router/tf-roles.yaml` (`accept_skills: [code-l2-accept]` on `code-l2` only). `tests/test_config_accept_skills.py` and the `code-l2-accept` case in `tests/test_coding_suite.py` were kept as they were; the test file covers every plan test row.
@@ -76,10 +309,6 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
 - **Acceptance command result:** Ran 82 tests in 9.758s, OK (exit 0). Run on Windows with `.venv/Scripts/python.exe` under bash with `timeout 600`.
 - **Departures from the plan:** `_execute` loads the workspace once more to read `host_accept` (the plan says reuse the existing setting; `_execute_task` still loads its own copy). The `code-l2` role keeps `run_tests` in its `tools` list in `tf-roles.yaml`; the removal happens at runtime in `with_host_accept`, as the plan says. The assignment header Status line (above History) still reads "assigned to Haiku"; it was not edited because the instructions limited edits to the Feedback block.
 - **Problems or questions for Sonnet:** None. The realworld benchmark was not run, as the assignment says.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8c fix 1
 

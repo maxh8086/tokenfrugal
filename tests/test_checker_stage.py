@@ -2,6 +2,7 @@
 import asyncio
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -42,7 +43,7 @@ class ParseTest(unittest.TestCase):
 
 class StageTest(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.mkdtemp()
+        self.tmp = os.path.realpath(tempfile.mkdtemp())
         self.repo = _make_repo(self.tmp)
         Path(self.repo, "check.py").write_text(FLAG_CHECK, encoding="utf-8")
         self.patches = [
@@ -59,6 +60,7 @@ class StageTest(unittest.TestCase):
     def tearDown(self):
         for p in reversed(self.patches):
             p.stop()
+        shutil.rmtree(self.tmp, ignore_errors=True)
 
     def _run(self, fake, task):
         tid = store.create("builder-agent", "builder", task)
@@ -66,7 +68,7 @@ class StageTest(unittest.TestCase):
             reply = asyncio.run(server._execute(tid, "builder-agent", self.role, task))
         return tid, reply
 
-    def test_no_write_failed_accept_uses_accept_failed(self):
+    def test_no_write_failed_accept_ends_done_with_checks_failed(self):
         self.role["tools"] = []
         verdict = {"passed": False, "items": [{"name": "accept", "passed": False, "detail": "no"}]}
         runs = []
@@ -77,9 +79,11 @@ class StageTest(unittest.TestCase):
 
         tid = store.create("builder-agent", "builder", "task")
         with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=verdict):
-            asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
+            reply = asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
         self.assertEqual(len(runs), 1)
-        self.assertEqual(store.get(tid)["error_kind"], "accept_failed")
+        row = store.get(tid)
+        self.assertEqual((row["status"], row["outcome"], row["error_kind"]), ("done", "done", None))
+        self.assertIn("checks: FAILED (accept:", reply)
 
     def test_no_write_out_of_time_preserves_stop(self):
         self.role["tools"] = []
@@ -96,7 +100,7 @@ class StageTest(unittest.TestCase):
         self.assertEqual(len(runs), 1)
         self.assertEqual(store.get(tid)["error_kind"], "out_of_time")
 
-    def test_no_write_failed_lint_uses_checker(self):
+    def test_no_write_failed_lint_ends_done_with_checks_failed(self):
         self.role["tools"] = []
         verdict = {"passed": False, "items": [{"name": "lint", "passed": False, "detail": "bad"}]}
         runs = []
@@ -107,9 +111,26 @@ class StageTest(unittest.TestCase):
 
         tid = store.create("builder-agent", "builder", "task")
         with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=verdict):
+            reply = asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
+        self.assertEqual(len(runs), 1)
+        row = store.get(tid)
+        self.assertEqual((row["status"], row["outcome"], row["error_kind"]), ("done", "done", None))
+        self.assertIn("checks: FAILED (lint:", reply)
+
+    def test_no_write_env_missing_keeps_its_stop(self):
+        self.role["tools"] = []
+        verdict = {"passed": False, "stop": "env_missing", "items": [{"name": "accept", "passed": False, "detail": "no tool"}]}
+        runs = []
+
+        async def fake(*args, **kwargs):
+            runs.append(args)
+            return "answer", []
+
+        tid = store.create("builder-agent", "builder", "task")
+        with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=verdict):
             asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
         self.assertEqual(len(runs), 1)
-        self.assertEqual(store.get(tid)["error_kind"], "checker")
+        self.assertEqual((store.get(tid)["status"], store.get(tid)["error_kind"]), ("failed", "env_missing"))
 
     def test_no_accept_and_no_diff_skips_checks(self):
         calls = []
@@ -173,6 +194,7 @@ class StageTest(unittest.TestCase):
         self.role["tools"] = []
         tid, reply = self._run(fake, "explain the parser")
         self.assertEqual(len(calls), 1)
+        self.assertEqual(store.get(tid)["status"], "done")
         self.assertIn("diff: proposed, not applied", reply)
         self.assertIn("diff_applies", reply)
 
