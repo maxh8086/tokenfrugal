@@ -6,6 +6,7 @@ Failure never falls back to cloud: a short capped error summary + task_id goes b
 import asyncio
 import atexit
 import contextlib
+import os
 import re
 import signal
 import sys
@@ -211,9 +212,27 @@ def _failed_text(verdict: dict) -> str:
     return "; ".join(f"{i['name']}: {i['detail']}" for i in verdict["items"] if not i["passed"])
 
 
-def _fix_prompt(verdict: dict) -> str:
-    return (f"Checker failed: {_failed_text(verdict)}. Reply with a diff only, in a ```diff block, "
-            "that fixes these. Do not explain.")
+def _failed_stop(verdict: dict):
+    stop = verdict.get("stop")
+    if stop in (Stop.OUT_OF_TIME, Stop.ENV_MISSING):
+        return stop
+    failed = next((item for item in verdict.get("items", []) if not item["passed"]), None)
+    return Stop.ACCEPT_FAILED if failed and failed["name"] == "accept" else Stop.CHECKER
+
+
+def strip_nudges(msgs: list) -> list:
+    return [m for m in msgs if not (m.get("role") == "user" and
+            m.get("content") in (loop.NUDGE_WRAP, loop.NUDGE_FINAL))]
+
+
+def _can_write(role: dict) -> bool:
+    return bool({"write_file", "edit_file"} & set(role.get("tools") or []))
+
+
+def _fix_prompt(verdict: dict, role: dict) -> str:
+    first = next(i for i in verdict["items"] if not i["passed"])
+    return (f"Checks failed: {first['name']}: {first['detail']}. "
+            "Fix it with edit_file or write_file. The checks run again after your reply.")
 
 
 def _changed_set() -> set[str]:
@@ -242,7 +261,7 @@ def _report(verdict: dict | None, role: dict) -> str:
             state = ("FAILED (" + "; ".join(f"{i['name']}: {i['detail'][:100]}" for i in failed) + ")") if failed else "ok (" + ", ".join(ran) + ")"
             if note:
                 state = state[:-1] + f"; accept none: {note})"
-        text = "\nchecks: " + state
+        text = ("\ndiff: proposed, not applied" if verdict.get("diff_proposed") else "") + "\nchecks: " + state
     contract = (CFG.get("contracts") or {}).get(role["role"], {})
     judge = [c["text"] for c in contract.get("checklist") or [] if c.get("kind") == "judgement"]
     if judge:
@@ -268,7 +287,7 @@ async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: 
 
 
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0,
-                   accept=None, task_text: str | None = None) -> str:
+                   accept=None, task_text: str | None = None, checks: bool = True, correction: bool = True) -> str:
     t0 = time.monotonic()
     ws = workspace.load_workspace(WORKSPACE)
     task_text = task_text if task_text is not None else (store.get(tid).get("prompt") or prompt)
@@ -287,6 +306,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     before = await asyncio.to_thread(_changed_set)  # C2: the workspace's changed files before the run
     beat = asyncio.create_task(_heartbeat(tid))
     calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
+    last_msgs = messages
     rt = role_timeout(role)
     deadline_s = config.deadline(role, rt)
     accept_cancel = threading.Event()
@@ -298,28 +318,39 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                 guard = lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)
                 budget = loop.Budget(rt)
                 detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard, budget=budget)
+                last_msgs = msgs
                 calls += take_started(tid)
                 task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
-                if not ws.host_accept and task_accept.spec:
+                if checks and not ws.host_accept and task_accept.spec:
                     events.emit("checks_skipped", id=tid, reason="host accept off")
-                with budget.pause():
-                    verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
-                if verdict and not verdict["passed"]:  # one correction, continuing the same message history
+                verdict = None
+                if checks:
+                    with budget.pause():
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
+                if verdict is not None:
+                    verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
+                if correction and verdict and not verdict["passed"]:  # one correction, continuing the same message history
                     if verdict.get("accept_note") == "out of time":
                         failed = _failed_text(verdict)
                         err = f"{failed}; accept: out of time" if failed else "accept: out of time"
                         raise CheckFailed(err, Stop.OUT_OF_TIME)
                     if verdict.get("stop") == Stop.ENV_MISSING:
                         raise CheckFailed(_failed_text(verdict), verdict["stop"])
+                    if not _can_write(role):
+                        raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
                     left = config.model_budget(role, rt) - budget.spent()
                     if left < config.CORRECTION_FLOOR_S:
                         raise CheckFailed(_failed_text(verdict) + "; no time for a correction run", Stop.OUT_OF_TIME)
                     correction_budget = loop.Budget(left)
-                    detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid, guard=guard, budget=correction_budget)
+                    fix = _fix_prompt(verdict, role)
+                    detail, msgs = await run(agent, role, "", strip_nudges(msgs) + [{"role": "user", "content": fix}], tid, guard=guard, budget=correction_budget)
+                    last_msgs = msgs
                     budget = correction_budget
                     calls += take_started(tid)
                     with budget.pause():
                         verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
+                    if verdict is not None:
+                        verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
                     if verdict and not verdict["passed"]:
                         if verdict.get("accept_note") == "out of time":
                             failed = _failed_text(verdict)
@@ -327,8 +358,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                             raise CheckFailed(err, Stop.OUT_OF_TIME)
                         if verdict.get("stop") in (Stop.ENV_MISSING, Stop.OUT_OF_TIME):
                             raise CheckFailed(_failed_text(verdict), verdict["stop"])
-                        failed_names = [item["name"] for item in verdict["items"] if not item["passed"]]
-                        raise CheckFailed(_failed_text(verdict), Stop.ACCEPT_FAILED if failed_names[0] == "accept" else Stop.CHECKER)
+                        raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
                 after = await asyncio.to_thread(_changed_set)
                 base_summary = summarize(role["model"], detail, prompt)
                 report = _report(verdict, role)
@@ -337,11 +367,12 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                 store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
                 events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
                             task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, **usage)
-            except asyncio.CancelledError:
+            except asyncio.CancelledError as exc:
                 accept_cancel.set()
                 err = f"task timed out after {deadline_s:g}s" if cm.expired() else "task cancelled"
                 usage = take_usage(tid)
                 store.update(tid, status="failed", error=err, error_kind=Stop.OUT_OF_TIME,
+                             messages=getattr(leaf(exc), "msgs", None) or last_msgs,
                              outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
                 events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err,
                             reason="timeout", error_kind=Stop.OUT_OF_TIME, saved=0, task=prompt[:80],
@@ -384,7 +415,9 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         kind = stop_from_legacy(reason, kind)
         usage = take_usage(tid)
         err = full if gpu else hard_trim(full, 300 if isinstance(e, CheckFailed) else 120)
-        store.update(tid, status="failed", error=err, error_kind=kind, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+        failure_msgs = getattr(e, "msgs", None) or getattr(orig, "msgs", None) or last_msgs
+        store.update(tid, status="failed", error=err, error_kind=kind, messages=failure_msgs,
+                     outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
         extra = {"frames": frames} if kind in (Stop.ERROR, Stop.ENV_MISSING) else {}
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind, **extra,
                     saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
@@ -439,8 +472,15 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
         if not ok:
             return f"plan task {plan_id} not started: {msg}"
     kalamanch_cleanup.maybe_run()  # at most once a day, in a background thread; never blocks or fails the dispatch
-    prompt = store.with_templates(role["role"], task, task_type.strip())  # approved templates go before the task text; the row keeps the task
-    return await _execute(store.create(agent, role["role"], task, client=_CLIENT_NAME), agent, role, prompt, plan_id=plan_id,
+    task_type = task_type.strip()
+    prompt = store.with_templates(role["role"], task, task_type)  # approved templates go before the task text; the row keeps the task
+    kind = "edit" if task_type.lower() in {"add test", "fix bug", "add feature", "refactor", "edit", "write"} else "analyze"
+    effective_accept = parsed_accept if accept else checker.accept_from_task(task, "", workspace.load_workspace(WORKSPACE))
+    contract = {"accept": effective_accept.spec.to_json() if effective_accept and effective_accept.spec else None, "packet": None}
+    tid = store.create(agent, role["role"], task, client=_CLIENT_NAME, task_type=task_type, prompt_sent=prompt,
+                       contract_json=contract, workspace=os.path.normcase(os.path.realpath(WORKSPACE)),
+                       plan_id=plan_id or 0, kind=kind)
+    return await _execute(tid, agent, role, prompt, plan_id=plan_id,
                           accept=parsed_accept, task_text=task)
 
 
@@ -477,11 +517,17 @@ async def plan_update_from(task_id: int) -> str:
 async def ask_followup(task_id: str, question: str) -> str:
     """Ask the same agent a follow-up about a finished task; context is preserved."""
     t = store.get(task_id)
-    if not t or not t["messages"]:
-        return f"unknown or empty task {task_id}"
+    if not t:
+        return f"unknown task {task_id}"
+    if t["status"] != "done":
+        return f"task {task_id} must be done before asking a follow-up (status: {t['status']})"
+    if not t["messages"]:
+        return f"empty task {task_id}"
     role = resolve_role(t["agent"], CFG)
     msgs = t["messages"] + [{"role": "user", "content": question}]
-    return await _execute(task_id, t["agent"], role, question, msgs, task_text=question)
+    child_id = store.create(t["agent"], t["role"], question, client=t.get("client"), task_type=t.get("task_type"),
+                            workspace=t.get("workspace"), kind="analyze", parent_id=task_id)
+    return await _execute(child_id, t["agent"], role, question, msgs, task_text=question, checks=False, correction=False)
 
 
 @mcp.tool()
@@ -490,7 +536,14 @@ def get_detail(task_id: str, max_chars: int = 4000) -> str:
     t = store.get(task_id)
     if not t:
         return f"unknown task {task_id}"
-    head = (t["detail"] or t["error"] or "no output")[:max_chars]
+    if t["detail"]:
+        head = t["detail"]
+    elif t["messages"]:
+        lines = ([t["error"]] if t["error"] else []) + [f"{m.get('role', '')}: {m.get('content') or ''}" for m in t["messages"]]
+        head = "\n".join(lines)
+    else:
+        head = t["error"] or "no output"
+    head = head[:max_chars]
     trail = [_trail_line(e) for e in t["trail"]]
     return head + ("\n\nevent trail:\n" + "\n".join(trail) if trail else "")
 
@@ -519,8 +572,27 @@ async def resume_task(task_id: str) -> str:
     t = store.get(task_id)
     if not t:
         return f"unknown task {task_id}"
+    if t["status"] == "running":
+        return f"task {task_id} is already running"
+    current_workspace = os.path.normcase(os.path.realpath(WORKSPACE))
+    stored_workspace = t.get("workspace") or current_workspace
+    if stored_workspace != current_workspace:
+        return f"task workspace mismatch: stored {stored_workspace}; current {current_workspace}"
     role = resolve_role(t["agent"], CFG)
-    return await _execute(task_id, t["agent"], role, t["prompt"], t["messages"] or None)
+    prompt = t.get("prompt_sent") or t["prompt"]
+    contract = t.get("contract_json")
+    if contract is None:
+        accept = checker.accept_from_task(t["prompt"], "", workspace.load_workspace(WORKSPACE))
+    else:
+        accept_json = contract.get("accept")
+        if accept_json:
+            accept = checker.AcceptParse(checker.AcceptSpec.from_json(accept_json))
+        else:
+            parsed = checker.accept_from_task(t["prompt"], "", workspace.load_workspace(WORKSPACE))
+            accept = checker.AcceptParse(None, parsed.note if not parsed.spec else "no accept")
+    options = {"checks": False, "correction": False} if t.get("parent_id") else {}
+    return await _execute(task_id, t["agent"], role, prompt, t["messages"] or None,
+                          plan_id=t.get("plan_id") or 0, accept=accept, task_text=t["prompt"], **options)
 
 
 @mcp.tool()

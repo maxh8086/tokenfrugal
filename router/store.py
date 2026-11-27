@@ -32,7 +32,8 @@ def _db():
     c.execute("""CREATE TABLE IF NOT EXISTS quota(
         day TEXT NOT NULL, tool TEXT NOT NULL, calls INTEGER DEFAULT 0, units INTEGER DEFAULT 0,
         PRIMARY KEY(day, tool))""")
-    for column in ("trail TEXT", "heartbeat REAL", "error_kind TEXT", "run_id TEXT", "client TEXT", "model_tag TEXT", "peak_ctx INTEGER", "outcome TEXT"):  # databases created before these columns existed
+    for column in ("trail TEXT", "heartbeat REAL", "error_kind TEXT", "run_id TEXT", "client TEXT", "model_tag TEXT", "peak_ctx INTEGER", "outcome TEXT",
+                   "task_type TEXT", "prompt_sent TEXT", "contract_json TEXT", "workspace TEXT", "plan_id INTEGER", "kind TEXT", "parent_id TEXT"):  # databases created before these columns existed
         try:
             c.execute(f"ALTER TABLE tasks ADD COLUMN {column}")
         except sqlite3.OperationalError:
@@ -40,11 +41,15 @@ def _db():
     return c
 
 
-def create(agent, role, prompt, run_id: str | None = None, client=None) -> str:
+def create(agent, role, prompt, run_id: str | None = None, client=None, *, task_type=None, prompt_sent=None,
+           contract_json=None, workspace=None, plan_id=None, kind=None, parent_id=None) -> str:
     tid = uuid.uuid4().hex[:10]
     with _db() as c:
-        c.execute("INSERT INTO tasks(id,agent,role,prompt,status,heartbeat,run_id,client) VALUES(?,?,?,?,'running',?,?,?)",
-                  (tid, agent, role, prompt, time.time(), run_id, client))
+        c.execute("INSERT INTO tasks(id,agent,role,prompt,status,heartbeat,run_id,client,task_type,prompt_sent,contract_json,workspace,plan_id,kind,parent_id) "
+                  "VALUES(?,?,?,?,'running',?,?,?,?,?,?,?,?,?,?)",
+                  (tid, agent, role, prompt, time.time(), run_id, client, task_type, prompt_sent,
+                   json.dumps(contract_json, ensure_ascii=False) if contract_json is not None else None,
+                   workspace, plan_id, kind, parent_id))
     return tid
 
 
@@ -55,8 +60,9 @@ def beat(tid) -> None:
 
 
 def update(tid, **kw):
-    if "messages" in kw:
-        kw["messages"] = json.dumps(kw["messages"])
+    for key in ("messages", "trail", "contract_json"):
+        if key in kw and kw[key] is not None and not isinstance(kw[key], str):
+            kw[key] = json.dumps(kw[key], ensure_ascii=False)
     sets = ",".join(f"{k}=?" for k in kw)
     with _db() as c:
         c.execute(f"UPDATE tasks SET {sets} WHERE id=?", (*kw.values(), tid))
@@ -198,6 +204,7 @@ def get(tid) -> dict | None:
     d = dict(r)
     d["messages"] = json.loads(d["messages"] or "[]")
     d["trail"] = json.loads(d.get("trail") or "[]")
+    d["contract_json"] = json.loads(d["contract_json"]) if d.get("contract_json") else None
     return d
 
 

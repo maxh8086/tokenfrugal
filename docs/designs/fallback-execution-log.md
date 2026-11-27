@@ -262,3 +262,10 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 5 | GPT-6 Luna (Codex) | re-scope piece 1 | 5 | not recorded | about 4 min | `done`; only the piece 2 test failing | re-scope / consult 7 |
 | 5 | GPT-6 Luna (Codex) | re-scope piece 2 | 6 | not recorded | about 4 min | `done`, 72 tests OK; Sonnet full suite 1121 OK (skipped=4) | re-scope / consult 7 |
 | 5 | Haiku subagent | test | 1 | limit 20 | not recorded | added the accept-timeout case; 32 OK; clean-clone suite 1122 OK (skipped=4); Sonnet full suite 1122 OK (skipped=4) | none / none |
+| 6-7 | GPT-6 Luna (Codex) | build, task 6 | 1 | limit 35; about 114k tokens | about 6 min | `done`, 64 tests OK; Sonnet review: a no-write role loses the accept or out-of-time stop | fix 1 / none |
+| 6-7 | GPT-6 Luna (Codex) | fix 1, task 6 | 2 | limit 15 | about 4 min | `done`, 66 tests OK; Sonnet full suite 1129 OK (skipped=4) | fix 1 / none |
+| 6-7 | GPT-6 Luna (Codex) | build, task 7 part A | 3 | limit 35; about 188k tokens | about 6 min | `done`, 72 tests OK | none / none |
+| 6-7 | GPT-6 Luna (Codex) | build, task 7 part B | 4 | limit 35 | about 9 min | `done`, 78 tests OK; Sonnet full suite 1140 OK (skipped=4); review found lost messages on wrapped errors | fix 2 / consult 8 |
+| 6-7 | Opus | consult 8 | 1 | limit 10 | about 3 min | confirmed, plus three more defects | fix 2 / consult 8 |
+| 6-7 | GPT-6 Luna (Codex) | fix 2 | 5 | limit 35 | about 6 min | `done`, 83 tests OK; Sonnet full suite 1145 OK (skipped=4) | fix 2 / consult 8 |
+| 6-7 | Haiku subagent | test | 1 | limit 20 | about 2 min | five cases added; 69 OK; clean-clone suite 1150 OK (skipped=4); Sonnet full suite 1150 OK (skipped=4) | none / none |

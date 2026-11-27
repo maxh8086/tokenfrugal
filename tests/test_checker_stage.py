@@ -53,7 +53,7 @@ class StageTest(unittest.TestCase):
         ]
         for p in self.patches:
             p.start()
-        self.role = {"role": "builder", "model": "m", "max_steps": 4, "timeout_s": 60, "tools": [], "skills": []}
+        self.role = {"role": "builder", "model": "m", "max_steps": 4, "timeout_s": 60, "tools": ["write_file"], "skills": []}
         self.exe = sys.executable
 
     def tearDown(self):
@@ -65,6 +65,51 @@ class StageTest(unittest.TestCase):
         with mock.patch.object(server, "run", fake):
             reply = asyncio.run(server._execute(tid, "builder-agent", self.role, task))
         return tid, reply
+
+    def test_no_write_failed_accept_uses_accept_failed(self):
+        self.role["tools"] = []
+        verdict = {"passed": False, "items": [{"name": "accept", "passed": False, "detail": "no"}]}
+        runs = []
+
+        async def fake(*args, **kwargs):
+            runs.append(args)
+            return "answer", []
+
+        tid = store.create("builder-agent", "builder", "task")
+        with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=verdict):
+            asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
+        self.assertEqual(len(runs), 1)
+        self.assertEqual(store.get(tid)["error_kind"], "accept_failed")
+
+    def test_no_write_out_of_time_preserves_stop(self):
+        self.role["tools"] = []
+        verdict = {"passed": False, "stop": "out_of_time", "items": [{"name": "accept", "passed": False, "detail": "time"}]}
+        runs = []
+
+        async def fake(*args, **kwargs):
+            runs.append(args)
+            return "answer", []
+
+        tid = store.create("builder-agent", "builder", "task")
+        with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=verdict):
+            asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
+        self.assertEqual(len(runs), 1)
+        self.assertEqual(store.get(tid)["error_kind"], "out_of_time")
+
+    def test_no_write_failed_lint_uses_checker(self):
+        self.role["tools"] = []
+        verdict = {"passed": False, "items": [{"name": "lint", "passed": False, "detail": "bad"}]}
+        runs = []
+
+        async def fake(*args, **kwargs):
+            runs.append(args)
+            return "answer", []
+
+        tid = store.create("builder-agent", "builder", "task")
+        with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", return_value=verdict):
+            asyncio.run(server._execute(tid, "builder-agent", self.role, "task"))
+        self.assertEqual(len(runs), 1)
+        self.assertEqual(store.get(tid)["error_kind"], "checker")
 
     def test_no_accept_and_no_diff_skips_checks(self):
         calls = []
@@ -93,20 +138,43 @@ class StageTest(unittest.TestCase):
 
     def test_one_correction_then_pass(self):
         calls = []
+        call_messages = []
 
         async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             calls.append(prompt)
+            call_messages.append(list(messages or []))
+            received = list(messages or [])
+            if prompt:
+                received.append({"role": "user", "content": prompt})
             if len(calls) == 2:  # the correction run makes the accept command pass
                 Path(self.repo, "fixed").write_text("", encoding="utf-8")
-            return f"reply {len(calls)}", list(messages or []) + [{"role": "user", "content": prompt}]
+            return f"reply {len(calls)}", received
 
         tid, reply = self._run(fake, f"Accept: {shlex.join([self.exe, 'check.py'])}\nadd the fix")
         self.assertEqual(len(calls), 2)
-        self.assertTrue(calls[1].startswith("Checker failed: accept:"), calls[1])
+        self.assertEqual(calls[1], "")
         self.assertIn("checks: ok (accept, lint)", reply)
         row = store.get(tid)
         self.assertEqual(row["status"], "done")
         self.assertEqual(len(row["messages"]), 2)  # the correction continued the first run's history
+        fix = "Checks failed: accept: accept command failed. Fix it with edit_file or write_file. The checks run again after your reply."
+        self.assertEqual(row["messages"][-1]["content"], fix)
+        self.assertEqual(sum(m.get("content") == fix for m in row["messages"]), 1)
+        self.assertEqual(call_messages[1][-1]["content"], fix)
+        self.assertEqual(sum(m.get("content") == fix for m in call_messages[1]), 1)
+
+    def test_no_write_role_gets_no_correction(self):
+        calls = []
+
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
+            calls.append(prompt)
+            return "```diff\n--- a/x\n+++ b/x\n```", list(messages or [])
+
+        self.role["tools"] = []
+        tid, reply = self._run(fake, "explain the parser")
+        self.assertEqual(len(calls), 1)
+        self.assertIn("diff: proposed, not applied", reply)
+        self.assertIn("diff_applies", reply)
 
     def test_fails_after_one_correction_with_checker_output(self):
         calls = []
@@ -138,7 +206,7 @@ class StageTest(unittest.TestCase):
         with mock.patch.object(server, "run", fake), mock.patch.object(server, "_check", side_effect=[first, second]):
             asyncio.run(server._execute(tid, "builder-agent", self.role, "retry after out of time"))
         self.assertEqual(len(calls), 2)
-        self.assertTrue(calls[1].startswith("Checker failed:"))
+        self.assertEqual(calls[1], "")
 
     def test_declared_new_module_failure_is_accept_failed_not_env_missing(self):
         async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
