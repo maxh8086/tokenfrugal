@@ -12,7 +12,7 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 1 | 65 | done | Luna, Haiku | 2 | 1 | 1 | [#109](https://github.com/maxh8086/tokenfrugal/pull/109) | `3990872` (step commit `b3ef9ea`) | yes, local and remote | 71 OK | 1003 OK, 3 skipped | - |
 | 2 | 66 | done | Luna, Haiku | 6 | 2 | 3 | [#110](https://github.com/maxh8086/tokenfrugal/pull/110) | `48054cc` (step commit `9acaaa6`) | yes, local and remote | 101 OK | 1044 OK, 3 skipped | - |
 | 3 | 67 | done (post-commit checks pending) | Luna, Haiku | 3 | 1 | 0 | [#111](https://github.com/maxh8086/tokenfrugal/pull/111) | `64725ee` (step commit `06729e0`) | yes, local and remote | 10 OK | 1061 OK, 3 skipped | ask the user: install and live Codex check |
-| 4 | 68 | 6 Haiku close | Haiku | 2 | 1 | 0 | - | - | - | 112 OK, 1 skipped | 1104 OK, 4 skipped | open PR, wait for CI on three OSes, merge |
+| 4 | 68 | 6 Haiku close | Haiku | 3 | 2 | 1 | #112 (open) | - | - | 43 OK | 1104 OK, 4 skipped | push fix 2, wait CI on three OSes, merge |
 | 5 | 69 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 6-7 | 70 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8a | 71 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -62,6 +62,7 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 - **Step 3 `.codex` files:** the untracked local copies were saved to the session scratchpad before replacement.
 
 - **Step 4 workflow file:** `.gitignore` ignores `.github/`, so the close stage adds `.github/workflows/tests.yml` with `git add -f`. `.gitignore` is not changed, because the plan does not list it.
+- **Opus consult 4 (Step 4, CI):** PR 112 failed on all three OSes in `tests/test_media_workspace.py` (not in the Step 4 diff; first CI run on a clean machine). The test did not mock `ensure_models`, so without a model marker or token `mgen` stopped before compose; locally it passed on the model-pull call. Decision: change that test only (patch `ensure_models`, assert the call is `docker compose`) as a Step 4 follow-up commit. A test that reaches `ensure_models` unmocked could start a real model pull on a machine with a token.
 
 ## Open items
 

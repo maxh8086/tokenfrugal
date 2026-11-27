@@ -248,3 +248,7 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 4 | GPT-6 Luna (Codex) | build | 1 | over the 35 limit | about 15 min or less | `done`, acceptance 89 tests OK; Sonnet review found 11 departures, including a write-denylist bypass for nested paths and the wrong reply line order | fix 1 / none |
 | 4 | GPT-6 Luna (Codex) | fix 1 | 2 | over the 35 limit | about 10 min or less | `done`, acceptance 99 tests OK (skipped=1), also run by Sonnet; all 11 findings addressed | fix 1 / none |
 | 4 | Haiku subagent | test | 1 | 25 (limit 20, plus 10 for the follow-up) | about 24 min | its own new test `test_refused_write_never_reaches_the_server` hung the run (scripted mock ran out of replies); Sonnet stopped the processes after 11 min; fixed under tests/; new `tests/test_accept_gaps.py`; Haiku full suite 1104 OK, Sonnet acceptance 112 OK (skipped=1) and full suite 1104 OK (skipped=4) | none / none |
+| 4 | Haiku subagent | close | 1 | 8 | about 4 min | commit `b5824d6`, PR 112 opened; CI failed on all three OSes with one error in an older test; not merged | fix 2 / Opus consult 4 |
+| 4 | Opus | consult 4 | 1 | 13 | about 1 min | the test never mocked `ensure_models`; change the test only | fix 2 / consult 4 |
+| 4 | GPT-6 Luna (Codex) | fix 2 | 3 | not recorded | about 4 min | `done`, 43 tests OK; one-test change | fix 2 / consult 4 |
+| 4 | Haiku subagent | test, fix 2 | 2 | not recorded | not recorded | acceptance 43 OK; clean-clone suite 1104 OK (skipped=4); Sonnet full suite 1104 OK (skipped=4) | none / none |

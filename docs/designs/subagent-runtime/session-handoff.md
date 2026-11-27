@@ -9,13 +9,63 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 4, F3 accept parser and runner (CI follow-up)
+- **Branch:** `impl/step-4`
+- **Kind:** fix 2
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+**Failure.** CI (windows, macos, ubuntu) fails with one error: `tests.test_media_workspace.VeditExportsResolvedFolder.test_mgen_passes_the_resolved_folder_to_compose`, `run.call_args` is None.
+
+**Cause.** The test does not mock `ensure_models`. On a clean machine `mgen` returns before `subprocess.run` (no model marker and no token). On a developer machine it passes falsely: the call it inspects is the model pull in `router/model_sync.py`, not the compose call.
+
+**Change (this one test only).**
+1. First add an assertion that the first two items of the `run.call_args` argv are `docker` and `compose`. Run the test and show that it fails today.
+2. Then patch `v.ensure_models` to return `""` in that test, as `tests/test_sandbox.py` does. Keep the existing `VIDEO_EDITOR_DIR` assertion.
+
+The test must need no Docker, network, model, `.env` or token, on Windows, macOS and Linux. Do not read `.env`. The product code is correct and must not change.
+
+**Files you may touch:** `tests/test_media_workspace.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/`, `.github/`, `progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; $env:HF_TOKEN = ""; .venv\Scripts\python.exe -m unittest tests.test_media_workspace tests.test_sandbox -q
+```
+
+Do not run the full suite. If a test in these two modules fails only because of the sandbox (no git identity, no secrets folder), report it and say so.
+
+**Tool-call limit:** 12. Do not commit, push or install anything; report the files you changed and the test output.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `tests/test_media_workspace.py`
+- **Tests written first:** Added the `docker compose` argv assertion and ran the test before mocking `ensure_models`; it failed because `run` captured the preceding `docker run` model pull.
+- **Test result after the code:** Passed as part of the acceptance command.
+- **Acceptance command result:** Passed: 43 tests, `OK`.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 4 fix 1 (done)
+
 - **Step:** 4, F3 accept parser and runner (large)
 - **Branch:** `impl/step-4`
 - **Kind:** fix 1
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
 
@@ -51,7 +101,7 @@ Do not run the full suite.
 - Tool-call limit: 35. If you cannot finish, set Status to `failed` and list exactly which numbered items remain.
 - Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `router/workspace.py`, `router/checker.py`, `router/server.py`, `tests/test_accept_parse.py`, `tests/test_accept_run.py`, `tests/test_workspace.py`, `tests/test_denylist.py`, `tests/test_checker_stage.py`.
@@ -60,10 +110,6 @@ Do not run the full suite.
 - **Acceptance command result:** Passed the specified command with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`: 99 tests, `OK (skipped=1)`.
 - **Departures from the plan:** The 35-call tool limit was exceeded. Refused-reason and Windows handle assertions were added during final verification rather than before their fixes. The symlink-only case was skipped on this Windows environment when directory symlink creation was unavailable.
 - **Problems or questions for Sonnet:** None.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 4, build (2026-11-27): done; Sonnet's review sent it back
 
