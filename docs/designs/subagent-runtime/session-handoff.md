@@ -9,13 +9,88 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 9, close
+- **Branch:** `impl/step-9`
+- **Kind:** close
+- **Assigned at:** 2026-11-27
+- **Status:** in progress
+
+### Task
+
+Close Step 9. Sonnet already ran the acceptance and the full suite (1318 OK, 4 skipped); do not run tests.
+
+1. Set Status to "in progress".
+2. Stage exactly these four files: `Benchmark/replay/RESULTS.md`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly four files.
+3. Commit "Step 9: Gate run (s2 FAIL, S3 decision build)". Human author only: no Co-Authored-By trailer, no "generated with" footer.
+4. `git push -u tokenfrugal impl/step-9`.
+5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-9`, same title; body: gate results recorded in RESULTS.md, GATE FAIL 4/20 with 8 false successes, router files unchanged, verify-record exit 0, full suite 1318 OK, 4 skipped. No footer.
+6. `gh pr checks <n> --repo maxh8086/tokenfrugal --watch --fail-fast` in the foreground.
+7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm the state is MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present.
+8. After that, fill in Feedback (PR link, merge sha, CI per OS, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
+
+Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report; do not work around it.
+
+**Tool-call limit:** 15.
+
+### Feedback (Codex fills this in)
+
+- **Status:** -
+- **Files changed:** -
+- **Tests written first:** -
+- **Test result after the code:** -
+- **Acceptance command result:** -
+- **Departures from the plan:** -
+- **Problems or questions for Sonnet:** -
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Steps 10-11 read-only review (not done)
+
+- **Step:** 10 and 11, read-only readiness review (prepared while the Step 9 gate runs)
+- **Branch:** `impl/step-9` (change no repository file except this one)
+- **Kind:** review
+- **Assigned at:** 2026-11-27
+- **Status:** blocked (Codex usage limit, retry after 19:40; no findings written)
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** A timed benchmark is running on this machine. **Read files only:** run no test, no Python, no Docker command, no model and no install, and start nothing in the background. Use synaptree or targeted reads.
+
+Review Step 10 (In-loop accept and repeat guard) and Step 11 (The single tool-surface release) of `docs/designs/subagent-runtime-design.md`, with the appendices they cite, against the code at the current HEAD. For each step report:
+
+1. Every place where the plan no longer matches the code: wrong file, symbol, line reference, signature or literal; an item already done by an earlier step; an item that cannot be built as written. Give `path:line` and the plan text concerned.
+2. The files the build will touch, and any file it must touch that the plan's file table omits.
+3. The tests to write first: test file, test name, and what it asserts, one line each, from the plan's test rows. Mark plan rows that no test can check.
+4. Whether the step fits one assignment, or how to split it into pieces that each pass the full suite.
+5. Anything that needs the user (install, secret, file outside the repo).
+
+Report facts you checked, and say which items you did not check. Do not change the design document; Sonnet decides.
+
+**Files you may touch:** only the Feedback block and Status line of this file. Keep Feedback under 150 lines.
+
+**Tool-call limit:** 50. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** -
+- **Files changed:** -
+- **Tests written first:** -
+- **Test result after the code:** -
+- **Acceptance command result:** -
+- **Departures from the plan:** -
+- **Problems or questions for Sonnet:** -
+
+### Step 8h README table
+
 - **Step:** 8h, corpus README table and skip records
 - **Branch:** `impl/step-8h`
 - **Kind:** build
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied. Do not run an EGM brainstorm or review.** The 20 corpus folders under `Benchmark/replay/` are final. Add the corpus record to `Benchmark/replay/README.md`. Append only: **do not change, reorder or reword any existing line, and never change the frozen rules.** Check the README's existing structure and the Step 8h text in `docs/designs/subagent-runtime-design.md` first.
 
@@ -47,7 +122,7 @@ If a stated rule id does not match what the README's frozen rules call it, keep 
 
 **Tool-call limit:** 25. Do not commit, push or install anything.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `Benchmark/replay/README.md` and this handoff's current Status and Feedback.
@@ -56,10 +131,6 @@ If a stated rule id does not match what the README's frozen rules call it, keep 
 - **Acceptance command result:** `.venv/Scripts/python.exe -m scripts.replay --check-corpus` printed `tasks: 20` and exited 0.
 - **Departures from the plan:** Applied the requested precedence. Indices 133, 142 and 143 appear under R5 only, and 296–297 under R7 only. Index 255 appears once under R4 git/run operations. The assignment identifies duplicate sessions within 155–299 collectively, so the README records that group as supplied.
 - **Problems or questions for Sonnet:** The supplied R6 reasons concern missing inputs or outputs at the base, while frozen R6 specifies which commit to select and its reachability. The documentation/data-only R7 and UI-only R8 labels are review classifications. Frozen R7 requires observable behaviour and frozen R8 requires portable offline execution, so file lists alone cannot establish either exclusion.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8h validation
 
