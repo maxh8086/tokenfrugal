@@ -9,13 +9,87 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** Phase 1, merge the planning documents
+- **Branch:** create `docs/next-plan` from `main`
+- **Kind:** docs close
+- **Assigned at:** 2026-11-28
+- **Status:** in progress
+
+### Task
+
+The user approved this branch, push, PR, merge and branch delete. No EGM gate and no code change. Sonnet runs the full suite separately.
+
+1. In the five files below, replace the user home prefix of every absolute path that contains a user name (any slash style, including inside links and this file's History) with `<home>`. Change no other text. Scan again; also scan for secrets. If a secret is found, or a user-name path remains, report `blocked`. Report the number of replacements per file.
+2. Create `docs/next-plan`. Commit only these files in `docs/designs/`: `subagent-runtime/next-plan.md`, `subagent-runtime/next-loop-kickoff-prompt.md`, `subagent-runtime/progress.md`, `subagent-runtime/session-handoff.md`, `subagent-runtime-design.md`. Human author only: no Co-Authored-By trailer or generated-with footer.
+3. Push to remote `tokenfrugal`, open a PR to `main`, and wait for CI on all three OSes. If any check fails, do not merge; report `failed`.
+4. Merge with `gh pr merge <n> --merge --delete-branch`, confirm `gh pr view <n> --json state,mergeCommit` shows `MERGED`, switch to `main`, `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present. Keep the uncommitted edit of this file (Status and Feedback) through the switch.
+
+Never commit `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`. Never force push or push to `main`. Install nothing. Tool-call limit: 20.
+
+### Feedback (Codex fills this in)
+
+- **Status:** blocked at the preflight scan.
+- **PR and merge sha:** None.
+- **CI result:** Not run.
+- **Departures:** None.
+- **Problems or questions for Sonnet:** The scan confirmed an absolute path containing the local user name in this file at line 261. Review the history for other occurrences before retrying.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Next plan draft
+
+- **Step:** revised plan after the gate failures (documents only)
+- **Branch:** `main` (commit nothing)
+- **Kind:** docs
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate:** write a draft only. It is **unreviewed and unapproved**; a later session runs the EGM brainstorm and review and asks the owner. Do not run an EGM skill. Run no test, model, container or smoke command.
+
+Create `docs/designs/subagent-runtime/next-plan.md` (plain sentences, under 200 lines), reading only `Benchmark/replay/RESULTS.md`, the open items and decision notes of `docs/designs/subagent-runtime/progress.md`, the "Timeout diagnosis" Feedback in this file's History, and targeted parts of `docs/designs/subagent-runtime-design.md` (Goals, Measurement plan, Step 11).
+
+Sections:
+1. **Status line:** "Draft, unreviewed, not approved (2026-11-27)".
+2. **Where it stands:** merged PRs 108-125; base 5/20; s2 4/20 with 8 false success runs; s3 4/20 with 3; S2 and S3 unreleased; S3 enabled; Step 11 not built.
+3. **What is known and not known**, each with its source. Include these facts checked by Sonnet on 2026-11-27 after the run: results backed up to `<home>/Downloads/Projects/tokenfrugal-replay-backup/2026-11-27` (results files and diagnostic logs); `smoke.py tracker` passed (37 s, one run); `smoke.py security` failed with `APITimeoutError` after 228 s, with no model reply on its first step, while another project's script was using the same Ollama (builder model loaded with 32768 context, GPU 96 percent), so contention is the likely and unproven cause; that project's scratch files date from 22:39, which overlaps the end of the s3 arm, and whether it or other containers used the GPU during any earlier arm is unknown. The gate protocol only required ComfyUI to be stopped. Therefore replay timings and `out_of_time` counts may be affected by contention; do not state that they were.
+4. **Proposed work, in order**, each with files likely touched, acceptance command or check, what must not change, and open questions for the owner:
+   - N0: exclusive-GPU precondition for any measurement (a check before and during an arm that no other model is loaded or requesting; the run record says so), then rerun the `security` smoke test on an idle GPU.
+   - N1: an "unverified" result when a write task has no accept command or only a trivial one (what counts as trivial is an open question; changing outcome values or MCP docstrings touches the tool-surface rule and Step 11).
+   - N2: a second corpus version whose accept commands test behaviour, frozen before any run, with the first corpus kept unchanged; pass bar and time limit chosen from a calibration on an idle GPU, labelled as set after the first results.
+   - N3: end a run on in-loop `accept: PASS`, or switch S3 off by default (owner decides; the cause of the lost runs is unconfirmed).
+   - N4: whether Step 11 can be released independently of the gate (design change, owner decides).
+   - Small items: `search_files` slowness under `code-l2-accept`; the live Codex check from Step 3 (needs the owner's `~/.codex/config.toml`).
+5. **Decisions the owner must take** before work starts, as a short numbered list.
+
+Then add one line near the end of `docs/designs/subagent-runtime/progress.md` pointing to the draft, and one line under the design document's Status line in `docs/designs/subagent-runtime-design.md` saying the gate failed on 2026-11-27 and linking the draft. Change nothing else in the design document.
+
+**Files you may touch:** `docs/designs/subagent-runtime/next-plan.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime-design.md`, and the Feedback block and Status line of this file. No personal data or secret; no absolute path with a user name.
+
+**Tool-call limit:** 20. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** Added `next-plan.md`, linked it from `progress.md` and `subagent-runtime-design.md`, and updated this assignment's status and feedback.
+- **Tests written first:** None. The assignment covers documents only.
+- **Test result after the code:** No tests, models, containers or smoke commands ran.
+- **Acceptance command result:** Verified the draft status, 52-line length and relative link targets. The design and progress diffs each add one line. The tracked document diffs passed `git diff --check`.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** The draft lists the owner decisions for the later EGM brainstorm and review. Implementation awaits approval.
+
+### Step 10 results close
+
 - **Step:** 10, results record (end of run)
 - **Branch:** `impl/step-10-results`
 - **Kind:** close
 - **Assigned at:** 2026-11-27
-- **Status:** in progress
+- **Status:** done
 
-### Task
+#### Task
 
 Record the end of the run. Sonnet already ran the full suite (1327 OK, 4 skipped) and the record verification; do not run tests.
 
@@ -32,19 +106,15 @@ Never force push, never push to main directly, never install anything, never rea
 
 **Tool-call limit:** 15.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
-- **Status:** -
-- **Files changed:** -
-- **Tests written first:** -
-- **Test result after the code:** -
-- **Acceptance command result:** -
-- **Departures from the plan:** -
-- **Problems or questions for Sonnet:** -
-
-## History
-
-(Finished assignments with their feedback, newest first.)
+- **Status:** done
+- **Files changed:** Benchmark/replay/RESULTS.md, docs/designs/fallback-execution-log.md, docs/designs/subagent-runtime/progress.md, docs/designs/subagent-runtime/session-handoff.md
+- **Tests written first:** None (docs only).
+- **Test result after the code:** Sonnet reported 1327 OK, 4 skipped. No local rerun.
+- **Acceptance command result:** PR https://github.com/maxh8086/tokenfrugal/pull/125 merged at 9c809c5b602cea1968ce816b517c9d43371da4ed. Windows, macOS and Ubuntu PR checks passed. Main run https://github.com/maxh8086/tokenfrugal/actions/runs/46044336797 passed. Local main fast-forwarded. Branch deleted locally and on the remote.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
 
 ### Step 10 close
 
@@ -188,7 +258,7 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
 
 **Planning gate: already satisfied. Do not run an EGM brainstorm or review.** In the Step 9 gate, 11 of 28 `s2` replay runs ended `out_of_time` (the older router calls it `step_timeout`). Find where the time goes, with evidence.
 
-**Data** (read only), folder `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/diag/`: `records.jsonl` (five diagnostic runs, all `out_of_time`) and, per task id, the router's `events.jsonl` and `tasks.db` (SQLite). Also `Benchmark/replay/results/base-20261127.jsonl` and `s2-20261127.jsonl`. Code: `router/loop.py`, `router/server.py`, `router/checker.py`, `router/mcp_client.py`, `router/tf-roles.yaml`, `scripts/replay.py` (use synaptree or targeted reads).
+**Data** (read only), folder `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/diag/`: `records.jsonl` (five diagnostic runs, all `out_of_time`) and, per task id, the router's `events.jsonl` and `tasks.db` (SQLite). Also `Benchmark/replay/results/base-20261127.jsonl` and `s2-20261127.jsonl`. Code: `router/loop.py`, `router/server.py`, `router/checker.py`, `router/mcp_client.py`, `router/tf-roles.yaml`, `scripts/replay.py` (use synaptree or targeted reads).
 
 **Report in Feedback:**
 1. Per diagnostic run, a table of seconds: setup before the first model step, model time (per step: min, median, max), tool time by tool name (count, total, max), accept and checker time, anything unaccounted. Say how each figure is derived from event timestamps.
@@ -399,7 +469,7 @@ If a stated rule id does not match what the README's frozen rules call it, keep 
 4. If it exits 0, record "pass" and go on. If it fails, only now open `check.py` and the request text, and decide which is true: (a) your implementation broke a statement of the packet: fix the implementation; (b) the check relies on something the request or the base repository states and the packet omits: add it to the packet; (c) the check demands something neither the request nor the base states (a particular wording, argument type, private structure, call order): loosen the check so any correct implementation passes. Re-run until exit 0.
 5. After any change to a check, confirm it still exits non-zero on the untouched base.
 
-**Request text:** `cands2.json` (fb tasks: `fbspecs.txt`) in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`, entry matching the task's request (see its packet). Read only the matching entry's `text`; open nothing else in that folder.
+**Request text:** `cands2.json` (fb tasks: `fbspecs.txt`) in `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`, entry matching the task's request (see its packet). Read only the matching entry's `text`; open nothing else in that folder.
 
 **Sight rule:** never read a later commit, a diff, the History section of this file, or the main checkout's current version of any file a task changes. Do not start a task before the previous one is finished.
 
@@ -452,7 +522,7 @@ rw-018 was removed because its check could not be certified as written without s
 
 **Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
 
-**Request source:** the request text only, in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`, found by timestamp and session (for rw-022 request number 147, for rw-025 number 266). Prefer the delegated spec entry when the timestamp matches more than one. Read only that entry's `text`; open no transcript.
+**Request source:** the request text only, in `cands2.json` in `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`, found by timestamp and session (for rw-022 request number 147, for rw-025 number 266). Prefer the delegated spec entry when the timestamp matches more than one. Read only that entry's `text`; open no transcript.
 
 **The packet must carry the whole contract.** Every name, signature, flag, key, data shape, message word and error behaviour that `check.py` relies on must be stated in the packet (and come from the request or the base repository). A correct implementation written from `packet.json` alone must pass `check.py`. No secret and no personal data in any file (rw-025 uses obviously fake key values).
 
@@ -499,7 +569,7 @@ The `accept` string in `packet.json` is written exactly as in the table (plain `
 
 **Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
 
-**Request source:** the request text only, found by timestamp and session in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Prefer the delegated spec entry when the timestamp matches more than one (for rw-018 that is the 16:40:16 entry). Read only that entry's `text`; open no transcript.
+**Request source:** the request text only, found by timestamp and session in `cands2.json` in `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Prefer the delegated spec entry when the timestamp matches more than one (for rw-018 that is the 16:40:16 entry). Read only that entry's `text`; open no transcript.
 
 **The packet must carry the whole contract.** Every name, signature, flag, key, data shape and error behaviour that `check.py` relies on must be stated in the packet (and come from the request or the base repository). A correct implementation written from `packet.json` alone must pass `check.py`.
 
@@ -543,7 +613,7 @@ The `accept` string in `packet.json` is written exactly as in the table (plain `
 
 **Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
 
-**Request source:** the request text only, found by timestamp and session in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Prefer the delegated spec entry when the timestamp matches more than one. Read only that entry's `text`; open no transcript.
+**Request source:** the request text only, found by timestamp and session in `cands2.json` in `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Prefer the delegated spec entry when the timestamp matches more than one. Read only that entry's `text`; open no transcript.
 
 **The packet must carry the whole contract.** Every name, signature, flag, key, data shape and error behaviour that `check.py` relies on must be stated in the packet (and come from the request or the base repository). A correct implementation written from `packet.json` alone must pass `check.py`.
 
@@ -587,7 +657,7 @@ The `accept` string in `packet.json` is written exactly as in the table (plain `
 
 **Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
 
-**Request source:** the request text only, found by timestamp and session in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Read only that entry's `text`; open no transcript. The packet gives the model the contract of the request (names, signatures, flags, keys, error behaviour), restated in your own words with exact identifiers copied; it does not describe `check.py`. No secret or personal data.
+**Request source:** the request text only, found by timestamp and session in `cands2.json` in `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Read only that entry's `text`; open no transcript. The packet gives the model the contract of the request (names, signatures, flags, keys, error behaviour), restated in your own words with exact identifiers copied; it does not describe `check.py`. No secret or personal data.
 
 **Rules for `check.py`:** write it from the request and the repository at the base commit only; never open a later commit, a diff, the finished file or a session reply while writing. Observable behaviour only, never source or diff text; assert only what the request states (drop a table assertion the request does not support and say so); exit 0 only when done; repo venv, current directory is the task worktree (put it on `sys.path`); offline (patch `subprocess`, `urlopen`, sockets); portable across Windows, macOS and Linux; temporary folders only, and restore any repository file it changes; remove `TOKENFRUGAL_*` variables from the environment and any child.
 
@@ -631,7 +701,7 @@ All five have base `f335f78`.
 
 **Planning gate: already satisfied.** The first build of these three tasks used the fallback log only, which lacks their contracts. The original request texts exist. Rewrite `packet.json` and `check.py` of `Benchmark/replay/fb-001`, `fb-002` and `fb-009` from them; keep each `task.toml`.
 
-**Request source:** `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/fbspecs.txt`. Use only these entries: fb-001 the one at 08:02:57 (parse_story only), fb-002 the one at 08:12:40, fb-009 the one at 14:34:02. Write each check from that request and the repository at the task's base commit only. Never open `scripts/story_film.py`, `scripts/youtube_trends/` or any commit after the base while writing; do not read the existing three check.py files for assertions.
+**Request source:** `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/fbspecs.txt`. Use only these entries: fb-001 the one at 08:02:57 (parse_story only), fb-002 the one at 08:12:40, fb-009 the one at 14:34:02. Write each check from that request and the repository at the task's base commit only. Never open `scripts/story_film.py`, `scripts/youtube_trends/` or any commit after the base while writing; do not read the existing three check.py files for assertions.
 
 **packet.json:** give the model the contract of the request (function names, signatures, command-line flags, keys, argv, error behaviour) within the limits (goal 400 characters, 5 requirements of 200, context 1500, 3 files). Restate in your own words; exact identifiers, argv items and field names are part of the contract and are copied exactly. Accept stays: fb-001 `python -m unittest tests.test_story_film -q`, fb-002 `python -m py_compile scripts/story_film.py`, fb-009 `python -m unittest tests.test_youtube_discover -q`.
 
@@ -673,7 +743,7 @@ The other check rules are unchanged: offline, repo venv, current directory is th
 
 **Rules for `check.py`** (README rule 7): write it from the request and the repository at the base commit only. Never open a later commit, a diff or a session reply while writing it. It asserts observable behaviour, never source or diff text; exits 0 only when the task is done; runs with the repo venv from the task worktree as the current directory (put the current directory on `sys.path`); is offline (no network, Docker, GPU or secret; patch `subprocess`, `urlopen` and so on); works on Windows, macOS and Linux; writes only to temporary folders; removes `TOKENFRUGAL_*` variables from any child environment. Restate goals in your own words; copy no transcript text, secret or personal data.
 
-**Request sources:** FB tasks: `docs/designs/fallback-execution-log.md` and `docs/designs/fallback-attempts.jsonl`. rw tasks: the request text only, found by timestamp in `cands2.json` in the session scratchpad folder `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/` (read only that entry's request text; open no transcript).
+**Request sources:** FB tasks: `docs/designs/fallback-execution-log.md` and `docs/designs/fallback-attempts.jsonl`. rw tasks: the request text only, found by timestamp in `cands2.json` in the session scratchpad folder `<home>/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/` (read only that entry's request text; open no transcript).
 
 | id | base | packet files | accept | goal | check.py asserts |
 | --- | --- | --- | --- | --- | --- |
@@ -2952,7 +3022,7 @@ Also run the full suite with the same two variables: `.venv\Scripts\python.exe -
 - **Status:** done
 - **Files changed:** `router/outcomes.py`, `router/store.py`, `router/server.py`, `router/events.py`, `tests/test_outcomes.py`, `tests/test_error_kind.py`, `tests/test_checker_stage.py`, `tests/test_diagnostics.py`, `tests/test_tool_surface.py`, `tests/fixtures/tool_surface.json`, `docs/designs/subagent-runtime-design.md`
 - **Tests written first:** Added `tests/test_tool_surface.py` and recorded the current tool fixture before router changes. Added `tests/test_outcomes.py` and ran it before creating `router/outcomes.py`; it failed because that module did not exist yet.
-- **Test result after the code:** Targeted implementation tests passed. The full suite ran 1,000 tests; 32 errors remain in unrelated tests because temporary Git commits cannot be created without Git identity and secret-store tests cannot access `C:\Users\vaibh\.docker\mcp\secrets` in this environment. One transient assertion failure in the new hint test was corrected before final verification.
+- **Test result after the code:** Targeted implementation tests passed. The full suite ran 1,000 tests; 32 errors remain in unrelated tests because temporary Git commits cannot be created without Git identity and secret-store tests cannot access `<home>\.docker\mcp\secrets` in this environment. One transient assertion failure in the new hint test was corrected before final verification.
 - **Acceptance command result:** Passed: 68 tests, `OK`, with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`.
 - **Departures from the plan:** The existing runner base-arm reference was already `server.py:165-171`, so no edit was needed for that line. The full-suite failures are environment-related as described above.
 - **Problems or questions for Sonnet:** None.
