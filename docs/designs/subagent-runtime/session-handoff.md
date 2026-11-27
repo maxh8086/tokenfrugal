@@ -9,13 +9,191 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 3, F6 installation and client configuration
+- **Branch:** `impl/step-3`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Answer to your question:** the code is in the working tree at `scripts/doctor.py` (uncommitted Step 3 changes are there too). If synaptree does not locate a file or symbol, **read the file directly** with your file tools. That is allowed in this assignment for `scripts/doctor.py`, `README.md`, the test files named below, `router/config.py`, `router/loop.py` and `router/tf-roles.yaml`. Do not stop for a synaptree miss.
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+Sonnet's review found the defects below against the Step 3 rows and the design document sections Time budgets and Rollout and release notes. Write the tests first (new class in `tests/test_entrypoint.py` or a new file `tests/test_doctor_config.py`), run them to show they fail, then fix the code. Doctor tests must not read the real home folder (patch `Path.home` to a temporary folder), and need no Docker, network or model (stub `subprocess.run`, `urllib.request.urlopen` and `shutil.which` as `DoctorReport` in `tests/test_diagnostics_frames.py` does).
+
+1. **Wrong timeout.** A plain run prints 405; the plan's worked number is **548**. Cause: `code-l2` and `builder` are **role names** (keys of `cfg["roles"]`), but the code passes them to `resolve_role`, which takes an agent slug. Fix: read each role from `load_tf_roles()["roles"][name]`; `role_timeout` is the role's `timeout_s`, else `loop.TASK_TIMEOUT` (use `config.TASK_TIMEOUT`, not a literal 540); `deadline = ceil(1.5 * role_timeout + 2 * 60 + 30)`; `N = max(deadline) + 60`. If `router` cannot be imported or a role is missing, do not invent a number: print a warning that the timeout could not be computed. Test: with the shipped `tf-roles.yaml`, N is 548.
+2. **Wrong config key.** The code reads a top-level `tool_timeout_sec`. It belongs under `[mcp_servers.tokenfrugal]` in `~/.codex/config.toml`. Fix: read `data["mcp_servers"]["tokenfrugal"]["tool_timeout_sec"]`, treating any missing table or a non-number as absent. Print the line `tool_timeout_sec = N` (that exact text, on its own line, after a line saying to add it under `[mcp_servers.tokenfrugal]` in `~/.codex/config.toml`) when it is absent or below N; print nothing about it when it is N or more. Tests: absent file, key at top level only (still reported), value below N, value equal to N, broken TOML.
+3. **Printed block is invalid TOML on Windows.** `command = "C:\...\tokenfrugal-router.exe"` has invalid escapes. Fix: write the path with forward slashes (`Path(...).resolve().as_posix()`), escaped as a TOML basic string. Test: patch `shutil.which` to return a path with backslashes or spaces and parse the printed block with `tomllib`.
+4. **Missing script is silent.** When `shutil.which("tokenfrugal-router")` finds nothing, print a `[warn]` line saying `tokenfrugal-router` is not on PATH and to run `pip install -e .`. It does not change the exit code. Test it.
+5. **README examples still use the venv Python.** The row says the client config examples use `tokenfrugal-router`. Update the `claude mcp add` command (about line 57), its prompt paragraph (about line 66, which still says `requirements.txt`, the venv's Python and `-m router.server`) and the JSON example (about line 103). Keep `cwd` as the repo folder. Add one sentence there: if the client cannot find `tokenfrugal-router`, paste the block `python scripts/doctor.py` prints, which holds its full path.
+
+**Keep:** doctor writes no file; the Step 2 behaviour (module-level `sys.path` insert, `ImportError` fallback, `missing programs:` line); the `MCP_TOOL_TIMEOUT=<N * 1000>` line is always printed when N could be computed.
+
+**Files you may touch:** `scripts/doctor.py`, `README.md`, `tests/test_entrypoint.py`, `tests/test_doctor_config.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/`, `.codex/`, `.mcp.json`, `pyproject.toml`, the design documents, `progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_codex_wrapper tests.test_entrypoint tests.test_doctor_config tests.test_diagnostics_frames tests.test_tool_surface -q
+```
+
+Put the new doctor cases in `tests/test_doctor_config.py`. Do not run the full suite.
+
+**Instructions**
+
+- Try synaptree (project tokenfrugal) first when you need a symbol; fall back to reading the file.
+- Tool-call limit: 20.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `scripts/doctor.py`, `README.md`, `tests/test_doctor_config.py`.
+- **Tests written first:** Added five doctor configuration tests and ran them before implementation; they exposed the incorrect 405 timeout, wrong TOML key path, invalid Windows TOML command and missing router warning.
+- **Test result after the code:** Five doctor configuration tests passed.
+- **Acceptance command result:** Passed: 53 tests, `OK`, using the specified focused acceptance command with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 3, fix 1 (2026-11-27): blocked, synaptree did not locate doctor.py; Sonnet answered it
+
+- **Step:** 3, F6 installation and client configuration
+- **Branch:** `impl/step-3`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** blocked
+
+#### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+Sonnet's review found the defects below against the Step 3 rows and the design document sections Time budgets and Rollout and release notes. Write the tests first (new class in `tests/test_entrypoint.py` or a new file `tests/test_doctor_config.py`), run them to show they fail, then fix the code. Doctor tests must not read the real home folder (patch `Path.home` to a temporary folder), and need no Docker, network or model (stub `subprocess.run`, `urllib.request.urlopen` and `shutil.which` as `DoctorReport` in `tests/test_diagnostics_frames.py` does).
+
+1. **Wrong timeout.** A plain run prints 405; the plan's worked number is **548**. Cause: `code-l2` and `builder` are **role names** (keys of `cfg["roles"]`), but the code passes them to `resolve_role`, which takes an agent slug. Fix: read each role from `load_tf_roles()["roles"][name]`; `role_timeout` is the role's `timeout_s`, else `loop.TASK_TIMEOUT` (use `config.TASK_TIMEOUT`, not a literal 540); `deadline = ceil(1.5 * role_timeout + 2 * 60 + 30)`; `N = max(deadline) + 60`. If `router` cannot be imported or a role is missing, do not invent a number: print a warning that the timeout could not be computed. Test: with the shipped `tf-roles.yaml`, N is 548.
+2. **Wrong config key.** The code reads a top-level `tool_timeout_sec`. It belongs under `[mcp_servers.tokenfrugal]` in `~/.codex/config.toml`. Fix: read `data["mcp_servers"]["tokenfrugal"]["tool_timeout_sec"]`, treating any missing table or a non-number as absent. Print the line `tool_timeout_sec = N` (that exact text, on its own line, after a line saying to add it under `[mcp_servers.tokenfrugal]` in `~/.codex/config.toml`) when it is absent or below N; print nothing about it when it is N or more. Tests: absent file, key at top level only (still reported), value below N, value equal to N, broken TOML.
+3. **Printed block is invalid TOML on Windows.** `command = "C:\...\tokenfrugal-router.exe"` has invalid escapes. Fix: write the path with forward slashes (`Path(...).resolve().as_posix()`), escaped as a TOML basic string. Test: patch `shutil.which` to return a path with backslashes or spaces and parse the printed block with `tomllib`.
+4. **Missing script is silent.** When `shutil.which("tokenfrugal-router")` finds nothing, print a `[warn]` line saying `tokenfrugal-router` is not on PATH and to run `pip install -e .`. It does not change the exit code. Test it.
+5. **README examples still use the venv Python.** The row says the client config examples use `tokenfrugal-router`. Update the `claude mcp add` command (about line 57), its prompt paragraph (about line 66, which still says `requirements.txt`, the venv's Python and `-m router.server`) and the JSON example (about line 103). Keep `cwd` as the repo folder. Add one sentence there: if the client cannot find `tokenfrugal-router`, paste the block `python scripts/doctor.py` prints, which holds its full path.
+
+**Keep:** doctor writes no file; the Step 2 behaviour (module-level `sys.path` insert, `ImportError` fallback, `missing programs:` line); the `MCP_TOOL_TIMEOUT=<N * 1000>` line is always printed when N could be computed.
+
+**Files you may touch:** `scripts/doctor.py`, `README.md`, `tests/test_entrypoint.py`, `tests/test_doctor_config.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/`, `.codex/`, `.mcp.json`, `pyproject.toml`, the design documents, `progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_codex_wrapper tests.test_entrypoint tests.test_doctor_config tests.test_diagnostics_frames tests.test_tool_surface -q
+```
+
+Put the new doctor cases in `tests/test_doctor_config.py`. Do not run the full suite.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal) when you need a symbol.
+- Tool-call limit: 20.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** blocked
+- **Files changed:** `docs/designs/subagent-runtime/session-handoff.md` (Status and Feedback only).
+- **Tests written first:** None; implementation could not proceed because Synaptree did not index or locate `scripts/doctor.py`.
+- **Test result after the code:** Not run; no code changed.
+- **Acceptance command result:** Not run. After a Synaptree refresh, `search_code` still returned no `scripts/doctor.py` source match and `search_graph` returned no doctor symbol.
+- **Departures from the plan:** Stopped before code inspection to comply with the required Synaptree-first targeted-reading workflow.
+- **Problems or questions for Sonnet:** Please ensure `scripts/doctor.py` and relevant test symbols are indexed and available, then reassign this fix.
+
+### Step 3, build (2026-11-27): done; Sonnet's review sent it back
+
+- **Step:** 3, F6 installation and client configuration
+- **Branch:** `impl/step-3`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 3, lines 1051-1072; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `pyproject.toml` | Modify | The literal TOML is in Appendix A: a `[build-system]` table, pinned `dependencies`, `[project.scripts] tokenfrugal-router = "router.server:main"`, and explicit package data. Skills ship as `router` package data. There is no `router.skills` package. |
+| `requirements.txt` | Modify | Pin every dependency with the pins in the Appendix A TOML. |
+| `router/server.py` | Modify | <ul><li>Add `def main(): mcp.run()`, and replace the existing `if __name__ == "__main__": mcp.run()` (`:453-454`) with `if __name__ == "__main__": main()`.</li><li>Add `REQUIRED_ARGS = ("agent", "task", "task_type")`. `dispatch_task`'s existing runtime checks read from it, and the `role` alias for `agent` is kept.</li><li>New check: an empty or whitespace-only `task` is refused with `task is empty: send the task text` and no row.</li><li>No signature or docstring change.</li></ul> |
+| `.mcp.json` | Modify | `"command": "tokenfrugal-router"`, `"args": []`. `"cwd": "."` is kept, so the router still starts in the project folder. |
+| `.codex/config.toml` | **Create** (not tracked at `d675d75`; an untracked local copy is replaced) | The full content is in [Codex client files](#codex-client-files): `command = "tokenfrugal-router"`, `args = []`, no `CC_WORKSPACE`, and a comment that points to `doctor.py` for `tool_timeout_sec` and for the absolute-path block. |
+| `.codex/agents/tokenfrugal.toml` | **Create** (not tracked at `d675d75`; an untracked local copy is replaced) | The full content is in [Codex client files](#codex-client-files). The example call names `agent`, `task_type`, `task` and `accept`; accept is one command that exits non-zero on failure; the rule stays: resume once, then report. |
+| `scripts/doctor.py` | Modify | <ul><li>Check `shutil.which("tokenfrugal-router")`, and print a `[mcp_servers.tokenfrugal]` block with the script's absolute path.</li><li>Read `~/.codex/config.toml` with `tomllib`. Compute `max(deadline) + 60` over `code-l2` and `builder` with the formula from Time budgets (Step 5 replaces it with `config.deadline`).</li><li>When `~/.codex/config.toml` has no `tool_timeout_sec`, or one below N, print `tool_timeout_sec = N`. Always print `MCP_TOOL_TIMEOUT=<N * 1000>` for Claude Code.</li><li>Never write a file.</li></ul> |
+| `README.md` | Modify | The install section becomes `pip install -e .` and `python scripts/doctor.py`. The client config examples use `tokenfrugal-router`. |
+| `CLAUDE.md` | Modify | The "Register in an MCP client" line uses `tokenfrugal-router`. |
+| `tests/test_codex_wrapper.py` | **Create** | <ul><li>Parse `.codex/agents/tokenfrugal.toml`, find the example `dispatch_task(...)` call, and assert every name in `REQUIRED_ARGS` appears.</li><li>Parse `.codex/config.toml` and `.mcp.json`, and assert neither contains a path separator in `command`.</li></ul> |
+| `tests/test_entrypoint.py` | **Create** | <ul><li>`router.server.main` exists and is the `pyproject.toml` script target.</li><li>Every `dependencies` entry is pinned with `==`.</li><li>The package-data globs match files that exist.</li><li>An empty `task` is refused.</li></ul> |
+
+*   **Schema:** none.
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_codex_wrapper tests.test_entrypoint -q`
+*   **Post-commit checks:**
+    *   Run `pip install -e .`, then check that `tokenfrugal-router` starts and waits on stdin (Ctrl+C to stop).
+    *   Start Codex in a project other than tokenfrugal, dispatch one analyze task, and record which working directory the router saw under [Open Questions](#open-questions) in this design.
+
+**Notes from Sonnet**
+
+- Read Appendix A of the design document, sections `pyproject.toml` (Step 3) and Codex client files. Use their literal content exactly. Sonnet compared the pins with the installed versions in `.venv` today: all 12 match, so use them as written; do not run pip.
+- Do not run `pip install` in any form; it is not allowed in this run. The tests must pass without the package being installed.
+- `.codex/config.toml` and `.codex/agents/tokenfrugal.toml` exist as untracked local copies; replace their content. If your sandbox refuses to write under `.codex/`, do everything else and report exactly that, with Status `blocked`.
+- Line numbers in the rows are from commit `d675d75` and have moved. Find code by symbol name. The Time budgets formula is in the design document section Time budgets.
+- In `README.md` change only the install section and the client config examples; in `CLAUDE.md` change only the Register in an MCP client line.
+- In `scripts/doctor.py` keep the Step 2 behaviour: the module-level `sys.path` insert, the `ImportError` fallback and the `missing programs:` line. Doctor writes no file. Its new tests must not read the real `~/.codex/config.toml`.
+
+**Files you may touch:** `pyproject.toml`, `requirements.txt`, `router/server.py`, `.mcp.json`, `.codex/config.toml`, `.codex/agents/tokenfrugal.toml`, `scripts/doctor.py`, `README.md`, `CLAUDE.md`, `tests/test_codex_wrapper.py`, `tests/test_entrypoint.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/loop.py`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_codex_wrapper tests.test_entrypoint -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs.
+- Tool-call limit: 25.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `pyproject.toml`, `requirements.txt`, `router/server.py`, `.mcp.json`, `.codex/config.toml`, `.codex/agents/tokenfrugal.toml`, `scripts/doctor.py`, `README.md`, `CLAUDE.md`, `tests/test_codex_wrapper.py`, `tests/test_entrypoint.py`.
+- **Tests written first:** Added the six acceptance tests before implementation and ran them; the initial run failed on the missing `REQUIRED_ARGS`, console entry point, pinned metadata/package config, portable client command and blank-task refusal.
+- **Test result after the code:** All six focused acceptance tests pass.
+- **Acceptance command result:** `$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\\Scripts\\python.exe -m unittest tests.test_codex_wrapper tests.test_entrypoint -q` — exit 0, `Ran 6 tests`, `OK`.
+- **Departures from the plan:** Did not run `pip install -e .` or the live client check, as this run explicitly forbids installation and the live check is post-commit.
+- **Problems or questions for Sonnet:** None.
+
+### Step 2, re-scope part 1 (2026-11-27): done, merged in PR 110
+
 - **Step:** 2, F7 diagnosable failures
 - **Branch:** `impl/step-2`
 - **Kind:** re-scope part 1 (the only remaining piece)
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
 
@@ -45,7 +223,7 @@ Do not run the full suite.
 
 **Tool-call limit:** 15. Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `scripts/doctor.py` (inserted repo root into `sys.path` immediately after `ROOT` is defined and removed the late insertion); `tests/test_diagnostics_frames.py` (added `DoctorReport.test_plain_script_run_imports_router`).
@@ -54,10 +232,6 @@ Do not run the full suite.
 - **Acceptance command result:** Passed the requested six-module command with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`: 102 tests, `OK`.
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** None.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 2, fix 2 follow-up (2026-11-27): done
 

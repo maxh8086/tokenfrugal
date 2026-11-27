@@ -238,3 +238,9 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 2 | GPT-6 Luna (Codex) | re-scope part 1 | 6 | not recorded | not recorded | `done`: acceptance 102 OK; `doctor.py` now runs the router check | re-scope / consult 3 |
 | 2 | Sonnet | suite run | 1 | 1 | about 74 s | 1044 tests OK (skipped=3); plain `doctor.py` run exit 0 | none / none |
 | 2 | Haiku subagent | retest | 2 | 3 | not recorded | no files changed; acceptance 101 OK, suite 1044 OK (skipped=3), `doctor.py` exit 0 | none / none |
+| 2 | Haiku subagent | close | 1 | 5 | not recorded | commit `9acaaa6`, PR 110 merged as `48054cc`, branch deleted | none / none |
+| 3 | GPT-6 Luna (Codex) | build | 1 | not recorded | not recorded | `done`, acceptance 6 tests OK; Sonnet review found: doctor prints 405 instead of 548, reads the wrong config key, prints invalid TOML on Windows, silent when the script is missing, README examples unchanged | fix 1 / none |
+| 3 | GPT-6 Luna (Codex) | fix 1 | 2 | not recorded | not recorded | `blocked`: synaptree did not locate `scripts/doctor.py`; no code changed | fix 1 / none |
+| 3 | GPT-6 Luna (Codex) | fix 1 | 3 | not recorded | about 5 min or less | `done`, acceptance 53 tests OK; `doctor.py` prints 548 | fix 1 / none |
+| 3 | Haiku subagent | test | 1 | 11 | 346 s (124,405 tokens) | added cases, fixed one test that could not see `accept`; acceptance 10 OK, suite 1060 OK (skipped=3); flagged Windows-only paths | none / none |
+| 3 | Haiku subagent | test, portability follow-up | 2 | 7 | not recorded | made the path tests portable; suite 1061 OK (skipped=3); not run on macOS or Linux | none / none |

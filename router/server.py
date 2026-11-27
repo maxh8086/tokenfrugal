@@ -29,6 +29,7 @@ STALE_REASON = "router stopped while task was running (no heartbeat)"
 HEALTH_EVERY = 10  # seconds between health events; the dashboard marks a router down after ~3 missed beats
 RESUME_HINT = {"connection": "retry", "infra": "retry", "timeout": "retry"}  # other reasons: re-scope instead
 RESCOPE = "Re-scope the task smaller and dispatch again; resume_task will repeat the same failure."
+REQUIRED_ARGS = ("agent", "task", "task_type")
 _CLIENT_NAME: str | None = None
 _models_ready = False  # set once ensure_models() has succeeded in this process (mediahouse tasks)
 
@@ -341,9 +342,12 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
     Optional plan_id links it to a plan task (claimed first, marked done/blocked after).
     Returns a summary of up to 5000 tokens and a task_id."""
     agent = agent or role
-    if not agent:
+    required = dict(zip(REQUIRED_ARGS, (agent, task, task_type)))
+    if not required["agent"]:
         return "give agent (or role) and task"
-    if not task_type.strip():
+    if not required["task"].strip():
+        return "task is empty: send the task text"
+    if not required["task_type"].strip():
         return "give task_type: the kind of task, e.g. 'add test' or 'explain code' (see list_roles for templates)"
     accept_argv = None
     if accept:
@@ -484,5 +488,9 @@ def list_roles() -> str:
                       *(tpl or ["  none"])])
 
 
-if __name__ == "__main__":
+def main():
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

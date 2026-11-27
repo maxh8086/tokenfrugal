@@ -48,7 +48,7 @@ Local models run 16k-32k context. Point them at file paths in the workspace inst
 - Paste secrets into tasks or chat. Secrets live as Docker secret files in `~/.docker/mcp/secrets`.
 - Add Co-Authored-By trailers or "generated with" footers to commits and PRs, unless you want them.
 
-Register in an MCP client: `{"mcpServers": {"tokenfrugal": {"type": "stdio", "command": "python", "args": ["-m", "router.server"], "cwd": "<path>/tokenfrugal"}}}`. Use the venv's python on Windows.
+Register in an MCP client: `{ "mcpServers": { "tokenfrugal": { "type": "stdio", "command": "tokenfrugal-router", "args": [], "cwd": "<path>/tokenfrugal" } } }`.
 
 ## Architecture
 

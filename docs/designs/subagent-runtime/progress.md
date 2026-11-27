@@ -10,8 +10,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | 64 | done | Luna, Haiku | 2 | 0 | 0 | [#108](https://github.com/maxh8086/tokenfrugal/pull/108) | `a552857` (step commit `395bb68`) | yes, local and remote | exit 0 | 994 OK, 3 skipped | - |
 | 1 | 65 | done | Luna, Haiku | 2 | 1 | 1 | [#109](https://github.com/maxh8086/tokenfrugal/pull/109) | `3990872` (step commit `b3ef9ea`) | yes, local and remote | 71 OK | 1003 OK, 3 skipped | - |
-| 2 | 66 | 6 close | Haiku | 6 | 2 | 2 | - | - | - | 101 OK | 1044 OK, 3 skipped | open PR, merge, delete branch |
-| 3 | 67 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 2 | 66 | done | Luna, Haiku | 6 | 2 | 3 | [#110](https://github.com/maxh8086/tokenfrugal/pull/110) | `48054cc` (step commit `9acaaa6`) | yes, local and remote | 101 OK | 1044 OK, 3 skipped | - |
+| 3 | 67 | 6 close | Haiku | 3 | 1 | 0 | - | - | - | 10 OK | 1061 OK, 3 skipped | open PR, merge, delete branch |
 | 4 | 68 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 5 | 69 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 6-7 | 70 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -58,6 +58,10 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 
 - **Opus consult 3 (Step 2, third failure, re-scope):** keep one commit and one PR, no split; the only remaining piece is the `doctor.py` import path with one test that reproduces a plain script run. Decision (Sonnet): accepted. A failure after this re-scope pauses the loop. The count of failures: build review, fix 1, the test-stage defect; the two-item follow-up was not counted.
 
+- **Step 3 pins:** all 12 pins in Appendix A equal the versions installed in `.venv` (2026-11-27). No pin changed.
+- **Step 3 `.codex` files:** the untracked local copies were saved to the session scratchpad before replacement.
+
 ## Open items
 
-None.
+- **Step 3 post-commit checks need the user:** `pip install -e .` (an install) and starting Codex in another project with a `~/.codex/config.toml` entry (outside the repo). After Step 3 merges, `.mcp.json` runs `tokenfrugal-router`, so the tokenfrugal MCP server in this repo starts only when that script is installed and on `PATH`.
+

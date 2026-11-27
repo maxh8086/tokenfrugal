@@ -42,19 +42,19 @@ Activate the environment:
 Then install and check:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 cp .env.example .env          # Windows: copy .env.example .env, then set TOKENFRUGAL_LLM_URL
-python scripts/doctor.py      # checks everything and prints the fix commands
+python scripts/doctor.py      # checks everything and prints the client configuration
 ```
 
-Note the full path to the venv's Python for the next step: `.venv\Scripts\python.exe` on Windows, `.venv/bin/python` on macOS and Linux.
+The `tokenfrugal-router` command is installed into this virtual environment.
 
 ### Connect Claude Code
 
-Run from inside the `tokenfrugal` folder, replacing the placeholder with your venv Python path:
+Install the project with `pip install -e .`, then register the installed router command:
 
 ```bash
-claude mcp add tokenfrugal -- <path-to-venv-python> -m router.server
+claude mcp add tokenfrugal -- tokenfrugal-router
 ```
 
 **Optional: show TokenFrugal as a subagent.** Copy [examples/tokenfrugal_subagent.md](examples/tokenfrugal_subagent.md) to `.claude/agents/tokenfrugal.md` in your project. Claude Code then lists it as its own agent with its own usage. That usage is the small wrapper's Claude tokens; the local model's tokens are not counted by Claude.
@@ -63,22 +63,22 @@ claude mcp add tokenfrugal -- <path-to-venv-python> -m router.server
 
 **Prompt for Claude Code:**
 
-> Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install requirements.txt, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then register the router as an MCP server named tokenfrugal with `claude mcp add`, using the venv's Python, `-m router.server`, and the repo folder as the working directory. Do not write API keys into files or chat.
+> Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, run `pip install -e .`, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then register the router as an MCP server named tokenfrugal with `claude mcp add`, using `tokenfrugal-router` and the repo folder as the working directory. If the client cannot find `tokenfrugal-router`, paste the block printed by `python scripts/doctor.py`, which holds its full path. Do not write API keys into files or chat.
 
 ### Connect Codex
 
-Add this table to `~/.codex/config.toml` (on Windows: `%USERPROFILE%\.codex\config.toml`), replacing the placeholders:
+Add this table to `~/.codex/config.toml` (on Windows: `%USERPROFILE%\.codex\config.toml`):
 
 ```toml
 [mcp_servers.tokenfrugal]
-command = "<path-to-venv-python>"
-args = ["-m", "router.server"]
+command = "tokenfrugal-router"
+args = []
 cwd = "<path-to>/tokenfrugal"
 ```
 
 **Prompt for Codex:**
 
-> Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install requirements.txt, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then add a `[mcp_servers.tokenfrugal]` table to my ~/.codex/config.toml that runs the venv's Python with `-m router.server` from the repo folder. Keep my existing config intact. Do not write API keys into files or chat.
+> Install TokenFrugal from https://github.com/maxh8086/tokenfrugal into a folder I choose. Create a Python 3.11+ virtual environment, install the project with `pip install -e .`, copy .env.example to .env, and run python scripts/doctor.py. Show me each failed check and ask before installing Docker, Ollama or any other software. Then add a `[mcp_servers.tokenfrugal]` table to my ~/.codex/config.toml using `tokenfrugal-router` with empty args from the repo folder. Keep my existing config intact. Do not write API keys into files or chat.
 
 #### AGENTS.md for Codex and other agents
 
@@ -100,7 +100,7 @@ Codex reads `AGENTS.md` from the project root. Copy [examples/example_agents.md]
 Any stdio MCP client can use the same command. Example JSON:
 
 ```json
-{ "mcpServers": { "tokenfrugal": { "type": "stdio", "command": "<path-to-venv-python>", "args": ["-m", "router.server"], "cwd": "<path-to>/tokenfrugal" } } }
+{ "mcpServers": { "tokenfrugal": { "type": "stdio", "command": "tokenfrugal-router", "args": [], "cwd": "<path-to>/tokenfrugal" } } }
 ```
 
 Restart the client after registering. The full setup (models, Docker backends, tool profiles, smoke tests) is in the [technical guide](docs/technical.md#setup).

@@ -1,10 +1,12 @@
 """Check TokenFrugal prerequisites on any OS. Installs nothing; prints what is missing and how to fix it."""
 import json
+import math
 import os
 import platform
 import shutil
 import subprocess
 import sys
+import tomllib
 import urllib.request
 from pathlib import Path
 
@@ -98,6 +100,43 @@ def main() -> int:
         label = "ok" if ok else ("warn" if soft else "MISSING")
         print(f"[{label}] {name}" + ("" if ok else f"  ->  {fix}"))
         bad += not ok and not soft
+
+    router_command = shutil.which("tokenfrugal-router")
+    if router_command:
+        print("\nAdd this to your Codex config:")
+        print("[mcp_servers.tokenfrugal]")
+        print(f"command = {json.dumps(Path(router_command).resolve().as_posix())}")
+        print("args = []")
+    else:
+        print("[warn] tokenfrugal-router is not on PATH; run pip install -e .")
+    try:
+        from router import config
+        from router.config import load_tf_roles
+        cfg = load_tf_roles()
+        deadlines = []
+        for name in ("code-l2", "builder"):
+            role = cfg["roles"][name]
+            timeout = role.get("timeout_s", config.TASK_TIMEOUT)
+            deadlines.append(math.ceil(1.5 * timeout + 2 * 60 + 30))
+        timeout_sec = max(deadlines) + 60
+    except (ImportError, KeyError, TypeError, ValueError):
+        timeout_sec = None
+        print("[warn] Codex tool timeout could not be computed (router config or role unavailable)")
+    codex_config = Path.home() / ".codex" / "config.toml"
+    current_timeout = None
+    try:
+        data = tomllib.loads(codex_config.read_text(encoding="utf-8"))
+        servers = data.get("mcp_servers")
+        server_config = servers.get("tokenfrugal") if isinstance(servers, dict) else None
+        server_config = server_config if isinstance(server_config, dict) else {}
+        current_timeout = server_config.get("tool_timeout_sec")
+    except (OSError, tomllib.TOMLDecodeError):
+        pass
+    if timeout_sec is not None:
+        if not isinstance(current_timeout, (int, float)) or isinstance(current_timeout, bool) or current_timeout < timeout_sec:
+            print("Add this under [mcp_servers.tokenfrugal] in ~/.codex/config.toml:")
+            print(f"tool_timeout_sec = {timeout_sec}")
+        print(f"MCP_TOOL_TIMEOUT={timeout_sec * 1000}")
 
     report("python >= 3.11", sys.version_info >= (3, 11), "install Python 3.11+ (3.10.0 breaks pydantic)")
     try:
