@@ -188,9 +188,9 @@ class ServerDeadlineTests(unittest.TestCase):
         async def fake(*args, **kwargs):
             return "answer", []
         async def slow(*args, **kwargs):
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(3)
             return True, "ok"
-        with mock.patch.object(server, "run", fake), mock.patch.object(config, "deadline", return_value=0.2), \
+        with mock.patch.object(server, "run", fake), mock.patch.object(config, "deadline", return_value=1), \
              mock.patch.object(server, "_check", return_value={"passed": True, "items": []}), \
              mock.patch.object(server, "_plan", slow):
             reply = asyncio.run(server._execute(tid, "a", self.role, "success", plan_id=1))
@@ -205,11 +205,11 @@ class ServerDeadlineTests(unittest.TestCase):
             return "answer", []
         async def slow(*args, **kwargs):
             entered_plan.set()
-            await asyncio.sleep(30)
+            await asyncio.sleep(3)
             return True, "ok"
         async def scenario():
             with (mock.patch.object(server, "run", fake),
-                  mock.patch.object(config, "deadline", return_value=0.2),
+                  mock.patch.object(config, "deadline", return_value=1),
                   mock.patch.object(server, "_check", return_value={"passed": True, "items": []}),
                   mock.patch.object(server, "_plan", slow)):
                 task = asyncio.create_task(server._execute(tid, "a", self.role, "success", plan_id=1))
