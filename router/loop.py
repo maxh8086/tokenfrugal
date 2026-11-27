@@ -419,7 +419,7 @@ def think_extra(role: dict) -> dict:
 
 
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
-              tid: str = "", guard=None, budget: Budget | None = None) -> tuple[str, list]:
+              tid: str = "", guard=None, budget: Budget | None = None, policy=None) -> tuple[str, list]:
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
     if "synaptree" in (role.get("native") or []):
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
@@ -434,10 +434,11 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
     msgs = messages or [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
     STARTED[tid] = 0
     limit = role_timeout(role)
+    options = {"policy": policy} if policy is not None else {}
     try:
         if budget is None:
-            return await asyncio.wait_for(_run(agent, role, msgs, tid, guard), limit or None)
-        return await _run(agent, role, msgs, tid, guard, budget=budget)
+            return await asyncio.wait_for(_run(agent, role, msgs, tid, guard, **options), limit or None)
+        return await _run(agent, role, msgs, tid, guard, budget=budget, **options)
     except asyncio.TimeoutError:
         e = LoopError(f"task timed out after {(budget.total if budget is not None else limit):g}s")
         e.msgs = msgs
@@ -447,7 +448,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         raise
 
 
-async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget: Budget | None = None) -> tuple[str, list]:
+async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget: Budget | None = None, policy=None) -> tuple[str, list]:
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
             open_role(role.get("profile"), role.get("native"), role.get("params")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
@@ -483,13 +484,18 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
         hinted = False  # the first "answered without reading" retry names read_file (2A)
         hint_retries = 0  # first-call hint retries: their own budget of 2, separate from slop_retries
         wrapped = False  # the wrap-up nudge is sent once
-        for step in range(1, role["max_steps"] + 1):
+        accept_feedback = False
+        # A verdict on the last tool step still needs a model turn.
+        for step in range(1, role["max_steps"] + 1 + int(policy is not None)):
+            if step > role["max_steps"] and not accept_feedback:
+                break
             events.emit("step", id=tid, n=step)
             if not wrapped and wrapup_due(step, role["max_steps"], ok_calls):
                 wrapped = True
                 msgs.append({"role": "user", "content": NUDGE_WRAP})
             # the last step is reserved for the answer once real results exist: no tools, so the model cannot run out of steps
-            force_answer = bool(ok_calls) and step == role["max_steps"]
+            force_answer = bool(ok_calls) and step == role["max_steps"] and not accept_feedback
+            accept_feedback = False
             if force_answer:
                 msgs.append({"role": "user", "content": NUDGE_FINAL})
             use_tools = bool(tools) and not text_mode and not force_answer
@@ -575,6 +581,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
             for c in calls:
                 events.emit("tool", id=tid, name=c.function.name, args=(c.function.arguments or "")[:160])
                 bad_args = ""
+                successful = False
                 try:
                     a = coerce_args(json.loads(c.function.arguments or "{}"), schemas.get(c.function.name, {}))
                     if role["role"] == "browser":
@@ -586,6 +593,8 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
                             guard(a.get(key, "")) for key in (("source", "destination") if c.function.name == "move_file" else ("path",))):
                         path = next((a.get(key, "") for key in (("source", "destination") if c.function.name == "move_file" else ("path",)) if guard(a.get(key, ""))), "")
                         out = f"tool error: path is protected: {path}"
+                    elif policy is not None and (guard_result := policy.before_call(c.function.name, a)):
+                        out = guard_result
                     else:
                         STARTED[tid] = STARTED.get(tid, 0) + 1
                         res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)
@@ -594,6 +603,7 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
                             out = f"tool error: {out}"
                         else:
                             ok_calls += 1
+                            successful = True
                             if c.function.name in studio.QUOTA_UNITS:  # YouTube quota, estimated; never fails the call
                                 studio.record_quota_call(c.function.name)
                             if not out.strip():  # empty result: say so, so the model does not invent data
@@ -609,6 +619,16 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
                 if out.startswith("tool error") or bad_args:  # the trail keeps the error text, so get_detail shows why a call failed
                     events.emit("tool_error", id=tid, name=c.function.name, error=out[:300])
                 msgs.append({"role": "tool", "tool_call_id": c.id, "content": out})
+                if policy is not None:
+                    if stop := policy.stop():
+                        exc = LoopError(out)
+                        exc.stop = stop
+                        raise exc
+                    if successful:
+                        previous = policy.last_result
+                        msgs[-1]["content"] = await policy.after_tool(c.function.name, a, out)
+                        if previous is None and policy.last_result is not None:
+                            accept_feedback = True
         raise LoopError(f"no final answer in {role['max_steps']} steps")
 
 
