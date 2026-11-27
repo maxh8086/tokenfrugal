@@ -6,6 +6,7 @@ Failure never falls back to cloud: a short capped error summary + task_id goes b
 import asyncio
 import atexit
 import contextlib
+import dataclasses
 import os
 import re
 import signal
@@ -188,7 +189,8 @@ def diff_block(text: str) -> str | None:
     return m.group(1) if m else None
 
 
-def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None, deadline_at=None, cancel=None) -> dict | None:
+def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None, deadline_at=None, cancel=None,
+           base: checker.Baseline | None = None) -> dict | None:
     ws = ws or workspace.load_workspace(WORKSPACE)
     parsed = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
     diff = diff_block(detail)
@@ -200,8 +202,10 @@ def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=N
     skipped = bool(parsed.spec and left < config.MIN_ACCEPT_S)
     if skipped:
         parsed = checker.AcceptParse(None, "out of time")
+    task_files = workspace.legacy_task_files(ws, task_text, limit=3)
+    checked_changes = checker.changes(ws, base, task_files, ()) if base is not None else None
     verdict = checker.check_deterministic(ws, parsed, diff, timeout=min(config.ACCEPT_TIMEOUT, left), cancel=cancel,
-                                          task_files=workspace.legacy_task_files(ws, task_text, limit=3))
+                                          task_files=task_files, changes=checked_changes)
     if skipped:
         verdict["passed"] = False
         verdict["stop"] = Stop.OUT_OF_TIME
@@ -235,14 +239,6 @@ def _fix_prompt(verdict: dict, role: dict) -> str:
             "Fix it with edit_file or write_file. The checks run again after your reply.")
 
 
-def _changed_set() -> set[str]:
-    """Files git reports as changed in the workspace. Empty when git fails, so a broken git never fails a task."""
-    try:
-        return set(checker.files_changed(WORKSPACE))
-    except Exception:  # noqa: BLE001
-        return set()
-
-
 def _report(verdict: dict | None, role: dict) -> str:
     """Checker line appended to the summary; the judgement items go to the client to decide."""
     if verdict is None:
@@ -250,14 +246,12 @@ def _report(verdict: dict | None, role: dict) -> str:
     else:
         note = verdict.get("accept_note", "")
         note = {"prose": "acceptance line is prose", "no accept": "no accept command"}.get(note, note)
-        changed = next((i["detail"] for i in verdict["items"] if i["name"] == "files_changed"), "")
         ran = [i["name"] for i in verdict["items"] if i["name"] != "files_changed"]
-        lint_ran = any(x.endswith(".py") for x in changed.split(", "))
-        effective = [name for name in ran if name != "lint" or lint_ran]
-        if note and not effective:
+        failed = [i for i in verdict["items"] if not i["passed"]]
+        lint_ran = any(i.get("ran") for i in verdict["items"] if i["name"] == "lint")
+        if note and not failed and not lint_ran and not any(name != "lint" for name in ran):
             state = f"none ({note})"
         else:
-            failed = [i for i in verdict["items"] if not i["passed"]]
             state = ("FAILED (" + "; ".join(f"{i['name']}: {i['detail'][:100]}" for i in failed) + ")") if failed else "ok (" + ", ".join(ran) + ")"
             if note:
                 state = state[:-1] + f"; accept none: {note})"
@@ -298,12 +292,12 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             if backend_reason:
                 return await _infra_failed(tid, agent, role, prompt, plan_id, name, t0, backend_reason)
     row = store.get(tid)
+    task_files = workspace.legacy_task_files(ws, task_text, limit=3)
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
                 max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300],
                 tools=role.get("tools") or [], skills=role.get("skills") or [])
-    base = len(messages or [])  # messages from an earlier run were already counted
-    before = await asyncio.to_thread(_changed_set)  # C2: the workspace's changed files before the run
+    base_messages = len(messages or [])  # messages from an earlier run were already counted
     beat = asyncio.create_task(_heartbeat(tid))
     calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
     last_msgs = messages
@@ -311,10 +305,16 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     deadline_s = config.deadline(role, rt)
     accept_cancel = threading.Event()
     cm = None
+    verdict = None
     try:
         async with asyncio.timeout(deadline_s) as cm:
             try:
                 gpu_lease.guard_ollama(OLLAMA_URL)  # a held GPU lease refuses the task before any model or backend work
+                if row.get("baseline_json") is None:
+                    baseline_snapshot = await asyncio.to_thread(checker.baseline, ws, task_files)
+                    store.update(tid, baseline_json=dataclasses.asdict(baseline_snapshot))
+                else:
+                    baseline_snapshot = checker.Baseline.from_json(row["baseline_json"])
                 guard = lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)
                 budget = loop.Budget(rt)
                 detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard, budget=budget)
@@ -323,10 +323,9 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                 task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
                 if checks and not ws.host_accept and task_accept.spec:
                     events.emit("checks_skipped", id=tid, reason="host accept off")
-                verdict = None
                 if checks:
                     with budget.pause():
-                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot)
                 if verdict is not None:
                     verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
                 if correction and verdict and not verdict["passed"]:  # one correction, continuing the same message history
@@ -348,7 +347,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                     budget = correction_budget
                     calls += take_started(tid)
                     with budget.pause():
-                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot)
                     if verdict is not None:
                         verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
                     if verdict and not verdict["passed"]:
@@ -359,13 +358,13 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                         if verdict.get("stop") in (Stop.ENV_MISSING, Stop.OUT_OF_TIME):
                             raise CheckFailed(_failed_text(verdict), verdict["stop"])
                         raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
-                after = await asyncio.to_thread(_changed_set)
+                final_changes = await asyncio.to_thread(checker.changes, ws, baseline_snapshot, task_files, ())
                 base_summary = summarize(role["model"], detail, prompt)
                 report = _report(verdict, role)
                 summary = base_summary + report
                 usage = take_usage(tid)
                 store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
-                events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
+                events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base_messages:], summary),
                             task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, **usage)
             except asyncio.CancelledError as exc:
                 accept_cancel.set()
@@ -384,7 +383,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             if ok:
                 await _plan(plan.checkpoint)
             summary += "" if ok else f" (plan: {msg})"
-        return (f"[{tid}] {base_summary}\n{checker.manifest(before, after)}{report}\n"
+        return (f"[{tid}] {base_summary}\n{checker.manifest_from(final_changes, packet=False)}{report}\n"
                 + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
         if isinstance(e, TimeoutError) and cm is not None and cm.expired():
@@ -420,7 +419,7 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                      outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
         extra = {"frames": frames} if kind in (Stop.ERROR, Stop.ENV_MISSING) else {}
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind, **extra,
-                    saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
+                    saved=saved_tokens((getattr(e, "msgs", None) or [])[base_messages:], err),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)

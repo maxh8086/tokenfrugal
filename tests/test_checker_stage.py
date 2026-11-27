@@ -248,6 +248,7 @@ class StageTest(unittest.TestCase):
 
     def test_host_accept_off_skips_command_but_keeps_lint(self):
         async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
+            Path(self.repo, "changed.py").write_text("answer = 42\n", encoding="utf-8")
             return "plain answer", list(messages or [])
         task = "make a change"
         tid = store.create("builder-agent", "builder", task)
@@ -255,6 +256,16 @@ class StageTest(unittest.TestCase):
         with mock.patch.object(config, "HOST_ACCEPT_PATHS", frozenset()), mock.patch.object(server, "run", fake):
             reply = asyncio.run(server._execute(tid, "builder-agent", self.role, task, accept=parsed, task_text=task))
         self.assertIn("checks: ok (lint; accept none: host accept off)", reply)
+
+    def test_host_accept_off_without_changes_reports_no_checks(self):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
+            return "plain answer", list(messages or [])
+        task = "make a change"
+        tid = store.create("builder-agent", "builder", task)
+        parsed = server.checker.parse_accept(shlex.join([self.exe, "check.py"]), "argument", load_workspace(self.repo))
+        with mock.patch.object(config, "HOST_ACCEPT_PATHS", frozenset()), mock.patch.object(server, "run", fake):
+            reply = asyncio.run(server._execute(tid, "builder-agent", self.role, task, accept=parsed, task_text=task))
+        self.assertIn("checks: none (host accept off)", reply)
 
     def test_long_accept_error_uses_300_token_trim(self):
         async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):

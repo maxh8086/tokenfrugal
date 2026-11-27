@@ -10,6 +10,8 @@ import sys
 import tempfile
 import threading
 import time
+import hashlib
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -17,6 +19,142 @@ from typing import Literal
 from router import config
 from router.lint import check_python
 from router.workspace import Workspace, accept_env
+
+MAX_BASELINE_BYTES = 200 * 1024 * 1024
+
+@dataclass(frozen=True)
+class Baseline:
+    kind: Literal["git-tree", "hash"]
+    tree: str | None
+    files: dict[str, str | None]
+    partial: bool
+
+    @classmethod
+    def from_json(cls, data: dict) -> "Baseline":
+        return cls(data["kind"], data.get("tree"), data.get("files", {}), data.get("partial", False))
+
+@dataclass(frozen=True)
+class Changes:
+    changed: tuple[str, ...]
+    task_changed: tuple[str, ...]
+    outside_scope: tuple[str, ...]
+    scope_violation: tuple[str, ...]
+    partial: bool
+
+def _git(ws, *args, env=None):
+    return subprocess.run(["git", "-C", ws.root, *args], capture_output=True, timeout=60, env=env)
+
+def _git_tree(ws):
+    """Build a snapshot through a temporary index, preserving the user's index."""
+    with tempfile.TemporaryDirectory(prefix="tf-baseline-") as tmp:
+        index = os.path.join(tmp, "index")
+        env = os.environ.copy()
+        env["GIT_INDEX_FILE"] = index
+        try:
+            r = _git(ws, "rev-parse", "--git-path", "index")
+            if r.returncode == 0:
+                src = r.stdout.decode("utf-8", "replace").strip()
+                if src:
+                    src = src if os.path.isabs(src) else os.path.join(ws.root, src)
+                    if os.path.isfile(src): shutil.copyfile(src, index)
+            r = _git(ws, "add", "-A", "--", ".", env=env)
+            if r.returncode: raise RuntimeError(r.stderr.decode("utf-8", "replace"))
+            r = _git(ws, "write-tree", env=env)
+            if r.returncode: raise RuntimeError(r.stderr.decode("utf-8", "replace"))
+            return r.stdout.decode("ascii").strip()
+        except (OSError, subprocess.SubprocessError):
+            raise
+
+def _hash_files(ws, task_files):
+    files = {}
+    total = 0
+    partial = True
+    for name in sorted(set(task_files)):
+        path = os.path.join(ws.root, name)
+        try:
+            size = os.path.getsize(path)
+            total += size
+            if total > MAX_BASELINE_BYTES:
+                files[name] = None
+                continue
+            with open(path, "rb") as f: files[name] = hashlib.sha256(f.read()).hexdigest()
+        except OSError:
+            files[name] = None
+    return Baseline("hash", None, files, partial)
+
+def _untracked_bytes(ws):
+    r = _git(ws, "ls-files", "--others", "--exclude-standard", "-z")
+    if r.returncode: raise RuntimeError(r.stderr.decode("utf-8", "replace"))
+    total = 0
+    for entry in r.stdout.decode("utf-8", "replace").split("\0"):
+        if entry:
+            try: total += os.path.getsize(os.path.join(ws.root, entry))
+            except OSError: pass
+    return total
+
+def baseline(ws: Workspace, task_files: list[str]) -> Baseline:
+    try:
+        if _untracked_bytes(ws) > MAX_BASELINE_BYTES:
+            b = _hash_files(ws, task_files)
+            return Baseline(b.kind, b.tree, b.files, True)
+        tree = _git_tree(ws)
+        return Baseline("git-tree", tree, {}, False)
+    except Exception:
+        return _hash_files(ws, task_files)
+
+def _path_key(path):
+    path = path.replace("\\", "/")
+    return path.casefold() if os.name == "nt" or sys.platform == "darwin" else path
+
+def _glob_matches(path, pattern):
+    """Match a slash-separated glob; only ** may cross directory boundaries."""
+    path, pattern = _path_key(path), _path_key(pattern.replace("\\", "/"))
+    pieces = ["^"]
+    i = 0
+    while i < len(pattern):
+        char = pattern[i]
+        if char == "*":
+            if i + 1 < len(pattern) and pattern[i + 1] == "*":
+                i += 1
+                if i + 1 < len(pattern) and pattern[i + 1] == "/":
+                    i += 1
+                    pieces.append("(?:.*/)?")
+                else:
+                    pieces.append(".*")
+            else:
+                pieces.append("[^/]*")
+        elif char == "?":
+            pieces.append("[^/]")
+        else:
+            pieces.append(re.escape(char))
+        i += 1
+    pieces.append("$")
+    return re.match("".join(pieces), path) is not None
+
+def changes(ws, base: Baseline, task_files, must_not_change) -> Changes:
+    try:
+        if base.kind == "git-tree":
+            now = _git_tree(ws)
+            r = _git(ws, "diff", "--relative", "--no-renames", "--name-only", "-z", base.tree or "", now)
+            if r.returncode: raise RuntimeError(r.stderr.decode("utf-8", "replace"))
+            changed = tuple(sorted(set(p for p in r.stdout.decode("utf-8", "replace").split("\0") if p)))
+        else:
+            current = _hash_files(ws, base.files).files
+            changed = tuple(sorted(p for p in base.files if base.files[p] != current[p]))
+        task_keys = {_path_key(p) for p in task_files}
+        task_changed = tuple(p for p in changed if _path_key(p) in task_keys)
+        outside = tuple(p for p in changed if _path_key(p) not in task_keys)
+        patterns = [p.replace("\\", "/") for p in must_not_change]
+        violations = tuple(p for p in changed if any(_glob_matches(p, pattern) for pattern in patterns))
+        return Changes(changed, task_changed, outside, violations, base.partial)
+    except Exception:
+        return Changes((), (), (), (), True)
+
+def manifest_from(ch: Changes, packet: bool) -> str:
+    result = manifest(set(), set(ch.changed))
+    if packet and ch.outside_scope:
+        result += "\noutside_scope: " + ", ".join(ch.outside_scope)
+    return result
 
 @dataclass(frozen=True)
 class AcceptSpec:
@@ -258,7 +396,8 @@ def lint_python(paths: list[str], repo: str) -> list[str]:
 
 
 def check_deterministic(ws: Workspace, accept: AcceptParse | None, diff_text: str | None, timeout: float,
-                        cancel: threading.Event | None = None, task_files: tuple[str, ...] = ()) -> dict:
+                        cancel: threading.Event | None = None, task_files: tuple[str, ...] = (),
+                        changes: Changes | None = None) -> dict:
     items = []
     accept_item = None
     if accept and accept.spec:
@@ -267,10 +406,11 @@ def check_deterministic(ws: Workspace, accept: AcceptParse | None, diff_text: st
                        "detail": res.first_error or res.out[-300:], "stop": res.stop, "env": res.env_kind}
         items.append(accept_item)
     repo = ws.root
-    changed = files_changed(repo)
-    problems = lint_python(changed, repo)
+    changed = list(changes.changed) if changes is not None else files_changed(repo)
+    python_files = [p for p in changed if p.endswith(".py") and os.path.isfile(os.path.join(repo, p))]
+    problems = lint_python(python_files, repo)
     items.append({"name": "lint", "tag": "deterministic", "passed": not problems,
-                  "detail": "; ".join(problems) or "clean"})
+                  "detail": "; ".join(problems) or "clean", "ran": bool(python_files)})
     if diff_text is not None:
         ok, detail = diff_applies(diff_text, repo)
         items.append({"name": "diff_applies", "tag": "deterministic", "passed": ok, "detail": detail})
