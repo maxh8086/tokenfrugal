@@ -270,8 +270,8 @@ async def bench_concurrency(n, levels=(1, 2, 4, 8)):
 async def bench_resume(n, rounds=5):
     """Force a failure with a tiny task limit, then resume repeatedly and watch conversation growth and time."""
     from router import store
-    old = loop.TASK_TIMEOUT
-    loop.TASK_TIMEOUT = 2.0
+    old = server.CFG["roles"]["builder"].get("timeout_s")
+    server.CFG["roles"]["builder"]["timeout_s"] = 2.0
     try:
         agent, task = first_task("builder")
         dt, r = await timed(server.dispatch_task(agent, task, task_type="benchmark"))
@@ -283,11 +283,17 @@ async def bench_resume(n, rounds=5):
             rows.append({"round": i, "s": round(dt, 1), "ok": ok(r), "msgs": len(t["messages"] or []), "attempts": t["attempts"]})
             if ok(r):
                 break
-        loop.TASK_TIMEOUT = old
+        if old is None:
+            server.CFG["roles"]["builder"].pop("timeout_s", None)
+        else:
+            server.CFG["roles"]["builder"]["timeout_s"] = old
         dt, r = await timed(server.resume_task(tid))  # finally let it finish
         rows.append({"round": "final", "s": round(dt, 1), "ok": ok(r), "msgs": len(store.get(tid)["messages"] or [])})
     finally:
-        loop.TASK_TIMEOUT = old
+        if old is None:
+            server.CFG["roles"]["builder"].pop("timeout_s", None)
+        else:
+            server.CFG["roles"]["builder"]["timeout_s"] = old
     for r in rows:
         print(f"  resume {r}", flush=True)
     return rows

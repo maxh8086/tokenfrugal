@@ -415,12 +415,13 @@ deadline(role)     = TOKENFRUGAL_TASK_DEADLINE if set and valid, else
 *   **Each model call:** wrapped in `asyncio.wait_for(..., budget.remaining())`, so a hung call is bounded.
 *   **Each accept run:**
     *   It gets `min(ACCEPT_TIMEOUT, deadline - elapsed)`.
-    *   Below `MIN_ACCEPT_S` it does not run: the stop is `out_of_time`, and a legacy reply says `checks: none (out of time)`.
+    *   Below `MIN_ACCEPT_S` it does not run: the stop is `out_of_time`, no correction run follows, and lint and `diff_applies` still run. A legacy reply says `checks: none (out of time)` when nothing ran, else it names the checks that ran with `accept none: out of time`.
     *   Accept runs between model runs, or inside `budget.pause()` when S3's in-loop trigger runs it, so accept time counts against the deadline, not the model budget.
     *   At most `MAX_ACCEPT_RUNS` (2) accept runs happen per dispatch: one after the first run and one after the correction (under S3, one in-loop run and one final run). The same constant sizes the deadline.
 *   **Enforcement:**
     *   `_execute` runs inside `asyncio.timeout(deadline)`. Its timeout branch writes the failed row and the `task_failed` event.
     *   An explicit `except asyncio.CancelledError` writes the row with `stop=out_of_time`, sets the accept cancel event, and re-raises.
+    *   Only an expired deadline takes the timeout branch. With a plan task, that branch also records the failed run and marks the task blocked. A task already stored `done` is never rewritten.
 *   **Override validation:** a `TOKENFRUGAL_TASK_DEADLINE` that is not a number is ignored, with a warning in the first `health` event's `config_warnings`. A value below `role_timeout + MIN_ACCEPT_S` is raised to that floor.
 *   **Worked numbers:**
 

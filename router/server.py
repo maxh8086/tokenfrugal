@@ -9,12 +9,13 @@ import contextlib
 import re
 import signal
 import sys
+import threading
 import time
 
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import checker, compose, events, gpu_lease, kalamanch_cleanup, ollama_launcher, plan, reconnect, store, studio, ui_launcher, workspace
+from . import checker, compose, config, events, gpu_lease, kalamanch_cleanup, loop, ollama_launcher, plan, reconnect, store, studio, ui_launcher, workspace
 from .outcomes import Stop, stop_from_legacy
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
 from .mcp_client import backend_state
@@ -186,17 +187,24 @@ def diff_block(text: str) -> str | None:
     return m.group(1) if m else None
 
 
-def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None) -> dict | None:
+def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None, deadline_at=None, cancel=None) -> dict | None:
     ws = ws or workspace.load_workspace(WORKSPACE)
     parsed = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
     diff = diff_block(detail)
     if parsed.note == "no accept" and diff is None:
         return None
-    left = int(role_timeout(role) - (time.monotonic() - t0))
+    left = deadline_at - time.monotonic() if deadline_at is not None else role_timeout(role) - (time.monotonic() - t0)
     if not ws.host_accept and parsed.spec:
         parsed = checker.AcceptParse(None, "host accept off")
-    return checker.check_deterministic(ws, parsed, diff, timeout=max(5, left),
-                                       task_files=workspace.legacy_task_files(ws, task_text, limit=3))
+    skipped = bool(parsed.spec and left < config.MIN_ACCEPT_S)
+    if skipped:
+        parsed = checker.AcceptParse(None, "out of time")
+    verdict = checker.check_deterministic(ws, parsed, diff, timeout=min(config.ACCEPT_TIMEOUT, left), cancel=cancel,
+                                          task_files=workspace.legacy_task_files(ws, task_text, limit=3))
+    if skipped:
+        verdict["passed"] = False
+        verdict["stop"] = Stop.OUT_OF_TIME
+    return verdict
 
 
 def _failed_text(verdict: dict) -> str:
@@ -279,34 +287,66 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     before = await asyncio.to_thread(_changed_set)  # C2: the workspace's changed files before the run
     beat = asyncio.create_task(_heartbeat(tid))
     calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
+    rt = role_timeout(role)
+    deadline_s = config.deadline(role, rt)
+    accept_cancel = threading.Event()
+    cm = None
     try:
-        gpu_lease.guard_ollama(OLLAMA_URL)  # a held GPU lease refuses the task before any model or backend work
-        guard = lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)
-        detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard)
-        calls += take_started(tid)
-        task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
-        if not ws.host_accept and task_accept.spec:
-            events.emit("checks_skipped", id=tid, reason="host accept off")
-        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws)
-        if verdict and not verdict["passed"]:  # one correction, continuing the same message history
-            if verdict.get("stop") == Stop.ENV_MISSING:
-                raise CheckFailed(_failed_text(verdict), verdict["stop"])
-            detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid, guard=guard)
-            calls += take_started(tid)
-            verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws)
-            if verdict and not verdict["passed"]:
-                if verdict.get("stop") in (Stop.ENV_MISSING, Stop.OUT_OF_TIME):
-                    raise CheckFailed(_failed_text(verdict), verdict["stop"])
-                failed_names = [item["name"] for item in verdict["items"] if not item["passed"]]
-                raise CheckFailed(_failed_text(verdict), Stop.ACCEPT_FAILED if failed_names[0] == "accept" else Stop.CHECKER)
-        after = await asyncio.to_thread(_changed_set)
-        base_summary = summarize(role["model"], detail, prompt)
-        report = _report(verdict, role)
-        summary = base_summary + report
-        usage = take_usage(tid)
-        store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
-        events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
-                    task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, **usage)
+        async with asyncio.timeout(deadline_s) as cm:
+            try:
+                gpu_lease.guard_ollama(OLLAMA_URL)  # a held GPU lease refuses the task before any model or backend work
+                guard = lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)
+                budget = loop.Budget(rt)
+                detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard, budget=budget)
+                calls += take_started(tid)
+                task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
+                if not ws.host_accept and task_accept.spec:
+                    events.emit("checks_skipped", id=tid, reason="host accept off")
+                with budget.pause():
+                    verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
+                if verdict and not verdict["passed"]:  # one correction, continuing the same message history
+                    if verdict.get("accept_note") == "out of time":
+                        failed = _failed_text(verdict)
+                        err = f"{failed}; accept: out of time" if failed else "accept: out of time"
+                        raise CheckFailed(err, Stop.OUT_OF_TIME)
+                    if verdict.get("stop") == Stop.ENV_MISSING:
+                        raise CheckFailed(_failed_text(verdict), verdict["stop"])
+                    left = config.model_budget(role, rt) - budget.spent()
+                    if left < config.CORRECTION_FLOOR_S:
+                        raise CheckFailed(_failed_text(verdict) + "; no time for a correction run", Stop.OUT_OF_TIME)
+                    correction_budget = loop.Budget(left)
+                    detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid, guard=guard, budget=correction_budget)
+                    budget = correction_budget
+                    calls += take_started(tid)
+                    with budget.pause():
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel)
+                    if verdict and not verdict["passed"]:
+                        if verdict.get("accept_note") == "out of time":
+                            failed = _failed_text(verdict)
+                            err = f"{failed}; accept: out of time" if failed else "accept: out of time"
+                            raise CheckFailed(err, Stop.OUT_OF_TIME)
+                        if verdict.get("stop") in (Stop.ENV_MISSING, Stop.OUT_OF_TIME):
+                            raise CheckFailed(_failed_text(verdict), verdict["stop"])
+                        failed_names = [item["name"] for item in verdict["items"] if not item["passed"]]
+                        raise CheckFailed(_failed_text(verdict), Stop.ACCEPT_FAILED if failed_names[0] == "accept" else Stop.CHECKER)
+                after = await asyncio.to_thread(_changed_set)
+                base_summary = summarize(role["model"], detail, prompt)
+                report = _report(verdict, role)
+                summary = base_summary + report
+                usage = take_usage(tid)
+                store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
+                events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
+                            task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, **usage)
+            except asyncio.CancelledError:
+                accept_cancel.set()
+                err = f"task timed out after {deadline_s:g}s" if cm.expired() else "task cancelled"
+                usage = take_usage(tid)
+                store.update(tid, status="failed", error=err, error_kind=Stop.OUT_OF_TIME,
+                             outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+                events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err,
+                            reason="timeout", error_kind=Stop.OUT_OF_TIME, saved=0, task=prompt[:80],
+                            agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
+                raise
         if plan_id:
             await _plan(plan.record_run, plan_id, tid, agent, role["role"], "done", summary)
             ok, msg = await _plan(plan.done, plan_id, tid, "router run", "router")
@@ -316,6 +356,16 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         return (f"[{tid}] {base_summary}\n{checker.manifest(before, after)}{report}\n"
                 + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
+        if isinstance(e, TimeoutError) and cm is not None and cm.expired():
+            started = calls + take_started(tid)
+            err = f"task timed out after {deadline_s:g}s"
+            if plan_id:
+                await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
+                await _plan(plan.set_status, plan_id, "blocked", "router", err)
+            return (failure_message(tid, role, err, "timeout", Stop.OUT_OF_TIME, started,
+                                    role.get("required_tool") or "") + "\n"
+                    + "checks: none (out of time)"
+                    + "\n" + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
         orig = e
         frames = frames_of(orig) if not isinstance(e, CheckFailed) else []
         if isinstance(e, CheckFailed):

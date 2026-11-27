@@ -12,8 +12,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 1 | 65 | done | Luna, Haiku | 2 | 1 | 1 | [#109](https://github.com/maxh8086/tokenfrugal/pull/109) | `3990872` (step commit `b3ef9ea`) | yes, local and remote | 71 OK | 1003 OK, 3 skipped | - |
 | 2 | 66 | done | Luna, Haiku | 6 | 2 | 3 | [#110](https://github.com/maxh8086/tokenfrugal/pull/110) | `48054cc` (step commit `9acaaa6`) | yes, local and remote | 101 OK | 1044 OK, 3 skipped | - |
 | 3 | 67 | done (post-commit checks pending) | Luna, Haiku | 3 | 1 | 0 | [#111](https://github.com/maxh8086/tokenfrugal/pull/111) | `64725ee` (step commit `06729e0`) | yes, local and remote | 10 OK | 1061 OK, 3 skipped | ask the user: install and live Codex check |
-| 4 | 68 | 6 Haiku close | Haiku | 3 | 2 | 1 | #112 (open) | - | - | 43 OK | 1104 OK, 4 skipped | push fix 2, wait CI on three OSes, merge |
-| 5 | 69 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 4 | 68 | done | Haiku | 3 | 2 | 1 | #112 | `1d939fe` | yes (local and remote) | 43 OK | 1104 OK, 4 skipped; CI green on 3 OSes | - |
+| 5 | 69 | 6 Haiku close | Haiku | 6 | 3 | 3 | - | - | - | 32 OK | 1122 OK, 4 skipped | open PR, wait for CI on three OSes, merge |
 | 6-7 | 70 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8a | 71 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8b | 72 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -63,6 +63,9 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 
 - **Step 4 workflow file:** `.gitignore` ignores `.github/`, so the close stage adds `.github/workflows/tests.yml` with `git add -f`. `.gitignore` is not changed, because the plan does not list it.
 - **Opus consult 4 (Step 4, CI):** PR 112 failed on all three OSes in `tests/test_media_workspace.py` (not in the Step 4 diff; first CI run on a clean machine). The test did not mock `ensure_models`, so without a model marker or token `mgen` stopped before compose; locally it passed on the model-pull call. Decision: change that test only (patch `ensure_models`, assert the call is `docker compose`) as a Step 4 follow-up commit. A test that reaches `ensure_models` unmocked could start a real model pull on a machine with a token.
+- **Opus consult 5 (Step 5):** the design disagreed on a skipped accept run. Decision: only accept is skipped; lint and `diff_applies` run; the task fails with `out_of_time` and gets no correction run. The deadline branch keeps the plan calls (record failed, set blocked); only an expired deadline takes it; a `done` row is never rewritten. The design text under Time budgets says so now.
+- **Opus consult 6 (Step 5, second failure):** Luna changed only item 1 of fix 1; it broke a test that built a Mock with `spec=`. Decision: split the rest into A (items 1-3 and that test), B (`_execute` control flow, items 4-7) and C (item 8), with the control-flow shape and error literals stated.
+- **Opus consult 7 (Step 5, third failure: re-scope):** fix 2 part A passed; part B stopped `blocked` after two tests, no code. Re-scope into piece 1 (exception handlers only) and piece 2 (move the success plan calls and reply after the timeout block). The plan-call test was wrong (its fake returned None) and is fixed in piece 2. A failure of either piece pauses the loop.
 
 ## Open items
 

@@ -9,13 +9,306 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 5, F4 per-role deadline
+- **Branch:** `impl/step-5`
+- **Kind:** re-scope, piece 2 of 2
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied.** This is a small piece of an approved task; do not run an EGM brainstorm or review. Piece 1 is done and reviewed. Always run `.venv\Scripts\python.exe`, never plain `python`.
+
+1. **Fix the wrong test** `test_timeout_during_plan_after_success_keeps_done_row` in `tests/test_deadline.py`: its fake `slow` returns None, so the success path raises `TypeError` even with correct code. Make it sleep 0.3 s and return `(True, "ok")`; patch `server._changed_set` to return `set()`; use a deadline of 0.2 s. Assert the row stays `done`, no `task_failed` is emitted, and the success reply is returned. Run it and show it fails.
+2. **Move the success tail** in `router/server.py`, function `_execute`: cut everything from `if plan_id:` (the one that records `"done"`) through the success `return` (the one with `status_line("done", ...)`) and paste it after the inner `except asyncio.CancelledError:` block's `raise`, indented as a sibling of the `async with` statement, still inside the outer `try:`. Nothing else changes. No `return` stays inside the `async with` block, and no `await` follows the `task_done` emit inside it.
+3. Add a case: an outside cancel during a slow plan call after success leaves the row `done` with no `task_failed`.
+
+**Files you may touch:** `router/server.py`, `tests/test_deadline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage tests.test_error_kind tests.test_timeouts tests.test_role_timeout tests.test_doctor_config tests.test_tool_surface -q
+```
+
+**Tool-call limit:** 20. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `router/server.py`, `tests/test_deadline.py`, and this file's Status line and Feedback block.
+- **Tests written first:** Corrected `test_timeout_during_plan_after_success_keeps_done_row` to return `(True, "ok")`, wait 0.3 s against a 0.2 s deadline, patch `_changed_set`, and assert done/no failure/success reply. Added `test_outside_cancel_during_plan_after_success_keeps_done_row`.
+- **Test result after the code:** Both focused tests passed (2 tests, 1.009 s). Before the code change, both failed because the row was `failed` instead of `done`.
+- **Acceptance command result:** Passed: 72 tests in 6.294 s (`OK`).
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 5 re-scope piece 1 (done)
+
+- **Step:** 5, F4 per-role deadline
+- **Branch:** `impl/step-5`
+- **Kind:** re-scope, piece 1 of 2
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** This is a small piece of an approved task; do not run an EGM brainstorm or review. Only the exception handlers of `_execute` in `router/server.py` change; **move no success-path code** (that is piece 2). Always run `.venv\Scripts\python.exe`, never plain `python` (it is 3.10 and has no `asyncio.timeout`). The two new tests already in `tests/test_deadline.py` are yours from the last attempt.
+
+Edits in `router/server.py`, function `_execute`:
+
+1. Just below `accept_cancel = threading.Event()` add `cm = None`. Change `async with asyncio.timeout(deadline_s):` to end with `as cm:`.
+2. In `except asyncio.CancelledError:` set `err` to `f"task timed out after {deadline_s:g}s"` if `cm.expired()`, else `"task cancelled"`. Add no `await` there.
+3. Delete the whole `except TimeoutError:` block. As the first statement inside `except Exception as e:`, before `orig = e`, add a branch for `isinstance(e, TimeoutError) and cm is not None and cm.expired()`. It sets `started = calls + take_started(tid)` and the timed-out `err`; when `plan_id`, awaits `_plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)` and `_plan(plan.set_status, plan_id, "blocked", "router", err)`; and returns the `failure_message(...)` line (same arguments as the deleted block), then `checks: none (out of time)`, then the status line. It writes no row and emits no event.
+
+Add two tests to `tests/test_deadline.py`: an outside cancel stores the error `task cancelled` while a deadline expiry keeps the `timed out` text; a deadline expiry with `plan_id` returns the lines `FAILED...`, `checks: none (out of time)`, `status=...` in that order and makes both plan calls (patch `server._plan` with an async fake; no Neo4j).
+
+Leave `test_timeout_during_plan_after_success_keeps_done_row` as it is: it belongs to piece 2 and may still fail now. Say so in your feedback.
+
+**Files you may touch:** `router/server.py`, `tests/test_deadline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root): everything must pass except the one piece 2 test named above.
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage -q
+```
+
+**Tool-call limit:** 25. Fill in the Feedback block and set Status (done, blocked or failed, with the reason) before you stop. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/server.py`, `tests/test_deadline.py`
+- **Tests written first:** Added tests for external cancellation versus deadline expiry and for deadline expiry with plan recording before changing the handler.
+- **Test result after the code:** Both new tests passed (2 tests, exit 0).
+- **Acceptance command result:** Ran the specified command: 30 tests; only `test_timeout_during_plan_after_success_keeps_done_row` failed, as expected for piece 2.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** The known piece 2 test remains failing until that piece is implemented.
+
+### Step 5 fix 2 part B (blocked: tests only)
+
+- **Step:** 5, F4 per-role deadline
+- **Branch:** `impl/step-5`
+- **Kind:** fix 2, part B of 3
+- **Assigned at:** 2026-11-27
+- **Status:** in progress
+
+#### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+Part A is done and reviewed; keep it. Now restructure `_execute` in `router/server.py` into exactly this shape (add the failing tests to `tests/test_deadline.py` first):
+
+- `cm = None`, then `try:` containing `async with asyncio.timeout(deadline_s) as cm:`.
+- Inside the `async with`: the model run, check and correction, `_changed_set`, summarize, `store.update(status="done", ...)` and the `task_done` emit. No `await` comes after those last two inside the block.
+- The inner `except asyncio.CancelledError` has no `await`: set `accept_cancel`; the error is `task timed out after {deadline_s:g}s` when `cm.expired()`, else the literal `task cancelled`; stop `out_of_time`; one `store.update(failed)` and one `task_failed`; re-raise.
+- After the `async with` block (outside the timeout scope): the `plan.*` calls for success and the success reply, unchanged in content.
+- Delete the separate `except TimeoutError`. Make it the first branch inside the existing `except Exception as e:`: if `isinstance(e, TimeoutError) and cm is not None and cm.expired()`, write **no** row and emit **no** event (the cancel handler did); when `plan_id`, call `plan.record_run(plan_id, tid, agent, role["role"], "failed", "", err)` and `plan.set_status(plan_id, "blocked", "router", err)` through `_plan`; return the `FAILED` message, then the line `checks: none (out of time)`, then the status line. Every other `TimeoutError` continues down the normal failure path.
+
+Tests (each bounded, deadlines of tens of milliseconds through a patched `config.deadline`):
+
+1. A `TimeoutError` raised by a patched `_check` (and one by `_changed_set`) while the deadline has not expired: row `failed`, exactly one `task_failed`, no row left `running`.
+2. A cancel or an expired deadline during a slow `plan` call after success: the row stays `done` and no `task_failed` is emitted. For the expiry case the success reply is still returned.
+3. An outside cancel stores the error `task cancelled`; a deadline expiry keeps the `timed out` text; one `task_failed` each.
+4. Deadline expiry with `plan_id`: the reply has the `FAILED` line, then `checks: none (out of time)`, then `status=`; both plan calls happen (patch `server._plan` or the plan functions; no Neo4j).
+
+**Files you may touch:** `router/server.py`, `tests/test_deadline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file. No MCP tool signature or docstring changes.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage tests.test_error_kind tests.test_timeouts tests.test_tool_surface -q
+```
+
+**Tool-call limit:** 25. Run the acceptance command and fill in the Feedback block before you reach it. Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** -
+- **Files changed:** -
+- **Tests written first:** -
+- **Test result after the code:** -
+- **Acceptance command result:** -
+- **Departures from the plan:** -
+- **Problems or questions for Sonnet:** -
+
+### Step 5 fix 2 part A (done)
+
+- **Step:** 5, F4 per-role deadline
+- **Branch:** `impl/step-5`
+- **Kind:** fix 2, part A of 3
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+Do only the four things below; later assignments cover the rest. The diff in the working tree is uncommitted: build on it. The `_check` change from the last attempt (accept skipped below `MIN_ACCEPT_S`, other checks still run) is correct; keep it.
+
+1. **Fix the broken test** `test_accept_gets_configured_timeout_after_elapsed_role_timeout` in `tests/test_deadline.py`: `mock.Mock(note="accept", spec=object())` sets the Mock's own spec, so `parsed.spec` fails. Pass a real `checker.AcceptParse(checker.AcceptSpec((sys.executable, "-c", "pass"), {}, "argument"), "")`.
+2. **Test for the skipped accept:** with `left` below `MIN_ACCEPT_S` and a spec, `_check` still calls `check_deterministic` with a parse whose spec is None and note `out of time`, and returns `passed=False`, `stop=Stop.OUT_OF_TIME`. With a diff and no accept command, nothing is gated.
+3. **No correction after a skipped accept** (test first). In `_execute`, a failing verdict with `verdict.get("accept_note") == "out of time"` raises `CheckFailed(..., Stop.OUT_OF_TIME)` at once. Tell it apart by `accept_note`, never by `stop`: an accept that ran and timed out keeps its correction attempt. The stored error is the failed-check text, or the literal `accept: out of time` when that text is empty; when it is not empty, append `; accept: out of time`. The reply keeps the verdict's checks line.
+4. **Correction skipped below `CORRECTION_FLOOR_S`** (test first): the stored error is `_failed_text(verdict)` of the first verdict plus `; no time for a correction run`, stop `out_of_time`, and the reply keeps the first verdict's checks line.
+
+Tests need no Docker, network, model, `.env` or token on Windows, macOS and Linux; no real waits above about 1 s.
+
+**Files you may touch:** `router/server.py`, `tests/test_deadline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage tests.test_tool_surface -q
+```
+
+**Tool-call limit:** 25. Run the acceptance command and fill in the Feedback block before you reach it. Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/server.py`, `tests/test_deadline.py`, and this file's Status/Feedback fields.
+- **Tests written first:** Fixed the malformed `AcceptParse` test setup and added cases for skipped accepts, no-accept diffs, and no correction after a skipped accept. The baseline acceptance run failed the skipped-accept and correction-floor cases because their stored errors were empty.
+- **Test result after the code:** The requested acceptance suite passed: 27 tests, `OK`.
+- **Acceptance command result:** Passed with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`: `.venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage tests.test_tool_surface -q`.
+- **Departures from the plan:** None. Kept the existing `_check` skip behavior and distinguished a skipped accept by `accept_note`; an accept run that times out retains the existing correction flow.
+- **Problems or questions for Sonnet:** None.
+
+### Step 5 fix 1 (failed: item 1 only)
+
+- **Step:** 5, F4 per-role deadline
+- **Branch:** `impl/step-5`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** failed
+
+#### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+Sonnet's review of your Step 5 diff found the defects below; the decisions are final. The diff is uncommitted in the working tree: build on it. For each item add a failing test to `tests/test_deadline.py` first, run it to show it fails, then fix `router/server.py`.
+
+1. **Skipped accept still runs the other checks.** In `_check`, apply the `MIN_ACCEPT_S` gate after the `host accept off` rewrite and only when `parsed.spec` would actually run. Replace it with `checker.AcceptParse(None, "out of time")`, still call `check_deterministic` (lint and `diff_applies` run), then mark the verdict `passed=False`, `stop=Stop.OUT_OF_TIME`. A diff with no accept command is not gated: note stays `no accept` and the normal pass, fail and correction flow runs. No return of an empty-items verdict.
+2. **No correction after a skipped accept.** A verdict whose accept was skipped for time raises `CheckFailed(..., Stop.OUT_OF_TIME)` at once. An accept that ran and timed out keeps today's correction attempt (`test_out_of_time_verdict_still_gets_correction_attempt` must still pass). The reply's checks line is `ok (lint; accept none: out of time)`, `FAILED (lint: ...; accept none: out of time)` or `none (out of time)`, and the stored error is not empty.
+3. **Correction skipped below `CORRECTION_FLOOR_S`:** the stored error is the first verdict's failed-check text plus `; no time for a correction run`; the reply keeps the first verdict's checks line; stop `out_of_time`.
+4. **Stray `TimeoutError`.** Only an expired deadline takes the timeout branch (`async with asyncio.timeout(d) as cm:` and `cm.expired()`). Any other `TimeoutError` (for example raised by `_check` or `_changed_set`) goes through the normal failure path: row `failed`, exactly one `task_failed`, no row left `running`.
+5. **Cancel or deadline after success.** Once the row is `done` and `task_done` is emitted, a later deadline or cancel (for example during the `plan.*` calls) must not turn the row `failed` or emit `task_failed`. Prefer moving the plan calls and the reply building after the `async with` block.
+6. **Outside cancel message.** The row keeps `outcome=failed`, stop `out_of_time`, but the error says the task was cancelled, not `task timed out after Ns`. A deadline expiry keeps the timeout text. The `CancelledError` handler stays free of `await`.
+7. **Deadline reply and plan.** The deadline-expiry reply has a `checks: none (out of time)` line between the `FAILED` line and the `status=` line. When `plan_id` is set, that branch (outside the timeout scope) calls `plan.record_run(..., "failed", "", err)` and `plan.set_status(plan_id, "blocked", "router", err)` as the normal failure path does. It writes no second row or event.
+8. **Accept budget test.** Add a case through `_execute` (fake `run` that uses most of its role timeout, patched `checker.check_deterministic`) showing the accept still gets the full `config.ACCEPT_TIMEOUT`.
+
+New tests need no Docker, network, model, `.env` or token on Windows, macOS and Linux; bound every async test with a short timeout, no real waits above about 1 s.
+
+**Files you may touch:** `router/server.py`, `tests/test_deadline.py`, `tests/test_checker_stage.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/checker.py`, the design documents, `progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage tests.test_timeouts tests.test_role_timeout tests.test_doctor_config tests.test_error_kind tests.test_tool_surface -q
+```
+
+Do not run the full suite.
+
+**Tool-call limit:** 25. Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** -
+- **Files changed:** -
+- **Tests written first:** -
+- **Test result after the code:** -
+- **Acceptance command result:** -
+- **Departures from the plan:** -
+- **Problems or questions for Sonnet:** -
+
+### Step 5 build (done)
+
+- **Step:** 5, F4 per-role deadline
+- **Branch:** `impl/step-5`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 5, lines 1101-1116; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/config.py` | Modify | <ul><li>Add `ACCEPT_TIMEOUT` (from `TOKENFRUGAL_ACCEPT_TIMEOUT`, default 60 s), `MIN_ACCEPT_S = 15`, `MAX_ACCEPT_RUNS = 2` and `CORRECTION_FLOOR_S = 45`.</li><li>Add `TASK_DEADLINE_OVERRIDE` (from `TOKENFRUGAL_TASK_DEADLINE`, in seconds), validated as described in [Time budgets](#time-budgets).</li><li>Add `model_budget(role, role_timeout)` and `deadline(role, role_timeout)`. Both take the role timeout as an argument.</li><li>`role_timeout(role)` stays in `router/loop.py` (`:240-242`), reading `loop.TASK_TIMEOUT`, so the `loop.TASK_TIMEOUT` patch in `tests/test_timeouts.py:14` and the fallback assertion in `tests/test_role_timeout.py:43-45` (which reads the value and does not patch it) keep working. `scripts/bench.py` stops patching `loop.TASK_TIMEOUT` (row below).</li><li>`TASK_TIMEOUT` is unchanged.</li></ul> |
+| `router/loop.py` | Modify | <ul><li>Add `class Budget(total: float)` with `remaining()`, `spent()`, and `pause()` as a context manager.</li><li>`run()` and `_run` take an optional `budget=None`; `run` passes it to `_run`, where the model call is. When given, each model call is `asyncio.wait_for(call, budget.remaining())`, and an exhausted budget raises `LoopError("task timed out ...")` with the existing text.</li><li>Without a budget, the existing `asyncio.wait_for(_run, role_timeout)` path is unchanged.</li></ul> |
+| `router/server.py` | Modify | <ul><li>`_execute` computes `rt = loop.role_timeout(role)` once and runs inside `asyncio.timeout(config.deadline(role, rt))`. A `try/except TimeoutError` around that block returns the failure reply with stop `out_of_time` (`failure_message` plus the status line), so a deadline never escapes as a tool exception. The row and event are written by the `CancelledError` handler below, before `asyncio.timeout` turns the cancel into `TimeoutError`, exactly once; the `TimeoutError` branch writes nothing more.</li><li>The first run gets `Budget(rt)`. The correction runs only if `config.model_budget(role, rt) - spent >= CORRECTION_FLOOR_S`, with `Budget(config.model_budget(role, rt) - spent)`; otherwise the stop is `out_of_time`.</li><li>`_check` passes `min(ACCEPT_TIMEOUT, deadline - elapsed)`. Below `MIN_ACCEPT_S` it skips accept with the note `out of time`, which the reply shows by the [Reply contract](#reply-contract-for-legacy-calls) rule (`ok (lint; accept none: out of time)` when lint ran). `max(5, left)` is gone.</li><li>`_execute` creates the accept cancel `threading.Event`. Its `except asyncio.CancelledError` writes the failed row (`outcome=failed`, stop `out_of_time`), emits `task_failed`, sets the event, and re-raises.</li></ul> |
+| `scripts/doctor.py` | Modify | Replace the Step 3 formula with `max(config.deadline(r, loop.role_timeout(r)) for r in (code-l2, builder)) + 60`, keeping the 60 s margin. |
+| `tests/test_deadline.py` | **Create** | <ul><li>With a fixture role of `timeout_s: 225`, `deadline` gives 488 s and `model_budget` gives 337.5 s.</li><li>Every role in `tf-roles.yaml` has a finite deadline above its `role_timeout`.</li><li>The override: a non-number is ignored, and a value below `role_timeout + MIN_ACCEPT_S` is raised to that value.</li><li>A fake slow accept after a long fake run still gets its full `ACCEPT_TIMEOUT`.</li><li>The correction is skipped, with `out_of_time`, when less than `CORRECTION_FLOOR_S` (45 s) of model budget is left.</li><li>A hung fake model call is cut at `budget.remaining()`.</li><li>A cancelled `_execute` leaves the row `failed`, not `running`, with the cancel event set.</li><li>When the deadline itself expires (not an outside cancel), `_execute` returns a `FAILED` reply with `error_kind=out_of_time`, no exception escapes, and exactly one `task_failed` event is emitted.</li></ul> |
+| `tests/test_checker_stage.py` | Modify | The fake `server.run` functions take `**kw`, so the new `budget=` keyword does not raise `TypeError`. |
+| `scripts/bench.py` | Modify | In `bench_resume` (`:270-293`), replace the `loop.TASK_TIMEOUT` patch (`:273-274`, `:286`, `:290`) with `server.CFG["roles"]["builder"]["timeout_s"] = 2`, saving the old value first and restoring it at `:286` and in `finally`. `resolve_role` copies the role dict on each call (`config.py:284`), so the patch reaches the next `dispatch_task` and `resume_task`. |
+
+*   **Bench:** `bench_resume` calls `dispatch_task`, so it always runs with a Budget. Its timeout case is a no-op at `d675d75`: it patches `loop.TASK_TIMEOUT`, but `role_timeout` (`loop.py:240-242`) prefers the role's `timeout_s`, and `builder` has `timeout_s: 130` (`tf-roles.yaml:21`). The `scripts/bench.py` row above makes the case force a 2 s role timeout again.
+*   **Schema:** none.
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_deadline tests.test_checker_stage -q`
+
+**Notes from Sonnet**
+
+- Read the design document section Time budgets and the Reply contract for legacy calls before writing tests; their formulas and literal texts are the authority.
+- Line numbers in the rows are from commit `d675d75` and have moved. Find code by symbol name. Step 4 changed `router/server.py`, `router/checker.py` (new `check_deterministic` and `run_accept_spec` signatures), `router/loop.py` (`guard=` parameter, keep it) and `scripts/doctor.py`.
+- CI now runs the full suite on clean Windows, macOS and Linux runners. New tests must need no Docker, network, running Ollama, `.env`, token or model marker: mock every such call, `ensure_models` included. A fake that can run out of scripted replies must not let a test loop forever; give async runs a hard `asyncio.wait_for` limit and use short timeouts, never real waits of many seconds.
+- `tests/test_doctor_config.py` expects the doctor number from the shipped `tf-roles.yaml` to be 548; with the new formula it should still hold. Change that file only if the new formula requires it, and say why.
+- In `scripts/doctor.py` keep the module-level `sys.path` insert, the `ImportError` fallback, the `missing programs:` line and the host accept lines. Doctor writes no file.
+
+**Files you may touch:** `router/config.py`, `router/loop.py`, `router/server.py`, `scripts/doctor.py`, `scripts/bench.py`, `tests/test_deadline.py`, `tests/test_checker_stage.py`, `tests/test_doctor_config.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/tf-roles.yaml`, `tests/test_timeouts.py`, `tests/test_role_timeout.py`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_deadline tests.test_checker_stage tests.test_timeouts tests.test_role_timeout tests.test_doctor_config tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 25.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/config.py`, `router/loop.py`, `router/server.py`, `scripts/doctor.py`, `scripts/bench.py`, `tests/test_deadline.py`, `tests/test_checker_stage.py`
+- **Tests written first:** Created initial config and model-budget tests, then ran them before implementation; the 5 tests errored on the missing `Budget`, `deadline` and `model_budget` APIs. Additional server integration cases were added during implementation.
+- **Test result after the code:** The focused acceptance suite passed: 37 tests, `OK`.
+- **Acceptance command result:** Passed: 37 tests, `OK`, with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`.
+- **Departures from the plan:** Server integration tests for accept timing, correction skip, deadline expiry and cancellation were added after the initial red run, rather than all being in that first run. `tests/test_doctor_config.py` needed no change; the expected 548 s still holds.
+- **Problems or questions for Sonnet:** The worktree also had unrelated modifications in `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`; I left them untouched. None otherwise.
+
+### Step 4 fix 2 (done)
+
 - **Step:** 4, F3 accept parser and runner (CI follow-up)
 - **Branch:** `impl/step-4`
 - **Kind:** fix 2
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
 
@@ -43,7 +336,7 @@ Do not run the full suite. If a test in these two modules fails only because of 
 
 **Tool-call limit:** 12. Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `tests/test_media_workspace.py`
@@ -52,10 +345,6 @@ Do not run the full suite. If a test in these two modules fails only because of 
 - **Acceptance command result:** Passed: 43 tests, `OK`.
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** None.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 4 fix 1 (done)
 

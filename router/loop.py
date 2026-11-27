@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -23,6 +24,34 @@ _LOCAL = any(h in OLLAMA_URL for h in ("localhost", "127.0.0.1", "[::1]", "host.
 _client = OpenAI(base_url=OLLAMA_URL, api_key=LLM_API_KEY, timeout=LLM_TIMEOUT, max_retries=0 if _LOCAL else 4)
 DONE: dict[str, dict] = {}  # last taken totals per task id, read by the benchmark
 USAGE: dict[str, dict] = {}  # per task id: model calls and tokens, taken by the router when the task ends
+
+
+class Budget:
+    """A model-time budget whose clock can be paused while host checks run."""
+    def __init__(self, total: float):
+        self.total = float(total)
+        self._started = time.monotonic()
+        self._paused = 0.0
+        self._pause_started = None
+
+    def spent(self) -> float:
+        now = self._pause_started if self._pause_started is not None else time.monotonic()
+        return max(0.0, now - self._started - self._paused)
+
+    def remaining(self) -> float:
+        return max(0.0, self.total - self.spent())
+
+    @contextmanager
+    def pause(self):
+        if self._pause_started is not None:
+            yield
+            return
+        self._pause_started = time.monotonic()
+        try:
+            yield
+        finally:
+            self._paused += time.monotonic() - self._pause_started
+            self._pause_started = None
 
 
 def _count(tid: str, r, msgs: list, m, secs: float) -> None:
@@ -385,7 +414,7 @@ def think_extra(role: dict) -> dict:
 
 
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
-              tid: str = "", guard=None) -> tuple[str, list]:
+              tid: str = "", guard=None, budget: Budget | None = None) -> tuple[str, list]:
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
     if "synaptree" in (role.get("native") or []):
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
@@ -401,9 +430,11 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
     STARTED[tid] = 0
     limit = role_timeout(role)
     try:
-        return await asyncio.wait_for(_run(agent, role, msgs, tid, guard), limit or None)
+        if budget is None:
+            return await asyncio.wait_for(_run(agent, role, msgs, tid, guard), limit or None)
+        return await _run(agent, role, msgs, tid, guard, budget=budget)
     except asyncio.TimeoutError:
-        e = LoopError(f"task timed out after {limit:g}s")
+        e = LoopError(f"task timed out after {(budget.total if budget is not None else limit):g}s")
         e.msgs = msgs
         raise e
     except BaseException as e:
@@ -411,7 +442,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         raise
 
 
-async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None) -> tuple[str, list]:
+async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget: Budget | None = None) -> tuple[str, list]:
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
             open_role(role.get("profile"), role.get("native"), role.get("params")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
@@ -470,7 +501,14 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None) -> tupl
             infra_retried = False  # one retry after a 3s pause for runner/HTTP 500 failures
             for _attempt in range(3):
                 try:
-                    r = await asyncio.to_thread(_client.chat.completions.create, **kw)  # off the event loop
+                    call = asyncio.to_thread(_client.chat.completions.create, **kw)  # off the event loop
+                    if budget is None:
+                        r = await call
+                    else:
+                        remaining = budget.remaining()
+                        if remaining <= 0:
+                            raise asyncio.TimeoutError
+                        r = await asyncio.wait_for(call, remaining)
                     break
                 except Exception as e:
                     s = str(e)

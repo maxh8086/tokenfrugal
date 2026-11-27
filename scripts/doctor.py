@@ -111,6 +111,7 @@ def main() -> int:
         print("[warn] tokenfrugal-router is not on PATH; run pip install -e .")
     try:
         from router import config
+        from router import loop
         from router.config import load_tf_roles
         cfg = load_tf_roles()
         from router.workspace import load_workspace
@@ -120,12 +121,8 @@ def main() -> int:
             print(f"TOKENFRUGAL_HOST_ACCEPT_PATHS={config.WORKSPACE}")
         if "site-packages" in str(config.ROOT):
             print("note: ROOT is under site-packages; set host accept variables in the client's server env block")
-        deadlines = []
-        for name in ("code-l2", "builder"):
-            role = cfg["roles"][name]
-            timeout = role.get("timeout_s", config.TASK_TIMEOUT)
-            deadlines.append(math.ceil(1.5 * timeout + 2 * 60 + 30))
-        timeout_sec = max(deadlines) + 60
+        timeout_sec = max(config.deadline(cfg["roles"][name], loop.role_timeout(cfg["roles"][name]))
+                          for name in ("code-l2", "builder")) + 60
     except (ImportError, KeyError, TypeError, ValueError):
         timeout_sec = None
         print("[warn] Codex tool timeout could not be computed (router config or role unavailable)")
