@@ -14,7 +14,7 @@ import time
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
-from . import checker, compose, events, gpu_lease, kalamanch_cleanup, ollama_launcher, plan, reconnect, store, studio, ui_launcher
+from . import checker, compose, events, gpu_lease, kalamanch_cleanup, ollama_launcher, plan, reconnect, store, studio, ui_launcher, workspace
 from .outcomes import Stop, stop_from_legacy
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
 from .mcp_client import backend_state
@@ -158,7 +158,7 @@ async def _health_loop() -> None:
     first = True
     while True:
         if first:
-            events.emit("health", status="up", missing=missing_programs())
+            events.emit("health", status="up", missing=missing_programs(), config_warnings=checker.config.CONFIG_WARNINGS)
             first = False
         else:
             events.emit("health", status="up")
@@ -180,31 +180,23 @@ class CheckFailed(Exception):
         self.stop = stop
 
 
-def accept_cmd(text: str) -> list[str] | None:
-    """argv of the task's acceptance command: the last 'Accept:' line, split on spaces. None when the task has none."""
-    cmd = None
-    for line in text.splitlines():
-        if line.strip().lower().startswith("accept:"):
-            cmd = line.strip()[len("accept:"):].split() or None
-    return cmd
-
-
 def diff_block(text: str) -> str | None:
     """The first ```diff block of a reply, without its fences. None when the reply has none."""
     m = DIFF_FENCE.search(text or "")
     return m.group(1) if m else None
 
 
-def _check(role: dict, prompt: str, detail: str, t0: float, accept_override: list[str] | None = None) -> dict | None:
-    """Deterministic checks, run only when the task names an Accept: command or the reply holds a ```diff block.
-    accept_override (from dispatch_task's accept argument) replaces the task's Accept: line when given.
-    The accept command gets what is left of the role's timeout_s after the run, so run and checks share one budget."""
-    accept = accept_override if accept_override is not None else accept_cmd(prompt)
+def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None) -> dict | None:
+    ws = ws or workspace.load_workspace(WORKSPACE)
+    parsed = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
     diff = diff_block(detail)
-    if accept is None and diff is None:
+    if parsed.note == "no accept" and diff is None:
         return None
     left = int(role_timeout(role) - (time.monotonic() - t0))
-    return checker.check_deterministic(WORKSPACE, accept, diff, timeout=max(5, left))
+    if not ws.host_accept and parsed.spec:
+        parsed = checker.AcceptParse(None, "host accept off")
+    return checker.check_deterministic(ws, parsed, diff, timeout=max(5, left),
+                                       task_files=workspace.legacy_task_files(ws, task_text, limit=3))
 
 
 def _failed_text(verdict: dict) -> str:
@@ -227,13 +219,22 @@ def _changed_set() -> set[str]:
 def _report(verdict: dict | None, role: dict) -> str:
     """Checker line appended to the summary; the judgement items go to the client to decide."""
     if verdict is None:
-        return ""
-    parts = []
-    for i in verdict["items"]:
-        state = "ok" if i["passed"] else "FAILED"
-        shown = not i["passed"]  # files_changed is listed by the manifest line instead
-        parts.append(f"{i['name']} {state}" + (f" ({i['detail']})" if shown else ""))
-    text = "\nChecks: " + "; ".join(parts) + "."
+        text = "\nchecks: none (no accept command)"
+    else:
+        note = verdict.get("accept_note", "")
+        note = {"prose": "acceptance line is prose", "no accept": "no accept command"}.get(note, note)
+        changed = next((i["detail"] for i in verdict["items"] if i["name"] == "files_changed"), "")
+        ran = [i["name"] for i in verdict["items"] if i["name"] != "files_changed"]
+        lint_ran = any(x.endswith(".py") for x in changed.split(", "))
+        effective = [name for name in ran if name != "lint" or lint_ran]
+        if note and not effective:
+            state = f"none ({note})"
+        else:
+            failed = [i for i in verdict["items"] if not i["passed"]]
+            state = ("FAILED (" + "; ".join(f"{i['name']}: {i['detail'][:100]}" for i in failed) + ")") if failed else "ok (" + ", ".join(ran) + ")"
+            if note:
+                state = state[:-1] + f"; accept none: {note})"
+        text = "\nchecks: " + state
     contract = (CFG.get("contracts") or {}).get(role["role"], {})
     judge = [c["text"] for c in contract.get("checklist") or [] if c.get("kind") == "judgement"]
     if judge:
@@ -254,12 +255,16 @@ async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: 
         await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
         await _plan(plan.set_status, plan_id, "blocked", "router", err)
     return (failure_message(tid, role, err, "env_missing" if missing else "infra", stop, 0, role.get("required_tool") or "") + "\n"
+            + "checks: none (not run)\n"
             + status_line("failed", role["role"], role["model"], 0, time.monotonic() - t0))
 
 
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0,
-                   accept_override: list[str] | None = None) -> str:
+                   accept=None, task_text: str | None = None) -> str:
     t0 = time.monotonic()
+    ws = workspace.load_workspace(WORKSPACE)
+    task_text = task_text if task_text is not None else (store.get(tid).get("prompt") or prompt)
+    allowed = set()
     for name in role.get("native") or []:  # B3: a native server's containers must be up before any model call
         if name in NATIVE_BACKENDS:
             backend_reason = await backend_state(name)
@@ -276,18 +281,28 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
     calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
     try:
         gpu_lease.guard_ollama(OLLAMA_URL)  # a held GPU lease refuses the task before any model or backend work
-        detail, msgs = await run(agent, role, prompt, messages, tid)
+        guard = lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)
+        detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard)
         calls += take_started(tid)
-        verdict = await asyncio.to_thread(_check, role, prompt, detail, t0, accept_override)
+        task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
+        if not ws.host_accept and task_accept.spec:
+            events.emit("checks_skipped", id=tid, reason="host accept off")
+        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws)
         if verdict and not verdict["passed"]:  # one correction, continuing the same message history
-            detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid)
+            if verdict.get("stop") == Stop.ENV_MISSING:
+                raise CheckFailed(_failed_text(verdict), verdict["stop"])
+            detail, msgs = await run(agent, role, _fix_prompt(verdict), msgs, tid, guard=guard)
             calls += take_started(tid)
-            verdict = await asyncio.to_thread(_check, role, prompt, detail, t0, accept_override)
+            verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws)
             if verdict and not verdict["passed"]:
+                if verdict.get("stop") in (Stop.ENV_MISSING, Stop.OUT_OF_TIME):
+                    raise CheckFailed(_failed_text(verdict), verdict["stop"])
                 failed_names = [item["name"] for item in verdict["items"] if not item["passed"]]
                 raise CheckFailed(_failed_text(verdict), Stop.ACCEPT_FAILED if failed_names[0] == "accept" else Stop.CHECKER)
         after = await asyncio.to_thread(_changed_set)
-        summary = summarize(role["model"], detail, prompt) + _report(verdict, role)
+        base_summary = summarize(role["model"], detail, prompt)
+        report = _report(verdict, role)
+        summary = base_summary + report
         usage = take_usage(tid)
         store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
         events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base:], summary),
@@ -298,13 +313,15 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             if ok:
                 await _plan(plan.checkpoint)
             summary += "" if ok else f" (plan: {msg})"
-        return (f"[{tid}] {summary}\n{checker.manifest(before, after)}\n"
+        return (f"[{tid}] {base_summary}\n{checker.manifest(before, after)}{report}\n"
                 + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
         orig = e
         frames = frames_of(orig) if not isinstance(e, CheckFailed) else []
         if isinstance(e, CheckFailed):
-            full, reason, kind = str(e), "checker", e.stop
+            full = str(e)
+            reason = "env_missing" if e.stop == Stop.ENV_MISSING else ("timeout" if e.stop == Stop.OUT_OF_TIME else "checker")
+            kind = e.stop
         else:
             e = leaf(e)
             full = program_missing(orig) or f"{type(e).__name__}: {e}"
@@ -327,7 +344,8 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
             await _plan(plan.set_status, plan_id, "blocked", "router", err)
         return (failure_message(tid, role, err, reason, kind, started, role.get("required_tool") or "",
                                hint_text=e.hint if gpu else "") + "\n"
-                + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
+                + (_report(verdict, role).lstrip("\n") if isinstance(e, CheckFailed) else "checks: none (not run)")
+                + "\n" + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
     finally:
         beat.cancel()
 
@@ -349,11 +367,9 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
         return "task is empty: send the task text"
     if not required["task_type"].strip():
         return "give task_type: the kind of task, e.g. 'add test' or 'explain code' (see list_roles for templates)"
-    accept_argv = None
-    if accept:
-        accept_argv = accept.split()
-        if not accept_argv:
-            return "accept must be a command, e.g. 'python -m unittest ...'"
+    parsed_accept = checker.parse_accept(accept, "argument", workspace.load_workspace(WORKSPACE)) if accept else None
+    if parsed_accept and parsed_accept.note.startswith("refused:"):
+        return parsed_accept.note
     err = task_error(agent, task, CFG, WORKSPACE)
     if err:
         events.emit("task_refused", agent=agent, reason=err)  # refusal before any model time; logged to events.jsonl
@@ -375,7 +391,7 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
     kalamanch_cleanup.maybe_run()  # at most once a day, in a background thread; never blocks or fails the dispatch
     prompt = store.with_templates(role["role"], task, task_type.strip())  # approved templates go before the task text; the row keeps the task
     return await _execute(store.create(agent, role["role"], task, client=_CLIENT_NAME), agent, role, prompt, plan_id=plan_id,
-                          accept_override=accept_argv)
+                          accept=parsed_accept, task_text=task)
 
 
 @mcp.tool()
@@ -415,7 +431,7 @@ async def ask_followup(task_id: str, question: str) -> str:
         return f"unknown or empty task {task_id}"
     role = resolve_role(t["agent"], CFG)
     msgs = t["messages"] + [{"role": "user", "content": question}]
-    return await _execute(task_id, t["agent"], role, question, msgs)
+    return await _execute(task_id, t["agent"], role, question, msgs, task_text=question)
 
 
 @mcp.tool()

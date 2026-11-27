@@ -9,13 +9,195 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 4, F3 accept parser and runner (CI follow-up)
+- **Branch:** `impl/step-4`
+- **Kind:** fix 2
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+**Failure.** CI (windows, macos, ubuntu) fails with one error: `tests.test_media_workspace.VeditExportsResolvedFolder.test_mgen_passes_the_resolved_folder_to_compose`, `run.call_args` is None.
+
+**Cause.** The test does not mock `ensure_models`. On a clean machine `mgen` returns before `subprocess.run` (no model marker and no token). On a developer machine it passes falsely: the call it inspects is the model pull in `router/model_sync.py`, not the compose call.
+
+**Change (this one test only).**
+1. First add an assertion that the first two items of the `run.call_args` argv are `docker` and `compose`. Run the test and show that it fails today.
+2. Then patch `v.ensure_models` to return `""` in that test, as `tests/test_sandbox.py` does. Keep the existing `VIDEO_EDITOR_DIR` assertion.
+
+The test must need no Docker, network, model, `.env` or token, on Windows, macOS and Linux. Do not read `.env`. The product code is correct and must not change.
+
+**Files you may touch:** `tests/test_media_workspace.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/`, `.github/`, `progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; $env:HF_TOKEN = ""; .venv\Scripts\python.exe -m unittest tests.test_media_workspace tests.test_sandbox -q
+```
+
+Do not run the full suite. If a test in these two modules fails only because of the sandbox (no git identity, no secrets folder), report it and say so.
+
+**Tool-call limit:** 12. Do not commit, push or install anything; report the files you changed and the test output.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `tests/test_media_workspace.py`
+- **Tests written first:** Added the `docker compose` argv assertion and ran the test before mocking `ensure_models`; it failed because `run` captured the preceding `docker run` model pull.
+- **Test result after the code:** Passed as part of the acceptance command.
+- **Acceptance command result:** Passed: 43 tests, `OK`.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 4 fix 1 (done)
+
+- **Step:** 4, F3 accept parser and runner (large)
+- **Branch:** `impl/step-4`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** This is a fix to an approved task from the reviewed design; do not run an EGM brainstorm or review.
+
+Sonnet's review found the departures below. For each, add a failing test first, run it to show it fails, then fix the code. The authority is `docs/designs/subagent-runtime-design.md`: the Step 4 rows, Reply contract for legacy calls, Security model for host accept, and Appendix A (parse rules, run rules). Line the fixes up with those texts.
+
+1. **Write denylist misses nested and indirect paths (security).** `workspace.denied` matches only directory prefixes counted from the start of the raw `rel`, so `sub/.git/config`, `pkg/node_modules/.bin/x`, `a/.github/workflows/x.yml` and `x/../.git/hooks/pre-commit` are allowed. The security model refuses "anything under `.git/`, `.venv/`, `venv/`, `node_modules/.bin/` or `.github/workflows/`", and the row says the path is resolved with `normcase(realpath(ws.root / rel))`. Match directory segments (and the two-segment pairs) anywhere in the **resolved** path relative to the resolved root, and also in the given path; match file names and `*.pth` on both. Keep `allowed` (exact relative path) and the always-protected router config. Tests: the four paths above, a symlinked folder pointing into `.git` (skip with a reason where symlinks cannot be created), and a normal nested file that stays allowed.
+2. **Reply order.** The `checks:` line must come right after the `files_changed:` line and before `Judge`/`status=`; today the success reply puts it inside the summary, before `files_changed:`. Build the reply as the Reply contract shows. The stored `summary` (and `task_done.summary`, `plan.record_run`) keeps the `checks:` and `Judge` lines appended, as today. Test the exact line order on a success and on a failure.
+3. **Failure reply has a blank line** between the `FAILED` line and `checks:` for a `CheckFailed`, and carries a `Judge` line there only if the contract asks. The order is: `FAILED` line, `checks:` line, `status=` line, with no empty line.
+4. **`checks: none` reasons.** A refused accept line must print `checks: none (refused: <reason>)`; the code strips `refused: `. Follow the reason mapping and the `ok (lint; accept none: <reason>)` forms exactly. If `diff_applies` ran, the state is not `none`.
+5. **`_fix_prompt` was changed too early.** Its new text belongs to Step 6+7, not Step 4. Restore the Step 3 version of `_fix_prompt` (see `git show HEAD:router/server.py`) and remove or restore any test that asserts the new text.
+6. **Correction skip.** Only a verdict stop of `env_missing` skips the correction run. Remove the `out_of_time` skip before the correction; a failure after the correction still keeps the verdict's stop (`env_missing` or `out_of_time`).
+7. **`legacy_task_files`** drops a relative token that has a file extension but does not exist yet. The row says tokens "that have a file extension or exist under `ws.root`". A declared new module such as `newmod.py` must be returned (at most 3, task order), and `run_accept_spec` through `_check` must then report `accept_failed`, not `env_missing`. Avoid picking up words such as version numbers or `e.g.`.
+8. **`env_kind` has invalid values** (`workspace`, `path`). It is an `outcomes.EnvKind`: `venv`, `system-python` or `missing`. For a program that is not a bare Python name, use `venv` when `ws.venv` exists, else `system-python`; `missing` when it cannot be resolved, with stop `env_missing` naming the program.
+9. **`first_error`.** The frame form is `file:line: <last exception line>`; the code appends the last output line, which for unittest output is `FAILED (errors=1)`. Use the last line that names an exception (`\b\w*(Error|Exception)\b`) after the frame; without a workspace frame, the last such line; else the first `FAIL:` or `FAILED` line. At most 100 characters. Test with unittest-style output.
+10. **Comments in the split.** `shlex.shlex` treats `#` as a comment, so `python x.py --tag=#1` loses text. Set `commenters = ""`. Add the case.
+11. **Windows handle types.** `_kill_tree` calls `CloseHandle` without `argtypes`; declare them the same way `_close_job` does (use one helper).
+
+**Files you may touch:** `router/workspace.py`, `router/checker.py`, `router/server.py`, `tests/test_accept_parse.py`, `tests/test_accept_run.py`, `tests/test_workspace.py`, `tests/test_denylist.py`, `tests/test_checker.py`, `tests/test_checker_stage.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `.gitignore` (the ignored `.github/` folder is handled at commit time), `.github/workflows/tests.yml`, `tests/fixtures/tool_surface.json`, the design documents, `progress.md`, `docs/haiku-fallback-log.md`, `.agents/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes. Every test must pass on Windows, macOS and Linux and need no Docker, network or model.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_accept_parse tests.test_accept_run tests.test_workspace tests.test_denylist tests.test_checker tests.test_checker_stage tests.test_router_bc tests.test_error_kind tests.test_tool_surface -q
+```
+
+Do not run the full suite.
+
+**Instructions**
+
+- Try synaptree (project tokenfrugal) first for a symbol; read the file directly if it does not locate it.
+- Tool-call limit: 35. If you cannot finish, set Status to `failed` and list exactly which numbered items remain.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/workspace.py`, `router/checker.py`, `router/server.py`, `tests/test_accept_parse.py`, `tests/test_accept_run.py`, `tests/test_workspace.py`, `tests/test_denylist.py`, `tests/test_checker_stage.py`.
+- **Tests written first:** Added regression tests before the corresponding fixes for nested and indirect denylist paths, new task files and missing modules, invalid environment kinds, unittest error selection, `#` token parsing, reply order and correction after `out_of_time`. The initial focused run showed the expected failures (8 failures and one test setup error); the setup error was fixed by adding the missing `Path` import. Refused-reason and Windows handle assertions were added during final verification.
+- **Test result after the code:** Focused acceptance suite passed: 99 tests, `OK (skipped=1)`. The symlink denylist case skipped because this environment could not create directory symlinks.
+- **Acceptance command result:** Passed the specified command with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`: 99 tests, `OK (skipped=1)`.
+- **Departures from the plan:** The 35-call tool limit was exceeded. Refused-reason and Windows handle assertions were added during final verification rather than before their fixes. The symlink-only case was skipped on this Windows environment when directory symlink creation was unavailable.
+- **Problems or questions for Sonnet:** None.
+
+### Step 4, build (2026-11-27): done; Sonnet's review sent it back
+
+- **Step:** 4, F3 accept parser and runner (large)
+- **Branch:** `impl/step-4`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 4, lines 1075-1100; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/config.py` | Modify | <ul><li>Add `"host_accept_paths": "TOKENFRUGAL_HOST_ACCEPT_PATHS"` and `"accept_env_passthrough": "TOKENFRUGAL_ACCEPT_ENV_PASSTHROUGH"` to `_OVERRIDE_ENV`. A list value is joined before it is set: `host_accept_paths` with `os.pathsep`, `accept_env_passthrough` with `,`.</li><li>Move the override loop (`:32-34`) into `_apply_overrides(overrides: dict, real_env: set, environ: MutableMapping) -> None`, called once at import as `_apply_overrides(_overrides, _REAL_ENV, os.environ)`. Behaviour is unchanged apart from the new list join.</li><li>Add `_parse_host_accept(raw: str) -> tuple[frozenset[str], list[str]]`. It splits on `os.pathsep`, normcase-realpaths each entry, and returns the paths that exist plus one warning per missing path.</li><li>`HOST_ACCEPT_PATHS: frozenset[str]` and `ACCEPT_ENV_PASSTHROUGH: tuple[str, ...]` are set at import from these helpers, and the warnings go to a new `CONFIG_WARNINGS: list[str]`.</li></ul> |
+| `router/workspace.py` | **Create** | <ul><li>`Workspace` dataclass: `root`, `key` (normcase realpath), `host_accept: bool`, `env_passthrough: tuple[str, ...]`, `venv: Path \| None`.</li><li>`load_workspace(root) -> Workspace`: `host_accept` is `key in config.HOST_ACCEPT_PATHS`, read by attribute at call time so a test's patch of `config.HOST_ACCEPT_PATHS` works (tests add the normcase realpath, because macOS `/var` resolves to `/private/var`); `env_passthrough` is `config.ACCEPT_ENV_PASSTHROUGH`; the venv comes from `config.ACCEPT_VENV`, then `<root>/.venv`, then `<root>/venv`. `config.ACCEPT_VENV` is read at import from the `TOKENFRUGAL_ACCEPT_VENV` environment variable or `.env` line, as an absolute path; it is not an `_OVERRIDE_ENV` key.</li><li>`ENV_ALLOWLIST` and `accept_env(ws, spec_env) -> dict`.</li><li>`PROTECTED_ALWAYS` (the resolved `ROOT/.env` and `router/config_overrides.json`), `DENYLIST_DIRS`, `DENYLIST_NAMES` and `denied(rel: str, allowed: set[str], ws: Workspace) -> bool` (used by the write guard in this step's `router/server.py` row). It resolves `normcase(realpath(ws.root / rel))` and refuses a match with `PROTECTED_ALWAYS` whether host accept is on or off. With `ws.host_accept` on and `rel` not in `allowed`, it also refuses a path with a segment in `DENYLIST_DIRS` or a file name matching `DENYLIST_NAMES`.</li><li>`to_rel(ws, tool_path) -> str`, which turns `/workspace/...` tool paths into workspace-relative `/`-separated paths with the mapping of `config.WORKSPACE_PATH` (`config.py:307`), and a host-absolute path under `ws.root` into a path relative to it. Any other path is returned unchanged, so it still resolves correctly in `denied`.</li></ul> |
+| `router/checker.py` | Modify | <ul><li>Add `AcceptSpec`, `AcceptParse`, `AcceptResult`, `parse_accept(text, source, ws)`, `accept_from_task(task_text, accept_arg, ws)` and `run_accept_spec(spec, ws, timeout, cancel)` (Appendix A).</li><li>Add the helpers `_resolve_argv0`, `_first_error`, `_missing_module` and `_kill_tree`. `_kill_tree` uses a Job Object via `ctypes` on Windows and `os.killpg` on POSIX.</li><li>Remove `run_accept`. On timeout, `run_accept_spec` sets `first_error` to the Appendix B text `timed out after <N>s` and `stop` to `out_of_time`.</li><li>New signature `check_deterministic(ws: Workspace, accept: AcceptParse \| None, diff_text: str \| None, timeout: float, cancel: threading.Event \| None = None, task_files: tuple[str, ...] = ()) -> dict`. With `cancel` None it uses a local `threading.Event()`. `task_files` is passed on to `run_accept_spec` for the missing-module rule. The accept item runs only when `accept.spec` is set; it is `{"name": "accept", "tag": "deterministic", "passed": res.ok, "detail": res.first_error or res.out[-300:], "stop": res.stop, "env": res.env_kind}`. The verdict dict gains `"stop"` (the accept item's `stop`, or None) and `"accept_note"` (`accept.note` when accept did not run).</li><li>Lint and `files_changed` are unchanged in Step 4.</li></ul> |
+| `router/server.py` | Modify | <ul><li>Remove `accept_cmd`.</li><li>`_execute`'s `accept_override: list[str] \| None` (`:237`) becomes `accept: AcceptParse \| None`. `_check(role, task_text, detail, t0, accept)` takes the raw task text, not the composed prompt. `_execute` gains `task_text: str | None = None`: `ask_followup` sets it to the question, so a follow-up runs accept only when the question has an accept line, as at `d675d75` (`server.py:382`, `:181`); otherwise it is `store.get(tid)["prompt"]`. `_check` uses `accept` when given, else `accept_from_task`.</li><li>When checks run: as at `d675d75` (`:183-184`), when the task text has an accept line (whether or not it runs), when `dispatch_task` got a non-empty `accept=` argument, or when the reply has a diff. Lint then always runs on the changed files. With none of these, nothing runs, and `_report(None)` returns the line `checks: none (no accept command)`, so every legacy reply has a `checks:` line. Failure replies get the line too, between the `[tid] FAILED ...` line and the `status=` line (`server.py:295-297`): `checks: FAILED (...)` from the last verdict for a `CheckFailed`, and `checks: none (not run)` for a failure before checks ran.</li><li>`_check` passes `task_files` from the new `workspace.legacy_task_files(ws, task_text, limit=3) -> tuple[str, ...]`: the paths `loop.named_paths` finds, converted with `to_rel`, plus workspace-relative tokens such as `router/foo.py` that have a file extension or exist under `ws.root`, in task order, at most 3. `loop.PATH` (`loop.py:183`) matches only absolute paths, so `named_paths` alone misses relative ones. Step 8e passes the packet's files instead.</li><li>`_execute` builds `ws = workspace.load_workspace(WORKSPACE)` once per call and passes it to `_check` and the guard. It always passes `guard=lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)` to `run`, with `allowed` an empty set (Step 8e passes the packet's files). With host accept off, only the always-protected router config is refused. The guard lands in this step, together with the first code that can run accept on the host, so host accept never runs without it.</li><li>With host accept off, `_check` passes `AcceptParse(None, "host accept off")` and adds a `checks_skipped` trail entry; lint still runs.</li><li>`_report` returns the `checks:` line (from the [Reply contract](#reply-contract-for-legacy-calls)) and the `Judge` line. The reply places them right after the `files_changed:` line (and after `outside_scope:` once Step 8a adds it). The stored `summary` keeps them appended, as today, so `get_detail`, `task_done.summary` and `plan.record_run` change only in the line's text.</li><li>`dispatch_task`'s `accept=` string goes through `parse_accept`. A refusal returns the reason with no row created.</li><li>When the verdict's `stop` is `env_missing`, `_execute` skips the correction run and fails with stop `env_missing`.</li><li>`config.CONFIG_WARNINGS` go into the first `health` event's `config_warnings`.</li></ul> |
+| `router/loop.py` | Modify | <ul><li>`run(..., guard=None)` passes `guard` to `_run`.</li><li>`guard: Callable[[str], bool] \| None` takes the raw tool path and returns True to refuse. It runs right after `arg_error` passes and before the call is sent: on `path` for `write_file` and `edit_file`, and on both `source` and `destination` for `move_file`.</li><li>A refusal goes back to the model as `tool error: path is protected: <path>` and is not sent to the server.</li></ul> |
+| `scripts/bench_checks.py` | Modify | `_TRAILER` (`:167`) also strips `checks:` lines. |
+| `tests/test_accept_parse.py` | **Create** | <ul><li>A table with every case below: plain argv; `python -c "..."` with nested quotes; `PYTHONPATH=. python -m unittest ...`; `.venv\Scripts\python.exe -m pytest`; a backtick span inside prose; a prose line; `make sure the loader works` is prose; `pytest -q` without backticks is prose, and inside backticks it runs; `&&` refused; `\|` inside quotes allowed; each of the 7 operators refused; an unquoted operator attached to a word (`python x.py\|tee`, `python a.py>out`) refused; an unclosed quote refused; `Acceptance:` matched; lowercase and indented labels matched; the last of two lines wins; an empty line.</li><li>The 13 non-null `accept` strings in `fallback-attempts.jsonl` (lines 10-22) are included verbatim, each with its expected result. Lines 1-9 (FB-001 and class A among them) have `accept: null` and are not cases. Line 18 (`docker ebur128 ...`) is prose. Line 19 joins two commands with `+`; it parses as one `python` command whose extra words are arguments, and the table records that result.</li><li>A `shlex.join` round trip for 5 argv lists, including one argument with an apostrophe (`it's`) and one with a quoted `\|`. Each parses back to the same argv and is not refused.</li></ul> |
+| `tests/test_accept_run.py` | **Create** | <ul><li>Venv interpreter substitution, with a fake venv folder and a stub interpreter script.</li><li>An absolute interpreter path (`sys.executable`) runs as given, with and without a venv.</li><li>An unknown program gives `env_missing`.</li><li>A missing third-party module gives `stop` `env_missing`. A missing workspace module, and a module whose only source is a declared task file that does not exist yet (`newmod.py` in `task_files`), give `ok` false with `stop` None, which the task reports as `accept_failed`.</li><li>A timeout kills a grandchild: a child spawns a sleeping grandchild that writes its pid, and the test asserts the pid is gone.</li><li>Cancel through the `threading.Event`.</li><li>Allowlisted names pass and others are dropped, checked with a sentinel variable.</li><li>Output is cut to the first 400 and last 1,200 characters.</li></ul> |
+| `tests/test_workspace.py` | **Create** | <ul><li>Host accept is off with an empty path list, on for a listed workspace, and off for a folder under a listed one.</li><li>Precedence, through `_apply_overrides` with a dict as `environ` (no `router.config` reload): a name in `real_env` beats `config_overrides.json`, which beats a `.env` value already in `environ`; a list value is joined.</li><li>`_parse_host_accept` on temp folders: a missing path is dropped and gives a warning.</li><li>Passthrough names reach `accept_env`.</li><li>`denied()`: router `.env` and `config_overrides.json` are refused with host accept off and on.</li><li>`to_rel` on a `/workspace/` path and on a host-absolute path under the root; `legacy_task_files` on relative, host-absolute and `/workspace/` paths, at most 3.</li><li>Case-insensitive paths and names on Windows (skipped elsewhere).</li></ul> |
+| `tests/test_denylist.py` | **Create** | <ul><li>Each denylisted path is refused when host accept is on and allowed when it is off.</li><li>The router's `.env` and `config_overrides.json` are refused either way.</li><li>A path in `allowed` is allowed.</li><li>A refused call is not sent to the fake server.</li></ul> |
+| `tests/test_checker.py` | Modify | <ul><li>`:73-83` call `run_accept_spec` with an `AcceptSpec` and assert `ok`, and on timeout `first_error == "timed out after 1s"` with `stop == "out_of_time"`.</li><li>`:85-101` (the failing and passing accept cases) call `check_deterministic(load_workspace(self.repo), AcceptParse(AcceptSpec(argv, {}, "argument"), ""), diff, 120)` with the test workspace listed in `config.HOST_ACCEPT_PATHS`. Their item names and order assertions are unchanged.</li><li>`:103-106` (no optional items) calls `check_deterministic(load_workspace(self.repo), AcceptParse(None, "no accept"), None, 120)` and still expects `["lint", "files_changed"]`.</li><li>Add a case for an argv with spaces in quotes.</li></ul> |
+| `tests/test_checker_stage.py` | Modify | <ul><li>`:25-31` uses `accept_from_task`, and an `Acceptance:` line is now matched.</li><li>`:75` (`assertNotIn("Checks:", reply)`) becomes `assertIn("checks: none (no accept command)", reply)`, plus an assertion that this line comes right after the `files_changed:` line and before the `status=` line.</li><li>`:84` and `:100` (`assertIn("accept ok", reply)`) become `assertIn("checks: ok (accept", reply)`.</li><li>Cases that expect accept to run patch `config.HOST_ACCEPT_PATHS` to contain the test workspace in `setUp`.</li><li>New cases: a task with no accept line, run through `_execute` with the parsed value of a separate `accept=` argument. A passing command gives `checks: ok (accept, lint)`; a failing one gets the correction and then `checks: FAILED (accept: ...)`; a follow-up whose parent task has an accept line does not run accept; with host accept off and a changed Python file, the reply has `checks: ok (lint; accept none: host accept off)`, and with no changed file, `checks: none (host accept off)`.</li></ul> |
+| `tests/test_router_bc.py` | Modify | `:71-76`: the `AcceptCommand` helper cases use `accept_from_task`. No reply text is asserted here. |
+| `tests/test_error_kind.py` | Check | `:253` reads the last reply line as `status=`. The `checks:` line goes before it, so the test must still pass unchanged. |
+| `.github/workflows/tests.yml` | **Create** | <ul><li>A matrix of `windows-latest`, `macos-latest` and `ubuntu-latest` on Python 3.11.</li><li>It sets `env: PYTHONPATH: .` at job level and runs `pip install -r requirements.txt`, then `python -m unittest discover -s tests -t . -q`, so the same line works in PowerShell on `windows-latest`. There is no workflow at `d675d75`.</li><li>**CI policy:** after the Step 4 commit, Sonnet pushes the branch. Step 5 starts only when the workflow passes on `ubuntu-latest` and `macos-latest`. Each failure that comes from `.venv/Scripts` paths or a Docker dependency gets a fix, or a `skipUnless` marker that states the reason, in a follow-up Step 4 commit.</li></ul> |
+| `scripts/doctor.py` | Modify | Print whether host accept is on for `CC_WORKSPACE`, the `TOKENFRUGAL_HOST_ACCEPT_PATHS=...` line that would turn it on, and a note when `ROOT` is under `site-packages`. It writes nothing. |
+| `.env.example` | Modify | Add commented `TOKENFRUGAL_HOST_ACCEPT_PATHS=` and `TOKENFRUGAL_ACCEPT_ENV_PASSTHROUGH=` lines with a one-line explanation of the trust decision. The owner adds this checkout's path to their own `.env` by hand. |
+
+*   **Schema:** none. Accept is still parsed from the stored prompt; `contract_json` arrives in Step 6+7.
+*   **Interim behaviour:** until Step 6+7 adds `checks=False`, a follow-up runs checks only when its question has an accept line, as at `d675d75`. The parent task's accept line is not re-run.
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_accept_parse tests.test_accept_run tests.test_workspace tests.test_denylist tests.test_checker tests.test_checker_stage tests.test_router_bc tests.test_error_kind -q`
+
+**Notes from Sonnet**
+
+- Read Appendix A of the design document (accept types and functions, parse rules, run rules) and Appendix B before writing tests; the rows depend on them. Read the design sections Accept: parsing and running, Reply contract for legacy calls, Host-accept configuration and Security model for host accept.
+- Line numbers in the rows are from commit `d675d75`; Steps 1 to 3 have moved lines, especially in `router/server.py` and `scripts/doctor.py`. Find code by symbol name.
+- Keep what Steps 1 to 3 added: `Stop` values and `CheckFailed.stop` (`accept_failed` or `checker`), the failure-path columns, `frames` on failures, the `REQUIRED_ARGS` checks, and doctor's `sys.path` insert, `missing programs:` line and client-config output.
+- The new CI workflow runs on `pull_request` to `main` and on `push` to `main` (the run's rule), on windows-latest, macos-latest and ubuntu-latest. Every test you write or change must pass on all three: no hardcoded separators, drive letters or `.venv/Scripts` paths, resolve temporary folders with realpath, and mark an OS-only case with `skipUnless` and a reason. No test may need Docker, a network or a model.
+- Tests must not read the developer's real `.env`, `router/config_overrides.json` or home folder.
+- Do not add a `.env` file or edit one; only `.env.example` changes.
+- Work in this order so a partial run is still useful: tests, `router/config.py` and `router/workspace.py`, `router/checker.py`, `router/server.py` and the other router files, then the workflow, doctor and `.env.example`. If you cannot finish within the limit, set Status to `failed` and list exactly what remains.
+
+**Files you may touch:** `router/config.py`, `router/workspace.py`, `router/checker.py`, `router/server.py`, `router/loop.py`, `scripts/bench_checks.py`, `tests/test_accept_parse.py`, `tests/test_accept_run.py`, `tests/test_workspace.py`, `tests/test_denylist.py`, `tests/test_checker.py`, `tests/test_checker_stage.py`, `tests/test_router_bc.py`, `.github/workflows/tests.yml`, `scripts/doctor.py`, `.env.example`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `the design documents`, `tests/fixtures/tool_surface.json`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_accept_parse tests.test_accept_run tests.test_workspace tests.test_denylist tests.test_checker tests.test_checker_stage tests.test_router_bc tests.test_error_kind -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/config.py`, `router/workspace.py`, `router/checker.py`, `router/server.py`, `router/loop.py`, `scripts/bench_checks.py`, `scripts/doctor.py`, `.env.example`, `.github/workflows/tests.yml`, and the assigned parser, runner, workspace, denylist, checker, stage, and router tests.
+- **Tests written first:** Added parser, runner, workspace, and denylist tests and ran them before implementing those APIs; the run failed on the expected missing symbols. The config override helper was added immediately before that first test run, so that part was not strictly test-first.
+- **Test result after the code:** The focused acceptance suite passed: 89 tests, `OK`.
+- **Acceptance command result:** Passed with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`: `python -m unittest tests.test_accept_parse tests.test_accept_run tests.test_workspace tests.test_denylist tests.test_checker tests.test_checker_stage tests.test_router_bc tests.test_error_kind -q`. `git diff --check` passed.
+- **Departures from the plan:** The assignment's 35-call limit was exceeded. `.github/workflows/tests.yml` was created, but `.github/` is ignored by `.gitignore`. The sandbox denied writing `.git/index` when I tried to make the ignored workflow visible with intent-to-add; no index or commit change was made. Cross-platform CI was not run locally.
+- **Problems or questions for Sonnet:** None.
+
+### Step 3, fix 1 (2026-11-27): done, merged in PR 111
+
 - **Step:** 3, F6 installation and client configuration
 - **Branch:** `impl/step-3`
 - **Kind:** fix 1
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Answer to your question:** the code is in the working tree at `scripts/doctor.py` (uncommitted Step 3 changes are there too). If synaptree does not locate a file or symbol, **read the file directly** with your file tools. That is allowed in this assignment for `scripts/doctor.py`, `README.md`, the test files named below, `router/config.py`, `router/loop.py` and `router/tf-roles.yaml`. Do not stop for a synaptree miss.
 
@@ -49,7 +231,7 @@ Put the new doctor cases in `tests/test_doctor_config.py`. Do not run the full s
 - Tool-call limit: 20.
 - Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `scripts/doctor.py`, `README.md`, `tests/test_doctor_config.py`.
@@ -58,9 +240,6 @@ Put the new doctor cases in `tests/test_doctor_config.py`. Do not run the full s
 - **Acceptance command result:** Passed: 53 tests, `OK`, using the specified focused acceptance command with `PYTHONPATH=.` and `TOKENFRUGAL_OLLAMA_AUTOSTART=0`.
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** None.
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 3, fix 1 (2026-11-27): blocked, synaptree did not locate doctor.py; Sonnet answered it
 

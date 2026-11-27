@@ -385,7 +385,7 @@ def think_extra(role: dict) -> dict:
 
 
 async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
-              tid: str = "") -> tuple[str, list]:
+              tid: str = "", guard=None) -> tuple[str, list]:
     system = SYSTEM.format(role=role["role"], agent=agent, n=TOOLS_PER_STEP)
     if "synaptree" in (role.get("native") or []):
         system += GRAPH_RULE.format(project=SYNAPTREE_PROJECT)
@@ -401,7 +401,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
     STARTED[tid] = 0
     limit = role_timeout(role)
     try:
-        return await asyncio.wait_for(_run(agent, role, msgs, tid), limit or None)
+        return await asyncio.wait_for(_run(agent, role, msgs, tid, guard), limit or None)
     except asyncio.TimeoutError:
         e = LoopError(f"task timed out after {limit:g}s")
         e.msgs = msgs
@@ -411,7 +411,7 @@ async def run(agent: str, role: dict, prompt: str, messages: list | None = None,
         raise
 
 
-async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]:
+async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None) -> tuple[str, list]:
     async with backends(role.get("compose", []), role.get("keep_alive", False)), \
             open_role(role.get("profile"), role.get("native"), role.get("params")) as sess:
         tools = to_openai_tools((await sess.list_tools()).tools, role["tools"])
@@ -540,6 +540,10 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     bad_args = arg_error(a, schemas.get(c.function.name, {}))
                     if bad_args:  # never sent to the server; the model must fix the call
                         out = bad_args
+                    elif guard and c.function.name in ("write_file", "edit_file", "move_file") and any(
+                            guard(a.get(key, "")) for key in (("source", "destination") if c.function.name == "move_file" else ("path",))):
+                        path = next((a.get(key, "") for key in (("source", "destination") if c.function.name == "move_file" else ("path",)) if guard(a.get(key, ""))), "")
+                        out = f"tool error: path is protected: {path}"
                     else:
                         STARTED[tid] = STARTED.get(tid, 0) + 1
                         res = await asyncio.wait_for(sess.call_tool(c.function.name, a), TOOL_TIMEOUT or None)

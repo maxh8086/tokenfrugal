@@ -229,9 +229,11 @@ class VeditExportsResolvedFolder(unittest.TestCase):
         (ws / "Raw").mkdir()
         (ws / "Raw" / "clip.mp4").write_bytes(b"x")
         with mock.patch.dict(os.environ, {"VIDEO_EDITOR_DIR": str(ws)}), \
+             mock.patch.object(v, "ensure_models", return_value=""), \
              mock.patch.object(v.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=0, stdout="", stderr="")
             v.mgen("clip.mp4")
+        self.assertEqual(run.call_args.args[0][:2], ["docker", "compose"])
         self.assertEqual(run.call_args.kwargs["env"]["VIDEO_EDITOR_DIR"], str(ws))
 
 

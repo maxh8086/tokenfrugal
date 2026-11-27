@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+from collections.abc import MutableMapping
 from datetime import date
 from pathlib import Path
 
@@ -24,14 +25,44 @@ _OVERRIDE_ENV = {
     "llm_url": "OPENAI_BASE_URL",
     "temperature": "LOCAL_LLM_TEMPERATURE",
     "max_tokens": "LOCAL_LLM_MAX_TOKENS",
+    "host_accept_paths": "TOKENFRUGAL_HOST_ACCEPT_PATHS",
+    "accept_env_passthrough": "TOKENFRUGAL_ACCEPT_ENV_PASSTHROUGH",
 }
 try:
     _overrides = json.loads((Path(__file__).parent / "config_overrides.json").read_text(encoding="utf-8"))
 except (OSError, ValueError):
     _overrides = {}
-for _k, _env in _OVERRIDE_ENV.items():
-    if _k in _overrides and _env not in _REAL_ENV:
-        os.environ[_env] = str(_overrides[_k])
+def _apply_overrides(overrides: dict, real_env: set, environ: MutableMapping) -> None:
+    for _k, _env in _OVERRIDE_ENV.items():
+        if _k in overrides and _env not in real_env:
+            value = overrides[_k]
+            if isinstance(value, list) and _k in ("host_accept_paths", "accept_env_passthrough"):
+                value = (os.pathsep if _k == "host_accept_paths" else ",").join(map(str, value))
+            environ[_env] = str(value)
+
+
+_apply_overrides(_overrides, _REAL_ENV, os.environ)
+
+
+def _parse_host_accept(raw: str) -> tuple[frozenset[str], list[str]]:
+    paths, warnings = set(), []
+    for value in raw.split(os.pathsep):
+        entry = value.strip()
+        if not entry:
+            continue
+        path = os.path.normcase(os.path.realpath(entry))
+        if os.path.isdir(path):
+            paths.add(path)
+        else:
+            warnings.append(f"host accept path does not exist: {entry.strip()}")
+    return frozenset(paths), warnings
+
+
+HOST_ACCEPT_PATHS, _HOST_ACCEPT_WARNINGS = _parse_host_accept(os.getenv("TOKENFRUGAL_HOST_ACCEPT_PATHS", ""))
+ACCEPT_ENV_PASSTHROUGH = tuple(x.strip() for x in os.getenv("TOKENFRUGAL_ACCEPT_ENV_PASSTHROUGH", "").split(",") if x.strip())
+CONFIG_WARNINGS = list(_HOST_ACCEPT_WARNINGS)
+_accept_venv = os.getenv("TOKENFRUGAL_ACCEPT_VENV", "").strip()
+ACCEPT_VENV = str(Path(_accept_venv).expanduser().resolve()) if _accept_venv else None
 
 # Any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM, a hosted API). Host and port live in .env.
 OLLAMA_URL = os.getenv("TOKENFRUGAL_LLM_URL") or os.getenv("OLLAMA_URL", "http://localhost:11434/v1")
