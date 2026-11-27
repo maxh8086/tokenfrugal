@@ -1,0 +1,23 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Use stored task trails to classify connection errors and verify that roles called their required tools. Add offline helper and run tests.",
+  "requirements": [
+    "tid_of(r) returns the ten hex digits in an initial bracketed task id, otherwise None. strip_tid removes this prefix and following whitespace.",
+    "trail_of(r) reads router.store.get(tid)['trail']; return [] for absent id, missing row or errors. trail_tools(trail) lists name values from ev='tool' events in order.",
+    "trail_conn_error(trail) detects ev='tool_error' with a CONN_MARKERS substring in error. For a synaptree case mark it infra even on a successful reply. Preserve existing failed-run checks.",
+    "Record trail_tools on each dispatched repeat. REQUIRED_TOOLS maps role_tracker to plan_status, role_designer to high_level_overview and role_browser to None. Keep existing case tuples.",
+    "For a nonempty trail and otherwise passing case, a missing required tool clears verified with note 'tool {name} not called'. An empty trail leaves verification alone."
+  ],
+  "context": "Stored tool events have ev, name and args. Tool errors have ev, name and error. CONN_MARKERS includes 'Connection closed'. Healthy containers with ordinary tool errors keep their usual status. Exercise run(n,timed,ok,failure_mode,stats), BENCH_CASES, dispatch_task and the existing per-case runs records as in RunCase.",
+  "files": [
+    {
+      "path": "scripts/bench_real.py",
+      "new": false
+    },
+    {
+      "path": "tests/test_bench_status.py",
+      "new": false
+    }
+  ]
+}

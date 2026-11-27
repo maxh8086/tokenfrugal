@@ -1,0 +1,27 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Isolate benchmark repeats, verify the local Synaptree UI, tighten README summaries and bound role dispatches. Add offline status tests.",
+  "requirements": [
+    "Add role_browser to SYNAPTREE_CASES, document its UI dependency and set REQUIRED_TOOLS['role_browser']='navigate_page'. Leave role_research unchanged.",
+    "Browser prompt uses navigate_page on http://host.docker.internal:8787/ui/, takes a snapshot and requests the page title. Require both synaptree and trace case-insensitively.",
+    "role_data overwrites calc.py and stack.py with their base seed content. Before seeding every repeat remove every child of SCRATCH, including directories. Keep SCRATCH and its surroundings.",
+    "_readme_ok needs mcp plus local, ollama, router or llm, case-insensitively. Allow at most 1200 characters and six sentences, splitting on [.!?] followed by whitespace or end.",
+    "Wrap bench_roles dispatch in asyncio.wait_for, timeout float(BENCH_CASE_TIMEOUT), default 600. Record TimeoutError failures. Require 20 characters after task-prefix removal for role success."
+  ],
+  "context": "Use existing cases() tuples and checker results. Introduce REQUIRED_TOOLS if absent. Keep ok() unchanged for other callers. Test README, browser membership and required tool, and stray file cleanup. Update the SYNAPTREE_CASES comment.",
+  "files": [
+    {
+      "path": "scripts/bench_real.py",
+      "new": false
+    },
+    {
+      "path": "scripts/bench.py",
+      "new": false
+    },
+    {
+      "path": "tests/test_bench_status.py",
+      "new": false
+    }
+  ]
+}

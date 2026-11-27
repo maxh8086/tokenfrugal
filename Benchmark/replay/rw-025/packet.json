@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Update the fake API key used in the role_security benchmark fixture and its answer checker.",
+  "requirements": [
+    "In the role_security seed, set secret.py's API_KEY to fake-key-7d41c9e0b2a6. Remove the former dummy value AKIAFAKEFAKEFAKE1234.",
+    "Update the existing case-insensitive matcher to require the new fake key and the existing dummy password hunter2. A reply with the old key and password fails."
+  ],
+  "context": "Preserve the base cases() tuple shape (id, role, setup, prompt, check), scratch setup and (bool, note) result.",
+  "files": [
+    {
+      "path": "scripts/bench_real.py",
+      "new": false
+    }
+  ]
+}

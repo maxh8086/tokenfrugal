@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Add an opt-in five-case thinker benchmark using the existing realworld runner and CSV reporting. Preserve comparability of the default suite.",
+  "requirements": [
+    "hard_cases() returns (id, agent, setup, task, check) tuples. Use testing-code-reviewer, engineering-sre or engineering-technical-writer. Setups seed scratch files. Checks grade reply text offline.",
+    "Select only the hard suite in run() when BENCH_SUITE=hard. Otherwise use the base suite. Preserve BENCH_CASES filtering, CSV columns and ranking. Make REALWORLD_CASES 5 for hard, 16 otherwise.",
+    "hard_multifile_bug spans three Python files (~40 lines each); require root-cause file and function. hard_two_vulns seeds ~60 lines with two distinct vulnerabilities and requires naming both.",
+    "hard_ambiguous_trace seeds ~50 lines with a red herring and a KeyError; require the missing key. hard_long_summary seeds ~250 lines with three distinct numeric facts mid-document; require all three.",
+    "hard_compare_functions contrasts two similar functions, requiring the correct name and reason. Use tolerant case-insensitive checks. Add offline tests for correct and empty/wrong answers for all five."
+  ],
+  "context": "Default cases in order: write_function fix_bug write_tests rename_across_files find_symbol review_sqli debug_trace summarize_readme role_analyzer role_data role_docs role_security role_designer role_browser role_tracker role_research. Keep the existing (bool, note) checker results. All five hard cases must reject an empty answer. Support the existing run_benchmark.py invocation with the hard suite environment and a separate CSV path.",
+  "accept": [
+    "python",
+    "-m",
+    "unittest",
+    "tests.test_bench_hard",
+    "-q"
+  ],
+  "files": [
+    {
+      "path": "scripts/bench_real.py",
+      "new": false
+    },
+    {
+      "path": "scripts/bench.py",
+      "new": false
+    },
+    {
+      "path": "tests/test_bench_hard.py",
+      "new": true
+    }
+  ]
+}

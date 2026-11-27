@@ -9,13 +9,395 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8h, corpus README table and skip records
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** The 20 corpus folders under `Benchmark/replay/` are final. Add the corpus record to `Benchmark/replay/README.md`. Append only: **do not change, reorder or reword any existing line, and never change the frozen rules.** Check the README's existing structure and the Step 8h text in `docs/designs/subagent-runtime-design.md` first.
+
+**1. Table**, one row per id, in id order (fb-001, fb-002, fb-009, rw-010 to rw-026): id, repo, base sha (full or at least 12 characters), agent, task_type, goal (one short line), files, what `check.py` asserts (one short line, true to the final `check.py`). Take every value from that folder's `task.toml`, `packet.json` and `check.py`.
+
+**2. Selection and substitutions** (state as facts, plainly):
+- N = 20. Decided on 2026-11-27, before any S2 result existed.
+- fb-001, fb-002 and fb-009 are rebuilt at base `b6a9a89`, because their files did not exist at the original base. Their packets and checks come from the delegated request texts.
+- FB-003 to FB-008 are replaced, because no commit holds the code they changed before their work (FB-007 and FB-008 also needed Docker): FB-003 by rw-021, FB-004 by rw-022, FB-005 by rw-023, FB-006 by rw-024, FB-007 by rw-025, FB-008 by rw-026.
+- rw-010 to rw-026 are the first eligible requests in date order, with subagent edits counted; the last is dated 2026-10-18T12:11Z. Later entries need no skip record.
+- rw-010 is the single task whose accept command passes before any change (97 of 97 tests, confirmed in a worktree of its base).
+- Most rw tasks have no accept command, so false-success detection rests on `check.py`. The FB half no longer covers failure classes A, B and D.
+- Known gaps: edits made through local-model dispatches appear in no transcript; 8 subagent edits are attributed by time only.
+- Validation: every task's `check.py` fails on its untouched base and passes on a reference implementation written from its packet. Checks for rw-012, rw-014 and rw-021 were loosened after independent validation, because they demanded something the request does not state.
+
+**3. Skip records**, grouped by the README's own rule ids. The numbers are indices into the candidate list mined from the session transcripts (that list is local and not committed; say so). Indices not named in the original review were classed from file lists alone (UI only: R8; handoff only: R4; documentation only: R7).
+- R4: approvals and picks 7-9, 23, 32, 37, 45, 47, 73, 142, 149, 213-216, 253, 260-261, 267 (twin of 266); questions and reviews 16-20, 41, 66, 129, 133-135, 143, 145-146; git and run operations 42, 49, 55, 255, 258-259; handoff and plan notes 25, 54, 68-69, 72, 75-82, 120, 247-248, 254-257, 268-275; files outside the repository 12-15, 52, 103, 144, 250; re-dispatch of a chosen spec 70-71, 84, 87, 102, 137, 140, 148; every second copy, within 155-299, of a session already counted. Also: user 10-10T18:52, 10-11T10:50, 10-15T16:40, 10-16T05:13, 06:17, 07:11, 07:25, 10-16T14:05, 10-18T12:09; spec 10-12T06:50; second-session duplicate specs 10-16T17:55 and 10-18T12:11.
+- R5: 118, 133, 142, 143, 249 (more than 3 files once subagent edits are counted). Where an index appears under both R4 and R5, list it under R5 only.
+- R6: 93-95, 113-117, 119, 121-128, 130-131, 141, 251; specs 10-11T13:10 and 13:12 (gitignored `bench/` outputs); spec 10-12T06:51 (`check_persona` absent at `f335f78`); user 10-14T14:51 (same as 113); spec 10-14T19:21 (its acceptance test absent at `0f356f9`); spec 10-15T04:10 (`profile_sync` not at the base); user 10-15T05:20 (compose not at the base).
+- R7: 2, 5-6, 21-22, 28, 30, 34-36, 38-40, 43-44, 46, 85, 96-98, 100, 112, 150-158, 209, 252, 278-299; user 10-16T15:14 and spec 15:17 (documentation); user 10-16T17:54 and spec 17:55 (data rows in a new CSV).
+- R8: 0-1, 3-4, 10-11, 24, 26-27, 29, 33, 51, 53, 56-65, 74, 89-92, 99, 105-111, 159-208, 210-212, 217-246, 262-265, 276-277, 296-297; users 10-12T09:10 and 12:32; user 10-14T16:36 with spec 16:37; user 10-14T19:17 with spec 19:18.
+- R9: none.
+
+If a stated rule id does not match what the README's frozen rules call it, keep the README's rules unchanged and report the mismatch in Feedback. If an index appears under two other rules (for example 142 and 143, or 278-299), keep one entry (R5 over R4; otherwise the first listed above) and report it.
+
+**Checks:** `.venv/Scripts/python.exe -m scripts.replay --check-corpus` (20 tasks, exit 0); `git diff Benchmark/replay/README.md` shows only added lines; the table has 20 rows.
+
+**Files you may touch:** `Benchmark/replay/README.md`, and the Feedback block and Status line of this file. No test is needed for this documentation task.
+
+**Tool-call limit:** 25. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `Benchmark/replay/README.md` and this handoff's current Status and Feedback.
+- **Tests written first:** None required for this documentation assignment.
+- **Test result after the code:** Verified 20 corpus rows. The README diff adds 79 lines with zero deletions. `git diff --check -- Benchmark/replay/README.md` passed.
+- **Acceptance command result:** `.venv/Scripts/python.exe -m scripts.replay --check-corpus` printed `tasks: 20` and exited 0.
+- **Departures from the plan:** Applied the requested precedence. Indices 133, 142 and 143 appear under R5 only, and 296–297 under R7 only. Index 255 appears once under R4 git/run operations. The assignment identifies duplicate sessions within 155–299 collectively, so the README records that group as supplied.
+- **Problems or questions for Sonnet:** The supplied R6 reasons concern missing inputs or outputs at the base, while frozen R6 specifies which commit to select and its reachability. The documentation/data-only R7 and UI-only R8 labels are review classifications. Frozen R7 requires observable behaviour and frozen R8 requires portable offline execution, so file lists alone cannot establish either exclusion.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8h validation
+
+- **Step:** 8h, corpus validation (independent check of packet against check.py)
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** Prove that a correct implementation written from `packet.json` alone passes `check.py`, and repair the tasks where it does not. All 20 corpus folders exist under `Benchmark/replay/`; you validate these eleven, in this order: `rw-010`, `rw-011`, `rw-012`, `rw-013`, `rw-014`, `rw-015`, `rw-016`, `rw-021`, `fb-001`, `fb-002`, `fb-009`.
+
+**For each task, in order:**
+1. Extract the base commit from `task.toml` into a fresh system temporary folder (`git archive <base>`; a temporary worktree is fine if allowed).
+2. Read `packet.json` and the base files only. **Do not open `check.py` yet.** Write the implementation a careful developer would write from the packet, using ordinary choices where the packet leaves them open (message wording, private names, structure). Do not tune it to a check.
+3. Run `check.py` as a black box with the copy as current directory (repo venv `.venv/Scripts/python.exe`). Run the packet's `accept` command too where there is one.
+4. If it exits 0, record "pass" and go on. If it fails, only now open `check.py` and the request text, and decide which is true: (a) your implementation broke a statement of the packet: fix the implementation; (b) the check relies on something the request or the base repository states and the packet omits: add it to the packet; (c) the check demands something neither the request nor the base states (a particular wording, argument type, private structure, call order): loosen the check so any correct implementation passes. Re-run until exit 0.
+5. After any change to a check, confirm it still exits non-zero on the untouched base.
+
+**Request text:** `cands2.json` (fb tasks: `fbspecs.txt`) in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`, entry matching the task's request (see its packet). Read only the matching entry's `text`; open nothing else in that folder.
+
+**Sight rule:** never read a later commit, a diff, the History section of this file, or the main checkout's current version of any file a task changes. Do not start a task before the previous one is finished.
+
+**Known points to examine:** rw-012 (the check may reject a reasonable argv or argument parser), rw-013 (confirm the packet defines every key and default of `ollama_env`), rw-014 (the check passes label dicts to `score_predictions`: the packet must define the type, or the check must accept what the request allows), rw-021 (a literal word such as "warning" is required only if the packet and request require that word).
+
+**Packet limits stay:** goal at most 400 characters, at most 5 requirements of 200, at most 3 files, context at most 1500; the packet never describes `check.py`; no secret or personal data. `check.py` rules stay: observable behaviour only, offline, temporary folders only, portable across Windows, macOS and Linux, `TOKENFRUGAL_*` removed from child environments.
+
+Finally run `.venv/Scripts/python.exe -m scripts.replay --check-corpus` (20 tasks expected). In Feedback give one line per task: first-run result, and for each change the category (b or c) and what changed.
+
+**Files you may touch:** `packet.json` and `check.py` of the eleven tasks, and the Feedback block and Status line of this file. Your reference implementations stay outside the repository and are deleted.
+
+**Tool-call limit:** 70. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `Benchmark/replay/{rw-012,rw-014,rw-021}/check.py` and this handoff. No packets needed edits.
+- **Tests written first:** Used the supplied checks as black boxes against independent implementations in temporary base archives. Added the packet-requested unit tests to those copies.
+- **Test result after the code:** All eleven checks exited 0. Each revised check also exited 1 on its untouched base.
+  - rw-010 — first check passed. Full acceptance passed all 98 tests after initializing Git in the archive and isolating the fixture Git configuration.
+  - rw-011 — first check passed.
+  - rw-012 — first check failed. Category (c). Supplied a realistic header and data row for `ollama list` and checked benchmark option values independently of their order or use of `=`. CLI help passed.
+  - rw-013 — first check failed on an indentation error in the reference implementation. Category (a). Fixed the temporary copy. The packet defines all five Ollama keys, the missing-value default and the integer timeout with its 150-second default. Check and unittest passed.
+  - rw-014 — first check failed on dictionary labels. Category (c). The request specifies alignment but leaves the scorer's label representation open. The check accepts slug strings or labelled rows with the same required scores. Validation fixtures include task text. CLI help passed.
+  - rw-015 — first check passed.
+  - rw-016 — first check and CLI help passed.
+  - rw-021 — first check failed on the literal word “warning”. Category (c). Checked the diagnostic after the benchmark for both timestamps, affected roles and the recovery option. Exercised the state helper in the loaded script and tested inspect failure through preflight.
+  - fb-001 — first check and unittest passed.
+  - fb-002 — first check and compilation passed.
+  - fb-009 — first check and unittest passed.
+- **Acceptance command result:** All eight packet acceptance commands passed. The other three packets have no acceptance command. `.venv/Scripts/python.exe -m scripts.replay --check-corpus` reported `tasks: 20`.
+- **Departures from the plan:** The rw-010 acceptance suite needed Git metadata and isolated configuration in its temporary copy. Removed all temporary reference copies after verification.
+- **Problems or questions for Sonnet:** None.
+
+### Step 8h batch 4
+
+- **Step:** 8h, corpus build, batch 4 of 4 (rw-018 again, rw-022 to rw-026)
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** Build six replay corpus tasks. The folders `rw-017`, `rw-019` and `rw-020` under `Benchmark/replay/` show the format; do not change any existing folder. Read the frozen rules in `Benchmark/replay/README.md` (do not edit it), `docs/designs/subagent-runtime/packet.schema.json`, and how `scripts/replay.py` loads a task and runs `check.py`.
+
+rw-018 was removed because its check could not be certified as written without sight of the solution. Build it from nothing: do not read the History section of this file, any other task's files about it, or `git show` / the current working copy of `Benchmark/script/`.
+
+**Order and sight rule:** finish the tasks strictly in the table order (write `packet.json` and `check.py` of one task before you read anything for the next). A later base contains earlier solutions, so never read a file at a later base, in the main checkout, or at any other commit before the check that depends on it is written. The files named in the table must be read only at that task's base (`git show <base>:<path>` or an extracted copy).
+
+**Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
+
+**Request source:** the request text only, in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`, found by timestamp and session (for rw-022 request number 147, for rw-025 number 266). Prefer the delegated spec entry when the timestamp matches more than one. Read only that entry's `text`; open no transcript.
+
+**The packet must carry the whole contract.** Every name, signature, flag, key, data shape, message word and error behaviour that `check.py` relies on must be stated in the packet (and come from the request or the base repository). A correct implementation written from `packet.json` alone must pass `check.py`. No secret and no personal data in any file (rw-025 uses obviously fake key values).
+
+**Rules for `check.py`:** write it from the request and the repository at the base commit only; never open a later commit, a diff, the finished file or a session reply. Observable behaviour only, never source or diff text; assert only what the request states (drop a table assertion the request does not support and say so); exit 0 only when done; run with the repo venv, current directory is the task worktree (put it on `sys.path`); offline (patch `subprocess`, `urlopen`, sockets); portable across Windows, macOS and Linux; temporary folders only, restore any repository file it changes; remove `TOKENFRUGAL_*` variables from the environment and any child. Scripts that parse arguments at import time: extract functions with `ast`, or run them with `runpy` and fakes. `run_benchmark.py` parses arguments at import. If a task cannot be verified offline, skip it, do not build its folder, and say why.
+
+| id | request | base | packet files | accept | goal | check.py asserts |
+| --- | --- | --- | --- | --- | --- | --- |
+| rw-018 | 2026-10-15T16:40, e52244d1 | d428661 | Benchmark/script/modelinfo.py, Benchmark/script/run_benchmark.py, tests/test_modelinfo.py | python -m unittest tests.test_modelinfo -q | model and VRAM information columns | `info()` with `urlopen` faked: parsing, the `/v1` strip, ps/tags fallback, blanks on error; META gains the names after `tokens_out_per_run` (read with ast) |
+| rw-022 | 2026-10-16T14:06, 34301022 | ab41db0 | scripts/bench_real.py | none | strip the task-id prefix and tighten three checkers | `strip_tid`, `_all_has`, `_debug_ok`, the security and debug cases, the `c_tests` count rule |
+| rw-023 | 2026-10-16T14:20, 34301022 | ab41db0 | scripts/bench_real.py, tests/test_bench_status.py | none | task-id and trail helpers backed by `router.store`; connection-error test for the trail; narrower container-failure condition | helper names; with the store faked or temporary, each helper's return for a known and an unknown task; a connection-closed trail is classed as a connection error; a healthy container is not marked bad |
+| rw-024 | 2026-10-16T14:36, 34301022 | ab41db0 | the 3 existing files the request names | none | role_browser case target, synaptree case set, required-tools table, fixture seeding, scratch cleanup, stricter README check | set membership of named cases; required tools per case; the README check rejects the old loose positive and accepts a real one; the scratch folder is gone after a faked case |
+| rw-025 | 2026-10-17T04:00, 58fe2423 | 16203d9 | scripts/bench_real.py | none | replace the security fixture key value and its matcher | the seeded fixture holds the new fake value, not the old; the matcher accepts the new and rejects the old |
+| rw-026 | 2026-10-18T12:11, 58fe2423 | cc77157 | scripts/bench_real.py, scripts/bench.py, tests/test_bench_hard.py | python -m unittest tests.test_bench_hard -q | opt-in hard suite selected by environment variable; default unchanged | default case list identical to the base; the variable set to hard gives only the hard cases; an unknown value behaves as the request states |
+
+The `accept` string in `packet.json` is written exactly as in the table (plain `python`). When you run it yourself, use `.venv/Scripts/python.exe`.
+
+**Verify** each task in a temporary copy of its base outside the repository (a temporary worktree; if refused, `git archive <base>` extracted into a system temporary folder): `check.py` exits non-zero and, where there is an accept, the accept fails. Then prove each check can pass: write a small reference implementation from `packet.json` alone in that copy, run `check.py` (it must exit 0), and delete the copy. If your reference needs something the packet does not say, add it to the packet. Run `.venv/Scripts/python.exe -m scripts.replay --check-corpus` (20 tasks expected, fewer only for a recorded skip).
+
+**Files you may touch:** the folders `rw-018` and `rw-022` to `rw-026`, and the Feedback block and Status line of this file.
+
+**Tool-call limit:** 60. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** Added task.toml, packet.json and check.py under Benchmark/replay/rw-018 and rw-022 through rw-026. Updated this assignment's status and feedback.
+- **Tests written first:** Wrote each check in table order. All six exited 1 on their specified historical bases before reference changes.
+- **Test result after the code:** All six checks exited 0 with temporary reference implementations in separate extracted base archives. The temporary copies were removed.
+- **Acceptance command result:** The rw-018 and rw-026 unittest commands each exited 1 on the untouched base because their requested test modules did not exist. The final repo-venv scripts.replay --check-corpus run exited 0 and reported 20 tasks.
+- **Departures from the plan:** For rw-024 the historical request explicitly keeps SCRATCH. The check verifies that its contents are removed before each seed, that SCRATCH survives and that a sibling file is preserved. Only role_browser's required tool is specified by that request.
+- **Problems or questions for Sonnet:** None. No skips.
+
+### Step 8h batch 3 remainder
+
+- **Step:** 8h, corpus build, batch 3 remainder (rw-018, rw-020, rw-021)
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** blocked
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** Build three replay corpus tasks. The existing folders under `Benchmark/replay/` (see rw-017 and rw-019) show the format; keep them and do not change them. Read the frozen rules in `Benchmark/replay/README.md` (do not edit it), `docs/designs/subagent-runtime/packet.schema.json`, and how `scripts/replay.py` loads a task and runs `check.py`.
+
+**Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
+
+**Request source:** the request text only, found by timestamp and session in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Prefer the delegated spec entry when the timestamp matches more than one (for rw-018 that is the 16:40:16 entry). Read only that entry's `text`; open no transcript.
+
+**The packet must carry the whole contract.** Every name, signature, flag, key, data shape and error behaviour that `check.py` relies on must be stated in the packet (and come from the request or the base repository). A correct implementation written from `packet.json` alone must pass `check.py`.
+
+**Rules for `check.py`:** write it from the request and the repository at the base commit only; never open a later commit, a diff, the finished file or a session reply, at any point. Observable behaviour only, never source or diff text; assert only what the request states (drop a table assertion the request does not support and say so); exit 0 only when done; run with the repo venv, current directory is the task worktree (put it on `sys.path`); offline (patch `subprocess`, `urlopen`, sockets); portable across Windows, macOS and Linux; temporary folders only, restore any repository file it changes; remove `TOKENFRUGAL_*` variables from the environment and any child. Scripts that parse arguments at import time: extract functions with `ast`, or run them with `runpy` and fakes.
+
+| id | request | base | packet files | accept | goal | check.py asserts |
+| --- | --- | --- | --- | --- | --- | --- |
+| rw-018 | 2026-10-15T16:40, e52244d1 | d428661 | Benchmark/script/modelinfo.py, Benchmark/script/run_benchmark.py, tests/test_modelinfo.py | python -m unittest tests.test_modelinfo -q | model and VRAM information columns | `info()` with `urlopen` faked: parsing, the `/v1` strip, ps/tags fallback, blanks on error; META gains the names after `tokens_out_per_run` (read with ast) |
+| rw-020 | 2026-10-16T05:29, e52244d1 | 435818f | scripts/bench_csv.py, scripts/bench_consolidate.py | none | fix the summarize_readme labels and agent mapping | the imported layout and mapping values; other mappings unchanged |
+| rw-021 | 2026-10-16T06:18, e52244d1 | 435818f | Benchmark/script/run_benchmark.py | none | synaptree container preflight and before/after guard | functions extracted with ast, `run_cmd` and socket faked: the state tuple, the two new checks, the guard on a restart |
+
+The `accept` string in `packet.json` is written exactly as in the table (plain `python`, like the other tasks). When you run it yourself, use `.venv/Scripts/python.exe`.
+
+**Verify** each task in a temporary copy of its base outside the repository (a temporary worktree; if creating one is refused, extract `git archive <base>` into a system temporary folder): `check.py` exits non-zero and, where there is an accept, the accept fails. Then prove each check can pass: in that copy write a small reference implementation from `packet.json` alone, run `check.py` (it must exit 0), and delete the copy. If your reference needs something the packet does not say, add it to the packet. Run `.venv/Scripts/python.exe -m scripts.replay --check-corpus` (15 tasks expected).
+
+**Files you may touch:** the folders `rw-018`, `rw-020`, `rw-021`, and the Feedback block and Status line of this file.
+
+**Tool-call limit:** 40. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** blocked on rw-018 provenance. All three tasks were built and verified. rw-020 and rw-021 are complete.
+- **Files changed:** Added task.toml, packet.json and check.py under Benchmark/replay/rw-018, rw-020 and rw-021. Updated the current assignment status and this Feedback block.
+- **Tests written first:** Wrote the three offline checks before the temporary reference implementations. The checks exercise Ollama responses and CSV metadata, both reporting mappings, and Synaptree preflight and run-guard behavior.
+- **Test result after the code:** Each check exited 1 on its assigned base and 0 on its reference implementation. The rw-021 scenarios included a failed container, unreachable database, restarted container, stopped container and stable run. Temporary base copies were removed.
+- **Acceptance command result:** With the repo venv, rw-018's unittest command exited 1 at d428661 and 0 on the reference. The other two packets omit accept as assigned. The corpus validator exited 0 and reported 15 tasks.
+- **Departures from the plan:** Used the permitted git archive fallback after Git refused worktree registration. While reading the rw-021 base at 435818f, I displayed the later rw-018 CSV integration in the same script before writing the rw-018 check. Its requirements are in the delegated request, but I cannot certify blind authorship of that check.
+- **Problems or questions for Sonnet:** Reassign rw-018 for independent check authorship using only its request and d428661. The rw-020 and rw-021 checks need no provenance follow-up.
+
+### Step 8h batch 3
+
+- **Step:** 8h, corpus build, batch 3 of 4 (rw-017 to rw-021)
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** blocked (rw-017 and rw-019 done; rw-018, rw-020, rw-021 not built, see Feedback)
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** Build five more replay corpus tasks. The existing folders under `Benchmark/replay/` show the format; keep them. Read the frozen rules in `Benchmark/replay/README.md` (do not edit it), `docs/designs/subagent-runtime/packet.schema.json`, and how `scripts/replay.py` loads a task and runs `check.py`.
+
+**Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
+
+**Request source:** the request text only, found by timestamp and session in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Prefer the delegated spec entry when the timestamp matches more than one. Read only that entry's `text`; open no transcript.
+
+**The packet must carry the whole contract.** Every name, signature, flag, key, data shape and error behaviour that `check.py` relies on must be stated in the packet (and come from the request or the base repository). A correct implementation written from `packet.json` alone must pass `check.py`.
+
+**Rules for `check.py`:** write it from the request and the repository at the base commit only; never open a later commit, a diff, the finished file or a session reply, at any point. No probe against later commits in this batch. Observable behaviour only, never source or diff text; assert only what the request states (drop a table assertion the request does not support and say so); exit 0 only when done; repo venv, current directory is the task worktree (put it on `sys.path`); offline (patch `subprocess`, `urlopen`, sockets); portable across Windows, macOS and Linux; temporary folders only, restore any repository file it changes; remove `TOKENFRUGAL_*` variables from the environment and any child. Scripts that parse arguments at import time: extract functions with `ast`, or run them with `runpy` and fakes.
+
+| id | request | base | packet files | accept | goal | check.py asserts |
+| --- | --- | --- | --- | --- | --- | --- |
+| rw-017 | 2026-10-12T12:27, 1471e18d | f335f78 | gateway/config.py (after line 13) | none | optional `config_overrides.json` environment defaults | in a child process: an unset key gets set; a preset key is kept; a missing or invalid file is ignored |
+| rw-018 | 2026-10-15T16:40, e52244d1 | d428661 | Benchmark/script/modelinfo.py, Benchmark/script/run_benchmark.py, tests/test_modelinfo.py | python -m unittest tests.test_modelinfo -q | model and VRAM information columns | `info()` with `urlopen` faked: parsing, the `/v1` strip, ps/tags fallback, blanks on error; META gains the names after `tokens_out_per_run` (read with ast) |
+| rw-019 | 2026-10-16T05:14, e52244d1 | 435818f | scripts/bench_real.py (line 24) | none | stricter README checker; the summarize case moves to the docs role | `_readme_ok` truth table; the summarize case uses the new agent and checker |
+| rw-020 | 2026-10-16T05:29, e52244d1 | 435818f | scripts/bench_csv.py, scripts/bench_consolidate.py | none | fix the summarize_readme labels and agent mapping | the imported layout and mapping values; other mappings unchanged |
+| rw-021 | 2026-10-16T06:18, e52244d1 | 435818f | Benchmark/script/run_benchmark.py | none | synaptree container preflight and before/after guard | functions extracted with ast, `run_cmd` and socket faked: the state tuple, the two new checks, the guard on a restart |
+
+**Verify** each task in a temporary worktree of its base under the scratchpad: `check.py` exits non-zero and, where there is an accept, the accept fails. Then prove each check can pass: in that worktree write a small reference implementation from `packet.json` alone, run `check.py` (it must exit 0), and delete the worktree. If your reference needs something the packet does not say, add it to the packet. Run `scripts.replay --check-corpus` (15 tasks expected).
+
+**Files you may touch:** the folders `rw-017` to `rw-021`, and the Feedback block and Status line of this file.
+
+**Tool-call limit:** 40. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** blocked. rw-017 and rw-019 are built and verified. rw-018, rw-020 and rw-021 are not built: the 40-call limit was reached first.
+- **Files changed:** Benchmark/replay/rw-017/ (task.toml, packet.json, check.py) and Benchmark/replay/rw-019/ (task.toml, packet.json, check.py). This file: the Status line and this Feedback block only. No other repository file changed; no commit, push or install. Temporary worktrees at base commits f335f78, 435818f (and d428661 for rw-018, unused) were created under the scratchpad and removed.
+- **Tests written first:** check.py was written before any reference. rw-017 at f335f78: exit 1, "valid file: RW017_NEW is None, expected 'new-value'". rw-019 at 435818f: exit 1, "module-level def _readme_ok not found exactly once".
+- **Test result after the code:** Reference implementations, written only in the scratchpad worktrees: rw-017 (new block after line 13 of gateway/config.py) check exit 0; rw-019 (_readme_ok after _has, summarize tuple uses engineering-technical-writer and the bare name _readme_ok) check exit 0. Neither reference was added to the packets; packets were not changed after the reference run.
+- **Acceptance command result:** None for rw-017 and rw-019 (accept omitted, as the table says "none"). rw-018 (accept `python -m unittest tests.test_modelinfo -q`) not built.
+- **Departures from the plan:** (1) Only 2 of 5 tasks built; rw-018, rw-020, rw-021 have no folder, so `--check-corpus` reports 12 tasks, rc 0, not 15. (2) rw-017: the override file is read from ROOT / "gateway" / "config_overrides.json" (the literal path in the request); check.py copies gateway/config.py into a temp package and sets MCP_ENV_FILE to an absent path, so the repository is not touched. The request's "real environment" is tested as the process environment only. A non-object JSON case is not asserted. (3) rw-019: check.py asserts the 14-sample truth table and the 100-character truncation; the summarize case is checked by AST (agent string and bare checker name), not by running cases().
+- **Problems or questions for Sonnet:** (a) rw-018: the request text at 16:40 has a user entry at 16:40:09 and a spec entry at 16:40:16; I used the spec entry per the rule. Its accept is `python -m unittest ...` with plain python; I would run the venv python instead, so please confirm. (b) Status of the Current assignment: set to blocked as well. (c) Next: rw-018, rw-020 and rw-021 need a new batch, or a follow-up with more budget. Nothing of mine is running.
+
+### Step 8h batch 2
+
+- **Step:** 8h, corpus build, batch 2 of 4 (rw-012 to rw-016)
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** Build five more replay corpus tasks. The earlier folders under `Benchmark/replay/` show the format; keep them. Read the frozen rules in `Benchmark/replay/README.md` (do not edit it), `docs/designs/subagent-runtime/packet.schema.json`, and how `scripts/replay.py` loads a task and runs `check.py`.
+
+**Folder per task:** `task.toml` (`repo = "tokenfrugal"`, full `base_commit` sha, `agent = "coding-l2"`, `task_type = "code"`), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files with `new` true exactly when the file is absent at the base, context at most 1500; omit `accept` when "none"), `check.py`.
+
+**Request source:** the request text only, found by timestamp and session in `cands2.json` in `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/`. Read only that entry's `text`; open no transcript. The packet gives the model the contract of the request (names, signatures, flags, keys, error behaviour), restated in your own words with exact identifiers copied; it does not describe `check.py`. No secret or personal data.
+
+**Rules for `check.py`:** write it from the request and the repository at the base commit only; never open a later commit, a diff, the finished file or a session reply while writing. Observable behaviour only, never source or diff text; assert only what the request states (drop a table assertion the request does not support and say so); exit 0 only when done; repo venv, current directory is the task worktree (put it on `sys.path`); offline (patch `subprocess`, `urlopen`, sockets); portable across Windows, macOS and Linux; temporary folders only, and restore any repository file it changes; remove `TOKENFRUGAL_*` variables from the environment and any child.
+
+All five have base `f335f78`.
+
+| id | request | packet files | accept | goal | check.py asserts |
+| --- | --- | --- | --- | --- | --- |
+| rw-012 | 2026-10-11T10:42, d459c276 | scripts/bench_model.py | python scripts/bench_model.py --help | CLI wrapper that runs the bench for one model tag | `--help` exits 0; with subprocess patched: model environment variables and output folder set, argv tail is `scripts/bench.py --n --only --tag`, the child's exit code is returned; the optional GGUF import is skipped when the tag is already listed (do not assert the interpreter path) |
+| rw-013 | 2026-10-12T04:07, d0ab3147 | scripts/bench.py (line 298), tests/test_bench_env.py | python -m unittest tests.test_bench_env -q | record the Ollama environment and task timeout in each run's JSON and markdown | `ollama_env()` has the 5 keys plus integer `task_timeout_s` (150 with the variable cleared); missing keys map to "unset"; no other variable is read |
+| rw-014 | 2026-10-12T06:21, 1471e18d | scripts/persona_routing_eval.py | python scripts/persona_routing_eval.py --help | offline persona-routing evaluator | the six functions on fixtures: slug union, keyword routing with ties and None, label validation, scores, JSONL load; `main` returns 2 on bad labels and 0 otherwise |
+| rw-015 | 2026-10-12T06:49, 1471e18d | gateway/config.py | none | `check_persona(slug, cfg)` | known slugs from all four sources return ""; an unknown slug returns the exact error text; empty cfg is safe |
+| rw-016 | 2026-10-12T12:09, 1471e18d | scripts/bench_append.py | python scripts/bench_append.py --help | append a CSV result row into the model-comparison table | `--help` exits 0; dry run prints the escaped row and writes nothing; a real run inserts after the table's last row only; a duplicate tag and date exits 1; any repository file is restored |
+
+**Also (from the review of fix 1):** in `Benchmark/replay/fb-002/packet.json`, `scripts/story_film.py` must be `"new": true`, because it is absent at that task's base.
+
+**Verify** each new task in a temporary worktree of `f335f78` under the scratchpad (check fails; accept fails), then, only after all five checks are written, probe each once at the first main commit after the request that contains the change (report pass or fail; change a check only where the request shows it wrong). Remove the worktrees. Run `scripts.replay --check-corpus` (10 tasks expected).
+
+**Files you may touch:** the folders `rw-012` to `rw-016`, `fb-002/packet.json`, and the Feedback block and Status line of this file.
+
+**Tool-call limit:** 35. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done (executed by Haiku, Codex at its usage limit; corpus and checks written, probes run, no commit)
+- **Files changed:** Benchmark/replay/rw-012, rw-013, rw-014, rw-015, rw-016 (task.toml, packet.json, check.py each); Benchmark/replay/fb-002/packet.json (scripts/story_film.py "new": true)
+- **Tests written first:** check.py written from the request text only, before any probe; no later commit opened.
+- **Test result after the code:** not applicable (no code written). Base f335f78, checks: rw-012 FAIL (--help exit 2), rw-013 FAIL (no ollama_env), rw-014 FAIL (module missing), rw-015 FAIL (no check_persona), rw-016 FAIL (--help exit 2). Accepts at base all fail (rw-013 accept rc 1, others rc 2).
+- **Acceptance command result:** base fails as required. Probes at first main commit with the change: rw-012 at 8d1c64e: check FAIL (exit 2, expected child rc 7; argparse rejected argv, so check/probe mismatch on the CLI surface), accept rc 0. rw-013 at 2efbd5f: check FAIL (no ollama_env in bench.py); no main commit found that adds ollama_env (git log -S empty), so the probe is the test-file commit. Accept rc 0. rw-014 at 97fe5ec: check FAIL (TypeError unhashable dict; my check passes label dicts to score_predictions, the request does not fix the label type, so this may be a check issue), accept rc 0. rw-015 at 8b4e6bb: check PASS. rw-016 at b109410: check PASS, accept rc 0. Corpus: `scripts.replay --check-corpus` reports tasks: 10.
+- **Departures from the plan:** rw-013 packet requirement 0 was over 200 characters after first draft, shortened (corpus check caught it). rw-013 request timestamp 04:07 matches two cands2 entries; the spec entry (d0ab3147) was used. rw-013 "no other variable is read" is asserted by a decoy OLLAMA_HOST. The rw-012 check uses --out-dir and --gguf per the request; the rw-013 probe commit has no ollama_env so the check cannot pass there. Worktrees removed (wt-b2 and probe worktrees); repo files untouched.
+- **Problems or questions for Sonnet:** (1) rw-013: decide whether a main commit implements ollama_env; none found. (2) rw-014: confirm the score_predictions label type (strings vs dicts); the check assumes dicts with a "persona" key only in load/validate, and the probe error suggests a mismatch. (3) rw-012: confirm whether the probe failure is a check departure (--out-dir) or an implementation gap.
+
+### Step 8h fix 1
+
+- **Step:** 8h, corpus fix 1 (fb-001, fb-002, fb-009)
+- **Branch:** `impl/step-8h`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** The first build of these three tasks used the fallback log only, which lacks their contracts. The original request texts exist. Rewrite `packet.json` and `check.py` of `Benchmark/replay/fb-001`, `fb-002` and `fb-009` from them; keep each `task.toml`.
+
+**Request source:** `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/fbspecs.txt`. Use only these entries: fb-001 the one at 08:02:57 (parse_story only), fb-002 the one at 08:12:40, fb-009 the one at 14:34:02. Write each check from that request and the repository at the task's base commit only. Never open `scripts/story_film.py`, `scripts/youtube_trends/` or any commit after the base while writing; do not read the existing three check.py files for assertions.
+
+**packet.json:** give the model the contract of the request (function names, signatures, command-line flags, keys, argv, error behaviour) within the limits (goal 400 characters, 5 requirements of 200, context 1500, 3 files). Restate in your own words; exact identifiers, argv items and field names are part of the contract and are copied exactly. Accept stays: fb-001 `python -m unittest tests.test_story_film -q`, fb-002 `python -m py_compile scripts/story_film.py`, fb-009 `python -m unittest tests.test_youtube_discover -q`.
+
+**check.py:** assert only observable behaviour the request states.
+- fb-001: `parse_story` returns exactly the expected sentence list.
+- fb-002: with `subprocess.run` patched, the argv list, the stdin JSON, writing stdout bytes to `out_wav`, the defaults, and `RuntimeError` carrying the last stderr line.
+- fb-009: `build_url` (query fields and clamping), `parse_items` (keys and defaults), `fetch_most_popular` with a fake opener (HTTP error becomes RuntimeError without the key), `write_jsonl`, and `main` with `router.secrets_store.get` patched (missing key returns 2; success writes the file, returns 0 and never prints the key). `check.py` must not need the model's own test file to pass.
+The other check rules are unchanged: offline, repo venv, current directory is the task worktree, temporary folders only, portable, `TOKENFRUGAL_*` removed from child environments.
+
+**Verify** each of the three in a temporary worktree of the base (check fails, accept fails), then probe once at `6905b60` (report pass or fail; change a check only where the request itself shows it wrong). Remove the worktrees. Run `scripts.replay --check-corpus`.
+
+**Files you may touch:** `packet.json` and `check.py` of those three tasks, and the Feedback block and Status line of this file.
+
+**Tool-call limit:** 20. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done (Haiku did this step; Codex was at its usage limit)
+- **Files changed:** packet.json and check.py of Benchmark/replay/fb-001, fb-002 and fb-009; task.toml unchanged. Plus the Status lines and this Feedback block of this file.
+- **Tests written first:** the three check.py files were written from the request contract without reading the model test files or the existing check.py files, then run. No unit tests were written.
+- **Test result after the code:** at base b6a9a89 all three checks fail (missing scripts.story_film and scripts.youtube_trends). At probe 6905b60 all three checks pass. Corpus check: tasks: 5
+- **Acceptance command result:** at base all three accept commands fail as expected (unittest tests.test_story_film, py_compile scripts/story_film.py, unittest tests.test_youtube_discover), run with the repo venv python.
+- **Departures from the plan:** fb-009 requirements were shortened to fit the 200-character limit; fb-009 packet has must_not_change router/**; fb-002 declares scripts/story_film.py with new false although the file is absent at base. Accept commands ran with the repo venv python instead of the bare python token.
+- **Problems or questions for Sonnet:** scripts/story_film.py is created by fb-001 and is absent at base, so fb-002 fails at base for that reason. Please confirm the header Status line and this Feedback Status. Nothing of mine is running; the temporary worktrees were removed.
+
+### Step 8h batch 1
+
+- **Step:** 8h, corpus build, batch 1 of 4 (fb-001, fb-002, fb-009, rw-010, rw-011)
+- **Branch:** `impl/step-8h`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** failed (built by Haiku, Codex at its usage limit; fb-009 probe fails, see Feedback)
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** Build five replay corpus tasks for Step 8h of `docs/designs/subagent-runtime-design.md`. Read that step, "Measurement plan (S2)", the frozen rules in `Benchmark/replay/README.md` (do not edit it), `docs/designs/subagent-runtime/packet.schema.json`, and how `scripts/replay.py` loads a task and runs `check.py`.
+
+**Folder per task:** `Benchmark/replay/<id>/` with `task.toml` (`repo = "tokenfrugal"`, `base_commit` as the full sha, `agent = "coding-l2"`, `task_type = "code"`, and `regression_tag` only where listed), `packet.json` (packet v1, `kind` `edit`; goal at most 400 characters, at most 5 requirements of 200, at most 3 files, context at most 1500; `accept` is an argv list, omitted when "none"), and `check.py`.
+
+**Rules for `check.py`** (README rule 7): write it from the request and the repository at the base commit only. Never open a later commit, a diff or a session reply while writing it. It asserts observable behaviour, never source or diff text; exits 0 only when the task is done; runs with the repo venv from the task worktree as the current directory (put the current directory on `sys.path`); is offline (no network, Docker, GPU or secret; patch `subprocess`, `urlopen` and so on); works on Windows, macOS and Linux; writes only to temporary folders; removes `TOKENFRUGAL_*` variables from any child environment. Restate goals in your own words; copy no transcript text, secret or personal data.
+
+**Request sources:** FB tasks: `docs/designs/fallback-execution-log.md` and `docs/designs/fallback-attempts.jsonl`. rw tasks: the request text only, found by timestamp in `cands2.json` in the session scratchpad folder `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/` (read only that entry's request text; open no transcript).
+
+| id | base | packet files | accept | goal | check.py asserts |
+| --- | --- | --- | --- | --- | --- |
+| fb-001 | b6a9a89 | scripts/story_film.py (new), tests/test_story_film.py (new) | python -m unittest tests.test_story_film -q | `parse_story(path)`: drop stage-direction lines, strip markdown and quote marks, split into sentences; plus a unittest | both stage-direction forms, bold/italic markers and quoted lines give exactly the expected sentence list: split on . ! ? followed by a space or end of text, no empty items |
+| fb-002 | b6a9a89 | scripts/story_film.py (new) | python -m py_compile scripts/story_film.py | `narrate(text, out_wav, voice, speed)` runs the voice image through `docker run` and writes the WAV, as the log specifies | with subprocess.run patched: the docker argv list is as the spec says; stdin JSON decodes to text, voice, speed; on exit 0 stdout bytes are written to out_wav; on non-zero exit RuntimeError carries the last stderr line |
+| fb-009 (`regression_tag = "new-module"`) | b6a9a89 | scripts/youtube_trends/__init__.py, scripts/youtube_trends/discover.py, tests/test_youtube_discover.py (all new) | python -m unittest tests.test_youtube_discover -q | the YouTube trend ingest module of FB-009 | build_url clamps the count to 1..50 and has the documented query fields (parse with urllib.parse); parse_items maps a fixture payload to the documented keys, integer views, defaults for missing tags or stats; any command-line entry point the spec defines runs with urlopen patched and a fake key and never prints the key |
+| rw-010 (request 2026-10-10T18:54Z, session 96da787e) | 518f0a4 | gateway/mcp_client.py (lines 42-50), tests/test_open_role_profiles.py (new) | python -m unittest discover -s tests -t . -q (passes at the base: the corpus's single such task) | `open_role` accepts a list of profiles and opens one session per profile | with open_profile patched: a list opens each name once as a string; a string opens once; None opens none; native servers are still added; the new test file exists and its tests run a two-profile list with open_profile mocked (check by running it, not by reading its text) |
+| rw-011 (request 2026-10-10T19:47Z, session f1932e30) | 4b1fd67 | gateway/loop.py (line 159 on) | none | text tool-call parsing tolerates raw control characters inside JSON strings | a call whose content holds a literal newline is recovered (the base returns an empty list) |
+
+The packet must give the model what the original request gave it (names, signatures, expected behaviour) within the limits, and must not describe `check.py`. Where the request or log does not support an assertion in the table, drop it and say so.
+
+**Verify each task and report the results in your Feedback:** in a temporary `git worktree` under the scratchpad at the base commit (remove it afterwards with `git worktree remove`): `check.py` exits non-zero; the accept command fails (rw-010: passes). Then, only after all five checks are written, as a correctness probe, run each check once in a temporary worktree of the commit where the work later landed (for the FB tasks 6905b60; for rw tasks the first main commit after the request that contains the change); report pass or fail. If a probe fails, fix the check only when the request itself shows the check is wrong, and say why. Finally run `scripts.replay --check-corpus` with the venv.
+
+**Files you may touch:** the five task folders under `Benchmark/replay/`, and the Feedback block and Status line of this file. Nothing else.
+
+**Tool-call limit:** 35. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** failed (Haiku built all five; the fb-009 probe at 6905b60 fails, the other four probes pass, `--check-corpus` passes with 5 tasks)
+- **Files changed:** new, all under `Benchmark/replay/`: `fb-001/`, `fb-002/`, `fb-009/`, `rw-010/`, `rw-011/`, each with `task.toml`, `packet.json` and `check.py`. Nothing else in the repo; no commit, push or install. Temporary worktrees (base and landed commits) were removed with `git worktree remove --force` and pruned.
+- **Tests written first:** each `check.py` was written before any worktree was created, from the table and the request sources (the FB log and attempts, the design doc sections for stage directions and narration, and the rw request texts from `cands2.json`). For rw-010 and rw-011 the base files were read with `git show` at base commits 518f0a4 and 4b1fd67 only. Landed commits were found with `git log main -S` only after the checks were written: rw-010 at 3a97ea0d, rw-011 at 4900f7cf. FB probe commit: 6905b60 from the table.
+- **Test result after the code:** Checks at base (all exit 1): fb-001 (scripts/story_film.py missing), fb-002 (same), fb-009 (scripts/youtube_trends missing), rw-010 (a list is not opened once), rw-011 (0 calls recovered).
+- **Acceptance command result (at base):** fb-001 `unittest tests.test_story_film` exits 1 (module missing). fb-002 `py_compile scripts/story_film.py` exits 1 (file missing). fb-009 accept was NOT run at base. rw-010 `unittest discover -s tests -t . -q` exits 0 at base, as the table says. rw-011 has no accept.
+- **Probe at the landed commit (after the check was written):** fb-001 at 6905b60 failed on the first version, then passed after one fix (see Departures). fb-002 at 6905b60 passes. fb-009 at 6905b60 FAILS (exit 2). rw-010 at 3a97ea0d passes. rw-011 at 4900f7cf passes. `python -m scripts.replay --check-corpus` in the main checkout: 5 tasks, exit 0.
+- **Departures from the plan:**
+  1. fb-001: the first check asserted that the parenthesised line "(The lights dim.)" is dropped. The probe kept it. The only source that defines stage directions (`docs/designs/video-workflow-containers.md` section 3) says "a bracketed stage direction", so that line now reads "[Beat]". The table's "both stage-direction forms" could not be matched to any source; the check covers two bracketed variants instead. I changed the check after I saw the probe result, and the reason is that source wording.
+  2. fb-002: the log gives only "calls the voice image through docker run". The check follows the table (stdin JSON with text, voice and speed; stdout bytes to out_wav; RuntimeError carrying the last stderr line). It does not use `video-workflow-containers.md` section 3, which describes a curl call to dhvani. The image name is not asserted.
+  3. fb-009: the sources name neither the functions (`build_url`, `parse_items` are not in the table or the log), nor the key variable, nor the output format. The check therefore tests only the CLI, run in-process with `runpy` and `urlopen` patched: `part`, `chart`, `regionCode`, `maxResults` and the 1..50 clamp; the key is not printed; ids, title and view count appear in stdout; a payload without statistics does not crash. It sets both `YOUTUBE_API_KEY` and `YOUTUBE_KEY`, which is a guess. The defaults for missing tags and the exact integer output are not asserted.
+- **Problems or questions for Sonnet:**
+  1. fb-009 probe: at 6905b60 `discover.py --region US --max 50` (no key set) exits 2 with "the following arguments are required: --out". The log's live-run command has no `--out`, so the check matches the request and I did not change it. Either `--out` is part of the spec and the request source should say so, or the landed code diverges from the log. Please decide which.
+  2. The fb-009 key variable name is not in any source; please confirm the name, or say the check should not set a key.
+  3. Please confirm the header Status line (set to failed here) and the Feedback Status (failed), since the probe result is the basis for both.
+
+### Step 8g build
+
 - **Step:** 8g, Replay report
 - **Branch:** `impl/step-8g`
 - **Kind:** build
 - **Assigned at:** 2026-11-27
 - **Status:** done (built by Haiku; one correction by Sonnet review: verify-record reads the S3 line directly after its GATE line, 87 tests OK)
 
-### Task
+#### Task
 
 **Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
 
@@ -58,7 +440,7 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
 - Tool-call limit: 35.
 - Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done (built by Haiku, Codex at its usage limit)
 - **Files changed:** `scripts/replay_report.py` (new), `tests/test_replay_report.py` (new), `scripts/replay.py` (one `date.today()` per invocation, passed to every `append_record`), `tests/test_replay_runner.py` (new class `RunDateTest` at the end). Nothing committed, pushed or installed.
@@ -73,10 +455,6 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
   5. The `results=` value in the `GATE:` line is the results path relative to the repo root with forward slashes. `--verify-record` takes the base file as the newest base-arm file, the same as the report does.
   6. The report prints its detail lines first and the `GATE:` and `S3 decision:` lines last. Missing base or candidate results files exit 2 with a message.
 - **Problems or questions for Sonnet:** The Status line in the Current assignment section still says "assigned to Haiku"; I left it because the rules say to edit only the Feedback block. The design's gate uses `ceil(0.8 * N)` with N counted from the corpus folders; confirm that is the intended N when Step 8h changes the count. Nothing of mine is running.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8f part B2
 

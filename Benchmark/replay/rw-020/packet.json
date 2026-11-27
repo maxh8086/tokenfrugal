@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Correct the README summary case's description and persona in both benchmark reports.",
+  "requirements": [
+    "In scripts/bench_csv.py keep the summarize_readme case id and column label in LAYOUT, setting its third field to 'Read local README and summarize (docs role, read_file)'.",
+    "Set summarize_readme to engineering-technical-writer in bench_csv.PERSONAS and bench_consolidate.CASE_PERSONA. Preserve every other mapping from the base, including role_research."
+  ],
+  "files": [
+    {
+      "path": "scripts/bench_csv.py"
+    },
+    {
+      "path": "scripts/bench_consolidate.py"
+    }
+  ]
+}

@@ -312,3 +312,13 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8g | Haiku | build (fallback) | 1 | 19 | about 4 min | done, 85 OK; Sonnet review: verify-record could take a later record's S3 line | one correction to the same agent |
 | 8g | Haiku | correction | 2 | limit 8 | - | done, 87 OK | S3 line lookup |
 | 8g | Haiku | test | 1 | limit 20 | about 4 min | no case missing; 86 OK twice; clean clone 1318 OK (4 skipped) | note on `.env` load kept as planned |
+| 8g | Haiku | close | 1 | limit 15 | about 5 min | PR 121, CI pass on 3 OS, merged `d67f3a4`, branch deleted. Reported one stray `dispatch_task` call that returned an error | - |
+| 8h | Opus | consult (corpus) | 1 | 101 | about 31 min | FB kept or substituted, rw-010..026 chosen, re-mined with subagent edits | recorded in progress.md |
+| 8h | Haiku | corpus batch 1 (fallback) | 1 | 28 | about 5 min | rw-010, rw-011 verified; FB checks lacked their contracts and fb-009 failed its probe | fix 1: rewrite FB tasks from the delegated request texts |
+| 8h | Haiku | corpus fix 1 (fallback) | 2 | 20 | - | FB tasks rewritten from the request texts; checks fail at base and pass the probe | one packet flag moved to batch 2 |
+| 8h | Haiku | corpus batch 2 (fallback) | 1 | about 35 | about 4 min | rw-012..016 fail at base; probes of rw-012, 013, 014 failed | validate each check with an implementation written from the packet alone |
+| 8h | Haiku | corpus batch 3 (fallback) | 1 | 28 | about 4 min | blocked at its tool limit: rw-017, rw-019 built and verified; rw-018, 020, 021 not built | new assignment for the three, to Luna after its reset |
+| 8h | Luna | corpus batch 3 remainder | 1 | not reported | about 7 min | blocked: rw-020, rw-021 built and verified; rw-018 built but Luna saw its later integration before writing the check | rw-018 removed and reassigned to a fresh run with batch 4 |
+| 8h | Luna | corpus batch 4 | 1 | not reported | about 10 min | done: rw-018 rebuilt, rw-022..026 built; 20 tasks, no skips | independent validation next |
+| 8h | Luna | corpus validation | 1 | not reported | about 9 min | done: 11 tasks validated against packets; rw-012, 014, 021 checks over-strict and loosened, all still fail on base | README table next |
+| 8h | Luna | corpus README | 1 | not reported | about 3 min | done: 20 rows and skip records, additions only | Sonnet added a note on how R6-R8 were read |
