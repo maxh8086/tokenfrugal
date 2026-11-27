@@ -9,6 +9,8 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 HINTS = {
     "docker": {"Windows": "winget install Docker.DockerDesktop", "Darwin": "brew install --cask docker",
                "Linux": "https://docs.docker.com/engine/install/ (Podman/Colima/Rancher Desktop also work)"},
@@ -98,8 +100,18 @@ def main() -> int:
         bad += not ok and not soft
 
     report("python >= 3.11", sys.version_info >= (3, 11), "install Python 3.11+ (3.10.0 breaks pydantic)")
-    report("git", bool(shutil.which("git")), HINTS["git"].get(osn, ""))
-    dk = bool(shutil.which("docker"))
+    try:
+        from router.preflight import missing_programs
+        missing = missing_programs()
+    except ImportError:
+        missing = [n for n in ("git", "docker") if not shutil.which(n)]
+        print("[warn] router imports failed; run pip install -e . first")
+    print("missing programs: " + (", ".join(missing) if missing else "none"))
+    for program in missing:
+        if program not in ("git", "docker"):
+            print(f"[warn] {program} is not on PATH (needed only by roles that use it)")
+    report("git", "git" not in missing, HINTS["git"].get(osn, ""))
+    dk = "docker" not in missing
     report("docker CLI", dk, HINTS["docker"].get(osn, ""))
     if dk:
         up = subprocess.run(["docker", "info"], capture_output=True).returncode == 0
@@ -123,7 +135,6 @@ def main() -> int:
     except Exception:
         report(f"LLM endpoint {url}", False, "start Ollama (" + HINTS["ollama"].get(osn, "") + ") or set TOKENFRUGAL_LLM_URL in .env")
     if have is not None:  # content-pipeline stage models: report only, never pulled, not counted as failures
-        sys.path.insert(0, str(ROOT))
         from router.config import load_tf_roles
         from router.preflight import stage_model_gaps
         for agent, tag in stage_model_gaps(load_tf_roles(), have):
