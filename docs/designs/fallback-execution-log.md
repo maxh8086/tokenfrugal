@@ -308,3 +308,7 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8f | Haiku | test | 1 | limit 20 | - | 2 cases added; 60 OK twice; clean clone 1292 OK (4 skipped); check-corpus prints tasks: 0 | - |
 | 8f | Haiku | close | 1 | 5 | about 4 min | PR 120: Windows CI failed `test_cancelled_execution_persists_messages_attached_to_cancel` (older test, 30 ms deadline); not merged | fix 1: test-only |
 | 8f | Haiku | CI fix 1 (test only) | 1 | 15 + 6 | about 10 min | deadline tests made independent of machine speed; one correction (a test took 90 s); suite 1292 OK | - |
+| 8f | Haiku | close (after fix) | 2 | 9 | about 6 min | CI pass on 3 OS, merged `a568f5a`, branch deleted | - |
+| 8g | Haiku | build (fallback) | 1 | 19 | about 4 min | done, 85 OK; Sonnet review: verify-record could take a later record's S3 line | one correction to the same agent |
+| 8g | Haiku | correction | 2 | limit 8 | - | done, 87 OK | S3 line lookup |
+| 8g | Haiku | test | 1 | limit 20 | about 4 min | no case missing; 86 OK twice; clean clone 1318 OK (4 skipped) | note on `.env` load kept as planned |

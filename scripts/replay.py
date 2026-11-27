@@ -474,6 +474,7 @@ def main(argv=None):
         child_main(sys.stdin.read())
         return 0
     args = parse_args(argv)
+    day = date.today()  # one date for the whole invocation, so an arm that runs past midnight stays in one file
     if args.check_corpus:
         count, problems = corpus_check(ROOT, args.repo, args.venv)
         for problem in problems:
@@ -507,7 +508,7 @@ def main(argv=None):
         records = []
         for run_no in run_numbers:
             for record in run_with_infra_rerun(lambda attempt: run_once(task, args.arm, router, repo, venv, args.env, run_no)):
-                append_record(ROOT, args.arm, record, date.today())
+                append_record(ROOT, args.arm, record, day)
                 print(json.dumps(record, sort_keys=True), flush=True)
                 records.append(record)
         return records
