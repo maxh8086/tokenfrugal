@@ -21,8 +21,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 8d | 74 | done | Luna (stopped at limit), Haiku | 1 | 0 | 1 | [#118](https://github.com/maxh8086/tokenfrugal/pull/118) | `816bb34` | yes | 8 OK | 1197 OK (4 skipped); CI pass; code-l2 bench PASS 6/6 | slower sandbox task, see open items |
 | 8e | 75 | done | Luna (usage limit), Haiku | 4 | 2 | 1 | [#119](https://github.com/maxh8086/tokenfrugal/pull/119) | `6d45c5c` | yes | 76 OK | 1232 OK (4 skipped); CI pass | - |
 | 8f | 76 | done | Luna (usage limit), Haiku | 3 | 1 | 0 | [#120](https://github.com/maxh8086/tokenfrugal/pull/120) | `a568f5a` | yes | 60 OK | 1292 OK (4 skipped); CI pass after a test-timing fix | - |
-| 8g | 77 | 5 close | Haiku | 2 | 0 | 0 | - | - | - | 86 OK, two runs | 1318 OK (4 skipped) | PR, CI, merge |
-| 8h | 78 | pending | - | 0 | 0 | 0 | - | - | - | - | - | corpus decisions before any S2 result |
+| 8g | 77 | done | Luna (usage limit), Haiku | 2 | 0 | 0 | [#121](https://github.com/maxh8086/tokenfrugal/pull/121) | `d67f3a4` | yes | 86 OK | 1318 OK (4 skipped); CI pass | - |
+| 8h | 78 | 4 close (Haiku) | Haiku | 8 | 1 | 1 | - | - | - | 20 tasks validated; --check-corpus 20, rc 0 | 1318 OK, 4 skipped | PR, CI, merge |
 | 9 | 79 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 10 | 80 | pending | - | 0 | 0 | 0 | - | - | - | - | - | only if Step 9 says build |
 | 11 | 81 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -75,6 +75,11 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 - Step 8e (Opus consult, 2026-11-27): rule 5 applies to legacy and packet tasks alike; the Step 6+7 build had made a no-write role's failed checks end `failed`, against the plan, so `tests/test_checker_stage.py` joins Step 8e's file list and acceptance command in the design doc. Rules 1-3 run before the failed-checks rule; earlier stops (`env_missing`, `out_of_time`) still win. Fix split in two: fix 1 outcome semantics, fix 2 reply manifest, result record, guarded `changes()` and missing tests.
 
 - Step 8g (Sonnet): the test stage noted that `replay_report` imports `scripts.bench` for `pct`, which loads `router/config.py` and so reads `.env` during its tests. Kept as the plan says (reuse `bench.pct`): the suite already loads that config in many other test files.
+
+- Step 8h (Sonnet, from the Opus consult, 2026-11-27, before any S2 result exists): N = 20. Kept: fb-001, fb-002, fb-009, rebuilt at `b6a9a89` (their files did not exist there). Substituted: FB-003 to FB-008, because no commit holds the code they changed before their work (FB-007 and FB-008 also needed Docker), by rw-021 to rw-026. rw-010 to rw-026 are the first eligible requests in date order with subagent edits counted, the last dated 2026-10-18T12:11Z; rw-010 is the single task whose accept passes before any change (97/97 confirmed in a worktree). Most rw tasks have no accept command, so false-success detection rests on `check.py`; the FB half no longer covers failure classes A, B and D. Skip records go into the corpus README with the last batch. Known gap: edits made through local-model dispatches are in no transcript.
+- Step 9 must dry-run one task first: the `code-l2` profile mounts the installed workspace, and a replay worktree may trigger a profile re-import.
+
+- Step 8h (Sonnet, 2026-11-27): the README table and skip records were added by Luna, which noted that the stated R6-R8 reasons are broader than the frozen wording. The rules are unchanged; Sonnet added one paragraph to the corpus README saying how they were read and that file-list classifications were not examined one by one.
 
 ## Open items
 

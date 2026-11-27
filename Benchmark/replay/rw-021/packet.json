@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Catch Synaptree outages before a benchmark and suppress CSV import when its container stops or restarts during a live run.",
+  "requirements": [
+    "Add synaptree_state() -> (running: bool, started_at: str). Use run_cmd with docker inspect -f '{{.State.Running}} {{.State.StartedAt}}' synaptree-synaptree-1. Return (False, '') on nonzero status.",
+    "After preflight's plan-store check, check 'synaptree container synaptree-synaptree-1 running' and 'synaptree neo4j 127.0.0.1:17687'. Socket-connect as for 7697. Print StartedAt when running.",
+    "Give a container-start fix hint on failure. Both checks must participate in preflight's normal pass/fail behavior.",
+    "For live runs sample state right after preflight and again after the benchmark subprocess. If stopped or StartedAt changed, warn with both timestamps before reading the raw JSON or writing CSV.",
+    "Identify builder, reviewer, debugger and analyzer cases (1-7 and 9) as unreliable. Exit with a message that raw JSON is kept for reviewed --from-json import. Preserve offline import and CSV columns."
+  ],
+  "files": [
+    {
+      "path": "Benchmark/script/run_benchmark.py"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Collect Ollama model and memory information for benchmark rows. Add unittest coverage with urllib.request.urlopen mocked for parsing and errors.",
+  "requirements": [
+    "Implement info(model: str, endpoint: str, peak_tokens: int = 0) -> dict using urllib and json. Strip trailing slash and /v1, default to http://localhost:11434. Use five-second timeouts.",
+    "POST /api/show with JSON model. Read details.quantization_level, first integer model_info value with a .context_length suffix, and integer from a num_ctx parameters line (blank if absent).",
+    "GET /api/ps and match name or model against the requested name or its :latest form. A running entry's context_length overrides num_ctx. If absent from ps, look up size in GET /api/tags.",
+    "On exceptions or unsupported endpoints return every field blank (empty string). The module's CLI prints JSON for argv[1].",
+    "Append the eight fields to META immediately after tokens_out_per_run. Import modelinfo after hardware. Update rec before choosing cols. Preserve blanks for legacy rows."
+  ],
+  "context": "Field order: quant, file_gb, num_ctx, max_ctx, vram_gb, cpu_offload_pct, ctx_used_pct, ctx_free_tokens. ps and tags return a models array. file_gb and vram_gb are size and size_vram divided by 2**30, rounded to 2 decimals. cpu_offload_pct is 100*(size-size_vram)/size rounded to 1 decimal, blank for zero size. Tags fallback leaves VRAM and offload blank. When both peak_tokens and num_ctx are truthy, usage is 100*peak_tokens/num_ctx rounded to 1 decimal, free is num_ctx-peak_tokens. Otherwise leave both blank. Call info(meta.get('builder') or row[0], endpoint, rec['ctx_peak_tokens']).",
+  "accept": [
+    "python",
+    "-m",
+    "unittest",
+    "tests.test_modelinfo",
+    "-q"
+  ],
+  "files": [
+    {
+      "path": "Benchmark/script/modelinfo.py",
+      "new": true
+    },
+    {
+      "path": "Benchmark/script/run_benchmark.py",
+      "new": false
+    },
+    {
+      "path": "tests/test_modelinfo.py",
+      "new": true
+    }
+  ]
+}

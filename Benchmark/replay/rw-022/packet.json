@@ -1,0 +1,19 @@
+{
+  "v": 1,
+  "kind": "edit",
+  "goal": "Remove the task prefix before checking replies, tighten verification for three cases and exclude infrastructure failures from run aggregates.",
+  "requirements": [
+    "strip_tid(r) removes only an initial bracketed 10-character lowercase hex id and following whitespace. In run use ok(r) on the raw reply and check(strip_tid(r)).",
+    "_all_has(*words) tests every supplied lowercase word against lowercase reply. role_security requires both akiafakefakefake1234 and hunter2. Helpers return (bool, first 100 chars with newlines spaced).",
+    "_debug_ok(a), used by debug_trace, requires zerodivision or division by zero AND empty or len, case insensitive. Use the same note format as _all_has.",
+    "For write_tests require unittest exit 0, at least three multiline ^\\s*def test_ matches, and literal import stack or from stack import in the file. Preserve the existing note format.",
+    "Aggregate verified and ran fractions over non-infra repeats. Round input/output averages over the same repeats using max(count,1) as divisor. Preserve other result keys."
+  ],
+  "context": "Use the base cases() tuples (id, role, setup, prompt, checker) and the existing scratch test_stack.py.",
+  "files": [
+    {
+      "path": "scripts/bench_real.py",
+      "new": false
+    }
+  ]
+}
