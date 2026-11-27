@@ -104,6 +104,11 @@ TEXT_TOOLS = (chr(10) * 2 + "Tools are NOT available through an API. To use one,
 SLOP = re.compile(r"(as an ai|i.m sorry, but i.m not able|i can.t assist|i cannot access|lorem ipsum|TODO: implement|placeholder|\.\.\. ?rest of)", re.I)
 
 
+NUDGE_WRAP = "Stop calling tools. Give the final answer now."
+NUDGE_FINAL = ("Step limit reached. Do not call any more tools. "
+               "Answer now using only the tool results above.")
+
+
 class LoopError(Exception):
     pass
 
@@ -482,12 +487,11 @@ async def _run(agent: str, role: dict, msgs: list, tid: str, guard=None, budget:
             events.emit("step", id=tid, n=step)
             if not wrapped and wrapup_due(step, role["max_steps"], ok_calls):
                 wrapped = True
-                msgs.append({"role": "user", "content": "Stop calling tools. Give the final answer now."})
+                msgs.append({"role": "user", "content": NUDGE_WRAP})
             # the last step is reserved for the answer once real results exist: no tools, so the model cannot run out of steps
             force_answer = bool(ok_calls) and step == role["max_steps"]
             if force_answer:
-                msgs.append({"role": "user", "content": "Step limit reached. Do not call any more tools. "
-                                                        "Answer now using only the tool results above."})
+                msgs.append({"role": "user", "content": NUDGE_FINAL})
             use_tools = bool(tools) and not text_mode and not force_answer
             gpu_lease.guard_ollama(OLLAMA_URL)  # GpuBusy goes up to _execute: it is not a model error, so no retry block here
             t0 = time.monotonic()

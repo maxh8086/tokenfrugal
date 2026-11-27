@@ -282,6 +282,8 @@ class ServerDeadlineTests(unittest.TestCase):
         self.assertEqual(store.get(tid)["status"], "done")
 
     def test_correction_is_skipped_below_floor(self):
+        # This test covers the correction budget floor; the correction requires a write-capable role.
+        self.role["tools"] = ["write_file"]
         calls = []
         async def fake(*args, **kwargs):
             calls.append(args[2])

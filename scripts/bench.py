@@ -276,11 +276,11 @@ async def bench_resume(n, rounds=5):
         agent, task = first_task("builder")
         dt, r = await timed(server.dispatch_task(agent, task, task_type="benchmark"))
         tid = r[1:r.find("]")]
-        rows = [{"round": 0, "s": round(dt, 1), "ok": ok(r), "msgs": len(store.get(tid)["messages"] or [])}]
+        rows = [{"round": 0, "s": round(dt, 1), "ok": ok(r), "peak_ctx": store.get(tid)["peak_ctx"]}]
         for i in range(1, rounds + 1):
             dt, r = await timed(server.resume_task(tid))
             t = store.get(tid)
-            rows.append({"round": i, "s": round(dt, 1), "ok": ok(r), "msgs": len(t["messages"] or []), "attempts": t["attempts"]})
+            rows.append({"round": i, "s": round(dt, 1), "ok": ok(r), "peak_ctx": t["peak_ctx"], "attempts": t["attempts"]})
             if ok(r):
                 break
         if old is None:
@@ -288,7 +288,7 @@ async def bench_resume(n, rounds=5):
         else:
             server.CFG["roles"]["builder"]["timeout_s"] = old
         dt, r = await timed(server.resume_task(tid))  # finally let it finish
-        rows.append({"round": "final", "s": round(dt, 1), "ok": ok(r), "msgs": len(store.get(tid)["messages"] or [])})
+        rows.append({"round": "final", "s": round(dt, 1), "ok": ok(r), "peak_ctx": store.get(tid)["peak_ctx"]})
     finally:
         if old is None:
             server.CFG["roles"]["builder"].pop("timeout_s", None)
