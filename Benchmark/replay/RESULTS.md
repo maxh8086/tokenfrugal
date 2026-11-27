@@ -24,3 +24,52 @@ Result: **PASS** (6/6 against 6/6).
 
 Slower: in the inspected Step 8d run (`4f6bd4f44e`), the model called `search_files` twice on `/workspace` for the files it was about to create, and each call timed out after 60 s. The Step 8c run inspected (`d5178d8631`) made no search. The reports are local files; `bench/` is not committed.
 
+## Step 9: gate run, `base` against `s2`
+
+Run on 2026-11-27 on the owner's Windows 11 machine. Router `base` at `a552857`, `s2` at `c8371ef`, default settings, one run per task, with two reruns in `s2` for each task whose result differed from `base`. The results files are local and not committed.
+
+```text
+Replay report: base=base (Benchmark/replay/results/base-20261127.jsonl), candidate=s2 (Benchmark/replay/results/s2-20261127.jsonl)
+Corpus: 20 tasks. The gate needs 16 passing tasks and no false success.
+Candidate passed 4/20; false successes 8.
+Base passed 5/20 (reported, not gating).
+Tasks without a candidate run: none
+FB tasks: candidate 0/3, base 1/3
+rw tasks: candidate 4/17, base 4/17
+Sign test (reported, not gating): candidate-only 1, base-only 2, one-sided p=0.8750
+The improvement cannot be told apart from noise (p >= 0.05).
+90th percentile run seconds: base=301.83 candidate=351.72
+Estimated tokens spared per task (estimated, not measured usage):
+  fb-001: estimated tokens spared 2023
+  fb-002: estimated tokens spared 2589
+  fb-009: estimated tokens spared 976
+  rw-010: estimated tokens spared 20977
+  rw-011: estimated tokens spared 13065
+  rw-012: estimated tokens spared 5561
+  rw-013: estimated tokens spared 20837
+  rw-014: estimated tokens spared 1972
+  rw-015: estimated tokens spared 13919
+  rw-016: estimated tokens spared 2412
+  rw-017: estimated tokens spared 4873
+  rw-018: estimated tokens spared 3850
+  rw-019: estimated tokens spared 5205
+  rw-020: estimated tokens spared 3886
+  rw-021: estimated tokens spared 6461
+  rw-022: estimated tokens spared 7629
+  rw-023: estimated tokens spared 9223
+  rw-024: estimated tokens spared 15150
+  rw-025: estimated tokens spared 15480
+  rw-026: estimated tokens spared 19385
+accept_failed share (candidate, non-infra runs with outcome failed): 0/13 = 0.00
+GATE: FAIL base=base candidate=s2 results=Benchmark/replay/results/s2-20261127.jsonl passed=4/20 false_successes=8 accept_failed_share=0.00
+S3 decision: build
+```
+
+- `base` runs by stop reason (20 runs): checker 4, fail 2, max_steps 1, pass 5, step_timeout 8.
+- `s2` runs by stop reason (28 runs): fail 8, max_steps 2, out_of_time 11, pass 7.
+- Tasks with at least one false success in `s2`: fb-002, rw-012, rw-014, rw-015, rw-016, rw-024.
+- The FB half no longer covers failure classes A, B and D (see the corpus README). Most rw tasks have no accept command, so a run can end `done` and fail only on the hidden check.
+- Thinking arms: not run. `timeout_s` stays at 225 s; `router/tf-roles.yaml`, `router/config.py` and `tests/test_role_timeout.py` are unchanged.
+- S2 is not released. S3 (Step 10) is built and the gate is re-run with `--base s2 --candidate s3`.
+- A dry run of fb-001 before the arms is in no results file.
+

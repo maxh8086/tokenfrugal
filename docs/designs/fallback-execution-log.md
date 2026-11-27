@@ -322,3 +322,10 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8h | Luna | corpus batch 4 | 1 | not reported | about 10 min | done: rw-018 rebuilt, rw-022..026 built; 20 tasks, no skips | independent validation next |
 | 8h | Luna | corpus validation | 1 | not reported | about 9 min | done: 11 tasks validated against packets; rw-012, 014, 021 checks over-strict and loosened, all still fail on base | README table next |
 | 8h | Luna | corpus README | 1 | not reported | about 3 min | done: 20 rows and skip records, additions only | Sonnet added a note on how R6-R8 were read |
+| 8h | Haiku | close | 1 | not reported | about 5 min | done: PR 122 merged (c8371ef), CI passed on three OSes, branch deleted | - |
+| 9 | Sonnet | dry run | 1 | - | about 6 min | file tools work in a replay worktree; fb-001 failed out_of_time | start arm base |
+| 10-11 | Luna | read-only review | 1 | not reported | about 4 min | stopped at the Codex usage limit, no findings | rerun after 19:40; no fallback, the review is optional |
+| 9 | Sonnet | arm base | 1 | - | about 65 min | 20 runs, 5 pass, 8 step_timeout, no infra | arm s2 with --rerun-against base |
+| 10-11 | Luna | read-only review | 2 | 0 | under 1 min | refused at the Codex usage limit | rerun after 19:40 |
+| 9 | Sonnet | arm s2 and report | 1 | - | about 100 min | GATE: FAIL, 4/20, 8 false successes, S3 build | Opus consult |
+| 9 | Opus | consult (gate FAIL) | 1 | 8 | about 3 min | S3 cannot reach the bar; recommends asking the owner | pause before Step 10 |
