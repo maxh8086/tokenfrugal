@@ -20,6 +20,7 @@ from fastmcp.server.middleware import Middleware
 
 from . import checker, compose, config, events, gpu_lease, kalamanch_cleanup, loop, ollama_launcher, plan, reconnect, store, studio, ui_launcher, workspace
 from .outcomes import Outcome, Stop, stop_from_legacy
+from .loop_policy import AcceptPolicy
 from .packet import Packet, render as render_packet, task_files as packet_files
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of, with_host_accept
 from .mcp_client import backend_state
@@ -192,7 +193,7 @@ def diff_block(text: str) -> str | None:
 
 
 def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None, deadline_at=None, cancel=None,
-           base: checker.Baseline | None = None, packet: Packet | None = None) -> dict | None:
+           base: checker.Baseline | None = None, packet: Packet | None = None, accept_result=None) -> dict | None:
     ws = ws or workspace.load_workspace(WORKSPACE)
     parsed = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
     diff = diff_block(detail)
@@ -201,13 +202,14 @@ def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=N
     left = deadline_at - time.monotonic() if deadline_at is not None else role_timeout(role) - (time.monotonic() - t0)
     if not ws.host_accept and parsed.spec:
         parsed = checker.AcceptParse(None, "host accept off")
-    skipped = bool(parsed.spec and left < config.MIN_ACCEPT_S)
+    skipped = bool(parsed.spec and accept_result is None and left < config.MIN_ACCEPT_S)
     if skipped:
         parsed = checker.AcceptParse(None, "out of time")
     task_files = packet_files(packet) if packet is not None else workspace.legacy_task_files(ws, task_text, limit=3)
     checked_changes = checker.changes(ws, base, task_files, ()) if base is not None else None
     verdict = checker.check_deterministic(ws, parsed, diff, timeout=min(config.ACCEPT_TIMEOUT, left), cancel=cancel,
-                                          task_files=task_files, changes=checked_changes)
+                                          task_files=task_files, changes=checked_changes,
+                                          **({"accept_result": accept_result} if accept_result is not None else {}))
     if skipped:
         verdict["passed"] = False
         verdict["stop"] = Stop.OUT_OF_TIME
@@ -388,15 +390,29 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
                     baseline_snapshot = checker.Baseline.from_json(row["baseline_json"])
                 guard = lambda p: workspace.denied(workspace.to_rel(ws, p), allowed, ws)
                 budget = loop.Budget(rt)
-                detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard, budget=budget)
+                task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
+                policy = None
+                if ws.host_accept and task_files and _can_write(role):
+                    def in_loop_accept():
+                        left = t0 + deadline_s - time.monotonic()
+                        if left < config.MIN_ACCEPT_S or not all(os.path.isfile(os.path.join(ws.root, p)) for p in task_files):
+                            return None
+                        return checker.run_accept_spec(task_accept.spec, ws, min(config.ACCEPT_TIMEOUT, left),
+                                                       accept_cancel, task_files)
+
+                    policy = AcceptPolicy(task_files, in_loop_accept if checks and task_accept.spec else None, budget,
+                                          normalize=lambda p: os.path.normcase(os.path.normpath(workspace.to_rel(ws, p))))
+                detail, msgs = await run(agent, role, prompt, messages, tid, guard=guard, budget=budget,
+                                         **({"policy": policy} if policy is not None else {}))
                 last_msgs = msgs
                 calls += take_started(tid)
-                task_accept = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
                 if checks and not ws.host_accept and task_accept.spec:
                     events.emit("checks_skipped", id=tid, reason="host accept off")
                 if checks:
+                    cached = policy.last_result if policy and not policy.stale else None
                     with budget.pause():
-                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot, packet=packet)
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, task_accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot, packet=packet,
+                                                          **({"accept_result": cached} if cached is not None else {}))
                 if verdict is not None:
                     verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
                 if correction and verdict and not verdict["passed"]:  # earlier stops first: accept out of time, env_missing
@@ -407,6 +423,11 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
                     if verdict.get("stop") == Stop.ENV_MISSING or (verdict.get("stop") == Stop.OUT_OF_TIME and not _can_write(role)):
                         raise CheckFailed(_failed_text(verdict), verdict["stop"])  # a no-write role has no correction to wait for
                 if correction and verdict and not verdict["passed"] and _can_write(role):  # a write role gets one correction run; a no-write role gets none
+                    accept_runs = int(policy is not None and policy.last_result is not None)
+                    if cached is None and any(i["name"] == "accept" for i in verdict["items"]):
+                        accept_runs += 1
+                    if accept_runs >= config.MAX_ACCEPT_RUNS:
+                        raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
                     left = config.model_budget(role, rt) - budget.spent()
                     if left < config.CORRECTION_FLOOR_S:
                         raise CheckFailed(_failed_text(verdict) + "; no time for a correction run", Stop.OUT_OF_TIME)
@@ -485,7 +506,7 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
             e = leaf(e)
             full = program_missing(orig) or f"{type(e).__name__}: {e}"
             reason = failure_reason(full)
-            kind = error_kind(full)
+            kind = getattr(e, "stop", None) or error_kind(full)
         started = calls + take_started(tid)
         gpu = isinstance(e, gpu_lease.GpuBusy)  # its message is short and carries the holder: not trimmed
         if gpu:

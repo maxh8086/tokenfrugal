@@ -39,7 +39,7 @@ async def _no_backends(*a, **k):
 
 
 class ForcedFinalAnswer(unittest.TestCase):
-    def _run_loop(self, replies, max_steps):
+    def _run_loop(self, replies, max_steps, **kwargs):
         role = {"role": "reviewer", "model": "m", "tools": ["read_file"], "max_steps": max_steps}
         tools = [{"type": "function", "function": {"name": "read_file", "parameters": PARAMS}}]
         create = mock.Mock(side_effect=replies)
@@ -50,12 +50,13 @@ class ForcedFinalAnswer(unittest.TestCase):
             mock.patch.object(loop, "result_text", lambda res: "file body"),
             mock.patch.object(loop, "_count", lambda *a, **k: None),
             mock.patch.object(loop.events, "emit", lambda *a, **k: None),
+            mock.patch.object(loop.mcp_reap, "sweep"),
             mock.patch.object(loop._client.chat.completions, "create", create),
         ]
         for p in patches:
             p.start()
         try:
-            out = asyncio.run(loop._run("reviewer", role, [{"role": "user", "content": "check"}], "t1"))
+            out = asyncio.run(loop._run("reviewer", role, [{"role": "user", "content": "check"}], "t1", **kwargs))
         finally:
             for p in patches:
                 p.stop()
@@ -77,6 +78,15 @@ class ForcedFinalAnswer(unittest.TestCase):
         replies = [_reply(content="I cannot read files.")] * 3
         with self.assertRaises(loop.LoopError):
             self._run_loop(replies, max_steps=2)
+
+    def test_explicit_none_allows_three_identical_reads_before_forcing(self):
+        replies = [_reply(tool_call=_call(i)) for i in range(3)] + [_reply("finished")]
+        (answer, messages), create = self._run_loop(replies, max_steps=4, policy=None)
+        self.assertEqual(answer, "finished")
+        self.assertEqual([m["content"] for m in messages if m["role"] == "tool"], ["file body"] * 3)
+        self.assertEqual(create.call_count, 4)
+        self.assertNotIn("tools", create.call_args.kwargs)
+        self.assertIn({"role": "user", "content": loop.NUDGE_FINAL}, messages)
 
 
 if __name__ == "__main__":

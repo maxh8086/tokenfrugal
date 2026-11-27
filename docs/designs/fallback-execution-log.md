@@ -329,3 +329,8 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 10-11 | Luna | read-only review | 2 | 0 | under 1 min | refused at the Codex usage limit | rerun after 19:40 |
 | 9 | Sonnet | arm s2 and report | 1 | - | about 100 min | GATE: FAIL, 4/20, 8 false successes, S3 build | Opus consult |
 | 9 | Opus | consult (gate FAIL) | 1 | 8 | about 3 min | S3 cannot reach the bar; recommends asking the owner | pause before Step 10 |
+| 9 | Luna | close | 1 | not reported | about 7 min | done: PR 123 merged (8c57df9), CI passed on three OSes | - |
+| 9 | Sonnet | diagnostic reruns | 1 | - | about 27 min | 5 timed-out tasks rerun with logs kept, all out_of_time again | Luna analyses the logs |
+| 9 | Luna | timeout analysis | 1 | not reported | about 6 min | done: model time dominates, no tool fault found | loop paused for the owner |
+| 10 | Luna | build | 1 | not reported | about 7 min | done: acceptance 9 OK; Sonnet suite 1325 OK | test completion |
+| 10 | Luna | test completion | 1 | not reported | about 5 min | done: 11 acceptance OK; Sonnet suite 1327 OK | close |

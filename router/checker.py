@@ -397,11 +397,11 @@ def lint_python(paths: list[str], repo: str) -> list[str]:
 
 def check_deterministic(ws: Workspace, accept: AcceptParse | None, diff_text: str | None, timeout: float,
                         cancel: threading.Event | None = None, task_files: tuple[str, ...] = (),
-                        changes: Changes | None = None) -> dict:
+                        changes: Changes | None = None, accept_result: AcceptResult | None = None) -> dict:
     items = []
     accept_item = None
     if accept and accept.spec:
-        res = run_accept_spec(accept.spec, ws, timeout, cancel, task_files)
+        res = accept_result if accept_result is not None else run_accept_spec(accept.spec, ws, timeout, cancel, task_files)
         accept_item = {"name": "accept", "tag": "deterministic", "passed": res.ok,
                        "detail": res.first_error or res.out[-300:], "stop": res.stop, "env": res.env_kind}
         items.append(accept_item)

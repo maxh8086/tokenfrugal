@@ -9,26 +9,26 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
-- **Step:** 9, close
-- **Branch:** `impl/step-9`
+- **Step:** 10, close
+- **Branch:** `impl/step-10`
 - **Kind:** close
 - **Assigned at:** 2026-11-27
 - **Status:** in progress
 
 ### Task
 
-Close Step 9. Sonnet already ran the acceptance and the full suite (1318 OK, 4 skipped); do not run tests.
+Close Step 10. Sonnet already ran the full suite (1327 OK, 4 skipped); do not run tests.
 
 1. Set Status to "in progress".
-2. Stage exactly these four files: `Benchmark/replay/RESULTS.md`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly four files.
-3. Commit "Step 9: Gate run (s2 FAIL, S3 decision build)". Human author only: no Co-Authored-By trailer, no "generated with" footer.
-4. `git push -u tokenfrugal impl/step-9`.
-5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-9`, same title; body: gate results recorded in RESULTS.md, GATE FAIL 4/20 with 8 false successes, router files unchanged, verify-record exit 0, full suite 1318 OK, 4 skipped. No footer.
+2. Stage exactly these ten files: `router/loop_policy.py`, `router/loop.py`, `router/server.py`, `router/checker.py`, `tests/test_loop_policy.py`, `tests/test_forced_answer.py`, `tests/test_checker_stage.py`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly ten files.
+3. Commit "Step 10: In-loop accept and repeat guard". Add one body line: "router/checker.py also changed (optional accept_result), outside the plan's file table." Human author only: no Co-Authored-By trailer, no "generated with" footer.
+4. `git push -u tokenfrugal impl/step-10`.
+5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-10`, same title; body: summary of the policy, acceptance `python -m unittest tests.test_loop_policy tests.test_forced_answer -q` 11 OK, full suite 1327 OK, 4 skipped. No footer.
 6. `gh pr checks <n> --repo maxh8086/tokenfrugal --watch --fail-fast` in the foreground.
-7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm the state is MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present.
-8. After that, fill in Feedback (PR link, merge sha, CI per OS, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
+7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present.
+8. Then fill in Feedback (PR link, merge sha, CI per OS, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
 
-Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report; do not work around it.
+Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report the failing job and its error lines; do not work around it.
 
 **Tool-call limit:** 15.
 
@@ -45,6 +45,219 @@ Never force push, never push to main directly, never install anything, never rea
 ## History
 
 (Finished assignments with their feedback, newest first.)
+
+### Step 10 test completion
+
+- **Step:** 10, test completion
+- **Branch:** `impl/step-10`
+- **Kind:** test
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** The Step 10 code is written and the full suite passes (1325 OK, 4 skipped). Check `tests/test_loop_policy.py` against the test rows of Step 10 in `docs/designs/subagent-runtime-design.md` (the `tests/test_loop_policy.py` row, about line 1294), one row at a time, and add a test for every row or part of a row that no test asserts. Also cover: an unchanged path when `policy` is None, a failed or dry-run write not counting as a write, and the extra model turn after an accept result on the last tool step. The suite took 310 s this run against about 110 s before: report which new tests are slow and shorten their waits without weakening what they assert.
+
+**Change only files under `tests/`.** If a test shows the code does not meet the plan, report it with the output and leave the code alone.
+
+**Acceptance command** (repo root): `$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_loop_policy tests.test_forced_answer -q`
+
+**Files you may touch:** files under `tests/`, and the Feedback block and Status line of this file.
+
+**Tool-call limit:** 20. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `tests/test_loop_policy.py`, `tests/test_forced_answer.py`, `tests/test_checker_stage.py`, and this Status and Feedback.
+- **Tests written first:** Added explicit None-policy and failed/dry-run edit cases. Extended the guard, accept precedence, last-tool-step feedback, heartbeat, budget, and dispatch cap assertions.
+- **Test result after the code:** The existing dispatch cases cover cached PASS, stale PASS with final failure, cached FAIL with correction, and missing files. They check the files accept actually reads and the number of model runs. The baseline took 2.624 s for 9 tests. The slowest were correction (0.703 s), PASS reuse (0.532 s), stale PASS (0.531 s), and missing file (0.515 s). These fixtures now skip three Git configuration processes each. The heartbeat now wakes directly from the accept worker and uses a controlled budget clock, removing the fixed 50 ms delay.
+- **Acceptance command result:** 11 tests passed in 2.878 s with Ollama autostart disabled.
+- **Departures from the plan:** None. Only test code changed.
+- **Problems or questions for Sonnet:** The focused timings do not explain the reported 200 s full-suite increase. The full suite was not retimed.
+
+### Step 10 build
+
+- **Step:** 10, In-loop accept and repeat guard
+- **Branch:** `impl/step-10`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 10, lines 1285-1300; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+**Entry rule:** built only when Step 9's S3 decision says so. Otherwise this step is a contract only and S4 follows S2. The accept pre-check and output capping are not part of S3 (pre-check deferred to D9; no output cap exists at `d675d75`).
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/loop_policy.py` | **Create** | `class AcceptPolicy(task_files, run_accept_fn, budget)`. The hooks perform no I/O directly.<ul><li>`before_call(name, args) -> str \| None`: the one repeat guard. The key is `(name, json.dumps(args, sort_keys=True))`. The count resets after every successful write. It trips at the 3rd identical call with no successful write in between, and returns the Appendix B repeat-guard text, which is recorded as that call's tool result before the run ends.</li><li>`async after_tool(name, args, out) -> str`: when every task file exists and has had a successful `write_file`, `edit_file` or `move_file` in this run, it runs accept with `await asyncio.to_thread(run_accept_fn, ...)` inside `budget.pause()`, so the event loop and the heartbeat keep running, and appends `accept: PASS` or `accept: FAIL <first_error>`. It runs at most once per dispatch, in the first model run only (the correction run gets no policy), so one of the `MAX_ACCEPT_RUNS` (2) accept runs is always left for the final workspace. `last_result` holds that `AcceptResult`, and `stale` becomes True on any later successful `write_file`, `edit_file` or `move_file`.</li><li>`stop() -> Stop \| None`: `repeat_guard` once the guard has tripped.</li></ul> |
+| `router/loop.py` | Modify | <ul><li>`_run` takes an optional `policy`, defaulting to None, and calls the two hooks at the points shown in the data-flow diagram; `after_tool` is awaited.</li><li>Precedence when several apply in one step: a tripped guard ends the run with `repeat_guard`; otherwise an accept result goes back to the model; otherwise the forced final answer at the last step (`force_answer`) applies.</li><li>With no policy, the code path is unchanged.</li></ul> |
+| `router/server.py` | Modify | With host accept on and at least one task file, `_execute` builds `AcceptPolicy` for the first run of any builder task (packet or legacy). Accept runs, in the loop and after it, are at most `MAX_ACCEPT_RUNS` (2) per dispatch. The post-run `_check` reuses `policy.last_result` only when it exists and is not `stale`; otherwise it runs accept on the final workspace. The correction runs only when an accept run is still left to check its result. When none is left, the task fails with the stop of the last verdict (`accept_failed` or `checker`), with no correction. A reported verdict therefore always comes from the files as they are at the end. |
+| `tests/test_loop_policy.py` | **Create** | <ul><li>The repeat guard trips at 3 and resets after a write.</li><li>Accept runs only once all task files are written; a partial multi-file edit does not trigger it.</li><li>No more than `MAX_ACCEPT_RUNS` accept runs per dispatch, and in-loop accept runs at most once, in the first run only.</li><li>An in-loop PASS with no later write is reused by the post-run check.</li><li>An in-loop PASS followed by a write is stale: the post-run check runs accept on the final files; when that fails, no correction follows and the stop is `accept_failed`.</li><li>An in-loop FAIL with no later write is reused; the correction runs, and the final accept runs on the corrected files.</li><li>A slow fake accept does not block a concurrent heartbeat task.</li><li>A tripped guard returns the Appendix B repeat-guard text.</li><li>Accept time is paused out of the budget.</li><li>The precedence order holds.</li></ul> |
+
+*   **Unchanged callers:** the direct `_run` callers (`test_forced_answer.py:58`, `test_tool_error_trail.py:61`) and the `loop.run` callers that reach `_run` (`test_error_kind.py:84`, `test_timeouts.py:16`) need no change, because `policy` defaults to None.
+*   **Schema:** none.
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_loop_policy tests.test_forced_answer -q`
+*   **Post-commit checks:** `python -m scripts.replay --arm s3 --router <s3-checkout> --repo tokenfrugal=<path> --rerun-against s2`, then `python -m scripts.replay_report --base s2 --candidate s3`.
+
+**Notes from Sonnet**
+
+- The entry rule is met: Step 9 recorded `GATE: FAIL` and `S3 decision: build`, and the owner chose to build this step.
+- `Stop.REPEAT_GUARD` already exists in `router/outcomes.py`. The literal texts are in Appendix B.
+- `router/checker.py` is not in the plan's table. Touch it only if the post-run check cannot reuse `policy.last_result` from `router/server.py` alone, and say so in Feedback.
+- With `policy` None the loop must behave exactly as before; the existing suite files for the loop, the checker stage and the server must keep passing unchanged.
+
+**Files you may touch:** `router/loop_policy.py`, `router/loop.py`, `router/server.py`, `router/checker.py`, `tests/test_loop_policy.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/tf-roles.yaml`, `router/config.py`, `Benchmark/`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_loop_policy tests.test_forced_answer -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/loop_policy.py`, `router/loop.py`, `router/server.py`, `router/checker.py`, `tests/test_loop_policy.py`, and this handoff's Status and Feedback.
+- **Tests written first:** Added repeat-guard, write tracking, budget, heartbeat, precedence and dispatch tests. The acceptance command initially failed with `ModuleNotFoundError: No module named 'router.loop_policy'`. Added a missing-file regression after implementation.
+- **Test result after the code:** 60 existing checker, checker-stage, tool-error-trail, error-kind, timeout and tool-surface tests passed in 31.188s.
+- **Acceptance command result:** `Ran 9 tests in 57.766s`, `OK` (exit 0).
+- **Departures from the plan:** Used the permitted checker.py change. Its deterministic checker owns the accept invocation and now takes an optional cached AcceptResult while still evaluating lint and diff checks on the final files.
+- **Problems or questions for Sonnet:** None. The full suite and post-commit S3 replay remain for the outer workflow.
+
+### Timeout diagnosis
+
+- **Step:** timeout diagnosis (after Step 9; Step 10 paused by the owner)
+- **Branch:** `main` (change no repository file except this one; commit nothing)
+- **Kind:** analysis
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** In the Step 9 gate, 11 of 28 `s2` replay runs ended `out_of_time` (the older router calls it `step_timeout`). Find where the time goes, with evidence.
+
+**Data** (read only), folder `C:/Users/vaibh/AppData/Local/Temp/claude/048adbe4a86ce95e/70049fb3-92b4-4072-be3f-63d402f5fce2/scratchpad/diag/`: `records.jsonl` (five diagnostic runs, all `out_of_time`) and, per task id, the router's `events.jsonl` and `tasks.db` (SQLite). Also `Benchmark/replay/results/base-20261127.jsonl` and `s2-20261127.jsonl`. Code: `router/loop.py`, `router/server.py`, `router/checker.py`, `router/mcp_client.py`, `router/tf-roles.yaml`, `scripts/replay.py` (use synaptree or targeted reads).
+
+**Report in Feedback:**
+1. Per diagnostic run, a table of seconds: setup before the first model step, model time (per step: min, median, max), tool time by tool name (count, total, max), accept and checker time, anything unaccounted. Say how each figure is derived from event timestamps.
+2. What the role timeout (`code-l2` `timeout_s`) covers and excludes (setup, model, tools, accept, retries), with `path:line`; explain why runs last 230-480 s.
+3. Any tool call over 10 s or any tool error, with its arguments and cause.
+4. Model speed: prompt and output tokens per second if the events or database record them; whether a model reload or context growth explains slow steps. State if Ollama ran on the GPU only if the data shows it.
+5. Ranked causes with evidence, and for each a fix: setup or tool fault (applies to every arm) versus a change to router behaviour or to the frozen measurement settings. Estimate seconds saved. Say what the data cannot show and what one further measurement would settle it.
+
+Run no model, Docker container, replay or unit test. Small read-only analysis scripts go in a system temporary folder (use `.venv/Scripts/python.exe`). No secret or personal data in Feedback. Keep Feedback under 90 lines.
+
+**Files you may touch:** only the Feedback block and Status line of this file.
+
+**Tool-call limit:** 30. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Task and verification:** Matched all five diagnostic records to their event streams and SQLite task rows, and reconciled each child duration below. The gate recorded 11/28 s2 timeouts (228.45–476.76 s) and 8/20 base timeouts (229.84–346.39 s). These are run counts with different denominators. The five diagnostic repeats explain individual failures but do not establish a distribution for the gate.
+
+**Where the seconds went**
+
+| Run | Child total | Setup | Completed calls | Model sum | Model min / median / max | Interrupted final step | Check and reopen gap | Other inside events | Outside events |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|
+| rw-010 | 392.28 | 39.87 | 9 | 141.96 | 3.50 / 11.30 / 41.85 | 142.8 | 16.8 | 0.2 | 42.6 |
+| rw-013 | 290.61 | 39.93 | 7 | 173.97 | 3.63 / 11.52 / 67.91 | 3.46 | 0 | 0.12 | 64.18 |
+| rw-018 | 239.33 | 38.98 | 4 | 143.27 | 5.31 / 15.59 / 106.77 | 35.29 | 0 | 0.08 | 12.86 |
+| rw-021 | 320.64 | 40.41 | 6 | 62.52 | 8.34 / 10.19 / 14.12 | 92.08 | 0 | 0.14 | 93.97 |
+| rw-022 | 288.38 | 52.53 | 6 | 43.94 | 3.87 / 5.43 / 18.06 | 120.85 | 0 | 0.10 | 59.71 |
+
+Each tool cell gives count / total seconds / maximum seconds. These intervals include dispatch, result handling and any per-call cleanup through the next event.
+
+| Run | read_file | search_files | edit_file | write_file |
+|---|---|---|---|---|
+| rw-010 | 3 / 2.65 / 0.92 | 3 / 3.69 / 1.67 | 1 / 0.88 / 0.88 | 1 / 0.81 / 0.81 |
+| rw-013 | 3 / 3.50 / 1.57 | 3 / 3.37 / 1.50 | 1 / 1.16 / 1.16 | 1 / 0.91 / 0.91 |
+| rw-018 | 2 / 1.73 / 0.96 | 4 / 5.96 / 1.93 | — | 1 / 1.15 / 1.15 |
+| rw-021 | 2 / 2.97 / 1.89 | 9 / 28.56 / 4.76 | — | — |
+| rw-022 | 2 / 2.65 / 1.70 | 4 / 8.60 / 3.78 | — | — |
+
+Setup spans `task_start → first step`. Completed model calls span `step → say`. Each logged tool spans `tool → next tool or step`. The interrupted interval spans `last step → task_failed` and includes cancellation, session teardown and possible failure-path diffing (`router/server.py:498`). No completed usage was recorded for those last calls. Other inside events is the remaining event-span time, mostly reply dispatch. Outside events is record `secs` minus `task_failed.ts − task_start.ts`. It combines both ends of the child process. Rounding applies.
+
+**Checks and tool errors.** Four tasks timed out before their first host check (SQLite `result.accept=none`). On rw-010 the acceptance test failed at `tests/test_open_role_profiles.py:29` with `AssertionError: 0 != 1`. The 16.8 s between the final reply and the correction's first step bounds the first pass teardown, checker (including accept), and second session startup together. Neither accept nor lint has separate timestamps. An earlier empty-answer retry is also logged. All five rows have one stored task attempt. No logged tool exceeded 10 s or emitted `tool_error`. The longest was rw-021’s 4.76 s `search_files({"path":"/workspace","pattern":"synaptree"})`. Empty search results and rw-022's empty read of `/workspace/router/__init__.py` returned normally. Setup calls without event boundaries cannot be timed individually.
+
+**What the timeout measures.** `router/tf-roles.yaml:32` sets code-l2 to 10 steps and 225 s. `router/loop.py:313` resolves that limit. Native readiness precedes task_start (`router/server.py:358`), and baseline capture precedes the role clock (`router/server.py:381–391`). Once started, the monotonic clock includes backend/session startup, tool discovery and any prereads (`router/loop.py:450–480`, `router/mcp_client.py:197–210`), model requests and retries, and ordinary tool calls. The next model request uses the remaining time (`router/loop.py:508–535`), whereas a tool uses its own timeout (`router/loop.py:591`). Thus the setup column straddles the role clock's start.
+
+Host checks pause the role clock (`router/loop.py:37–54`, `router/server.py:397–399`). The checker runs accept, lint and applicable diff checks (`router/checker.py:398–419`), with accept bounded by time left on the outer deadline (`router/server.py:201–210`). One failed write-role check can open a correction with 337.5 s minus first-pass spend, subject to a 45 s floor (`router/config.py:68,85–92`, `router/server.py:409–420`). On rw-010 that left 147.062 s. The default outer deadline is 488 s, including room for two 60 s accepts and 30 s overhead. It starts around baseline capture and covers corrections. It has an environment override.
+
+The replay times the child subprocess, from before launch through exit (`scripts/replay.py:450–465`). Worktree setup and the independent replay check fall outside it. Four diagnostic event spans were 226–229 s and rw-010's was 350 s. Child time outside those spans added 13–94 s. A cancelled `asyncio.to_thread` model request can keep running as `asyncio.run` shuts down (`router/loop.py:508–515`, `scripts/replay.py:329–337`). This could explain part of the excess. The records do not separate child startup, preflight, executor drain or exit, or assign the 476.76 s gate run to any one of them.
+
+**Model throughput.** The final event and SQLite trail aggregate completed calls. Input/output below are tokens divided separately by the same sum of completed model-call wall seconds (`router/loop.py:57–71,535`). These are effective rates. Separate prompt-evaluation and generation speeds require separate phase durations. The counter can fall back to character estimates when backend usage is absent.
+
+| Run | Input / output tokens | Model wall s | Effective input / output tokens/s | Peak input tokens |
+|---|---:|---:|---:|---:|
+| rw-010 | 56021 / 2435 | 141.83 | 395.0 / 17.2 | 10096 |
+| rw-013 | 56890 / 2435 | 173.87 | 327.2 / 14.0 | 14955 |
+| rw-018 | 14424 / 2576 | 143.20 | 100.7 / 18.0 | 4859 |
+| rw-021 | 23266 / 761 | 62.44 | 372.6 / 12.2 | 5696 |
+| rw-022 | 26878 / 637 | 43.83 | 613.2 / 14.5 | 5245 |
+
+**Ranked causes and estimated savings**
+
+1. **Model waits and generated edits (router behaviour).** The longest completed call, 106.77 s on rw-018, produced the arguments for a write that took 1.15 s. On rw-013, generating an edit and a test write took about 68 and 57 s. Prefer smaller targeted edits and avoid reproducing unchanged code. Halving those reply intervals would reclaim about 53 and 62 s respectively, conditional on equivalent edits. Context growth is plausible on rw-013, but rw-018 had the smallest peak and the longest completed step. No per-step token timing, model-load or device-residency data establishes context growth, reload or GPU placement as the cause.
+2. **Time outside router events (common replay harness).** The observed 13–94 s is an upper bound on recoverable child overhead. If shutdown is waiting on an abandoned backend request, propagate cancellation and await confirmation from the backend. Savings could be zero if that wait is elsewhere. This would shorten measurement wall time after a failure without rescuing the failed task.
+3. **Setup before useful model work (common infrastructure).** All five lost 39–53 s before step one. Instrument readiness, baseline, gateway open and tool listing before choosing a fix. Reuse a healthy gateway only with per-workspace isolation. Halving the measured setup would save 19–26 s of child time. Only the share after budget creation returns time to the first pass.
+4. **Repeated discovery and correction (router behaviour).** rw-021 spent 28.56 s on nine searches, including three identical searches for `synaptree` under `/workspace`. Reuse the successful empty result until files change, or direct the model to the known source path. Eliminating half the search time saves about 14 s on this run. rw-010's failed accept triggered a correction. A correct first submission could have avoided the 142.8 s interrupted correction step plus part of the 16.8 s gap. Removing the check would change the success criterion.
+5. **Frozen measurement settings.** Raising the 225 s timeout buys additional execution time and saves zero seconds by itself. Changing the model, context policy or deadline needs a separately labelled comparison. The records cannot establish how many failures would then pass.
+
+- **Further measurement for Sonnet:** Capture one correlated trace across parent launch/exit, child readiness, baseline, MCP open/list/close, check/accept, and model request/cancel/backend completion. Include Ollama load duration, prompt/eval counts and durations, context length and device residency for each request, including the interrupted one. This would separate model work from setup and shutdown and give phase-specific speeds.
+- **Departures from the plan:** None. Read-only analysis of existing artifacts. No model, replay, Docker container or unit test was run. No commit.
+
+### Step 9 close
+
+- **Step:** 9, close
+- **Branch:** `impl/step-9`
+- **Kind:** close
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+Close Step 9. Sonnet already ran the acceptance and the full suite (1318 OK, 4 skipped); do not run tests.
+
+1. Set Status to "in progress".
+2. Stage exactly these four files: `Benchmark/replay/RESULTS.md`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, `docs/designs/subagent-runtime/session-handoff.md`. Never stage `Benchmark/replay/results/`, `docs/haiku-fallback-log.md`, `.agents/`, `scratchpad-pr66.txt` or `tokenfrugal.egg-info/`; never use `git add -A` or `git add .`; delete none of them. Check `git diff --cached --name-only` lists exactly four files.
+3. Commit "Step 9: Gate run (s2 FAIL, S3 decision build)". Human author only: no Co-Authored-By trailer, no "generated with" footer.
+4. `git push -u tokenfrugal impl/step-9`.
+5. `gh pr create --repo maxh8086/tokenfrugal --base main --head impl/step-9`, same title; body: gate results recorded in RESULTS.md, GATE FAIL 4/20 with 8 false successes, router files unchanged, verify-record exit 0, full suite 1318 OK, 4 skipped. No footer.
+6. `gh pr checks <n> --repo maxh8086/tokenfrugal --watch --fail-fast` in the foreground.
+7. Only if the windows, macos and ubuntu checks all pass: `gh pr merge <n> --repo maxh8086/tokenfrugal --merge --delete-branch`. Confirm the state is MERGED, `git switch main` (do not stash, reset or discard anything), `git pull --ff-only tokenfrugal main`, delete the branch locally and on the remote if still present.
+8. After that, fill in Feedback (PR link, merge sha, CI per OS, branch deletion) and set Status to done, blocked or failed. That last edit stays uncommitted.
+
+Never force push, never push to main directly, never install anything, never read `.env`. If a command is refused or a check fails, stop and report; do not work around it.
+
+**Tool-call limit:** 15.
+
+#### Feedback
+
+- **Status:** Done. [PR #123](https://github.com/maxh8086/tokenfrugal/pull/123) merged at `8c57df9e8900e29846cb41cd0de79d110e590ab7`. Local main fast-forwarded. `impl/step-9` was deleted locally and on the remote.
+- **Files changed:** Verified the staged list contained exactly `Benchmark/replay/RESULTS.md`, `docs/designs/fallback-execution-log.md`, `docs/designs/subagent-runtime/progress.md`, and `docs/designs/subagent-runtime/session-handoff.md`.
+- **Tests written first:** None. This step closed the gate run.
+- **Test result after the code:** Sonnet reported 1318 OK, 4 skipped. CI passed on Windows (3m33s), macOS (2m22s), and Ubuntu (1m24s).
+- **Acceptance command result:** Sonnet reported verify-record exit 0. GATE FAIL 4/20 with 8 false successes. S3 decision was build.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
 
 ### Steps 10-11 read-only review (not done)
 

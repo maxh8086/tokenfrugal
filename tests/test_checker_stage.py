@@ -17,11 +17,14 @@ from router.workspace import load_workspace
 FLAG_CHECK = "import os, sys\nsys.exit(0 if os.path.exists('fixed') else 1)\n"
 
 
-def _make_repo(root):
+def _make_repo(root, *, configure_commits=True):
     repo = os.path.join(root, "repo")
     os.makedirs(repo)
-    for args in (("init", "-q"), ("config", "user.email", "t@example.com"), ("config", "user.name", "T"),
-                 ("config", "commit.gpgsign", "false")):
+    commands = [("init", "-q")]
+    if configure_commits:
+        commands.extend([("config", "user.email", "t@example.com"), ("config", "user.name", "T"),
+                         ("config", "commit.gpgsign", "false")])
+    for args in commands:
         subprocess.run(["git", "-C", repo, *args], check=True, capture_output=True)
     return repo
 
@@ -42,9 +45,11 @@ class ParseTest(unittest.TestCase):
 
 
 class StageTest(unittest.TestCase):
+    configure_commits = True
+
     def setUp(self):
         self.tmp = os.path.realpath(tempfile.mkdtemp())
-        self.repo = _make_repo(self.tmp)
+        self.repo = _make_repo(self.tmp, configure_commits=self.configure_commits)
         Path(self.repo, "check.py").write_text(FLAG_CHECK, encoding="utf-8")
         self.patches = [
             mock.patch.object(store, "DB_PATH", Path(self.tmp) / "t.db"),
