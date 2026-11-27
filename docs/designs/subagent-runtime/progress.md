@@ -9,8 +9,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | Step | Task | Stage | Executor | Attempts | Fix plans | Opus | PR | Merge sha | Branch deleted | Acceptance | Suite | Next action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | 64 | done | Luna, Haiku | 2 | 0 | 0 | [#108](https://github.com/maxh8086/tokenfrugal/pull/108) | `a552857` (step commit `395bb68`) | yes, local and remote | exit 0 | 994 OK, 3 skipped | - |
-| 1 | 65 | 6 close | Haiku | 2 | 1 | 1 | - | - | - | 71 OK | 1003 OK, 3 skipped | open PR, merge, delete branch |
-| 2 | 66 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 1 | 65 | done | Luna, Haiku | 2 | 1 | 1 | [#109](https://github.com/maxh8086/tokenfrugal/pull/109) | `3990872` (step commit `b3ef9ea`) | yes, local and remote | 71 OK | 1003 OK, 3 skipped | - |
+| 2 | 66 | 6 close | Haiku | 6 | 2 | 2 | - | - | - | 101 OK | 1044 OK, 3 skipped | open PR, merge, delete branch |
 | 3 | 67 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 4 | 68 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 5 | 69 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -51,6 +51,12 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 - **Opus consult 1 (Step 1, plan and code conflict: `router/` changed after `d675d75`):** verdict, Steps 1 to 11 can use current main as the baseline; `32699ce` changes no tool and no path a step changes, and runs only in `_lifespan`. Decision (Sonnet): accepted. The Step 1 assignment edits the design document (baseline wording, one line-number note instead of refreshing every cite, one cite for the base arm, and an Ollama endpoint check before each arm). Not adopted: renaming the Step 11 fixture, and counting stop `connection` as infra, which would change the gate.
 - **Step 1 order check:** `git merge-base --is-ancestor 395bb68 HEAD` exited 0.
 - Full-suite runs set `TOKENFRUGAL_OLLAMA_AUTOSTART=0` from Step 1 on.
+
+- **Step 2 attempt 1 blocked:** Codex stopped for the EGM planning gate in the repository instructions. Answer: the design was already reviewed with EGM and the user started this run to implement it. Every build spec now says so.
+
+- **Opus consult 2 (Step 2, second failure):** diagnosis, the code is nearly done and the test file is about half written; `frames_of` returns nothing for an exception group and keeps one router frame too few; `_infra_failed` cannot carry frames. Decision (Sonnet): accepted. Fix 2 gives Luna every injection point, fixes `frames_of`, tidies `backend_state` and the duplicate helper, and amends the Step 2 server row so frames apply only to the except branch. One assignment, not split; relative frame paths not adopted.
+
+- **Opus consult 3 (Step 2, third failure, re-scope):** keep one commit and one PR, no split; the only remaining piece is the `doctor.py` import path with one test that reproduces a plain script run. Decision (Sonnet): accepted. A failure after this re-scope pauses the loop. The count of failures: build review, fix 1, the test-stage defect; the two-item follow-up was not counted.
 
 ## Open items
 

@@ -17,10 +17,10 @@ from fastmcp.server.middleware import Middleware
 from . import checker, compose, events, gpu_lease, kalamanch_cleanup, ollama_launcher, plan, reconnect, store, studio, ui_launcher
 from .outcomes import Stop, stop_from_legacy
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
-from .mcp_client import ensure_backend
+from .mcp_client import backend_state
 from .model_sync import ensure_models
-from .preflight import task_error
-from .loop import error_kind, failure_reason, leaf, role_timeout, run, take_started, take_usage
+from .preflight import missing_programs, task_error
+from .loop import error_kind, failure_reason, frames_of, leaf, program_missing, role_timeout, run, take_started, take_usage
 from .summarize import hard_trim, saved_tokens, summarize
 
 CFG = load_tf_roles()
@@ -154,8 +154,13 @@ async def _heartbeat(tid: str) -> None:
 
 async def _health_loop() -> None:
     """Publish this router's own health so the dashboard's /health reflects the router, not the dashboard."""
+    first = True
     while True:
-        events.emit("health", status="up")
+        if first:
+            events.emit("health", status="up", missing=missing_programs())
+            first = False
+        else:
+            events.emit("health", status="up")
         await asyncio.sleep(HEALTH_EVERY)
 
 
@@ -235,17 +240,19 @@ def _report(verdict: dict | None, role: dict) -> str:
     return text
 
 
-async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: int, name: str, t0: float) -> str:
+async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: int, name: str, t0: float, reason: str) -> str:
     """B3: a native server's containers were not running or healthy, so the task fails before any model run."""
-    err = f"infra: backend containers for {name} are not running or healthy"
+    missing = reason.startswith("program not found:")
+    err = reason if missing else f"infra: backend for {name}: {reason}"
+    stop = Stop.ENV_MISSING if missing else Stop.INFRA
     usage = take_usage(tid)
-    store.update(tid, status="failed", error=err, error_kind=Stop.INFRA, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
-    events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason="infra", error_kind=Stop.INFRA,
+    store.update(tid, status="failed", error=err, error_kind=stop, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+    events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason="env_missing" if missing else "infra", error_kind=stop,
                 saved=0, task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
     if plan_id:
         await _plan(plan.record_run, plan_id, tid, agent, role["role"], "failed", "", err)
         await _plan(plan.set_status, plan_id, "blocked", "router", err)
-    return (failure_message(tid, role, err, "infra", "infra", 0, role.get("required_tool") or "") + "\n"
+    return (failure_message(tid, role, err, "env_missing" if missing else "infra", stop, 0, role.get("required_tool") or "") + "\n"
             + status_line("failed", role["role"], role["model"], 0, time.monotonic() - t0))
 
 
@@ -253,8 +260,10 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                    accept_override: list[str] | None = None) -> str:
     t0 = time.monotonic()
     for name in role.get("native") or []:  # B3: a native server's containers must be up before any model call
-        if name in NATIVE_BACKENDS and not await ensure_backend(name):
-            return await _infra_failed(tid, agent, role, prompt, plan_id, name, t0)
+        if name in NATIVE_BACKENDS:
+            backend_reason = await backend_state(name)
+            if backend_reason:
+                return await _infra_failed(tid, agent, role, prompt, plan_id, name, t0, backend_reason)
     row = store.get(tid)
     store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
@@ -291,11 +300,13 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         return (f"[{tid}] {summary}\n{checker.manifest(before, after)}\n"
                 + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
+        orig = e
+        frames = frames_of(orig) if not isinstance(e, CheckFailed) else []
         if isinstance(e, CheckFailed):
             full, reason, kind = str(e), "checker", e.stop
         else:
             e = leaf(e)
-            full = f"{type(e).__name__}: {e}"
+            full = program_missing(orig) or f"{type(e).__name__}: {e}"
             reason = failure_reason(full)
             kind = error_kind(full)
         started = calls + take_started(tid)
@@ -306,7 +317,8 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
         usage = take_usage(tid)
         err = full if gpu else hard_trim(full, 300 if isinstance(e, CheckFailed) else 120)
         store.update(tid, status="failed", error=err, error_kind=kind, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
-        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind,
+        extra = {"frames": frames} if kind in (Stop.ERROR, Stop.ENV_MISSING) else {}
+        events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind, **extra,
                     saved=saved_tokens((getattr(e, "msgs", None) or [])[base:], err),
                     task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
         if plan_id:
@@ -426,6 +438,8 @@ def _trail_line(e: dict) -> str:
         return f"retry {e.get('reason', '')[:160]}"
     if kind == "tool_error":
         return f"tool_error {e.get('name')}: {e.get('error', '')[:200]}"
+    if e.get("frames"):
+        return f"{kind} {e.get('error') or e.get('summary') or ''} frames: {'; '.join(e['frames'])}"[:400]
     return f"{kind} {e.get('error') or e.get('summary') or ''}"[:200]
 
 

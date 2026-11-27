@@ -4,9 +4,17 @@ Each check returns a short error string, or '' when the check passes. Callers re
 wrong mount, an unknown agent or a missing skill file costs no model time.
 """
 import re
+import shutil
 from pathlib import Path
 
-from .config import ROOT, check_agent, missing_workspace_folder
+from .config import NATIVE_SERVERS, ROOT, check_agent, missing_workspace_folder
+
+
+def missing_programs() -> list[str]:
+    """Programs used directly by the router or by a configured native server."""
+    names = ["docker", "git", "npx", "hyperframes"]
+    names.extend(cfg["command"] for cfg in NATIVE_SERVERS.values())
+    return list(dict.fromkeys(name for name in names if shutil.which(name) is None))
 
 
 def task_error(agent: str, task: str, cfg: dict, workspace: str) -> str:

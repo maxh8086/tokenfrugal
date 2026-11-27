@@ -86,6 +86,45 @@ def leaf(e: BaseException) -> BaseException:
     return e
 
 
+def frames_of(exc: BaseException) -> list[str]:
+    """Return the innermost traceback frame and up to three recent router frames."""
+    frames = []
+    pending = [exc]
+    while pending:
+        current = pending.pop(0)
+        tb = current.__traceback__
+        while tb:
+            frame = tb.tb_frame
+            code = frame.f_code
+            rendered = f"{code.co_filename}:{tb.tb_lineno}:{code.co_name}"
+            if rendered not in frames:
+                frames.append(rendered)
+            tb = tb.tb_next
+        if isinstance(current, BaseExceptionGroup):
+            pending[0:0] = list(current.exceptions)
+    if not frames:
+        return []
+    innermost = frames[-1]
+    router = [f for f in frames if ("/router/" in f.replace("\\", "/")) and f != innermost][-3:]
+    return [innermost, *router]
+def program_missing(exc: BaseException) -> str | None:
+    """Find a missing-program diagnostic in any exception-group member or cause chain."""
+    pending = [exc]
+    seen = set()
+    while pending:
+        cur = pending.pop(0)
+        if id(cur) in seen:
+            continue
+        seen.add(id(cur))
+        if isinstance(cur, BaseExceptionGroup):
+            pending.extend(cur.exceptions)
+        if isinstance(cur, FileNotFoundError) and "program not found:" in str(cur):
+            return str(cur)
+        if cur.__cause__ is not None:
+            pending.append(cur.__cause__)
+    return None
+
+
 def slop_check(text: str) -> str | None:
     if not text.strip():
         return "empty answer"
@@ -316,6 +355,8 @@ def error_kind(text: str) -> str:
     """Failure kind stored as error_kind: step_timeout (role time limit hit), request_timeout (one model request timed out),
     no_tool_call, max_steps, bad_answer (empty or placeholder reply), infra (backend or runner failure), or error for
     everything else (connection, ...). Built on failure_reason. gpu_busy: the GPU lease is held (router/gpu_lease.py)."""
+    if "program not found:" in (text or ""):
+        return "env_missing"
     if (text or "").startswith("GpuBusy:"):
         return "gpu_busy"
     reason = failure_reason(text)
@@ -523,3 +564,5 @@ async def _run(agent: str, role: dict, msgs: list, tid: str) -> tuple[str, list]
                     events.emit("tool_error", id=tid, name=c.function.name, error=out[:300])
                 msgs.append({"role": "tool", "tool_call_id": c.id, "content": out})
         raise LoopError(f"no final answer in {role['max_steps']} steps")
+
+

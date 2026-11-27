@@ -23,7 +23,7 @@ def docker_bin() -> str:
     path = shutil.which("docker")
     if not path:
         raise DockerMcpError("docker was not found on PATH; install Docker Desktop with the MCP Toolkit "
-                             "(run: python scripts/doctor.py)")
+                             "(run: python scripts/doctor.py)") from FileNotFoundError("program not found: docker")
     return path
 
 
@@ -85,6 +85,6 @@ def apply_params(profile: str, params: dict | None) -> None:
         try:
             r = subprocess.run(argv, input=stdin, capture_output=True, text=True, timeout=60)
         except FileNotFoundError as e:
-            raise DockerMcpError(f"docker not runnable: {e}") from None
+            raise DockerMcpError(f"docker not runnable: {e}") from FileNotFoundError("program not found: docker")
         if r.returncode:
             raise DockerMcpError(f"{' '.join(argv[1:4])} failed: {(r.stderr or r.stdout).strip()[:200]}")

@@ -50,9 +50,11 @@ async def _compose(*args: str, timeout: int) -> None:
 
 
 async def _compose_once(*args: str, timeout: int) -> None:
-    p = await asyncio.create_subprocess_exec(
-        shutil.which("docker") or "docker", "compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE), *args,
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT, env=dict(os.environ))
+    from . import mcp_client
+    async with mcp_client._launch_guard("docker"):
+        p = await asyncio.create_subprocess_exec(
+                shutil.which("docker") or "docker", "compose", "-p", COMPOSE_PROJECT, "-f", str(COMPOSE_FILE), *args,
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT, env=dict(os.environ))
     try:
         out, _ = await asyncio.wait_for(p.communicate(), timeout)
     except asyncio.TimeoutError:

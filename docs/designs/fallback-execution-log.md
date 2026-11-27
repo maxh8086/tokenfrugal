@@ -137,7 +137,7 @@ Entry rules:
 
 | Class | Attempts | Failure seen | Hypothesis (to verify) | Fix to try |
 |---|---|---|---|---|
-| A_builder_path | 2 (FB-002, FB-003) | `FileNotFoundError` [WinError 2] | The builder's environment does not have `docker` or `hyperframes` on PATH. | Run the builder with the same PATH as this shell, or move Docker calls out of builder tasks. Confirm by running `where docker` inside the builder's runner. |
+| A_builder_path | 2 (FB-002, FB-003) | `FileNotFoundError` [WinError 2] | The builder's environment does not have `docker` or `hyperframes` on PATH. (cause unconfirmed, see F7) | Run the builder with the same PATH as this shell, or move Docker calls out of builder tasks. Confirm by running `where docker` inside the builder's runner. |
 | B_checker_env_quoting | 2 (FB-005, FB-006) | accept `SyntaxError` unterminated string | Inline `python -c "..."` is split on quote characters by the checker. | Put acceptance in a script file, e.g. `scripts/accept_story_film.py`, and pass only the file path. |
 | B_checker_env_missing_deps | 1 (FB-006) | `ModuleNotFoundError: yaml` | The builder's runner uses a Python without the repo's requirements. | Run the checker with the repo venv, `.venv/Scripts/python.exe`, or install the requirements into the builder's Python. |
 | C_step_budget | 7 (FB-001 x3, FB-004 x2, FB-005 x2) | step timeout 225 s, or `no final answer in 10 steps` | One dispatch covers several functions, so the step budget runs out. | Limit each dispatch to one function and at most 6 tool calls. |
@@ -226,3 +226,15 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 1 | GPT-6 Luna (Codex) | fix 1 | 2 | not recorded | about 5 min or less | `done`, acceptance 70 tests OK; review found no remaining departure. Codex left the Feedback status line blank | fix 1 / none |
 | 1 | Haiku subagent | test | 1 | about 16 | 172 s (102,083 tokens) | added missing cases in three test files and pinned the trim length; acceptance 71 OK, suite 1003 OK (skipped=3) | none / none |
 | 1 | Sonnet | suite run | 1 | 1 | about 79 s | 1003 tests OK (skipped=3) | none / none |
+| 1 | Haiku subagent | close | 1 | 5 | not recorded | commit `b3ef9ea`, PR 109 merged as `3990872`, branch deleted | none / none |
+| 2 | GPT-6 Luna (Codex) | build | 1 | not recorded | not recorded | `blocked`: stopped for the EGM planning gate, no files changed | none / none |
+| 2 | GPT-6 Luna (Codex) | build | 2 | not recorded | not recorded | `done`, acceptance 69 tests OK; Sonnet review found departures: the launch guard misses errors raised by the `stdio_client` call, compose wrapper, health events, most required test cases missing | fix 1 / none |
+| 2 | GPT-6 Luna (Codex) | fix 1 | 3 | not recorded | not recorded | `failed`: code departures changed, 71 tests OK, but the required test cases were not all written | fix 1 / consult 2 |
+| 2 | Opus subagent | consult (second failure) | 1 | not recorded | not recorded | test file half written; one real defect in `frames_of`; one plan and code conflict on frames | fix 2 / consult 2 |
+| 2 | GPT-6 Luna (Codex) | fix 2 | 4 | not recorded | about 5 min | `done`, acceptance 81 tests OK (also run by Sonnet); the design-document edit was not made and one unused function remained | fix 2 / consult 2 |
+| 2 | GPT-6 Luna (Codex) | fix 2 follow-up | 5 | not recorded | not recorded | `done`: design sentence added, unused function removed | fix 2 / none |
+| 2 | Haiku subagent | test | 1 | 12 | 226 s (110,455 tokens) | added 20 cases; acceptance 100 OK, suite 1043 OK (skipped=3); found a code defect: `doctor.py` imports `router` before the repo root is on `sys.path` | re-scope / consult 3 |
+| 2 | Opus subagent | consult (third failure, re-scope) | 1 | not recorded | not recorded | one remaining piece, no split | re-scope / consult 3 |
+| 2 | GPT-6 Luna (Codex) | re-scope part 1 | 6 | not recorded | not recorded | `done`: acceptance 102 OK; `doctor.py` now runs the router check | re-scope / consult 3 |
+| 2 | Sonnet | suite run | 1 | 1 | about 74 s | 1044 tests OK (skipped=3); plain `doctor.py` run exit 0 | none / none |
+| 2 | Haiku subagent | retest | 2 | 3 | not recorded | no files changed; acceptance 101 OK, suite 1044 OK (skipped=3), `doctor.py` exit 0 | none / none |

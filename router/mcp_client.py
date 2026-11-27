@@ -22,6 +22,23 @@ BACKEND_WAIT_S = 90  # max time to wait for a native server's containers to be r
 BACKEND_POLL_S = 2
 
 
+def _missing_exec(exc: BaseException) -> bool:
+    if isinstance(exc, BaseExceptionGroup):
+        return any(_missing_exec(e) for e in exc.exceptions)
+    return isinstance(exc, FileNotFoundError) or (os.name == "nt" and isinstance(exc, OSError) and getattr(exc, "winerror", None) in (2, 3))
+
+
+@contextlib.asynccontextmanager
+async def _launch_guard(argv0: str):
+    """Relabel a missing executable raised while entering a process client."""
+    try:
+        yield
+    except BaseException as exc:
+        if _missing_exec(exc):
+            raise FileNotFoundError(f"program not found: {argv0}") from exc
+        raise
+
+
 def conn_error(exc: BaseException) -> bool:
     """True when the exception means the gateway/container connection died (worth a reopen)."""
     if isinstance(exc, asyncio.TimeoutError):
@@ -49,35 +66,47 @@ async def _docker(*args: str) -> tuple[int, str]:
     return proc.returncode, out.decode(errors="replace").strip()
 
 
-async def ensure_backend(name: str) -> bool:
-    """Start the Docker containers behind a native server and wait until they are running and healthy.
-
-    Best effort: True when the server needs no backend, False on any failure or timeout (never raises).
-    Containers are handled in NATIVE_BACKENDS order, each waited on before the next.
-    """
+async def backend_state(name: str) -> str | None:
+    """Start a native server's containers, returning None or a diagnosable failure reason."""
     if name not in NATIVE_BACKENDS or os.getenv("SYNAPTREE_HOST_NODE") == "1":
-        return True
+        return None
     try:
         loop = asyncio.get_running_loop()
         deadline = loop.time() + BACKEND_WAIT_S
         for c in NATIVE_BACKENDS[name]:
             while True:
-                rc, out = await _docker("inspect", "-f", "{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{end}}", c)
+                try:
+                    rc, out = await _docker("inspect", "-f", "{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{end}}", c)
+                except Exception as exc:
+                    from .loop import program_missing
+                    if program_missing(exc):
+                        return "program not found: docker"
+                    return f"docker inspect failed for {c}"
                 if rc != 0:
-                    return False  # container missing or docker unreachable: nothing to heal
+                    return f"docker inspect failed for {c}"
                 status, _, health = out.partition("|")
                 if status == "running" and health in ("", "healthy"):
                     break
                 if loop.time() >= deadline:
-                    return False
+                    return f"container {c} is {health if status == 'running' and health else status or 'unhealthy'}"
                 if status not in ("running", "restarting"):  # exited, dead, paused, created: start it
-                    rc, _ = await _docker("start", c)
+                    try:
+                        rc, _ = await _docker("start", c)
+                    except Exception as exc:
+                        from .loop import program_missing
+                        if program_missing(exc):
+                            return "program not found: docker"
+                        return f"docker start failed for {c}"
                     if rc != 0:
-                        return False
+                        return f"docker start failed for {c}"
                 await asyncio.sleep(BACKEND_POLL_S)
-        return True
+        return None
     except Exception:
-        return False
+        return f"docker inspect failed for {c}"
+
+
+async def ensure_backend(name: str) -> bool:
+    return await backend_state(name) is None
 
 
 class Router:
@@ -199,10 +228,11 @@ async def open_native(name: str):
     # "docker-secret:NAME" values in the server's env block are read from their secret files
     extra = secrets_store.resolve_env(cfg.get("env") or {})
     params = StdioServerParameters(command=cfg["command"], args=cfg["args"], env={**os.environ, **extra})
-    async with stdio_client(params) as (r, w):
-        async with ClientSession(r, w) as s:
-            await s.initialize()
-            yield s
+    async with _launch_guard(cfg["command"]):
+        async with stdio_client(params) as (r, w):
+            async with ClientSession(r, w) as s:
+                await s.initialize()
+                yield s
 
 
 @contextlib.asynccontextmanager
@@ -220,16 +250,17 @@ async def open_profile(profile: str, params: dict | None = None):
     await asyncio.to_thread(mcp_reap.enter, docker)
     errlog = tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace")  # gateway stderr, read if the open fails
     try:
-        async with stdio_client(sp, errlog=errlog) as (r, w):
-            async with ClientSession(r, w) as s:
-                try:
-                    await s.initialize()
-                except Exception as exc:
-                    tail = _stderr_tail(errlog) if conn_error(exc) else ""
-                    if not tail:
-                        raise
-                    raise RuntimeError(f"{exc} | gateway stderr: {tail}") from exc  # same text, so open retries still match
-                yield s
+        async with _launch_guard(docker):
+            async with stdio_client(sp, errlog=errlog) as (r, w):
+                async with ClientSession(r, w) as s:
+                    try:
+                        await s.initialize()
+                    except Exception as exc:
+                        tail = _stderr_tail(errlog) if conn_error(exc) else ""
+                        if not tail:
+                            raise
+                        raise RuntimeError(f"{exc} | gateway stderr: {tail}") from exc
+                    yield s
     finally:
         errlog.close()
         await asyncio.to_thread(mcp_reap.leave, docker)  # gateway stdio containers stay inside this session
@@ -257,3 +288,4 @@ def to_openai_tools(tools, allow: list[str]) -> list[dict]:
 
 def result_text(res) -> str:
     return "\n".join(getattr(c, "text", "") for c in res.content)
+
