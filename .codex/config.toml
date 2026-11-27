@@ -1,0 +1,7 @@
+# tokenfrugal MCP server for Codex. Install first: pip install -e . (see README.md).
+# If Codex cannot start tokenfrugal-router, run python scripts/doctor.py: it prints this
+# block with the script's absolute path, and the tool_timeout_sec value to set in
+# ~/.codex/config.toml.
+[mcp_servers.tokenfrugal]
+command = "tokenfrugal-router"
+args = []
