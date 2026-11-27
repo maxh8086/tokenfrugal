@@ -9,6 +9,7 @@ import contextlib
 import dataclasses
 import os
 import re
+import shlex
 import signal
 import sys
 import threading
@@ -18,7 +19,8 @@ from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
 from . import checker, compose, config, events, gpu_lease, kalamanch_cleanup, loop, ollama_launcher, plan, reconnect, store, studio, ui_launcher, workspace
-from .outcomes import Stop, stop_from_legacy
+from .outcomes import Outcome, Stop, stop_from_legacy
+from .packet import Packet, render as render_packet, task_files as packet_files
 from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of, with_host_accept
 from .mcp_client import backend_state
 from .model_sync import ensure_models
@@ -190,7 +192,7 @@ def diff_block(text: str) -> str | None:
 
 
 def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=None, deadline_at=None, cancel=None,
-           base: checker.Baseline | None = None) -> dict | None:
+           base: checker.Baseline | None = None, packet: Packet | None = None) -> dict | None:
     ws = ws or workspace.load_workspace(WORKSPACE)
     parsed = accept if accept is not None else checker.accept_from_task(task_text, "", ws)
     diff = diff_block(detail)
@@ -202,7 +204,7 @@ def _check(role: dict, task_text: str, detail: str, t0: float, accept=None, ws=N
     skipped = bool(parsed.spec and left < config.MIN_ACCEPT_S)
     if skipped:
         parsed = checker.AcceptParse(None, "out of time")
-    task_files = workspace.legacy_task_files(ws, task_text, limit=3)
+    task_files = packet_files(packet) if packet is not None else workspace.legacy_task_files(ws, task_text, limit=3)
     checked_changes = checker.changes(ws, base, task_files, ()) if base is not None else None
     verdict = checker.check_deterministic(ws, parsed, diff, timeout=min(config.ACCEPT_TIMEOUT, left), cancel=cancel,
                                           task_files=task_files, changes=checked_changes)
@@ -263,13 +265,69 @@ def _report(verdict: dict | None, role: dict) -> str:
     return text
 
 
+_RULE_TEXT = {Stop.SCOPE: "scope: a must-not-change file changed",
+              Stop.NO_CHANGE: "no change: the task files are unchanged"}
+
+
+def _must_not(packet: Packet | None) -> tuple:
+    return tuple(packet.must_not_change) if packet is not None else ()
+
+
+def _accept_field(verdict: dict | None) -> str:
+    """The accept field of contract_json["result"]: pass, fail, none, off or prose."""
+    if verdict is None:
+        return "none"
+    note = verdict.get("accept_note") or ""
+    if note == "host accept off":
+        return "off"
+    if note == "prose":
+        return "prose"
+    if note in ("no accept", "out of time") or note.startswith("refused"):
+        return "none"
+    item = next((i for i in verdict.get("items", []) if i.get("name") == "accept"), None)
+    if item is None:
+        return "none"
+    return "pass" if item["passed"] else "fail"
+
+
+def _result(verdict: dict | None, ch, first_error: str = "", note: str = "") -> dict:
+    return {"accept": _accept_field(verdict), "files": list(ch.task_changed) if ch else [],
+            "outside_scope": list(ch.outside_scope) if ch else [], "first_error": first_error, "note": note}
+
+
+def _with_result(contract: dict | None, result: dict) -> dict:
+    return {**(contract or {}), "result": result}
+
+
+def _scope_note(packet: Packet | None, base) -> str:
+    """A packet edit task on a partial baseline (no git, or above the size cap) reports that its scope was not checked."""
+    return "scope unchecked" if packet is not None and packet.kind == "edit" and base is not None and base.partial else ""
+
+
+def _outcome_rules(packet: Packet | None, verdict: dict | None, ch) -> tuple:
+    """Step 8e outcome rules, applied after the checks and the correction. Returns (outcome, stop, note)."""
+    if packet is None or packet.kind != "edit":
+        return Outcome.DONE, Stop.NONE, ""
+    scope_note = "scope unchecked" if ch.partial else ""
+    if ch.scope_violation:
+        return Outcome.FAILED, Stop.SCOPE, scope_note
+    if not ch.task_changed:
+        if ch.partial:
+            return Outcome.FAILED, Stop.NO_CHANGE, scope_note
+        if _accept_field(verdict) == "pass":
+            return Outcome.SATISFIED, Stop.NONE, "accept passed with no change"
+        return Outcome.FAILED, Stop.NO_CHANGE, ""
+    return Outcome.DONE, Stop.NONE, scope_note
+
+
 async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: int, name: str, t0: float, reason: str) -> str:
     """B3: a native server's containers were not running or healthy, so the task fails before any model run."""
     missing = reason.startswith("program not found:")
     err = reason if missing else f"infra: backend for {name}: {reason}"
     stop = Stop.ENV_MISSING if missing else Stop.INFRA
     usage = take_usage(tid)
-    store.update(tid, status="failed", error=err, error_kind=stop, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+    store.update(tid, status="failed", error=err, error_kind=stop, outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"),
+                 contract_json=_with_result(store.get(tid).get("contract_json"), _result(None, None, err)))
     events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason="env_missing" if missing else "infra", error_kind=stop,
                 saved=0, task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
     if plan_id:
@@ -281,28 +339,30 @@ async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: 
 
 
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0,
-                   accept=None, task_text: str | None = None, checks: bool = True, correction: bool = True) -> str:
+                   accept=None, task_text: str | None = None, checks: bool = True, correction: bool = True,
+                   packet: Packet | None = None) -> str:
     if workspace.load_workspace(WORKSPACE).host_accept:  # host accept on: the router runs accept, so no run_tests tool
         role = with_host_accept(role, CFG)
     beat = asyncio.create_task(_heartbeat(tid))
     try:
-        return await _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction)
+        return await _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction, packet)
     finally:
         beat.cancel()
 
 
-async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction):
+async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction, packet=None):
     t0 = time.monotonic()
     ws = workspace.load_workspace(WORKSPACE)
     task_text = task_text if task_text is not None else (store.get(tid).get("prompt") or prompt)
-    allowed = set()
+    allowed = set(packet_files(packet)) if packet is not None else set()  # a packet's write guard allows only its files
     for name in role.get("native") or []:  # B3: a native server's containers must be up before any model call
         if name in NATIVE_BACKENDS:
             backend_reason = await backend_state(name)
             if backend_reason:
                 return await _infra_failed(tid, agent, role, prompt, plan_id, name, t0, backend_reason)
     row = store.get(tid)
-    task_files = workspace.legacy_task_files(ws, task_text, limit=3)
+    contract0 = dict(row.get("contract_json") or {})
+    task_files = packet_files(packet) if packet is not None else workspace.legacy_task_files(ws, task_text, limit=3)
     store.update(tid, status="running", heartbeat=time.time(), attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
                 max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300],
@@ -315,6 +375,8 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
     accept_cancel = threading.Event()
     cm = None
     verdict = None
+    baseline_snapshot = None
+    final_changes = None  # set once the outcome rules have diffed this run
     try:
         async with asyncio.timeout(deadline_s) as cm:
             try:
@@ -334,18 +396,17 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
                     events.emit("checks_skipped", id=tid, reason="host accept off")
                 if checks:
                     with budget.pause():
-                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot)
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot, packet=packet)
                 if verdict is not None:
                     verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
-                if correction and verdict and not verdict["passed"]:  # one correction, continuing the same message history
+                if correction and verdict and not verdict["passed"]:  # earlier stops first: accept out of time, env_missing
                     if verdict.get("accept_note") == "out of time":
                         failed = _failed_text(verdict)
                         err = f"{failed}; accept: out of time" if failed else "accept: out of time"
                         raise CheckFailed(err, Stop.OUT_OF_TIME)
-                    if verdict.get("stop") == Stop.ENV_MISSING:
-                        raise CheckFailed(_failed_text(verdict), verdict["stop"])
-                    if not _can_write(role):
-                        raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
+                    if verdict.get("stop") == Stop.ENV_MISSING or (verdict.get("stop") == Stop.OUT_OF_TIME and not _can_write(role)):
+                        raise CheckFailed(_failed_text(verdict), verdict["stop"])  # a no-write role has no correction to wait for
+                if correction and verdict and not verdict["passed"] and _can_write(role):  # a write role gets one correction run; a no-write role gets none
                     left = config.model_budget(role, rt) - budget.spent()
                     if left < config.CORRECTION_FLOOR_S:
                         raise CheckFailed(_failed_text(verdict) + "; no time for a correction run", Stop.OUT_OF_TIME)
@@ -356,32 +417,40 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
                     budget = correction_budget
                     calls += take_started(tid)
                     with budget.pause():
-                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot)
+                        verdict = await asyncio.to_thread(_check, role, task_text, detail, t0, accept, ws, deadline_at=t0 + deadline_s, cancel=accept_cancel, base=baseline_snapshot, packet=packet)
                     if verdict is not None:
                         verdict["diff_proposed"] = bool(diff_block(detail) is not None and not _can_write(role))
-                    if verdict and not verdict["passed"]:
+                    if verdict and not verdict["passed"]:  # earlier stops after the correction; other failures wait for the rules
                         if verdict.get("accept_note") == "out of time":
                             failed = _failed_text(verdict)
                             err = f"{failed}; accept: out of time" if failed else "accept: out of time"
                             raise CheckFailed(err, Stop.OUT_OF_TIME)
                         if verdict.get("stop") in (Stop.ENV_MISSING, Stop.OUT_OF_TIME):
                             raise CheckFailed(_failed_text(verdict), verdict["stop"])
-                        raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
-                final_changes = await asyncio.to_thread(checker.changes, ws, baseline_snapshot, task_files, ())
+                final_changes = await asyncio.to_thread(checker.changes, ws, baseline_snapshot, task_files, _must_not(packet))
+                outcome, rule_stop, rule_note = _outcome_rules(packet, verdict, final_changes)
+                if outcome == Outcome.FAILED:
+                    raise CheckFailed(_RULE_TEXT[rule_stop] + (f"; {rule_note}" if rule_note else ""), rule_stop)
+                if verdict and not verdict["passed"] and _can_write(role):  # a write role whose checks still fail after its correction
+                    raise CheckFailed(_failed_text(verdict), _failed_stop(verdict))
                 base_summary = summarize(role["model"], detail, prompt)
-                report = _report(verdict, role)
+                report = _report(verdict, role) + (f"\nnote: {rule_note}" if rule_note else "")
                 summary = base_summary + report
                 usage = take_usage(tid)
-                store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"), outcome="done")
+                result = _result(verdict, final_changes, "", rule_note)
+                store.update(tid, status="done", summary=summary, detail=detail, messages=msgs, error=None, error_kind=None, model_tag=role["model"], peak_ctx=usage.get("peak"),
+                             outcome=outcome.value, contract_json=_with_result(contract0, result))
                 events.emit("task_done", id=tid, role=role["role"], model=role["model"], summary=summary[:400], saved=saved_tokens(msgs[base_messages:], summary),
-                            task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, **usage)
+                            task=prompt[:80], agent=agent, e2e=round(time.monotonic() - t0, 2), error_kind=None, outcome=outcome.value, **usage)
             except asyncio.CancelledError as exc:
                 accept_cancel.set()
                 err = f"task timed out after {deadline_s:g}s" if cm.expired() else "task cancelled"
                 usage = take_usage(tid)
+                # cancel and deadline exits store an empty file list: there is no time to diff
                 store.update(tid, status="failed", error=err, error_kind=Stop.OUT_OF_TIME,
                              messages=getattr(leaf(exc), "msgs", None) or last_msgs,
-                             outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+                             outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"),
+                             contract_json=_with_result(contract0, _result(verdict, None, err, _scope_note(packet, baseline_snapshot))))
                 events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err,
                             reason="timeout", error_kind=Stop.OUT_OF_TIME, saved=0, task=prompt[:80],
                             agent=agent, e2e=round(time.monotonic() - t0, 2), **usage)
@@ -392,7 +461,7 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
             if ok:
                 await _plan(plan.checkpoint)
             summary += "" if ok else f" (plan: {msg})"
-        return (f"[{tid}] {base_summary}\n{checker.manifest_from(final_changes, packet=False)}{report}\n"
+        return (f"[{tid}] {base_summary}\n{checker.manifest_from(final_changes, packet=packet is not None)}{report}\n"
                 + status_line("done", role["role"], role["model"], calls, time.monotonic() - t0))
     except Exception as e:  # noqa: BLE001
         if isinstance(e, TimeoutError) and cm is not None and cm.expired():
@@ -409,7 +478,8 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
         frames = frames_of(orig) if not isinstance(e, CheckFailed) else []
         if isinstance(e, CheckFailed):
             full = str(e)
-            reason = "env_missing" if e.stop == Stop.ENV_MISSING else ("timeout" if e.stop == Stop.OUT_OF_TIME else "checker")
+            reason = "env_missing" if e.stop == Stop.ENV_MISSING else ("timeout" if e.stop == Stop.OUT_OF_TIME else
+                      e.stop.value if e.stop in (Stop.NO_CHANGE, Stop.SCOPE) else "checker")
             kind = e.stop
         else:
             e = leaf(e)
@@ -424,8 +494,15 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
         usage = take_usage(tid)
         err = full if gpu else hard_trim(full, 300 if isinstance(e, CheckFailed) else 120)
         failure_msgs = getattr(e, "msgs", None) or getattr(orig, "msgs", None) or last_msgs
+        ch = final_changes  # the outcome rules already diffed this run; a second diff would repeat it
+        if ch is None and baseline_snapshot is not None and time.monotonic() < t0 + deadline_s:  # no diff once the deadline has passed
+            try:
+                ch = await asyncio.to_thread(checker.changes, ws, baseline_snapshot, task_files, _must_not(packet))
+            except Exception:  # noqa: BLE001
+                ch = None  # the row still ends failed, with an empty file list
         store.update(tid, status="failed", error=err, error_kind=kind, messages=failure_msgs,
-                     outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"))
+                     outcome="failed", model_tag=role["model"], peak_ctx=usage.get("peak"),
+                     contract_json=_with_result(contract0, _result(verdict, ch, err, _scope_note(packet, baseline_snapshot))))
         extra = {"frames": frames} if kind in (Stop.ERROR, Stop.ENV_MISSING) else {}
         events.emit("task_failed", id=tid, role=role["role"], model=role["model"], error=err, reason=reason, error_kind=kind, **extra,
                     saved=saved_tokens((getattr(e, "msgs", None) or [])[base_messages:], err),
@@ -437,6 +514,58 @@ async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, tas
                                hint_text=e.hint if gpu else "") + "\n"
                 + (_report(verdict, role).lstrip("\n") if isinstance(e, CheckFailed) else "checks: none (not run)")
                 + "\n" + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
+
+
+async def _admit(agent: str, task_text: str, plan_id: int) -> tuple[dict | None, str]:
+    """Checks before any task row exists: task text, role, held role, model pull and plan claim. Returns (role, "") or (None, refusal)."""
+    err = task_error(agent, task_text, CFG, WORKSPACE)
+    if err:
+        events.emit("task_refused", agent=agent, reason=err)  # refusal before any model time; logged to events.jsonl
+        return None, err
+    role = resolve_role(agent, CFG)
+    if role.get("held"):  # held roles are listed for the owner but never run; refused before any task row exists
+        events.emit("task_refused", agent=agent, reason="held")
+        return None, f"role '{role['role']}' is held: {role['held']}"
+    global _models_ready
+    if not _models_ready and team_of(role["role"], CFG) == "mediahouse":
+        err = await asyncio.to_thread(ensure_models)  # a first pull can take hours; keep the event loop free
+        if err:
+            return None, err
+        _models_ready = True
+    if plan_id:
+        ok, msg = await _plan(plan.claim, plan_id, "router")
+        if not ok:
+            return None, f"plan task {plan_id} not started: {msg}"
+    return role, ""
+
+
+async def start_packet_task(agent: str, packet: Packet, task_type: str = "", plan_id: int = 0) -> tuple[str | None, str]:
+    """Run a task packet. Returns (task id, reply), or (None, refusal) when no row is created."""
+    task_text = render_packet(packet)
+    accept = checker.AcceptParse(None, "no accept")  # a packet without accept runs no accept, whatever its text says
+    if packet.accept:
+        accept = checker.parse_accept(shlex.join(packet.accept), "argument", workspace.load_workspace(WORKSPACE))
+        if accept.note.startswith("refused:"):
+            return None, accept.note
+    role, refusal = await _admit(agent, task_text, plan_id)
+    if role is None:
+        return None, refusal
+    task_type = task_type.strip()
+    prompt = store.with_templates(role["role"], task_text, task_type)
+    contract = {"accept": accept.spec.to_json() if accept and accept.spec else None, "packet": packet.model_dump(mode="json")}
+    ws_path = os.path.normcase(os.path.realpath(WORKSPACE))
+    if packet.kind == "edit":
+        row_fields = {"agent": agent, "role": role["role"], "prompt": task_text, "client": _CLIENT_NAME, "task_type": task_type,
+                      "prompt_sent": prompt, "contract_json": contract, "plan_id": plan_id or 0, "kind": "edit"}
+        tid, holder = store.create_claimed(row_fields, ws_path)
+        if tid is None:
+            if plan_id:
+                await _plan(plan.revert, plan_id, "router")
+            return None, f"workspace_busy: edit task {holder} is running in this workspace; retry later"
+    else:
+        tid = store.create(agent, role["role"], task_text, client=_CLIENT_NAME, task_type=task_type, prompt_sent=prompt,
+                           contract_json=contract, workspace=ws_path, plan_id=plan_id or 0, kind="analyze")
+    return tid, await _execute(tid, agent, role, prompt, plan_id=plan_id, accept=accept, task_text=task_text, packet=packet)
 
 
 @mcp.tool()
@@ -459,24 +588,9 @@ async def dispatch_task(agent: str = "", task: str = "", task_type: str = "", pl
     parsed_accept = checker.parse_accept(accept, "argument", workspace.load_workspace(WORKSPACE)) if accept else None
     if parsed_accept and parsed_accept.note.startswith("refused:"):
         return parsed_accept.note
-    err = task_error(agent, task, CFG, WORKSPACE)
-    if err:
-        events.emit("task_refused", agent=agent, reason=err)  # refusal before any model time; logged to events.jsonl
-        return err
-    role = resolve_role(agent, CFG)
-    if role.get("held"):  # held roles are listed for the owner but never run; refused before any task row exists
-        events.emit("task_refused", agent=agent, reason="held")
-        return f"role '{role['role']}' is held: {role['held']}"
-    global _models_ready
-    if not _models_ready and team_of(role["role"], CFG) == "mediahouse":
-        err = await asyncio.to_thread(ensure_models)  # a first pull can take hours; keep the event loop free
-        if err:
-            return err
-        _models_ready = True
-    if plan_id:
-        ok, msg = await _plan(plan.claim, plan_id, "router")
-        if not ok:
-            return f"plan task {plan_id} not started: {msg}"
+    role, refusal = await _admit(agent, task, plan_id)
+    if role is None:
+        return refusal
     kalamanch_cleanup.maybe_run()  # at most once a day, in a background thread; never blocks or fails the dispatch
     task_type = task_type.strip()
     prompt = store.with_templates(role["role"], task, task_type)  # approved templates go before the task text; the row keeps the task
@@ -587,7 +701,16 @@ async def resume_task(task_id: str) -> str:
     role = resolve_role(t["agent"], CFG)
     prompt = t.get("prompt_sent") or t["prompt"]
     contract = t.get("contract_json")
-    if contract is None:
+    packet = Packet.model_validate(contract["packet"]) if contract and contract.get("packet") else None
+    if packet is not None:  # a packet's accept comes from its contract only; its text is never parsed
+        accept_json = contract.get("accept")
+        accept = checker.AcceptParse(checker.AcceptSpec.from_json(accept_json)) if accept_json else checker.AcceptParse(None, "no accept")
+        if packet.kind == "edit":
+            claimed, holder = store.create_claimed({}, current_workspace, resume_of=task_id)
+            if claimed is None:
+                return (f"workspace_busy: edit task {holder} is running in this workspace; retry later" if holder
+                        else f"task {task_id} is already running")
+    elif contract is None:
         accept = checker.accept_from_task(t["prompt"], "", workspace.load_workspace(WORKSPACE))
     else:
         accept_json = contract.get("accept")
@@ -598,7 +721,7 @@ async def resume_task(task_id: str) -> str:
             accept = checker.AcceptParse(None, parsed.note if not parsed.spec else "no accept")
     options = {"checks": False, "correction": False} if t.get("parent_id") else {}
     return await _execute(task_id, t["agent"], role, prompt, t["messages"] or None,
-                          plan_id=t.get("plan_id") or 0, accept=accept, task_text=t["prompt"], **options)
+                          plan_id=t.get("plan_id") or 0, accept=accept, task_text=t["prompt"], packet=packet, **options)
 
 
 @mcp.tool()

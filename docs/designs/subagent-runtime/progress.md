@@ -18,8 +18,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 8a | 71 | done | Haiku | 6 | 2 | 1 | #115 | `299ed5c` | yes (local and remote) | 57 OK | 1176 OK, 4 skipped; CI green on 3 OSes | - (timing in RESULTS.md) |
 | 8b | 72 | done | Haiku | 1 | 0 | 0 | #116 | `ef8afb0` | yes (local and remote) | 6 OK | 1182 OK, 4 skipped; CI green on 3 OSes | - |
 | 8c | 73 | done | Luna, Haiku | 2 | 1 | 0 | [#117](https://github.com/maxh8086/tokenfrugal/pull/117) | `5a2e88a` | yes | 9 OK, three runs | 1191 OK (4 skipped); CI pass | - |
-| 8d | 74 | 5 close | Haiku | 1 | 0 | 0 | - | - | - | 8 OK | 1197 OK (4 skipped) | PR, CI, merge, then realworld-bench check |
-| 8e | 75 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 8d | 74 | done | Luna (stopped at limit), Haiku | 1 | 0 | 1 | [#118](https://github.com/maxh8086/tokenfrugal/pull/118) | `816bb34` | yes | 8 OK | 1197 OK (4 skipped); CI pass; code-l2 bench PASS 6/6 | slower sandbox task, see open items |
+| 8e | 75 | 5 close | Haiku | 4 | 2 | 1 | - | - | - | 76 OK, two runs | 1232 OK (4 skipped) | PR, CI, merge |
 | 8f | 76 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8g | 77 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8h | 78 | pending | - | 0 | 0 | 0 | - | - | - | - | - | corpus decisions before any S2 result |
@@ -70,7 +70,12 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 - **Step 6+7 post-commit checks (2026-11-27):** `smoke_plan` OK. `smoke.py`: 9 roles passed; `security` wrong (file search timed out), `designer` failed (`APITimeoutError`), `tracker` failed (no final answer in 6 steps). Step 6+7 changed only two prompt constants in the loop these tests call; whether the three fail without it is not established. Rerun of the three: `designer` passed; `security` wrong again (file search still running after 210 s); `tracker` failed again (no final answer in 6 steps).
 - **Opus consult 9 (Step 8a, second review failure):** confirmed: tests snapshot the real repository; `baseline_json` bypasses the store encoding; `host accept off` breaks the Reply contract; `_changed_set` is dead; the baseline runs outside the deadline and before the row is `running`. Also: a hash baseline must compare its own file list on resume, and a deleted `.py` file must not count as linted. Fix in two parts. Not changed: follow-ups take a baseline they do not need, and each check builds extra trees (speed only).
 
+- Step 8d (Opus consult, 2026-11-27): the realworld benchmark named by the plan was retired in `5d53805`. Sonnet replaced the check with a paired `code-l2` role bench at `5a2e88a` and `816bb34` with host accept on, and changed the three places in the design doc. Result: PASS (`Benchmark/replay/RESULTS.md`).
+
+- Step 8e (Opus consult, 2026-11-27): rule 5 applies to legacy and packet tasks alike; the Step 6+7 build had made a no-write role's failed checks end `failed`, against the plan, so `tests/test_checker_stage.py` joins Step 8e's file list and acceptance command in the design doc. Rules 1-3 run before the failed-checks rule; earlier stops (`env_missing`, `out_of_time`) still win. Fix split in two: fix 1 outcome semantics, fix 2 reply manifest, result record, guarded `changes()` and missing tests.
+
 ## Open items
 
+- Step 8d made the `code-l2` sandbox task about 125 s slower (37 s to 164 s): under `code-l2-accept` the model searches `/workspace` for files it has yet to create, and `search_files` times out at 60 s. The pass criterion does not measure time. Relevant to the Step 9 timeout decision; the skill text is the design's literal text and is unchanged.
 - **Step 3 post-commit checks:** the user approved the install on 2026-11-27; `pip install -e .` ran in `.venv` and created `.venv/Scripts/tokenfrugal-router.exe`. The user then approved appending that folder to the end of the user `PATH` (done 2026-11-27); new processes resolve `tokenfrugal-router`. The Codex check in another project, with a `~/.codex/config.toml` entry (outside the repo), is still pending. The untracked `tokenfrugal.egg-info/` folder from the install is never committed.
 
