@@ -334,3 +334,6 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 9 | Luna | timeout analysis | 1 | not reported | about 6 min | done: model time dominates, no tool fault found | loop paused for the owner |
 | 10 | Luna | build | 1 | not reported | about 7 min | done: acceptance 9 OK; Sonnet suite 1325 OK | test completion |
 | 10 | Luna | test completion | 1 | not reported | about 5 min | done: 11 acceptance OK; Sonnet suite 1327 OK | close |
+| 10 | Luna | close | 1 | not reported | about 7 min | done: PR 124 merged (609a87b), CI passed on three OSes | arm s3 |
+| 10 | Sonnet | arm s3 and report | 1 | - | about 85 min | GATE: FAIL, 4/20, 3 false successes | loop paused for the owner |
+| 10 | Opus | consult (s3 FAIL) | 1 | at most 10 | about 3 min | record as FAIL; suggests S3 off by default; no revert | owner decision |
