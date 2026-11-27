@@ -9,13 +9,78 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8b, Task packet
+- **Branch:** `impl/step-8b`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8b, lines 1160-1170; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/packet.py` | **Create** | The `FileRef` and `Packet` pydantic models with the path and line validators ([Task packet v1](#task-packet-v1-routerpacketpy-a-pydantic-model)). `render(packet: Packet) -> str` (format in Appendix B). `task_files(packet) -> list[str]`. A `__main__` block: `python -m router.packet --schema` prints `Packet.model_json_schema()` as indented JSON, and `--out PATH` writes the same text to `PATH` as UTF-8 with `\n` line ends. |
+| `docs/designs/subagent-runtime/packet.schema.json` | **Create** | Generated with `python -m router.packet --schema --out docs/designs/subagent-runtime/packet.schema.json`, not a shell `>` (Windows PowerShell 5.1 writes UTF-16). Never edited by hand. |
+| `pyproject.toml`, `requirements.txt` | Check, no change | `pydantic==2.14.0` is already pinned in both by Step 3. |
+| `tests/test_packet.py` | **Create** | <ul><li>Valid packets: a minimal one, one with every field, a `new: true` file, a file named `a..b.py`.</li><li>Invalid packets raise `ValidationError`: 4 files, a `..` segment, an absolute path, a backslash, a drive colon, `lines` with start > end, an unknown key, `v: 2`.</li><li>`json.loads` of the committed `packet.schema.json` (read as UTF-8) equals `Packet.model_json_schema()`.</li><li>`render` includes an `Accept:` line that `parse_accept` turns back into the same argv.</li></ul> |
+
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_packet -q`
+
+**Notes from Sonnet**
+
+- Read the design document section Task packet v1 (`router/packet.py`, a pydantic model) and the packet render format in Appendix B before writing tests; their literal text is the authority. Appendix A may hold the contract types.
+- Use `.venv\Scripts\python.exe`, never plain `python`. Generate the schema file with the module's `--out` option, never a shell redirect.
+- The committed schema must be byte-identical on every platform: UTF-8, LF line ends. Check whether `.gitattributes` or git autocrlf would change it on checkout; the test compares parsed JSON, so line ends must not break it.
+- CI runs the full suite on clean Windows, macOS and Linux runners: no Docker, network, model or token.
+- `pyproject.toml` may need `router/packet.py` in no list: check only; change nothing there.
+
+**Files you may touch:** `router/packet.py`, `docs/designs/subagent-runtime/packet.schema.json`, `tests/test_packet.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `pyproject.toml`, `requirements.txt`, `Benchmark/replay/RESULTS.md`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_packet tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 25.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** Created `router/packet.py`, `tests/test_packet.py`, and `docs/designs/subagent-runtime/packet.schema.json`. Updated the current Status and Feedback in this handoff.
+- **Tests written first:** Added packet validation, exact rendering, task file order, accept argv round-trip, and schema equality tests. The first run exited 1 with ModuleNotFoundError for router.packet.
+- **Test result after the code:** All five packet tests passed. Verified schema CLI output matches the generated file text, and the file uses UTF-8 and LF. Git marks the schema eol=lf.
+- **Acceptance command result:** tests.test_packet and tests.test_tool_surface passed on Windows (6 tests in 0.046s, exit 0).
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** The existing legacy parser stops at the first closing backtick, so an argv item containing a literal backtick cannot round-trip through the specified backtick-delimited format. The packet itself preserves that argv.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8a fix 2 part B (done)
+
 - **Step:** 8a, review fixes
 - **Branch:** `impl/step-8a`
 - **Kind:** fix 2, part B of 2
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied.** These are fixes to an approved task; do not run an EGM brainstorm or review. Part A is done and reviewed; keep it. For each item add a failing test to `tests/test_verified_completion.py` (or `tests/test_baseline.py` for item 2) first, then fix.
 
@@ -37,7 +102,7 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 
 **Tool-call limit:** 35. Fill in the Feedback block and set Status before you reach it. Do not commit, push or install anything.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `router/server.py`, `router/checker.py`, `tests/test_verified_completion.py`, `tests/test_baseline.py`, and the current Status and Feedback in this file.
@@ -46,10 +111,6 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 - **Acceptance command result:** All 150 tests passed in 19.627 seconds on Windows (exit 0).
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** None.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8a fix 2 part A (done)
 
