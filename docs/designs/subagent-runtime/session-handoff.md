@@ -9,13 +9,116 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8c, workspace claim
+- **Branch:** `impl/step-8c`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied.** This is a small fix to an approved task; do not run an EGM brainstorm or review. Your uncommitted diff otherwise passed review; keep it.
+
+**Defect.** A resumed legacy task keeps its old heartbeat when `_execute_task` stores `status="running"`, and the first beat comes only after `HEARTBEAT_EVERY`. For up to 30 s the live edit looks stale: `create_claimed` lets a packet edit win the same workspace, and `sweep_stale` can fail the row.
+
+**Fix.** The store update that sets `status="running"` also sets `heartbeat=time.time()`. Test first (in `tests/test_workspace_claim.py`): a finished `kind="edit"` row with `heartbeat=0` is run through `server._execute` with a fake `server.run` that, before returning, asserts the row's heartbeat is recent and that `store.create_claimed` for the same workspace returns `(None, <that id>)`. Patch `checker.baseline`/`checker.changes` or use the temporary workspace; no Docker, network or model; bound the test.
+
+**Files you may touch:** `router/server.py`, `tests/test_workspace_claim.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_workspace_claim tests.test_deadline tests.test_task_contract -q
+```
+
+**Tool-call limit:** 12. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** Updated `router/server.py`, `tests/test_workspace_claim.py`, and this assignment's Status and Feedback.
+- **Tests written first:** The bounded legacy edit resume test failed before the fix. The fake runner observed a heartbeat of 0.0 after the task entered the running state.
+- **Test result after the code:** The regression passed. Before the first periodic beat, the fake runner observed a fresh heartbeat and a competing claim returned `(None, tid)`.
+- **Acceptance command result:** All 47 tests passed in 3.779 seconds on Windows (exit 0).
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8c build (done)
+
+- **Step:** 8c, Workspace claim
+- **Branch:** `impl/step-8c`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8c, lines 1171-1180; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/store.py` | Modify | Add the `tasks_claim` index on `(workspace, status)`, and `create_claimed(row_fields, workspace, resume_of=None) -> tuple[str \| None, str \| None]` (SQL in Appendix A). It returns `(task id, None)` when the claim is won, `(None, holder id)` when another live edit task holds the workspace, and `(None, "")` when `resume_of` is no longer resumable because another resume started it. No new column. |
+| `router/server.py` | Modify | `_execute` starts `_heartbeat(tid)` at its top, before the backend check (`:239-241`) and the baseline, and cancels it in the outer `finally`. At `d675d75` it starts at `:249`, after up to `BACKEND_WAIT_S` (90 s, `mcp_client.py:21`) of backend wait, so a live task could look stale to the claim. |
+| `tests/test_workspace_claim.py` | **Create** | <ul><li>Two concurrent `create_claimed` calls: one wins.</li><li>A running legacy edit row with a fresh heartbeat blocks a claim; a legacy analyze row does not.</li><li>A heartbeat older than 60 s is taken over.</li><li>A task waiting in the backend check (patched to sleep past `HEARTBEAT_EVERY`) keeps a fresh heartbeat and still blocks a claim.</li><li>A resume of the claiming task is allowed.</li><li>A refusal creates no row.</li><li>Two concurrent resumes of the same finished task: exactly one wins, and the other gets `(None, "")`.</li></ul> |
+
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_workspace_claim -q`
+
+**Notes from Sonnet**
+
+- Read the design sections Workspace claim (`router/store.py`, S2) and Appendix A, Workspace claim SQL; the SQL there is the authority. `create_claimed` inserts the same columns as `store.create` (reuse it so the two cannot drift) and encodes JSON columns the same way.
+- Use one connection and `BEGIN IMMEDIATE`; check how `store._db()` commits so the transaction really is explicit, and let a second writer wait (sqlite busy timeout) instead of raising `database is locked`.
+- `_execute` was changed by Steps 5, 6+7 and 8a: the heartbeat now starts after `task_start`. Move it to the top of `_execute`, before the backend check and `_infra_failed` return, and cancel it in a `finally` that covers every exit. Keep the Step 8a order for the baseline (inside the deadline block) and one row write and one event per exit.
+- No caller uses `create_claimed` yet; Step 8e wires it. Do not wire it now.
+- Tests use a temporary database and temporary workspace, no Docker, network or model; concurrency tests use threads with timeouts, and `HEARTBEAT_EVERY` patched small so no test waits more than about 2 s. Windows, macOS and Linux (CI runs them).
+- Use `.venv\Scripts\python.exe`, never plain `python`.
+
+**Files you may touch:** `router/store.py`, `router/server.py`, `tests/test_workspace_claim.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/checker.py`, `router/packet.py`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_workspace_claim tests.test_deadline tests.test_task_contract tests.test_verified_completion tests.test_checker_stage tests.test_error_kind tests.test_diagnostics_frames tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** Updated `router/store.py` and `router/server.py`, added `tests/test_workspace_claim.py`, and updated the current Status and Feedback in this handoff.
+- **Tests written first:** Ran all seven new tests before implementation. The backend wait left the heartbeat at zero, and the claim API was missing. Windows also reported open SQLite handles during fixture cleanup.
+- **Test result after the code:** All seven workspace tests passed. Repeating the concurrent claim and resume tests 24 times each passed all 48 runs after fixing a lock during concurrent database initialization.
+- **Acceptance command result:** All 141 tests passed on Windows in 12.924s (exit 0).
+- **Departures from the plan:** Added a bounded retry for SQLITE_BUSY when enabling WAL. The concurrent first-open test showed that this operation could fail immediately despite the configured SQLite busy timeout.
+- **Problems or questions for Sonnet:** None.
+
+### Step 8b build (done)
+
 - **Step:** 8b, Task packet
 - **Branch:** `impl/step-8b`
 - **Kind:** build
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
 
@@ -58,7 +161,7 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
 - Tool-call limit: 25.
 - Do not commit, push or install anything; report the files you changed and the test output.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** Created `router/packet.py`, `tests/test_packet.py`, and `docs/designs/subagent-runtime/packet.schema.json`. Updated the current Status and Feedback in this handoff.
@@ -67,10 +170,6 @@ You do not need to run the full suite; Sonnet and Haiku run it outside the sandb
 - **Acceptance command result:** tests.test_packet and tests.test_tool_surface passed on Windows (6 tests in 0.046s, exit 0).
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** The existing legacy parser stops at the first closing backtick, so an argv item containing a literal backtick cannot round-trip through the specified backtick-delimited format. The packet itself preserves that argv.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8a fix 2 part B (done)
 

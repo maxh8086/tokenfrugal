@@ -281,3 +281,7 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8a | Haiku subagent | close | 1 | 10 | about 4 min | commit `99b3449`, PR 115 merged as `299ed5c`, CI green on 3 OSes, branch deleted | none / none |
 | 8b | GPT-6 Luna (Codex) | build | 1 | limit 25 | about 4 min | `done`, 6 tests OK; Sonnet review passed; full suite 1181 OK (skipped=4) | none / none |
 | 8b | Haiku subagent | test | 1 | limit 15 | about 2 min | one case added; 6 OK; clean-clone suite 1182 OK (skipped=4); Sonnet full suite 1182 OK (skipped=4) | none / none |
+| 8b | Haiku subagent | close | 1 | 7 | about 4 min | commit `5e5eda4`, PR 116 merged as `ef8afb0`, CI green on 3 OSes, branch deleted | none / none |
+| 8c | GPT-6 Luna (Codex) | build | 1 | limit 35 | about 7 min | `done`, 141 tests OK; Sonnet review: a resumed legacy task looks stale until its first beat | fix 1 / none |
+| 8c | Luna | fix 1 | 2 | not reported | not reported | done: running update sets heartbeat; Sonnet suite 1190 OK (4 skipped) | stale heartbeat on resumed legacy task |
+| 8c | Haiku | test | 1 | 5 | about 2 min | added 1 case; 9 OK three times; clean clone 1191 OK (4 skipped) | - |

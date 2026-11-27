@@ -5,18 +5,30 @@ import re
 import sqlite3
 import time
 import uuid
+from contextlib import closing
 
 from .config import DB_PATH
 
 HEARTBEAT_EVERY = 30  # seconds between heartbeats from a running router
+DB_TIMEOUT = 30  # seconds to wait for concurrent writers
 STALE_AFTER = 120  # a running row with no heartbeat for this long belongs to a dead router
 TEMPLATE_MAX = 2  # approved templates placed before one task
 TEMPLATE_BUDGET_TOKENS = 1500  # their combined size; the rest of the 16-32k window is for the task and tool output
 
 
 def _db():
-    c = sqlite3.connect(DB_PATH, timeout=30)  # wait for concurrent writers instead of failing after Python's 5s default
-    c.execute("PRAGMA journal_mode=WAL")  # readers and writers stop blocking each other
+    c = sqlite3.connect(DB_PATH, timeout=DB_TIMEOUT)
+    deadline = time.monotonic() + DB_TIMEOUT
+    while True:
+        try:
+            c.execute("PRAGMA journal_mode=WAL")
+            break
+        except sqlite3.OperationalError as exc:
+            # Concurrent first opens can return SQLITE_BUSY without invoking the busy handler.
+            if exc.sqlite_errorcode != sqlite3.SQLITE_BUSY or time.monotonic() >= deadline:
+                c.close()
+                raise
+            time.sleep(0.02)
     c.execute("""CREATE TABLE IF NOT EXISTS tasks(
         id TEXT PRIMARY KEY, agent TEXT, role TEXT, prompt TEXT, status TEXT,
         summary TEXT, detail TEXT, messages TEXT, error TEXT, attempts INTEGER DEFAULT 0)""")
@@ -38,19 +50,50 @@ def _db():
             c.execute(f"ALTER TABLE tasks ADD COLUMN {column}")
         except sqlite3.OperationalError:
             pass
+    c.execute("CREATE INDEX IF NOT EXISTS tasks_claim ON tasks(workspace, status)")
     return c
 
 
 def create(agent, role, prompt, run_id: str | None = None, client=None, *, task_type=None, prompt_sent=None,
            contract_json=None, workspace=None, plan_id=None, kind=None, parent_id=None) -> str:
+    with closing(_db()) as c, c:
+        return _insert_task(c, agent, role, prompt, run_id, client, task_type=task_type, prompt_sent=prompt_sent,
+                            contract_json=contract_json, workspace=workspace, plan_id=plan_id, kind=kind,
+                            parent_id=parent_id)
+
+
+def _insert_task(c, agent, role, prompt, run_id=None, client=None, *, task_type=None, prompt_sent=None,
+                 contract_json=None, workspace=None, plan_id=None, kind=None, parent_id=None):
     tid = uuid.uuid4().hex[:10]
-    with _db() as c:
-        c.execute("INSERT INTO tasks(id,agent,role,prompt,status,heartbeat,run_id,client,task_type,prompt_sent,contract_json,workspace,plan_id,kind,parent_id) "
-                  "VALUES(?,?,?,?,'running',?,?,?,?,?,?,?,?,?,?)",
-                  (tid, agent, role, prompt, time.time(), run_id, client, task_type, prompt_sent,
-                   json.dumps(contract_json, ensure_ascii=False) if contract_json is not None else None,
-                   workspace, plan_id, kind, parent_id))
+    c.execute("INSERT INTO tasks(id,agent,role,prompt,status,heartbeat,run_id,client,task_type,prompt_sent,contract_json,workspace,plan_id,kind,parent_id) "
+              "VALUES(?,?,?,?,'running',?,?,?,?,?,?,?,?,?,?)",
+              (tid, agent, role, prompt, time.time(), run_id, client, task_type, prompt_sent,
+               json.dumps(contract_json, ensure_ascii=False) if contract_json is not None else None,
+               workspace, plan_id, kind, parent_id))
     return tid
+
+
+def create_claimed(row_fields, workspace, resume_of=None) -> tuple[str | None, str | None]:
+    ws = os.path.normcase(os.path.realpath(workspace))
+    with closing(_db()) as c, c:
+        c.execute("BEGIN IMMEDIATE")
+        now = time.time()
+        holder = c.execute(
+            "SELECT id FROM tasks WHERE workspace=? AND kind='edit' AND status='running' "
+            "AND heartbeat > ? AND id != coalesce(?, '') LIMIT 1",
+            (ws, now - 2 * HEARTBEAT_EVERY, resume_of),
+        ).fetchone()
+        if holder:
+            c.rollback()
+            return None, holder[0]
+        if resume_of is None:
+            return _insert_task(c, **{**row_fields, "workspace": ws}), None
+        resumed = c.execute("UPDATE tasks SET status='running', heartbeat=? "
+                            "WHERE id=? AND status IN ('done', 'failed')", (now, resume_of))
+        if resumed.rowcount:
+            return resume_of, None
+        c.rollback()
+        return None, ""
 
 
 def beat(tid) -> None:

@@ -16,8 +16,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 5 | 69 | done | Haiku | 6 | 3 | 3 | #113 | `bf61446` | yes (local and remote) | 32 OK | 1122 OK, 4 skipped; CI green on 3 OSes | - |
 | 6-7 | 70 | done | Haiku | 5 | 2 | 1 | #114 | `dd23707` | yes (local and remote) | 69 OK | 1150 OK, 4 skipped; CI green on 3 OSes | - |
 | 8a | 71 | done | Haiku | 6 | 2 | 1 | #115 | `299ed5c` | yes (local and remote) | 57 OK | 1176 OK, 4 skipped; CI green on 3 OSes | - (timing in RESULTS.md) |
-| 8b | 72 | 6 Haiku close | Haiku | 1 | 0 | 0 | - | - | - | 6 OK | 1182 OK, 4 skipped | open PR, wait for CI, merge |
-| 8c | 73 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 8b | 72 | done | Haiku | 1 | 0 | 0 | #116 | `ef8afb0` | yes (local and remote) | 6 OK | 1182 OK, 4 skipped; CI green on 3 OSes | - |
+| 8c | 73 | 5 close | Haiku | 2 | 1 | 0 | - | - | - | 9 OK, three runs | 1191 OK (4 skipped) | PR, CI, merge |
 | 8d | 74 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8e | 75 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8f | 76 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |

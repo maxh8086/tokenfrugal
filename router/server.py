@@ -282,6 +282,14 @@ async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: 
 
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0,
                    accept=None, task_text: str | None = None, checks: bool = True, correction: bool = True) -> str:
+    beat = asyncio.create_task(_heartbeat(tid))
+    try:
+        return await _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction)
+    finally:
+        beat.cancel()
+
+
+async def _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction):
     t0 = time.monotonic()
     ws = workspace.load_workspace(WORKSPACE)
     task_text = task_text if task_text is not None else (store.get(tid).get("prompt") or prompt)
@@ -293,12 +301,11 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                 return await _infra_failed(tid, agent, role, prompt, plan_id, name, t0, backend_reason)
     row = store.get(tid)
     task_files = workspace.legacy_task_files(ws, task_text, limit=3)
-    store.update(tid, status="running", attempts=(row["attempts"] or 0) + 1)
+    store.update(tid, status="running", heartbeat=time.time(), attempts=(row["attempts"] or 0) + 1)
     events.emit("task_start", id=tid, agent=agent, role=role["role"], model=role["model"],
                 max_steps=role["max_steps"], attempt=(row["attempts"] or 0) + 1, prompt=prompt[:300],
                 tools=role.get("tools") or [], skills=role.get("skills") or [])
     base_messages = len(messages or [])  # messages from an earlier run were already counted
-    beat = asyncio.create_task(_heartbeat(tid))
     calls = 0  # tool calls sent over every run of this task (a checker correction is a second run)
     last_msgs = messages
     rt = role_timeout(role)
@@ -428,8 +435,6 @@ async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None,
                                hint_text=e.hint if gpu else "") + "\n"
                 + (_report(verdict, role).lstrip("\n") if isinstance(e, CheckFailed) else "checks: none (not run)")
                 + "\n" + status_line("failed", role["role"], role["model"], started, time.monotonic() - t0))
-    finally:
-        beat.cancel()
 
 
 @mcp.tool()
