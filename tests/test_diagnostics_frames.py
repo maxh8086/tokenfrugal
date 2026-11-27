@@ -20,6 +20,9 @@ import doctor  # noqa: E402
 class DiagnosticFrames(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.mkdtemp()
+        ws_patch = mock.patch.object(server, "WORKSPACE", self.temp)
+        ws_patch.start()
+        self.addCleanup(ws_patch.stop)
         self.db_patch = mock.patch.object(store, "DB_PATH", Path(self.temp) / "e2e.db")
         self.db_patch.start()
         self.addCleanup(self.db_patch.stop)
@@ -40,7 +43,6 @@ class DiagnosticFrames(unittest.TestCase):
         patches = [
             mock.patch.object(loop, "backends", no_backends),
             mock.patch.object(server.gpu_lease, "guard_ollama", lambda *a, **k: None),
-            mock.patch.object(server, "_changed_set", lambda: set()),
             mock.patch.object(loop._client.chat.completions, "create", side_effect=AssertionError),
             mock.patch.object(server, "_heartbeat", idle_heartbeat),
             *extra,

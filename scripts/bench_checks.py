@@ -164,7 +164,7 @@ def _sandbox_tests(body, scratch=None, expect=None):
     return run_sandbox(scratch)[0]
 
 
-_TRAILER = re.compile(r"\s*(status=|files_changed:|checks:)")  # router trailer lines the checks drop
+_TRAILER = re.compile(r"\s*(status=|files_changed:|outside_scope:|checks:)")  # router trailer lines the checks drop
 
 
 def _reply(body):

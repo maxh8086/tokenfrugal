@@ -239,6 +239,9 @@ class ExecuteEndToEnd(unittest.TestCase):
 
     def setUp(self):
         self.path = Path(tempfile.mkdtemp()) / "e2e.db"
+        ws_patch = mock.patch.object(server, "WORKSPACE", str(self.path.parent))
+        ws_patch.start()
+        self.addCleanup(ws_patch.stop)
         self.patch = mock.patch.object(store, "DB_PATH", self.path)
         self.patch.start()
 

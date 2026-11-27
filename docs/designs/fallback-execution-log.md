@@ -269,3 +269,12 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 6-7 | Opus | consult 8 | 1 | limit 10 | about 3 min | confirmed, plus three more defects | fix 2 / consult 8 |
 | 6-7 | GPT-6 Luna (Codex) | fix 2 | 5 | limit 35 | about 6 min | `done`, 83 tests OK; Sonnet full suite 1145 OK (skipped=4) | fix 2 / consult 8 |
 | 6-7 | Haiku subagent | test | 1 | limit 20 | about 2 min | five cases added; 69 OK; clean-clone suite 1150 OK (skipped=4); Sonnet full suite 1150 OK (skipped=4) | none / none |
+| 6-7 | Haiku subagent | close | 1 | 6 | about 4 min | commit `5ecf05f`, PR 114 merged as `dd23707`, CI green on 3 OSes, branch deleted | none / none |
+| 8a | GPT-6 Luna (Codex) | build, part A | 1 | limit 35 | about 8 min | `done`, 62 tests OK; Sonnet review: subfolder paths, index writes by `git status`, renames, `**` globs, an extra `Changes` field | fix 1 / none |
+| 8a | GPT-6 Luna (Codex) | fix 1 | 2 | limit 30 | about 5 min | `done`, 67 tests OK; Sonnet full suite 1167 OK (skipped=4) | fix 1 / none |
+| 8a | GPT-6 Luna (Codex) | build, part B | 3 | not recorded | about 2 min | `blocked` with a question about the allowed files; no code | answered, reassigned / none |
+| 8a | GPT-6 Luna (Codex) | build, part B (reassigned) | 4 | limit 35; about 118k tokens | about 8 min | `done`, 177 tests OK; Sonnet full suite 1169 OK (skipped=4); review: five defects | fix 2 / consult 9 |
+| 8a | Opus | consult 9 | 1 | limit 10 | about 2 min | confirmed all five, two more | fix 2 / consult 9 |
+| 8a | GPT-6 Luna (Codex) | fix 2, part A | 5 | limit 35 | about 5 min | `done`, 147 tests OK; Sonnet full suite 1171 OK (skipped=4) | fix 2 / consult 9 |
+| 8a | GPT-6 Luna (Codex) | fix 2, part B | 6 | limit 35 | about 7 min | `done`, 150 tests OK; Sonnet full suite 1175 OK (skipped=4) | fix 2 / consult 9 |
+| 8a | Haiku subagent | test | 1 | limit 20 | about 3 min | one case added; 57 OK; clean-clone suite 1176 OK (skipped=4); Sonnet full suite 1176 OK (skipped=4) | none / none |

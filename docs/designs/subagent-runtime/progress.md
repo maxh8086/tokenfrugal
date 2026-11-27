@@ -14,8 +14,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 3 | 67 | done (post-commit checks pending) | Luna, Haiku | 3 | 1 | 0 | [#111](https://github.com/maxh8086/tokenfrugal/pull/111) | `64725ee` (step commit `06729e0`) | yes, local and remote | 10 OK | 1061 OK, 3 skipped | ask the user: install and live Codex check |
 | 4 | 68 | done | Haiku | 3 | 2 | 1 | #112 | `1d939fe` | yes (local and remote) | 43 OK | 1104 OK, 4 skipped; CI green on 3 OSes | - |
 | 5 | 69 | done | Haiku | 6 | 3 | 3 | #113 | `bf61446` | yes (local and remote) | 32 OK | 1122 OK, 4 skipped; CI green on 3 OSes | - |
-| 6-7 | 70 | 6 Haiku close | Haiku | 5 | 2 | 1 | - | - | - | 69 OK | 1150 OK, 4 skipped | open PR, wait for CI on three OSes, merge, post-commit checks |
-| 8a | 71 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 6-7 | 70 | done | Haiku | 5 | 2 | 1 | #114 | `dd23707` | yes (local and remote) | 69 OK | 1150 OK, 4 skipped; CI green on 3 OSes | - |
+| 8a | 71 | 6 Haiku close | Haiku | 6 | 2 | 1 | - | - | - | 57 OK | 1176 OK, 4 skipped | open PR, wait for CI, merge, time baseline() |
 | 8b | 72 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8c | 73 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8d | 74 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
@@ -67,6 +67,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 - **Opus consult 6 (Step 5, second failure):** Luna changed only item 1 of fix 1; it broke a test that built a Mock with `spec=`. Decision: split the rest into A (items 1-3 and that test), B (`_execute` control flow, items 4-7) and C (item 8), with the control-flow shape and error literals stated.
 - **Opus consult 7 (Step 5, third failure: re-scope):** fix 2 part A passed; part B stopped `blocked` after two tests, no code. Re-scope into piece 1 (exception handlers only) and piece 2 (move the success plan calls and reply after the timeout block). The plan-call test was wrong (its fake returned None) and is fixed in piece 2. A failure of either piece pauses the loop.
 - **Opus consult 8 (Step 6+7, second review failure):** failed and timed-out runs lost the loop's messages; a resumed follow-up child ran checks; a resume could run a task-line command the first run did not run; `get_detail` printed `None`. Decision: fix all four in `router/server.py`; the task-line accept fallback applies only to rows with no `contract_json`. Noted, not changed (outside the plan rows): a failed resume sets its plan task to `blocked` even when that task was `done`.
+- **Step 6+7 post-commit checks (2026-11-27):** `smoke_plan` OK. `smoke.py`: 9 roles passed; `security` wrong (file search timed out), `designer` failed (`APITimeoutError`), `tracker` failed (no final answer in 6 steps). Step 6+7 changed only two prompt constants in the loop these tests call; whether the three fail without it is not established. Rerun of the three: `designer` passed; `security` wrong again (file search still running after 210 s); `tracker` failed again (no final answer in 6 steps).
+- **Opus consult 9 (Step 8a, second review failure):** confirmed: tests snapshot the real repository; `baseline_json` bypasses the store encoding; `host accept off` breaks the Reply contract; `_changed_set` is dead; the baseline runs outside the deadline and before the row is `running`. Also: a hash baseline must compare its own file list on resume, and a deleted `.py` file must not count as linted. Fix in two parts. Not changed: follow-ups take a baseline they do not need, and each check builds extra trees (speed only).
 
 ## Open items
 

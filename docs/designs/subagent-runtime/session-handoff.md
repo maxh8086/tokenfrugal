@@ -9,13 +9,307 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8a, review fixes
+- **Branch:** `impl/step-8a`
+- **Kind:** fix 2, part B of 2
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+### Task
+
+**Planning gate: already satisfied.** These are fixes to an approved task; do not run an EGM brainstorm or review. Part A is done and reviewed; keep it. For each item add a failing test to `tests/test_verified_completion.py` (or `tests/test_baseline.py` for item 2) first, then fix.
+
+1. **Where the baseline is taken** (`router/server.py`, `_execute`). Required order: (1) `store.update(status="running", attempts=...)` and the `task_start` event; (2) start the heartbeat; (3) enter `asyncio.timeout(deadline_s)` and the inner `try`; (4) `gpu_lease.guard_ollama`; (5) only when `baseline_json` is NULL, `await asyncio.to_thread(checker.baseline, ...)`, then `store.update(baseline_json=...)`; (6) `run`. A cancel or deadline during the baseline must reach the existing handlers: one row write, one `task_failed`, row never left `running`. Every name used after the block or in the handlers must be bound even when the baseline was never taken. Tests: the row is `running` while a slow fake baseline runs; an outside cancel during it leaves the row `failed` with one `task_failed`; a deadline during it returns the out-of-time reply.
+2. **Hash baseline on resume** (`router/checker.py`, `changes`): for a hash baseline, hash exactly the files in `base.files` (its keys), not the caller's `task_files`, so a file that joins the task list after the baseline is not reported as changed. `task_changed` and `outside_scope` still use `task_files`. Test it.
+3. **Deleted Python files** (`router/server.py`, `_report`): a `.py` path that no longer exists was not linted, so it must not count as "lint ran". Decide this from the filesystem where the verdict is built (for example, have the `files_changed` or lint item carry whether any file was linted) without changing the reply's `files_changed:` line. With host accept off and only a deleted `.py` file, the state is `none (host accept off)`.
+
+Tests need no Docker, network, model or token on Windows, macOS and Linux; bound async tests (no real wait above about 1 s); never use the real repository as a workspace.
+
+**Files you may touch:** `router/server.py`, `router/checker.py`, `tests/test_verified_completion.py`, `tests/test_baseline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_baseline tests.test_checker_stage tests.test_error_kind tests.test_diagnostics_frames tests.test_deadline tests.test_task_contract -q
+```
+
+**Tool-call limit:** 35. Fill in the Feedback block and set Status before you reach it. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `router/server.py`, `router/checker.py`, `tests/test_verified_completion.py`, `tests/test_baseline.py`, and the current Status and Feedback in this file.
+- **Tests written first:** Reproduced an external cancel leaving the row running, a deadline missing the baseline, a newly scoped file appearing changed, and a deleted Python file counting as linted. Updated the workspace guard to expect a handled snapshot error.
+- **Test result after the code:** All regressions passed. Both interruption tests observed a running row during capture, one failed row update, one failure event, and no model run.
+- **Acceptance command result:** All 150 tests passed in 19.627 seconds on Windows (exit 0).
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8a fix 2 part A (done)
+
+- **Step:** 8a, review fixes
+- **Branch:** `impl/step-8a`
+- **Kind:** fix 2, part A of 2
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** These are fixes to an approved task; do not run an EGM brainstorm or review. The uncommitted diff stays; fix these four. Part B (another assignment) covers the rest.
+
+1. **Tests must never snapshot the real repository.** These call `_execute` against the real workspace: `tests.test_error_kind.ExecuteEndToEnd` (all its cases) and `tests.test_diagnostics_frames.DiagnosticFrames`. Patch `server.WORKSPACE` to a temporary folder, or patch `checker.baseline` and `checker.changes`, in their set-up. Add one guard test to `tests/test_verified_completion.py` only if it can be done without running other modules; otherwise skip it.
+2. **`baseline_json` encoding** (design section Data model: JSON columns are written once by `store.update()` and decoded by `store.get()`): add it to both. `_execute` passes `dataclasses.asdict(baseline)` and rebuilds the object with a new `Baseline.from_json(dict)` in `router/checker.py`; no hand-written `json.dumps` or `json.loads` in the server. Update the raw-string assertion in `tests/test_verified_completion.py` to compare a dict.
+3. **Reply contract:** remove the `or note == "host accept off"` special case in `_report`. When no Python file changed and accept did not run, the state is `none (host accept off)`. In `tests/test_checker_stage.py`, make the fake run of the host-accept-off case write a `.py` file in the test workspace, so `ok (lint; accept none: host accept off)` is earned, and add a case where nothing changes and `checks: none (host accept off)` is expected.
+4. **Remove dead `_changed_set`** from `router/server.py` and delete every test patch of it (`tests/test_deadline.py`, `tests/test_diagnostics_frames.py`, `tests/test_task_contract.py`). Where a test used that patch to avoid slow git work, patch `checker.baseline`/`checker.changes` or keep a temporary workspace instead.
+
+**Files you may touch:** `router/server.py`, `router/store.py`, `router/checker.py`, `tests/test_error_kind.py`, `tests/test_diagnostics_frames.py`, `tests/test_verified_completion.py`, `tests/test_checker_stage.py`, `tests/test_deadline.py`, `tests/test_task_contract.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file. No MCP tool signature or docstring changes.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_checker_stage tests.test_error_kind tests.test_diagnostics_frames tests.test_deadline tests.test_task_contract tests.test_baseline tests.test_tool_surface -q
+```
+
+**Tool-call limit:** 35. Fill in the Feedback block and set Status before you reach it. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/checker.py`, `router/server.py`, `router/store.py`, `tests/test_error_kind.py`, `tests/test_diagnostics_frames.py`, `tests/test_verified_completion.py`, `tests/test_checker_stage.py`, `tests/test_deadline.py`, `tests/test_task_contract.py`, and the current Status and Feedback in this file.
+- **Tests written first:** Updated the baseline assertion to expect a dict, covered host accept off with and without a Python edit, and added a guard that intercepts the baseline call and checks its workspace. Before the code changes, the dict assertion and no-change reply failed as expected.
+- **Test result after the code:** Both regression cases and the workspace guard passed in the acceptance run.
+- **Acceptance command result:** Passed all 147 tests in 18.248 seconds (exit 0).
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+### Step 8a part B (done)
+
+- **Step:** 8a, F5 baseline and scoped changes, part B of 2: wiring
+- **Branch:** `impl/step-8a`
+- **Kind:** build, part B
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design was brainstormed and reviewed with EGM and the user started this run to implement it. Part A is done and reviewed; keep it.
+
+**Answer to your question (read first).** `check_deterministic` already has the parameter: part A added `changes: Changes | None = None`, and when it is given, lint runs on `changes.changed` and the `files_changed` item lists them. Pass it from `_check`; `files_changed(repo)` is only the path when it is not given. `router/checker.py` is now in the files you may touch, for small wiring needs only (for example skipping a changed path that no longer exists); keep the `baseline`, `changes` and dataclass behaviour.
+
+Write the tests first and run them to show they fail; then write the code until they pass.
+
+**Plan rows, in full** (`docs/designs/subagent-runtime-design.md`; the dataclasses and exact rules are in its sections Change detection (`router/checker.py`, S2) and Appendix A, which are the authority):
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/store.py` | Modify | Add the `baseline_json` column. |
+| `scripts/bench_checks.py` | Modify | `_TRAILER` (`:167`) also strips the `outside_scope:` line. |
+| `router/server.py` | Modify | <ul><li>`_execute` takes the baseline at the first dispatch (when `baseline_json` is NULL). Every `resume_task` and the correction run reuse it.</li><li>The `before`/`after` path sets are replaced by `changes()`.</li><li>Legacy task files come from `workspace.legacy_task_files` (Step 4).</li></ul> |
+| `tests/test_verified_completion.py` | **Create** | <ul><li>Legacy tasks are never failed by the no-change rule.</li><li>Resume reuses the first baseline (an FB-002 replay with fakes).</li><li>Lint is scoped to changed files.</li></ul> |
+
+*   **Test isolation:** tests that run `_execute` (`test_error_kind.py:236-259`, `test_diagnostics_frames`, `test_checker_stage`) patch `server.WORKSPACE` to a temporary folder or patch `checker.baseline`, so no test runs `git add -A` over the real workspace.
+
+**Notes from Sonnet**
+
+- `changes.changed` now includes deleted and renamed-away paths (`--no-renames`) and paths relative to `ws.root`: lint must not fail on a file that no longer exists (test it). `baseline()` and `changes()` run git and read files: call them off the event loop, as `_changed_set` is called today.
+- Line numbers are from an old commit; find code by symbol name. Steps 4 to 6+7 changed `router/checker.py` and `router/server.py`; keep their behaviour.
+- No git command may change the real repository's index, working tree or refs: use the temporary index the design describes. Tests build their own temporary git repositories (set `user.name` and `user.email` with `-c` or repo config; never touch global git config).
+- Always run `.venv\Scripts\python.exe`, never plain `python`. Files may use CRLF.
+- CI runs the full suite on clean Windows, macOS and Linux runners: tests need no Docker, network, Ollama, `.env` or token; run git with an argument list, never a shell; handle path separators and case rules per platform.
+
+**Files you may touch:** `router/checker.py`, `router/store.py`, `router/server.py`, `scripts/bench_checks.py`, `tests/test_verified_completion.py`, and existing `tests/` files only to patch the workspace or `checker.baseline` as the test isolation line says, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file. No MCP tool signature or docstring changes.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_baseline tests.test_checker tests.test_router_bc tests.test_checker_stage tests.test_error_kind tests.test_diagnostics_frames tests.test_task_contract tests.test_deadline tests.test_tool_surface -q
+```
+
+Inside your sandbox a test that needs `git commit` may fail for lack of a git identity: set it in the test repository.
+
+**Tool-call limit:** 35. Fill in the Feedback block and set Status (done, blocked or failed, with the reason) before you reach it. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/store.py`, `router/server.py`, `scripts/bench_checks.py`, `tests/test_verified_completion.py`, this Feedback block and Status line.
+- **Tests written first:** Added baseline reuse and changed-file lint tests; the baseline reuse test failed before implementation because no baseline was stored.
+- **Test result after the code:** `tests.test_verified_completion` passed (2 tests).
+- **Acceptance command result:** Passed; 177 tests.
+- **Departures from the plan:** Kept the existing `host accept off` lint report wording when no changed Python paths exist, to preserve checker-stage behavior.
+- **Problems or questions for Sonnet:** None.
+
+### Step 8a part B (blocked: question)
+
+- **Step:** 8a, F5 baseline and scoped changes, part B of 2: wiring
+- **Branch:** `impl/step-8a`
+- **Kind:** build, part B
+- **Assigned at:** 2026-11-27
+- **Status:** blocked
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design was brainstormed and reviewed with EGM and the user started this run to implement it. Part A is done and reviewed; keep it.
+
+Write the tests first and run them to show they fail; then write the code until they pass.
+
+**Plan rows, in full** (`docs/designs/subagent-runtime-design.md`; the dataclasses and exact rules are in its sections Change detection (`router/checker.py`, S2) and Appendix A, which are the authority):
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/store.py` | Modify | Add the `baseline_json` column. |
+| `scripts/bench_checks.py` | Modify | `_TRAILER` (`:167`) also strips the `outside_scope:` line. |
+| `router/server.py` | Modify | <ul><li>`_execute` takes the baseline at the first dispatch (when `baseline_json` is NULL). Every `resume_task` and the correction run reuse it.</li><li>The `before`/`after` path sets are replaced by `changes()`.</li><li>Legacy task files come from `workspace.legacy_task_files` (Step 4).</li></ul> |
+| `tests/test_verified_completion.py` | **Create** | <ul><li>Legacy tasks are never failed by the no-change rule.</li><li>Resume reuses the first baseline (an FB-002 replay with fakes).</li><li>Lint is scoped to changed files.</li></ul> |
+
+*   **Test isolation:** tests that run `_execute` (`test_error_kind.py:236-259`, `test_diagnostics_frames`, `test_checker_stage`) patch `server.WORKSPACE` to a temporary folder or patch `checker.baseline`, so no test runs `git add -A` over the real workspace.
+
+**Notes from Sonnet**
+
+- `changes.changed` now includes deleted and renamed-away paths (`--no-renames`) and paths relative to `ws.root`: lint must not fail on a file that no longer exists (test it). `baseline()` and `changes()` run git and read files: call them off the event loop, as `_changed_set` is called today.
+- Line numbers are from an old commit; find code by symbol name. Steps 4 to 6+7 changed `router/checker.py` and `router/server.py`; keep their behaviour.
+- No git command may change the real repository's index, working tree or refs: use the temporary index the design describes. Tests build their own temporary git repositories (set `user.name` and `user.email` with `-c` or repo config; never touch global git config).
+- Always run `.venv\Scripts\python.exe`, never plain `python`. Files may use CRLF.
+- CI runs the full suite on clean Windows, macOS and Linux runners: tests need no Docker, network, Ollama, `.env` or token; run git with an argument list, never a shell; handle path separators and case rules per platform.
+
+**Files you may touch:** `router/store.py`, `router/server.py`, `scripts/bench_checks.py`, `tests/test_verified_completion.py`, and existing `tests/` files only to patch the workspace or `checker.baseline` as the test isolation line says, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file. No MCP tool signature or docstring changes.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_verified_completion tests.test_baseline tests.test_checker tests.test_router_bc tests.test_checker_stage tests.test_error_kind tests.test_diagnostics_frames tests.test_task_contract tests.test_deadline tests.test_tool_surface -q
+```
+
+Inside your sandbox a test that needs `git commit` may fail for lack of a git identity: set it in the test repository.
+
+**Tool-call limit:** 35. Fill in the Feedback block and set Status (done, blocked or failed, with the reason) before you reach it. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** blocked
+- **Files changed:** `docs/designs/subagent-runtime/session-handoff.md` only (Status and Feedback fields).
+- **Tests written first:** None; blocked before implementation.
+- **Test result after the code:** Not run.
+- **Acceptance command result:** Not run.
+- **Departures from the plan:** Implementation did not start. The task requires scoped lint via `check_deterministic(..., changes=...)`, but the “Files you may touch” list excludes `router/checker.py`, where that interface and behavior must be implemented. Current `check_deterministic` still obtains `files_changed(repo)` and lints that set. The explicit file restriction prevents completing the required lint scope safely.
+- **Problems or questions for Sonnet:** Please authorize `router/checker.py` in the allowed files list or revise the scoped-lint requirement.
+
+### Step 8a fix 1 (done)
+
+- **Step:** 8a, change detection in `router/checker.py`
+- **Branch:** `impl/step-8a`
+- **Kind:** fix 1
+- **Assigned at:** 2026-11-27
+- **Status:** done
+
+#### Task
+
+**Planning gate: already satisfied.** These are fixes to an approved task; do not run an EGM brainstorm or review. Your part A diff is uncommitted; keep it and fix the following. For each item add a failing test to `tests/test_baseline.py` first, then fix.
+
+1. **Workspace that is a subfolder of a repository.** `git diff` prints paths relative to the repository top, but `task_files` are relative to `ws.root`. Report paths relative to `ws.root`, and only those under it (`git diff --relative`, or equivalent), and measure untracked size for the same set. Test: a workspace at `repo/sub` with a task file `a.py`.
+2. **Real index must not change.** `git status` can rewrite the repository's index. List untracked, non-ignored files with `git ls-files --others --exclude-standard -z` (run in `ws.root`). Test: the bytes and mtime of the real index file are unchanged after `baseline()` and `changes()`, with a tracked file whose mtime was touched.
+3. **Renames.** With rename detection a moved file shows only its new path. Pass `--no-renames` so both paths are in `changed`. Test with `git mv`.
+4. **`**` globs.** `**/secrets.env` must match `secrets.env` at the root as well as nested; `dir/**` matches everything below `dir`; a single `*` and `?` do not cross `/`. Write a small glob-to-regex helper; keep the platform case rule. Test those cases.
+5. **`Changes` must match Appendix A exactly** (no extra `note` field). The `scope unchecked` note is derived from `partial` by later steps.
+
+Tests build their own temporary repositories, set identity in repo config, and run on Windows, macOS and Linux with no Docker, network or token.
+
+**Files you may touch:** `router/checker.py`, `tests/test_baseline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_baseline tests.test_checker tests.test_router_bc tests.test_checker_stage -q
+```
+
+**Tool-call limit:** 30. Fill in the Feedback block and set Status before you reach it. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/checker.py`, `tests/test_baseline.py`, `docs/designs/subagent-runtime/session-handoff.md` (assignment Status and Feedback block only)
+- **Tests written first:** Added five regressions for workspace-relative paths, real-index immutability, rename reporting, glob semantics, and the exact `Changes` fields. Before implementation, `tests.test_baseline` showed four failures and one error for those cases.
+- **Test result after the code:** `tests.test_baseline`: 17 tests passed.
+- **Acceptance command result:** Passed: 67 tests, `OK`.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+### Step 8a part A (done)
+
+- **Step:** 8a, F5 baseline and scoped changes, part A of 2: checker.py
+- **Branch:** `impl/step-8a`
+- **Kind:** build, part A
+- **Assigned at:** 2026-11-27
+- **Status:** blocked
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design was brainstormed and reviewed with EGM and the user started this run to implement it. Part B (the `baseline_json` column, wiring `_execute`, `scripts/bench_checks.py`, `tests/test_verified_completion.py`) is a later assignment: do not start it.
+
+Write the tests first and run them to show they fail; then write the code until they pass.
+
+**Plan rows, in full** (`docs/designs/subagent-runtime-design.md`; the dataclasses and exact rules are in its sections Change detection (`router/checker.py`, S2) and Appendix A, which are the authority):
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/checker.py` | Modify | <ul><li>The `Baseline` and `Changes` dataclasses, `baseline(ws, task_files)`, `changes(ws, baseline, task_files, must_not_change)` and `manifest_from(changes)` (Appendix A).</li><li>`manifest_from(ch, packet)` returns `manifest(set(), set(ch.changed))`, so the `files_changed:` line format is unchanged, plus an `outside_scope:` line when `ch.outside_scope` is non-empty and the task is a packet task. A legacy reply keeps the `d675d75` manifest, so the S4 byte-identical legacy fixture holds. The existing `manifest` (`checker.py:30`) stays.</li><li>`baseline()` and `changes()` never fail a task, as `_changed_set` (`server.py:198-203`) never does today: any exception in `baseline()` gives a hash baseline of the task files with `partial=True`, and any exception in `changes()` gives empty changes with `partial=True`.</li><li>`lint_python` runs on `changes.changed` only.</li><li>`check_deterministic` gains `changes: Changes \| None = None`. When given, lint runs on `changes.changed` and the `files_changed` item lists them. The `files_changed` item always passes: the no-change, `satisfied` and scope rules are applied only in Step 8e's outcome rules, after the checks.</li></ul> |
+| `tests/test_baseline.py` | **Create** | In a temporary git repo:<ul><li>an edit to an already-dirty file is detected;</li><li>an untouched dirty file is not credited;</li><li>an untracked new file is detected, and an ignored file is not;</li><li>the temporary index is seeded from the index file that `git rev-parse --git-path index` names, in a plain repo and in a linked worktree made with `git worktree add`;</li><li>a repository with no commit and no index file gives a baseline;</li><li>a non-git folder uses hashes, with the `scope unchecked` note;</li><li>the 200 MB cap gives a partial result (with a small cap patched in);</li><li>a must-not-change glob hit is reported;</li><li>matching is case-insensitive on Windows and macOS;</li><li>`manifest_from` with and without `outside_scope`, and for a legacy task, which gets no `outside_scope:` line;</li><li>a git failure (patched `subprocess.run` raising) gives a partial hash baseline, then empty partial changes.</li></ul> |
+| `tests/test_router_bc.py` | Check, no change | The `checker.manifest` cases (`:53-68`) keep passing, because `manifest` stays. |
+
+**Notes from Sonnet**
+
+- Line numbers are from an old commit; find code by symbol name. Steps 4 to 6+7 changed `router/checker.py` and `router/server.py`; keep their behaviour.
+- No git command may change the real repository's index, working tree or refs: use the temporary index the design describes. Tests build their own temporary git repositories (set `user.name` and `user.email` with `-c` or repo config; never touch global git config).
+- Always run `.venv\Scripts\python.exe`, never plain `python`. Files may use CRLF.
+- CI runs the full suite on clean Windows, macOS and Linux runners: tests need no Docker, network, Ollama, `.env` or token; run git with an argument list, never a shell; handle path separators and case rules per platform.
+
+**Files you may touch:** `router/checker.py`, `tests/test_baseline.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file. No MCP tool signature or docstring changes.
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_baseline tests.test_checker tests.test_router_bc tests.test_checker_stage -q
+```
+
+Inside your sandbox a test that needs `git commit` may fail for lack of a git identity: set it in the test repository.
+
+**Tool-call limit:** 35. Fill in the Feedback block and set Status (done, blocked or failed, with the reason) before you reach it. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `router/checker.py`, `tests/test_baseline.py`, and this Feedback block / Status line.
+- **Tests written first:** Added the baseline, temp-index, hash fallback, scope, manifest, and scoped-lint cases in `tests/test_baseline.py`; ran them before implementation and confirmed they failed because the baseline API was absent.
+- **Test result after the code:** Baseline tests passed (12 tests).
+- **Acceptance command result:** Passed: 62 tests, `OK`, with the specified `PYTHONPATH` and `TOKENFRUGAL_OLLAMA_AUTOSTART` settings.
+- **Departures from the plan:** None.
+- **Problems or questions for Sonnet:** None.
+
+### Step 6+7 fix 2 (done)
+
 - **Step:** 6-7, review fixes (large)
 - **Branch:** `impl/step-6-7`
 - **Kind:** fix 2
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied.** These are fixes to an approved task; do not run an EGM brainstorm or review. All changes are in `router/server.py`; the uncommitted diff is otherwise reviewed, so keep it. For each item add a failing test to `tests/test_task_contract.py` first, then fix. Do them in this order.
 
@@ -39,7 +333,7 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 
 **Tool-call limit:** 35. Fill in the Feedback block and set Status (done, blocked or failed, with the reason) before you reach it. Do not commit, push or install anything.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `router/server.py`, `tests/test_task_contract.py`, and this Feedback block / Status line.
@@ -48,10 +342,6 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 - **Acceptance command result:** Passed: 83 tests in 8.463s (`OK`).
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** None.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 6+7 task 7 part B (done)
 
@@ -184,7 +474,7 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 - **Branch:** `impl/step-6-7`
 - **Kind:** fix 1
 - **Assigned at:** 2026-11-27
-- **Status:** in progress
+- **Status:** blocked
 
 #### Task
 

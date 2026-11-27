@@ -33,7 +33,7 @@ def _db():
         day TEXT NOT NULL, tool TEXT NOT NULL, calls INTEGER DEFAULT 0, units INTEGER DEFAULT 0,
         PRIMARY KEY(day, tool))""")
     for column in ("trail TEXT", "heartbeat REAL", "error_kind TEXT", "run_id TEXT", "client TEXT", "model_tag TEXT", "peak_ctx INTEGER", "outcome TEXT",
-                   "task_type TEXT", "prompt_sent TEXT", "contract_json TEXT", "workspace TEXT", "plan_id INTEGER", "kind TEXT", "parent_id TEXT"):  # databases created before these columns existed
+                    "task_type TEXT", "prompt_sent TEXT", "contract_json TEXT", "workspace TEXT", "plan_id INTEGER", "kind TEXT", "parent_id TEXT", "baseline_json TEXT"):  # databases created before these columns existed
         try:
             c.execute(f"ALTER TABLE tasks ADD COLUMN {column}")
         except sqlite3.OperationalError:
@@ -60,7 +60,7 @@ def beat(tid) -> None:
 
 
 def update(tid, **kw):
-    for key in ("messages", "trail", "contract_json"):
+    for key in ("messages", "trail", "contract_json", "baseline_json"):
         if key in kw and kw[key] is not None and not isinstance(kw[key], str):
             kw[key] = json.dumps(kw[key], ensure_ascii=False)
     sets = ",".join(f"{k}=?" for k in kw)
@@ -204,7 +204,8 @@ def get(tid) -> dict | None:
     d = dict(r)
     d["messages"] = json.loads(d["messages"] or "[]")
     d["trail"] = json.loads(d.get("trail") or "[]")
-    d["contract_json"] = json.loads(d["contract_json"]) if d.get("contract_json") else None
+    for key in ("contract_json", "baseline_json"):
+        d[key] = json.loads(d[key]) if d.get(key) else None
     return d
 
 

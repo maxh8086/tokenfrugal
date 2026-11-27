@@ -177,7 +177,6 @@ class TaskContractTest(unittest.TestCase):
         with mock.patch.object(server.workspace, "load_workspace", return_value=ws), \
              mock.patch.object(server.workspace, "to_rel", side_effect=lambda p, *_: p), \
              mock.patch.object(server.workspace, "denied", return_value=False), \
-             mock.patch.object(server, "_changed_set", return_value=set()), \
              mock.patch.object(server.gpu_lease, "guard_ollama"), \
              mock.patch.object(server, "run", side_effect=fail_run):
             asyncio.run(server._execute(tid, "builder", role, "task"))
@@ -197,7 +196,6 @@ class TaskContractTest(unittest.TestCase):
         with mock.patch.object(server.workspace, "load_workspace", return_value=ws), \
              mock.patch.object(server.workspace, "to_rel", side_effect=lambda p, *_: p), \
              mock.patch.object(server.workspace, "denied", return_value=False), \
-             mock.patch.object(server, "_changed_set", return_value=set()), \
              mock.patch.object(server.gpu_lease, "guard_ollama"), \
              mock.patch.object(server, "run", side_effect=fail_run):
             asyncio.run(server._execute(tid, "builder", role, "task"))
@@ -219,7 +217,6 @@ class TaskContractTest(unittest.TestCase):
         with mock.patch.object(server.workspace, "load_workspace", return_value=ws), \
              mock.patch.object(server.workspace, "to_rel", side_effect=lambda p, *_: p), \
              mock.patch.object(server.workspace, "denied", return_value=False), \
-             mock.patch.object(server, "_changed_set", return_value=set()), \
              mock.patch.object(server, "role_timeout", return_value=1), \
              mock.patch.object(server.config, "deadline", return_value=0.03), \
              mock.patch.object(server.gpu_lease, "guard_ollama"), \
@@ -247,7 +244,6 @@ class TaskContractTest(unittest.TestCase):
         with mock.patch.object(server.workspace, "load_workspace", return_value=ws), \
              mock.patch.object(server.workspace, "to_rel", side_effect=lambda p, *_: p), \
              mock.patch.object(server.workspace, "denied", return_value=False), \
-             mock.patch.object(server, "_changed_set", return_value=set()), \
              mock.patch.object(server.gpu_lease, "guard_ollama"), \
              mock.patch.object(server, "run", side_effect=fake_run), \
              mock.patch.object(server, "_check", side_effect=[failed, failed]), \

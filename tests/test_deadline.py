@@ -192,7 +192,6 @@ class ServerDeadlineTests(unittest.TestCase):
             return True, "ok"
         with mock.patch.object(server, "run", fake), mock.patch.object(config, "deadline", return_value=0.2), \
              mock.patch.object(server, "_check", return_value={"passed": True, "items": []}), \
-             mock.patch.object(server, "_changed_set", return_value=set()), \
              mock.patch.object(server, "_plan", slow):
             reply = asyncio.run(server._execute(tid, "a", self.role, "success", plan_id=1))
         self.assertEqual(store.get(tid)["status"], "done")
@@ -212,7 +211,6 @@ class ServerDeadlineTests(unittest.TestCase):
             with (mock.patch.object(server, "run", fake),
                   mock.patch.object(config, "deadline", return_value=0.2),
                   mock.patch.object(server, "_check", return_value={"passed": True, "items": []}),
-                  mock.patch.object(server, "_changed_set", return_value=set()),
                   mock.patch.object(server, "_plan", slow)):
                 task = asyncio.create_task(server._execute(tid, "a", self.role, "success", plan_id=1))
                 await entered_plan.wait()
@@ -274,7 +272,6 @@ class ServerDeadlineTests(unittest.TestCase):
         with mock.patch.object(config, "HOST_ACCEPT_PATHS", {key}), \
              mock.patch.object(config, "ACCEPT_TIMEOUT", 0.25), \
              mock.patch.object(server, "run", long_run), \
-             mock.patch.object(server, "_changed_set", return_value=set()), \
              mock.patch.object(server.checker, "check_deterministic",
                                return_value={"passed": True, "items": []}) as check:
             asyncio.run(server._execute(tid, "a", role, "slow accept", accept=parsed))
