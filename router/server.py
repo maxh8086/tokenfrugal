@@ -19,7 +19,7 @@ from fastmcp.server.middleware import Middleware
 
 from . import checker, compose, config, events, gpu_lease, kalamanch_cleanup, loop, ollama_launcher, plan, reconnect, store, studio, ui_launcher, workspace
 from .outcomes import Stop, stop_from_legacy
-from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of
+from .config import NATIVE_BACKENDS, OLLAMA_URL, WORKSPACE, load_tf_roles, resolve_role, team_of, with_host_accept
 from .mcp_client import backend_state
 from .model_sync import ensure_models
 from .preflight import missing_programs, task_error
@@ -282,6 +282,8 @@ async def _infra_failed(tid: str, agent: str, role: dict, prompt: str, plan_id: 
 
 async def _execute(tid: str, agent: str, role: dict, prompt: str, messages=None, plan_id: int = 0,
                    accept=None, task_text: str | None = None, checks: bool = True, correction: bool = True) -> str:
+    if workspace.load_workspace(WORKSPACE).host_accept:  # host accept on: the router runs accept, so no run_tests tool
+        role = with_host_accept(role, CFG)
     beat = asyncio.create_task(_heartbeat(tid))
     try:
         return await _execute_task(tid, agent, role, prompt, messages, plan_id, accept, task_text, checks, correction)

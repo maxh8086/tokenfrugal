@@ -158,7 +158,7 @@ def role_errors(roles: dict, root: Path) -> dict:
         for p in _as_list(role.get("profile")):
             if not (root / "profiles" / f"{p}.yaml").exists():
                 probs.append(f"profile file profiles/{p}.yaml is missing")
-        for s in _as_list(role.get("skills")):
+        for s in _as_list(role.get("skills")) + _as_list(role.get("accept_skills")):
             if not (root / "router" / "skills" / s / "SKILL.md").exists():
                 probs.append(f"skill router/skills/{s}/SKILL.md is missing")
         for c in _as_list(role.get("compose")):

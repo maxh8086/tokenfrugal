@@ -9,13 +9,87 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8d, Tool list and accept skill, preread of 3
+- **Branch:** `impl/step-8d`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done (built by Haiku after Codex stopped at its usage limit)
+
+### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8d, lines 1181-1198; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+These changes apply to every builder task, packet or legacy (one pipeline). The write guard landed in Step 4.
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `router/loop.py` | Modify | <ul><li>The preread call site (`:392`) passes `named_paths(task_text, limit=3)`. The default in `named_paths` (`:258`) stays 2, so `tests/test_preread.py:19` keeps passing.</li></ul> |
+| `router/server.py` | Modify | <ul><li>`_execute` does not resolve the role again. When host accept is on, it applies `role = config.with_host_accept(role, CFG)` to the role it received, so fixture roles passed by tests (`test_checker_stage.py:51,63`, `test_error_kind.py:239,247`) and by `studio.py:269` and `content_pipeline.py:73,77` are kept.</li></ul> |
+| `router/config.py` | Modify | Add a pure `with_host_accept(role: dict, cfg: dict) -> dict`. It returns a copy of `role`. Only when `cfg["roles"][role["role"]]` has `accept_skills` does it remove `run_tests` from `tools` and replace that role's own skills in `role["skills"]` with them, keeping the agent skills that follow (`:288-289`) in order. Any other role, including a fixture role not in `cfg["roles"]`, is returned unchanged, because its skill tells the model to call `run_tests` (`role-builder`, `code-l1`, `code-l3`..`code-l6`, the UI roles; contracts at `tf-roles.yaml:325-455`). Because it runs on the resolved role, `run_tests` is removed after the mcp-toolkit union (`config.py:290-300`), which overwrites `r["tools"]`. `resolve_role` is unchanged. |
+| `router/preflight.py` | Modify | `role_errors` (`:153-155`) also checks that every `accept_skills` entry has `router/skills/<name>/SKILL.md`. |
+| `router/skills/code-l2-accept/SKILL.md` | **Create** | The host-accept variant of `code-l2` (text in Appendix B), under 1,200 characters. |
+| `router/tf-roles.yaml` | Modify | <ul><li>The `code-l2` role gains `accept_skills: [code-l2-accept]`.</li><li>The `code-l2` contract is unchanged. No runtime code reads `stop_condition` (only `preflight.contract_errors` validates it), so the host-accept stop rule lives in the `code-l2-accept` SKILL text only.</li><li>There is no new role, and the tool count only goes down.</li><li>`scripts/gen_db_profiles.py` does not generate these lines, so they are edited directly.</li></ul> |
+| `tests/test_config_accept_skills.py` | **Create** | <ul><li>`with_host_accept(resolve_role("coding-l2", CFG), CFG)` has no `run_tests` and gives `code-l2-accept` plus the agent skills.</li><li>`resolve_role` output is unchanged for every role in `tf-roles.yaml`.</li><li>A role with no `accept_skills`, or a fixture role not in `CFG`, is returned unchanged and keeps `run_tests`; the input dict is not mutated.</li><li>A role with `accept_skills` whose mcp-toolkit union includes `run_tests` loses it.</li><li>`preflight.role_errors` reports a missing `accept_skills` file.</li></ul> |
+| `tests/test_coding_suite.py` | Modify | Add `code-l2-accept` to the SKILL size check. |
+
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_config_accept_skills tests.test_coding_suite -q`
+*   **Post-commit check:** the realworld benchmark (`realworld-bench` skill) on the builder tag, to catch a legacy regression from the tool and skill change. It passes when the pass count is not lower than the newest result recorded for the builder tag in the `Benchmark/` reports before Step 8d.
+
+**Notes from Sonnet**
+
+- The literal text of `router/skills/code-l2-accept/SKILL.md` is in Appendix B of the design; copy it exactly, under 1,200 characters, UTF-8.
+- Line numbers in the plan are from an older commit; find each symbol with the synaptree MCP tools (project tokenfrugal) or a search before editing.
+- Check how the existing host-accept setting is read in `router/server.py` (Steps 5 to 8a) and reuse it; do not add a second switch. Apply `with_host_accept` once, before anything reads the role's tools or skills in `_execute` (which is now `_execute` plus `_execute_task`), including the resume path.
+- `with_host_accept` must not mutate its input, including the nested `tools` and `skills` lists.
+- Only add the one `accept_skills` line to `code-l2` in tf-roles.yaml; the tool cap stays 6 and the contract is unchanged. No MCP tool signature or docstring changes.
+- Do not run the realworld benchmark; Sonnet runs it after the merge.
+- CI runs the full suite on clean Windows, macOS and Linux runners: tests use no Docker, network, model or token. Use `.venv\Scripts\python.exe`, never plain `python`.
+
+**Files you may touch:** `router/loop.py`, `router/server.py`, `router/config.py`, `router/preflight.py`, `router/skills/code-l2-accept/SKILL.md`, `router/tf-roles.yaml`, `tests/test_config_accept_skills.py`, `tests/test_coding_suite.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/checker.py`, `router/store.py`, `router/packet.py`, `scripts/`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_config_accept_skills tests.test_coding_suite tests.test_preread tests.test_checker_stage tests.test_error_kind tests.test_task_contract tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 25.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `router/config.py` (`with_host_accept` reads the role name with `.get`, so a fixture without a `role` key is returned unchanged), `router/server.py` (imports `with_host_accept`; `_execute` applies it when `workspace.load_workspace(WORKSPACE).host_accept` is true, before the heartbeat, so the resume path is covered too), `router/loop.py` (preread call passes `limit=3`), `router/preflight.py` (`role_errors` checks `accept_skills` files), `router/skills/code-l2-accept/SKILL.md` (created, copied from Appendix B), `router/tf-roles.yaml` (`accept_skills: [code-l2-accept]` on `code-l2` only). `tests/test_config_accept_skills.py` and the `code-l2-accept` case in `tests/test_coding_suite.py` were kept as they were; the test file covers every plan test row.
+- **Tests written first:** The partial test file and suite case were already in place. Before the remaining code, the acceptance set ran with 3 failures and 1 error in `tests.test_config_accept_skills` (no `accept_skills` on `code-l2`, no skill replacement, no preflight check, and the `code-l2-accept` size check's file missing).
+- **Test result after the code:** `tests.test_config_accept_skills`, `tests.test_coding_suite`, `tests.test_preread`, `tests.test_checker_stage`, `tests.test_error_kind`, `tests.test_task_contract` and `tests.test_tool_surface` all passed.
+- **Acceptance command result:** Ran 82 tests in 9.758s, OK (exit 0). Run on Windows with `.venv/Scripts/python.exe` under bash with `timeout 600`.
+- **Departures from the plan:** `_execute` loads the workspace once more to read `host_accept` (the plan says reuse the existing setting; `_execute_task` still loads its own copy). The `code-l2` role keeps `run_tests` in its `tools` list in `tf-roles.yaml`; the removal happens at runtime in `with_host_accept`, as the plan says. The assignment header Status line (above History) still reads "assigned to Haiku"; it was not edited because the instructions limited edits to the Feedback block.
+- **Problems or questions for Sonnet:** None. The realworld benchmark was not run, as the assignment says.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8c fix 1
+
 - **Step:** 8c, workspace claim
 - **Branch:** `impl/step-8c`
 - **Kind:** fix 1
 - **Assigned at:** 2026-11-27
 - **Status:** done
 
-### Task
+#### Task
 
 **Planning gate: already satisfied.** This is a small fix to an approved task; do not run an EGM brainstorm or review. Your uncommitted diff otherwise passed review; keep it.
 
@@ -35,7 +109,7 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 
 **Tool-call limit:** 12. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** Updated `router/server.py`, `tests/test_workspace_claim.py`, and this assignment's Status and Feedback.
@@ -44,10 +118,6 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 - **Acceptance command result:** All 47 tests passed in 3.779 seconds on Windows (exit 0).
 - **Departures from the plan:** None.
 - **Problems or questions for Sonnet:** None.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8c build (done)
 

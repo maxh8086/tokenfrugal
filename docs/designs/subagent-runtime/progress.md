@@ -17,8 +17,8 @@ Stages are the SEQUENCE numbers: 1 branch, 2 assign, 3 review, 4 Haiku tests, 5 
 | 6-7 | 70 | done | Haiku | 5 | 2 | 1 | #114 | `dd23707` | yes (local and remote) | 69 OK | 1150 OK, 4 skipped; CI green on 3 OSes | - |
 | 8a | 71 | done | Haiku | 6 | 2 | 1 | #115 | `299ed5c` | yes (local and remote) | 57 OK | 1176 OK, 4 skipped; CI green on 3 OSes | - (timing in RESULTS.md) |
 | 8b | 72 | done | Haiku | 1 | 0 | 0 | #116 | `ef8afb0` | yes (local and remote) | 6 OK | 1182 OK, 4 skipped; CI green on 3 OSes | - |
-| 8c | 73 | 5 close | Haiku | 2 | 1 | 0 | - | - | - | 9 OK, three runs | 1191 OK (4 skipped) | PR, CI, merge |
-| 8d | 74 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
+| 8c | 73 | done | Luna, Haiku | 2 | 1 | 0 | [#117](https://github.com/maxh8086/tokenfrugal/pull/117) | `5a2e88a` | yes | 9 OK, three runs | 1191 OK (4 skipped); CI pass | - |
+| 8d | 74 | 5 close | Haiku | 1 | 0 | 0 | - | - | - | 8 OK | 1197 OK (4 skipped) | PR, CI, merge, then realworld-bench check |
 | 8e | 75 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8f | 76 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
 | 8g | 77 | pending | - | 0 | 0 | 0 | - | - | - | - | - | - |
