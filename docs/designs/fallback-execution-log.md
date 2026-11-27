@@ -252,3 +252,13 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 4 | Opus | consult 4 | 1 | 13 | about 1 min | the test never mocked `ensure_models`; change the test only | fix 2 / consult 4 |
 | 4 | GPT-6 Luna (Codex) | fix 2 | 3 | not recorded | about 4 min | `done`, 43 tests OK; one-test change | fix 2 / consult 4 |
 | 4 | Haiku subagent | test, fix 2 | 2 | not recorded | not recorded | acceptance 43 OK; clean-clone suite 1104 OK (skipped=4); Sonnet full suite 1104 OK (skipped=4) | none / none |
+| 5 | GPT-6 Luna (Codex) | build | 1 | not recorded | about 8 min | `done`, 37 tests OK; Sonnet review found 7 defects in deadline, cancel and skipped-accept handling | fix 1 / consult 5 |
+| 5 | Opus | consult 5 | 1 | not recorded | about 2 min | decision on skipped accept, plan calls and stray TimeoutError | fix 1 / consult 5 |
+| 5 | GPT-6 Luna (Codex) | fix 1 | 2 | limit 25; about 61k tokens | about 6 min | `failed`: item 1 of 8 only, one older test left failing | fix 2 in three parts / consult 6 |
+| 5 | Opus | consult 6 | 1 | not recorded | about 2 min | diagnosis and three-part split | fix 2 / consult 6 |
+| 5 | GPT-6 Luna (Codex) | fix 2, part A | 3 | not recorded | about 5 min | `done`, 27 tests OK, also run by Sonnet | fix 2 / consult 6 |
+| 5 | GPT-6 Luna (Codex) | fix 2, part B | 4 | limit 25; about 54k tokens | about 4 min | stopped `blocked`: two failing tests, no code | re-scope / consult 7 |
+| 5 | Opus | consult 7, re-scope | 1 | limit 6 | about 2 min | two pieces; one new test wrong | re-scope / consult 7 |
+| 5 | GPT-6 Luna (Codex) | re-scope piece 1 | 5 | not recorded | about 4 min | `done`; only the piece 2 test failing | re-scope / consult 7 |
+| 5 | GPT-6 Luna (Codex) | re-scope piece 2 | 6 | not recorded | about 4 min | `done`, 72 tests OK; Sonnet full suite 1121 OK (skipped=4) | re-scope / consult 7 |
+| 5 | Haiku subagent | test | 1 | limit 20 | not recorded | added the accept-timeout case; 32 OK; clean-clone suite 1122 OK (skipped=4); Sonnet full suite 1122 OK (skipped=4) | none / none |

@@ -69,7 +69,7 @@ class StageTest(unittest.TestCase):
     def test_no_accept_and_no_diff_skips_checks(self):
         calls = []
 
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             calls.append(prompt)
             return "plain answer", list(messages or [])
 
@@ -79,7 +79,7 @@ class StageTest(unittest.TestCase):
         self.assertEqual(store.get(tid)["status"], "done")
 
     def test_passing_accept_reports_checks_and_judgement(self):
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             return "changed nothing", list(messages or [])
 
         Path(self.repo, "fixed").write_text("", encoding="utf-8")  # the accept command passes from the start
@@ -94,7 +94,7 @@ class StageTest(unittest.TestCase):
     def test_one_correction_then_pass(self):
         calls = []
 
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             calls.append(prompt)
             if len(calls) == 2:  # the correction run makes the accept command pass
                 Path(self.repo, "fixed").write_text("", encoding="utf-8")
@@ -111,7 +111,7 @@ class StageTest(unittest.TestCase):
     def test_fails_after_one_correction_with_checker_output(self):
         calls = []
 
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             calls.append(prompt)
             return "still wrong", list(messages or [])
 
@@ -129,7 +129,7 @@ class StageTest(unittest.TestCase):
 
     def test_out_of_time_verdict_still_gets_correction_attempt(self):
         calls = []
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             calls.append(prompt)
             return "reply", list(messages or [])
         first = {"passed": False, "stop": "out_of_time", "items": [{"name": "accept", "passed": False, "detail": "time"}]}
@@ -141,7 +141,7 @@ class StageTest(unittest.TestCase):
         self.assertTrue(calls[1].startswith("Checker failed:"))
 
     def test_declared_new_module_failure_is_accept_failed_not_env_missing(self):
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             return "still missing module", list(messages or [])
         task = f"Create newmod.py\nAccept: {shlex.join([self.exe, '-c', 'import newmod'])}"
         tid, reply = self._run(fake, task)
@@ -165,7 +165,7 @@ class StageTest(unittest.TestCase):
 
     def test_accept_argument_runs_when_task_has_no_accept_line(self):
         calls = []
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             calls.append(prompt)
             if len(calls) == 2:
                 Path(self.repo, "fixed").write_text("", encoding="utf-8")
@@ -179,7 +179,7 @@ class StageTest(unittest.TestCase):
         self.assertIn("checks: ok (accept, lint)", reply)
 
     def test_host_accept_off_skips_command_but_keeps_lint(self):
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             return "plain answer", list(messages or [])
         task = "make a change"
         tid = store.create("builder-agent", "builder", task)
@@ -189,7 +189,7 @@ class StageTest(unittest.TestCase):
         self.assertIn("checks: ok (lint; accept none: host accept off)", reply)
 
     def test_long_accept_error_uses_300_token_trim(self):
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             return "still wrong", list(messages or [])
 
         failed_verdict = {"passed": False, "items": [
@@ -206,7 +206,7 @@ class StageTest(unittest.TestCase):
         self.assertIn("[trimmed]", error)
 
     def test_checks_line_sits_before_status_without_accept(self):
-        async def fake(agent, role, prompt, messages=None, tid=None, guard=None):
+        async def fake(agent, role, prompt, messages=None, tid=None, guard=None, **kw):
             return "plain answer", list(messages or [])
 
         tid, reply = self._run(fake, "explain the parser")

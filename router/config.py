@@ -1,5 +1,6 @@
 """Router configuration (env-overridable)."""
 import json
+import math
 import os
 import re
 import sys
@@ -61,6 +62,35 @@ def _parse_host_accept(raw: str) -> tuple[frozenset[str], list[str]]:
 HOST_ACCEPT_PATHS, _HOST_ACCEPT_WARNINGS = _parse_host_accept(os.getenv("TOKENFRUGAL_HOST_ACCEPT_PATHS", ""))
 ACCEPT_ENV_PASSTHROUGH = tuple(x.strip() for x in os.getenv("TOKENFRUGAL_ACCEPT_ENV_PASSTHROUGH", "").split(",") if x.strip())
 CONFIG_WARNINGS = list(_HOST_ACCEPT_WARNINGS)
+ACCEPT_TIMEOUT = float(os.getenv("TOKENFRUGAL_ACCEPT_TIMEOUT", "60"))
+MIN_ACCEPT_S = 15
+MAX_ACCEPT_RUNS = 2
+CORRECTION_FLOOR_S = 45
+
+def _parse_task_deadline_override(raw: str | None) -> tuple[float | None, str | None]:
+    if raw is None:
+        return None, None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None, "TOKENFRUGAL_TASK_DEADLINE is not a number; using the calculated deadline"
+    if not math.isfinite(value):
+        return None, "TOKENFRUGAL_TASK_DEADLINE is not a finite number; using the calculated deadline"
+    return value, None
+
+TASK_DEADLINE_OVERRIDE, _TASK_DEADLINE_WARNING = _parse_task_deadline_override(os.getenv("TOKENFRUGAL_TASK_DEADLINE"))
+if _TASK_DEADLINE_WARNING:
+    CONFIG_WARNINGS.append(_TASK_DEADLINE_WARNING)
+
+def model_budget(role: dict, role_timeout: float) -> float:
+    return 1.5 * float(role_timeout)
+
+def deadline(role: dict, role_timeout: float) -> float:
+    floor = float(role_timeout) + MIN_ACCEPT_S
+    if TASK_DEADLINE_OVERRIDE is not None:
+        return max(float(TASK_DEADLINE_OVERRIDE), floor)
+    return max(math.ceil(model_budget(role, role_timeout) + MAX_ACCEPT_RUNS * ACCEPT_TIMEOUT + 30), floor)
+
 _accept_venv = os.getenv("TOKENFRUGAL_ACCEPT_VENV", "").strip()
 ACCEPT_VENV = str(Path(_accept_venv).expanduser().resolve()) if _accept_venv else None
 
