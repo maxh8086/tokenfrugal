@@ -299,3 +299,10 @@ Loop run under `docs/designs/subagent-runtime/implementation-kickoff-prompt.md`.
 | 8e | Haiku | fix 1 (fallback) | 2 | 23 | about 3 min | done, 136 OK; Sonnet review passed | items 1-4 |
 | 8e | Haiku | fix 2 (fallback) | 3 | 28 (limit 25) | about 3 min | done, 143 OK; Sonnet review passed, suite 1232 OK | items 5-9 |
 | 8e | Haiku | test | 1 | limit 20 | about 3 min | no case missing; temp-folder portability edits; clean clone 1232 OK (4 skipped) | - |
+| 8e | Haiku | close | 1 | limit 15 | about 5 min | PR 119, CI pass on 3 OS, merged `6d45c5c`, branch deleted. Reported: its first local test run used system Python and its exit code was hidden; it pushed before the venv rerun passed | - |
+| 8f | GPT-6 Luna (Codex) | build part A | 1 | 0 | under 1 min | not started: usage limit | Haiku does part A |
+| 8f | Haiku | build part A (fallback) | 1 | 22 | about 3 min | done, 22 OK; Sonnet review: record result/steps/crash handling and wrong-router guard moved into part B1 | - |
+| 8f | Haiku | build part B1 (fallback) | 2 | - | - | stopped before any change: Claude 5-hour limit (reset 12:50); resumed after the reset | - |
+| 8f | Haiku | build part B1 (resumed) | 2 | 13 after resume | about 2 min | done, 39 OK; Sonnet review passed; wrong-router abort and check.py time limit added to B2 | - |
+| 8f | Haiku | build part B2 (fallback) | 3 | - | - | done, 59 OK; Sonnet review passed | - |
+| 8f | Haiku | test | 1 | limit 20 | - | 2 cases added; 60 OK twice; clean clone 1292 OK (4 skipped); check-corpus prints tasks: 0 | - |

@@ -9,13 +9,169 @@ Sonnet assigns every Codex (GPT-6 Luna) task here, and Codex writes its feedback
 
 ## Current assignment
 
+- **Step:** 8f, Replay runner, part B2 (rerun-against and corpus check)
+- **Branch:** `impl/step-8f`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done (built by Haiku, Codex at its usage limit)
+
+### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** This finishes the approved Step 8f. Parts A and B1 are in the working tree (uncommitted): `scripts/replay.py`, `tests/test_replay_runner.py`; keep them. The specification is the section "Measurement plan (S2)" of `docs/designs/subagent-runtime-design.md` (Corpus layout, Runner, Runs, `--check-corpus`) and the Step 8f rows.
+
+Write the tests first, show them failing, then change the code.
+
+1. **`--rerun-against BASE_ARM`:** after the arm's runs, each task whose result differs from that arm's newest results file (`Benchmark/replay/results/<BASE_ARM>-<YYYYMMDD>.jsonl`, newest date; infra lines ignored) is run two more times, so it has three runs, with run numbers 2 and 3. A missing base file is an error before any run starts. A task absent from the base file is not rerun.
+2. **`--check-corpus`:** each task folder under `Benchmark/replay` has a valid `task.toml` (with `repo`, `base_commit`, `agent`), a valid `packet.json` and a `check.py`; for each packet with `accept`, `" ".join(argv).split() == argv`; each repository named by `--venv` (and, when `--repo` is given, its default `<repo>/.venv`) has an existing venv folder. It prints every problem and the task count, and exits non-zero on any problem. It starts no run. The runner must not import `router` in the parent: validate `packet.json` in a way that follows `docs/designs/subagent-runtime/packet.schema.json` / `router/packet.py` without loading `router/config.py` (for example by loading `router/packet.py` by file path, which imports only pydantic).
+3. **Wrong router is fatal:** when the child exits with the wrong-router code, the runner stops at once with an error and a non-zero exit, and writes no record (it is a setup fault, not an infra run).
+4. **`check.py` has a time limit** (600 s): on timeout `check_ok` is false and the runner continues.
+
+Infra records stay in the results file beside their rerun.
+
+**Files you may touch:** `scripts/replay.py`, `tests/test_replay_runner.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q
+```
+
+Tests start no model, Docker or network, read no real `.env`, and write nothing into the real repository; CI runs them on clean Windows, macOS and Linux.
+
+**Tool-call limit:** 25. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
+
+### Feedback (Codex fills this in)
+
+- **Status:** done
+- **Files changed:** `scripts/replay.py` (`--rerun-against`: `base_results_file` picks the newest `<BASE>-<YYYYMMDD>.jsonl`, `base_results` ignores infra lines, `rerun_ids` lists tasks whose arm result differs and that are in the base file, and `main` runs those tasks twice more after the arm's runs, with no base file an error before any run; `--check-corpus`: `corpus_check` and `task_problems` validate task.toml, packet.json (via `router/packet.py` loaded by file path, pydantic only), check.py, the accept round trip and the venv folders, printing each problem and `tasks: N`, exit 1 on any problem; `SetupFault`: `run_once` raises it when the child exits 3, so `main` stops with exit 1 and writes no record for that run; `run_check` gives check.py a 600 s limit, a timeout is a failed check; `_read_events` renamed `read_jsonl`). `tests/test_replay_runner.py` (20 new tests: `CorpusCheckTest`, `RerunHelpersTest`, `RerunAgainstTest`, `WrongRouterFatalTest`, `CheckTimeoutTest`). No other file was touched. Nothing was run against a model, Docker or the network, and `.env` was not read.
+- **Tests written first:** the new tests against the part B1 code: `FAILED (failures=5, errors=15)`, from the missing helpers, the B2 exit 2 stub and the missing `SetupFault`/`CHECK_TIMEOUT`.
+- **Test result after the code:** `Ran 59 tests`, `OK` (`tests.test_replay_runner` and `tests.test_tool_surface`). The stderr lines are argparse usage messages from the expected SystemExit tests.
+- **Acceptance command result:** `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q` gave `Ran 59 tests`, `OK`. No real `Benchmark/replay/results` folder was created and no stray worktree was left. Nothing of mine is running.
+- **Departures from the plan:** (1) The rerun run numbers are `--runs + 1` and `--runs + 2`, which are 2 and 3 with the default `--runs 1`; with more runs the numbers continue after them, so no number repeats. (2) A task whose arm runs are all infra has no arm result, so it is not rerun. (3) The task list and the `--repo` check now run before the first run, so a missing `--repo` stops before any run starts. (4) `--check-corpus` treats every folder under `Benchmark/replay` except `results` as a task folder, so a folder without `task.toml` is reported rather than skipped. (5) The venv for a `--venv` name is that path; for a `--repo` name without one it is `<repo>/.venv`. (6) The header Status line above History was also set to done, as in earlier steps. (7) `_read_events` is renamed `read_jsonl`, used in four places in the same file.
+- **Problems or questions for Sonnet:** (a) Confirm the rerun numbers for `--runs` greater than 1 (departure 1). (b) Confirm that an arm with only infra runs for a task is skipped, not rerun (departure 2). (c) Confirm that `--check-corpus` should report a folder with no `task.toml` as a task problem (departure 4). I did not run `--check-corpus` on the real corpus: `Benchmark/replay` holds only `README.md` and `RESULTS.md` and no task folders yet, so it would report `tasks: 0`.
+
+## History
+
+(Finished assignments with their feedback, newest first.)
+
+### Step 8f part B1
+
+- **Step:** 8f, Replay runner, part B1 (record correctness and infra)
+- **Branch:** `impl/step-8f`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done (built by Haiku, Codex at its usage limit)
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review.** This continues the approved Step 8f. Part A is in the working tree (uncommitted): `scripts/replay.py`, `tests/test_replay_runner.py`; keep it. The specification is the section "Measurement plan (S2)" of `docs/designs/subagent-runtime-design.md`.
+
+Write or change the tests first, show them failing, then change the code.
+
+1. **`result`** in each record is `pass`, `fail` or `infra`. `pass`: the run ended `done` or `satisfied` (`outcome`, or `status` when `outcome` is null as on an old checkout) and `check_ok` and `scope_ok` are true. Add `status` to the record. A rowless refusal that is not infra is `fail`.
+2. **`steps`** is the largest `n` of the task's `step` events in the run's events file, or null when there is none.
+3. **A child that crashes or times out** does not stop the runner: `subprocess.TimeoutExpired` is caught, the record keeps `stop` `crashed` or `timeout`, the worktree is removed, and the next run continues.
+4. **The child refuses to run the wrong router:** after importing, it exits with an error if `router.__file__` is not under the `--router` checkout (realpath and normcase). The test uses a temporary stand-in package, no real model.
+5. **Infra classification and one rerun**, following the **Infra failures** bullet and the `bench_checks.InfraFailure` pattern: `gpu_busy`, `infra`, a backend that will not start, or `workspace_busy` (also a child that crashed before any step) give `result: infra`; the run is recorded and rerun once. Do not import `router` in the parent.
+6. `glob_matches` compares case the same way as `router/checker.py` `_glob_matches` (it normalises paths with the checker's `_path_key`).
+
+**Not in this assignment (part B2):** `--rerun-against` and `--check-corpus`.
+
+**Files you may touch:** `scripts/replay.py`, `tests/test_replay_runner.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file.
+
+**Acceptance command** (PowerShell, repo root; always `.venv\Scripts\python.exe`)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q
+```
+
+Tests start no model, Docker or network, read no real `.env`, and write nothing into the real repository; CI runs them on clean Windows, macOS and Linux.
+
+**Tool-call limit:** 25. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `scripts/replay.py` (`grade` gives pass, fail or infra; `count_steps` gives the largest `n` of the task's step events, or null; `build_record` adds `status` and writes `result`, `steps` and `stop`; `run_with_infra_rerun` keeps an infra record and reruns once with an `attempt` field; a child `TimeoutExpired` is recorded with stop `timeout` and the worktree is still removed; the child checks `router.__file__` with `router_under` (realpath, normcase, path boundary) and exits 3 when it is outside the `--router` checkout; `glob_matches` normalises with `_path_key`, the same as `checker._path_key`; `run_result` is removed). `tests/test_replay_runner.py` (new tests for grading, steps, record, the infra rerun, the timeout, the wrong-router child and `router_under`, and the glob case rule). No other file was touched.
+- **Tests written first:** the new `tests/test_replay_runner.py` (38 tests) against part A code: `FAILED (failures=2, errors=18)`, the errors from the missing helpers and the failures from the child router check and the glob case.
+- **Test result after the code:** `Ran 39 tests in 2.183s`, `OK` (`tests.test_replay_runner` and `tests.test_tool_surface`). The stderr lines are argparse usage messages from the expected SystemExit tests.
+- **Acceptance command result:** `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q` gave `Ran 39 tests`, `OK`. No model, Docker or network was used, and `.env` was not read. Nothing of mine is running.
+- **Departures from the plan:** (1) An infra record is kept in the output, and the rerun follows it with `attempt` 2, so one task can show two lines. The `status` and `attempt` fields are additions to the record. (2) `steps` filters step events by the task id. (3) A rowless refusal that is not busy is `fail` (per item 1). A timeout is `fail` and only a crash before any step is `infra`. (4) `--check-corpus` and `--rerun-against` still exit 2 (part B2). (5) The header Status line of this assignment was also set to done, as in earlier steps; please confirm.
+- **Problems or questions for Sonnet:** (a) A wrong-router child exits 3 with no result line, so the parent records it as crashed and, with no steps, as infra. Is a setup fault meant to be infra? (b) Should the infra record stay in the results file alongside its rerun, or be left out? I kept it.
+
+### Step 8f part A
+
+- **Step:** 8f, Replay runner, part A
+- **Branch:** `impl/step-8f`
+- **Kind:** build
+- **Assigned at:** 2026-11-27
+- **Status:** done (built by Haiku, Codex at its usage limit)
+
+#### Task
+
+**Planning gate: already satisfied. Do not run an EGM brainstorm or review, and do not ask for readiness confirmation.** The design in `docs/designs/subagent-runtime-design.md` was brainstormed and reviewed with EGM (its Status line records the reviews and the owner's decisions E1-E10), and the user started this run to implement every step of it. This assignment is one approved task from that plan: implement it.
+
+Write the tests from the plan's test rows first and run them to show they fail; then write the code and configuration until they pass.
+
+**Plan rows, in full** (from `docs/designs/subagent-runtime-design.md`, Step 8f, lines 1220-1228; in table cells a backslash before a pipe means a single pipe. Read the sections the rows link to, and the appendices for literal texts, in that document.)
+
+| File | Action | Specification |
+| --- | --- | --- |
+| `scripts/replay.py` | **Create** | <ul><li>The runner from the Measurement plan, including the per-run process, `GATEWAY_DB` isolation, the accept venv and `PATH`, the copied router settings, the rowless refusal output, `scope_ok` measured before `check.py` runs, the `base` arm's `" ".join(argv)` accept line, the infra classification and one infra rerun, `--rerun-against`, and `--check-corpus`.</li><li>`est_saved_tokens` is the run's `saved` event field (`server.py:264`, persisted through `events.py:16`), which `summarize.saved_tokens` (`summarize.py:15-18`) estimates as conversation size minus summary size. It is an estimate of tokens spared, not a measure of cloud usage.</li><li>It writes `Benchmark/replay/results/<arm>-<YYYYMMDD>.jsonl`.</li></ul> |
+| `tests/test_replay_runner.py` | **Create** | <ul><li>Argument parsing.</li><li>The per-run environment: a fresh `GATEWAY_DB`, host accept, `CC_WORKSPACE`, `TOKENFRUGAL_ACCEPT_VENV` with the venv folder first on `PATH`, and the copied `.env` and `router/*.json` files in the router worktree.</li><li>`scope_ok` from a temporary git repo, computed before `check.py` runs: a newly created untracked file that matches `must_not_change` gives `scope_ok` false even when the check passes, and a file that `check.py` writes is not counted.</li><li>A rowless `workspace_busy` result: the per-run process prints a null `tid` without calling `store.get`, and the runner records `result: infra`.</li><li>Infra results are excluded and rerun once.</li><li>`--check-corpus` on a fixture corpus with one bad task, and with a missing venv folder (both fail); the `base` arm prompt for an argv containing `*` gives the same argv through `str.split`.</li></ul> |
+
+*   **Acceptance:** `PYTHONPATH=. python -m unittest tests.test_replay_runner -q`
+
+**Notes from Sonnet**
+
+- Read the whole section `### Measurement plan (S2)` of the design: the Corpus layout and the Runner bullets are the specification.
+- **This assignment is part A only:** the argument parser (all options listed), the copy of `.env` and `router/*.json` into the router worktree, the per-run git worktree and its removal, the per-run environment, the child process (both the packet path and the old-checkout path, with the null output for a rowless refusal), `scope_ok` before grading, running `check.py`, and writing one JSON line per run to `Benchmark/replay/results/<arm>-<YYYYMMDD>.jsonl`.
+- **Part B, assigned later, do not build now:** infra classification and rerun, `--rerun-against`, `--check-corpus`, and their tests.
+- Part A test rows: argument parsing; the per-run environment (fresh GATEWAY_DB, events file, host accept, CC_WORKSPACE, TOKENFRUGAL_ACCEPT_VENV with the venv folder first on PATH, copied .env and router/*.json); scope_ok from a temporary git repo; the rowless workspace_busy child output; the base-arm prompt for an argv containing `*`.
+- The tests must not start a model, Docker or the network, must not read the real `.env`, and must not write into the real repository (use temporary folders and a temporary git repo with a local user.name and user.email). CI runs them on clean Windows, macOS and Linux: compare paths after realpath, remove temporary folders, and use `Scripts` or `bin` by platform.
+- No new dependencies; Python 3.11 has tomllib. Use `.venv\Scripts\python.exe`, never plain `python`.
+
+**Files you may touch:** `scripts/replay.py`, `tests/test_replay_runner.py`, and the Feedback block and Status line of this file.
+
+**Must not change:** every other file, including `router/`, `Benchmark/replay/README.md`, `Benchmark/replay/RESULTS.md`, `the design documents`, `docs/designs/subagent-runtime/progress.md`, `docs/haiku-fallback-log.md`, `.agents/`, `.codex/` and `scratchpad-pr66.txt`. No MCP tool signature or docstring changes (`tests/test_tool_surface.py` checks this).
+
+**Acceptance command** (PowerShell, repo root)
+
+```text
+$env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q
+```
+
+You do not need to run the full suite; Sonnet and Haiku run it outside the sandbox.
+
+**Instructions**
+
+- Find code with synaptree (project tokenfrugal): index_status first, then search_graph or search_code, trace_path for callers and callees, get_code_snippet for one symbol. Read a whole file only after synaptree has located the symbol, or for configs and docs. If synaptree does not locate a file or symbol, read the file directly; do not stop for that.
+- Tool-call limit: 35.
+- Do not commit, push or install anything; report the files you changed and the test output.
+
+#### Feedback
+
+- **Status:** done
+- **Files changed:** `scripts/replay.py` (new), `tests/test_replay_runner.py` (new). Nothing else in the repository was touched; `Benchmark/replay/` was not written.
+- **Tests written first:** `tests/test_replay_runner.py` with 21 tests. Before the code existed, the run failed with `ImportError: cannot import name 'replay' from 'scripts'` (all tests error).
+- **Test result after the code:** `Ran 22 tests in 1.412s ... OK` (the 21 replay tests plus `tests.test_tool_surface`). Expected argparse usage messages print to stderr from the SystemExit tests; they are not failures.
+- **Acceptance command result:** `PYTHONPATH=. TOKENFRUGAL_OLLAMA_AUTOSTART=0 timeout 600 .venv/Scripts/python.exe -m unittest tests.test_replay_runner tests.test_tool_surface -q` gave OK, 22 tests. No model, Docker or network was used, and the real `.env` was not read (the tests use temporary folders and a temporary git repo).
+- **Departures from the plan:** (1) `glob_matches` is a local copy of `checker._glob_matches` with the same semantics. Importing `router.checker` loads `router/config.py`, which reads `.env`, so the runner must not import the router. (2) `steps` is written as null: no task column holds a step count, and the spec does not say which field to use. (3) A refused (non-busy) rowless result is recorded as `result: refused`; the spec gives no name for it. (4) The child also prints `model_tag` and `peak_ctx`, which the record needs. (5) The child is started as `python scripts/replay.py --child` with `cwd` and `sys.path` set to the router checkout, so the router is imported only there. (6) Code search used Grep and direct reads, not synaptree, because the synaptree tools are deferred and the signatures were few. (7) Part A parses `--rerun-against` and `--check-corpus` but exits with status 2 when they are used.
+- **Problems or questions for Sonnet:** (a) Confirm whether `result` should be `refused` or something else for a rowless refusal. (b) Confirm where `steps` comes from, or whether null is acceptable. (c) The header Status line above History was set to done, as in earlier steps; please confirm. Nothing of mine is running.
+
+### Step 8e fix 2
+
 - **Step:** 8e, reply and result record fix 2
 - **Branch:** `impl/step-8e`
 - **Kind:** fix 2
 - **Assigned at:** 2026-11-27
 - **Status:** done (built by Haiku, Codex at its usage limit)
 
-### Task
+#### Task
 
 **Planning gate: already satisfied. This is a fix to an approved task; do not run an EGM brainstorm or review.** Your uncommitted Step 8e work, with fix 1, stays.
 
@@ -39,7 +195,7 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 
 **Tool-call limit:** 25. Fill in the Feedback block and set Status before you stop. Do not commit, push or install anything.
 
-### Feedback (Codex fills this in)
+#### Feedback
 
 - **Status:** done
 - **Files changed:** `router/server.py` (new `_scope_note(packet, base)`; `final_changes = None` at the top of `_execute_task`; the success reply uses `manifest_from(final_changes, packet=packet is not None)`; the failure path reuses `final_changes`, otherwise calls `checker.changes` once inside `try/except` and only before the deadline; `_result` gets the scope note on every failure exit; comment on cancel and deadline exits storing an empty file list). `tests/test_verified_completion.py` (`run_patches` takes `changes`/`verdict` and a complete baseline; plan test restored to an edit packet; new `test_packet_satisfied_with_plan_...`, outside-scope manifest, partial-baseline accept-failed note, changes-once, error-path changes raising, deadline exit, `_infra_failed` result; non-git and size-capped tests assert the note; refused resume asserts status, attempts, heartbeat, error_kind and messages unchanged). Done by Haiku, not Codex. No commit, push or install.
@@ -48,10 +204,6 @@ $env:PYTHONPATH = "."; $env:TOKENFRUGAL_OLLAMA_AUTOSTART = "0"; .venv\Scripts\py
 - **Acceptance command result:** `Ran 143 tests in 15.847s`, `OK`, run in bash with `timeout 600`.
 - **Departures from the plan:** (1) The failure note comes from the baseline's `partial` flag rather than the diff, so cancel and deadline exits with no diff still carry `scope unchecked` on a partial packet baseline. (2) `run_patches` now uses a complete baseline by default (it was partial), because the satisfied case needs one. (3) The infra-exit test calls `_infra_failed` directly instead of going through a backend. (4) The Status line in the Current assignment header was also set to done, since the rules named "its Status line"; please confirm.
 - **Problems or questions for Sonnet:** None. Nothing of mine is running.
-
-## History
-
-(Finished assignments with their feedback, newest first.)
 
 ### Step 8e fix 1
 
